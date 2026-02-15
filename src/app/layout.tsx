@@ -23,7 +23,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.className}>
-      <body className="min-h-dvh antialiased">{children}</body>
+      <body className="min-h-dvh antialiased">
+        <div className="relative z-10">{children}</div>
+      </body>
     </html>
   );
 }
