@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import type { MediaType, Sentiment } from "@/lib/types";
+import type { MediaType, Sentiment, FriendOverlap } from "@/lib/types";
 
 interface TitleCardProps {
   tmdb_id: number;
@@ -14,6 +14,7 @@ interface TitleCardProps {
   status?: string | null;
   progress?: { season: number; episode: number } | null;
   isFavorite?: boolean;
+  friendOverlap?: FriendOverlap[];
   onAction?: (action: string) => void;
   onClick?: () => void;
   actions?: { label: string; action: string; variant?: "default" | "green" | "red" | "yellow" | "accent" }[];
@@ -34,6 +35,7 @@ export default function TitleCard({
   sentiment,
   progress,
   isFavorite,
+  friendOverlap,
   onAction,
   onClick,
   actions,
@@ -192,6 +194,16 @@ export default function TitleCard({
             </>
           )}
         </div>
+        {friendOverlap && friendOverlap.length > 0 && (
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[10px] text-white/30">👥</span>
+            <span className="text-[10px] text-white/40 truncate">
+              {friendOverlap.length <= 2
+                ? friendOverlap.map((f) => f.name).join(", ")
+                : `${friendOverlap.slice(0, 2).map((f) => f.name).join(", ")} +${friendOverlap.length - 2}`}
+            </span>
+          </div>
+        )}
         {children}
       </div>
 

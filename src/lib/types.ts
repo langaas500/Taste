@@ -155,6 +155,14 @@ export interface SharedList {
   owner_name: string | null;
 }
 
+// Friend Overlap
+export interface FriendOverlap {
+  name: string;
+  status: string;
+  season?: number;
+  episode?: number;
+}
+
 // Advanced Search
 export interface TMDBGenre {
   id: number;

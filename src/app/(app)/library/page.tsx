@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Image from "next/image";
 import TitleCard from "@/components/TitleCard";
 import { SkeletonGrid } from "@/components/SkeletonCard";
@@ -8,10 +8,10 @@ import EmptyState from "@/components/EmptyState";
 import GlowButton from "@/components/GlowButton";
 import StreamingModal from "@/components/StreamingModal";
 import AddToListModal from "@/components/AddToListModal";
-import { removeTitle, addExclusion, toggleFavorite } from "@/lib/api";
+import { removeTitle, addExclusion, toggleFavorite, fetchFriendOverlaps } from "@/lib/api";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
-import type { UserTitle, TitleCache, MediaType, Recommendation } from "@/lib/types";
+import type { UserTitle, TitleCache, MediaType, Recommendation, FriendOverlap } from "@/lib/types";
 
 type Filter = "all" | "favorites" | "liked" | "disliked" | "neutral" | "excluded";
 type SortKey = "recent" | "alpha" | "year";
@@ -21,11 +21,15 @@ export default function LibraryPage() {
   const [exclusions, setExclusions] = useState<{ tmdb_id: number; type: string; reason: string | null; cache?: TitleCache }[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<SortKey>("recent");
+  const [genreFilter, setGenreFilter] = useState<string | null>(null);
+  const [yearFrom, setYearFrom] = useState("");
+  const [yearTo, setYearTo] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
   const [addToListItem, setAddToListItem] = useState<{ tmdb_id: number; type: MediaType; title: string } | null>(null);
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [recsLoading, setRecsLoading] = useState(false);
+  const [friendOverlaps, setFriendOverlaps] = useState<Record<string, FriendOverlap[]>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -61,7 +65,8 @@ export default function LibraryPage() {
     setExclusions(enrichedExc);
     setLoading(false);
 
-    // Load recommendations in background if user has titles
+    // Load recommendations and friend overlaps in background
+    fetchFriendOverlaps().then(setFriendOverlaps).catch(() => {});
     if (enriched.length >= 3) {
       loadRecs();
     }
@@ -103,6 +108,18 @@ export default function LibraryPage() {
     scrollRef.current.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
   }
 
+  const allGenres = useMemo(() => {
+    const set = new Map<number, string>();
+    for (const t of titles) {
+      for (const g of (t.cache?.genres as { id: number; name: string }[]) || []) {
+        set.set(g.id, g.name);
+      }
+    }
+    return [...set.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "nb"));
+  }, [titles]);
+
+  const hasActiveFilters = genreFilter || yearFrom || yearTo;
+
   const filteredUnsorted =
     filter === "excluded"
       ? []
@@ -112,7 +129,20 @@ export default function LibraryPage() {
           ? titles
           : titles.filter((t) => t.sentiment === filter);
 
-  const filtered = [...filteredUnsorted].sort((a, b) => {
+  let afterFilters = filteredUnsorted;
+  if (genreFilter) {
+    afterFilters = afterFilters.filter((t) =>
+      ((t.cache?.genres as { id: number; name: string }[]) || []).some((g) => g.name === genreFilter)
+    );
+  }
+  if (yearFrom) {
+    afterFilters = afterFilters.filter((t) => (t.cache?.year || 0) >= parseInt(yearFrom));
+  }
+  if (yearTo) {
+    afterFilters = afterFilters.filter((t) => (t.cache?.year || 0) <= parseInt(yearTo));
+  }
+
+  const filtered = [...afterFilters].sort((a, b) => {
     if (sort === "alpha") return (a.cache?.title || "").localeCompare(b.cache?.title || "", "nb");
     if (sort === "year") return (b.cache?.year || 0) - (a.cache?.year || 0);
     return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
@@ -201,6 +231,48 @@ export default function LibraryPage() {
         </div>
       )}
 
+      {/* Genre + year filters */}
+      {filter !== "excluded" && titles.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-5">
+          <select
+            value={genreFilter || ""}
+            onChange={(e) => setGenreFilter(e.target.value || null)}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 focus:outline-none focus:border-white/20 transition-all"
+          >
+            <option value="">Alle sjangere</option>
+            {allGenres.map((g) => (
+              <option key={g.id} value={g.name}>{g.name}</option>
+            ))}
+          </select>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold">År</span>
+            <input
+              type="number"
+              placeholder="Fra"
+              value={yearFrom}
+              onChange={(e) => setYearFrom(e.target.value)}
+              className="w-16 px-2 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 placeholder-white/25 focus:outline-none focus:border-white/20 transition-all"
+            />
+            <span className="text-white/20">–</span>
+            <input
+              type="number"
+              placeholder="Til"
+              value={yearTo}
+              onChange={(e) => setYearTo(e.target.value)}
+              className="w-16 px-2 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 placeholder-white/25 focus:outline-none focus:border-white/20 transition-all"
+            />
+          </div>
+          {hasActiveFilters && (
+            <button
+              onClick={() => { setGenreFilter(null); setYearFrom(""); setYearTo(""); }}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--red)] bg-[var(--red-glow)] hover:bg-[var(--red)]/15 transition-all"
+            >
+              Nullstill
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Library grid */}
       {filter === "excluded" ? (
         exclusions.length === 0 ? (
@@ -250,6 +322,7 @@ export default function LibraryPage() {
               poster_path={t.cache?.poster_path}
               sentiment={t.sentiment}
               isFavorite={t.favorite}
+              friendOverlap={friendOverlaps[`${t.tmdb_id}:${t.type}`]}
               onClick={() => setSelectedItem({ id: t.tmdb_id, type: t.type, title: t.cache?.title || `TMDB:${t.tmdb_id}`, poster_path: t.cache?.poster_path || null })}
               onAction={(action) => {
                 if (action === "toggle-favorite") handleToggleFavorite(t.tmdb_id, t.type);
@@ -398,6 +471,7 @@ export default function LibraryPage() {
             onClose={() => setSelectedItem(null)}
             isFavorite={t?.favorite}
             onToggleFavorite={() => handleToggleFavorite(selectedItem.id, selectedItem.type)}
+            friendOverlap={friendOverlaps[`${selectedItem.id}:${selectedItem.type}`]}
             actions={[
               { label: "List+", action: "add-to-list", variant: "accent" },
               ...(excludedSet.has(`${selectedItem.id}:${selectedItem.type}`)

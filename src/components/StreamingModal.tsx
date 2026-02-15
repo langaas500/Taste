@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import type { WatchProvider, WatchProviderData } from "@/lib/types";
+import type { WatchProvider, WatchProviderData, FriendOverlap } from "@/lib/types";
 
 interface ModalAction {
   label: string;
@@ -23,6 +23,7 @@ interface StreamingModalProps {
   onToggleFavorite?: () => void;
   progress?: { season: number; episode: number } | null;
   onUpdateProgress?: (season: number, episode: number) => void;
+  friendOverlap?: FriendOverlap[];
 }
 
 interface TitleDetails {
@@ -60,7 +61,7 @@ interface CastMember {
   order: number;
 }
 
-export default function StreamingModal({ tmdbId, type, title, posterPath, onClose, actions, onAction, isFavorite, onToggleFavorite, progress, onUpdateProgress }: StreamingModalProps) {
+export default function StreamingModal({ tmdbId, type, title, posterPath, onClose, actions, onAction, isFavorite, onToggleFavorite, progress, onUpdateProgress, friendOverlap }: StreamingModalProps) {
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<TitleDetails | null>(null);
   const [providers, setProviders] = useState<WatchProviderData | null>(null);
@@ -452,6 +453,33 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                           </div>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Friend overlap */}
+                {friendOverlap && friendOverlap.length > 0 && (
+                  <div>
+                    <p className="text-[11px] text-white/30 font-semibold uppercase tracking-wider mb-2">Venner som har denne</p>
+                    <div className="space-y-1.5">
+                      {friendOverlap.map((f, i) => {
+                        const statusLabel =
+                          f.status === "watched" ? "Sett" :
+                          f.status === "watchlist" ? "Se-liste" :
+                          f.status === "watching" ? `Ser nå${f.season && f.episode ? ` (S${f.season} E${f.episode})` : ""}` :
+                          f.status;
+                        const dotColor =
+                          f.status === "watched" ? "bg-emerald-400" :
+                          f.status === "watchlist" ? "bg-amber-400" :
+                          "bg-sky-400";
+                        return (
+                          <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+                            <span className={`w-2 h-2 rounded-full ${dotColor}`} />
+                            <span className="text-sm text-white/70 flex-1">{f.name}</span>
+                            <span className="text-xs text-white/40">{statusLabel}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

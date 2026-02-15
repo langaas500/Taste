@@ -132,3 +132,10 @@ export function revokeLink(link_id: string) {
 export function fetchSharedLists() {
   return api<{ sharedLists: import("./types").SharedList[] }>("/api/shared-lists");
 }
+
+// ── Friend Overlap ──
+
+export async function fetchFriendOverlaps(): Promise<Record<string, import("./types").FriendOverlap[]>> {
+  const data = await api<{ overlaps: Record<string, import("./types").FriendOverlap[]> }>("/api/friends/titles");
+  return data.overlaps;
+}

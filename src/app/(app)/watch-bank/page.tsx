@@ -1,25 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import TitleCard from "@/components/TitleCard";
 import { SkeletonGrid } from "@/components/SkeletonCard";
 import EmptyState from "@/components/EmptyState";
 import GlowButton from "@/components/GlowButton";
 import StreamingModal from "@/components/StreamingModal";
 import AddToListModal from "@/components/AddToListModal";
-import { logTitle, updateProgress, toggleFavorite, removeTitle } from "@/lib/api";
+import { logTitle, updateProgress, toggleFavorite, removeTitle, fetchFriendOverlaps } from "@/lib/api";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
-import type { UserTitle, TitleCache, MediaType } from "@/lib/types";
+import type { UserTitle, TitleCache, MediaType, FriendOverlap } from "@/lib/types";
 
 export default function WatchBankPage() {
   const [titles, setTitles] = useState<(UserTitle & { cache?: TitleCache })[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
   const [addToListItem, setAddToListItem] = useState<{ tmdb_id: number; type: MediaType; title: string } | null>(null);
+  const [genreFilter, setGenreFilter] = useState<string | null>(null);
+  const [yearFrom, setYearFrom] = useState("");
+  const [yearTo, setYearTo] = useState("");
+  const [friendOverlaps, setFriendOverlaps] = useState<Record<string, FriendOverlap[]>>({});
 
   useEffect(() => {
     loadData();
+    fetchFriendOverlaps().then(setFriendOverlaps).catch(() => {});
   }, []);
 
   async function loadData() {
@@ -104,6 +109,31 @@ export default function WatchBankPage() {
     </div>
   );
 
+  const allGenres = useMemo(() => {
+    const set = new Map<number, string>();
+    for (const t of titles) {
+      for (const g of (t.cache?.genres as { id: number; name: string }[]) || []) {
+        set.set(g.id, g.name);
+      }
+    }
+    return [...set.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "nb"));
+  }, [titles]);
+
+  const hasActiveFilters = genreFilter || yearFrom || yearTo;
+
+  let filtered = [...titles];
+  if (genreFilter) {
+    filtered = filtered.filter((t) =>
+      ((t.cache?.genres as { id: number; name: string }[]) || []).some((g) => g.name === genreFilter)
+    );
+  }
+  if (yearFrom) {
+    filtered = filtered.filter((t) => (t.cache?.year || 0) >= parseInt(yearFrom));
+  }
+  if (yearTo) {
+    filtered = filtered.filter((t) => (t.cache?.year || 0) <= parseInt(yearTo));
+  }
+
   return (
     <div className="animate-fade-in-up">
       <div className="glass rounded-xl px-5 py-4 mb-5 flex items-center justify-between">
@@ -128,9 +158,47 @@ export default function WatchBankPage() {
             </div>
           </div>
         </div>
-      ) : (
+      ) : (<>
+        <div className="flex flex-wrap items-center gap-2 mb-5">
+          <select
+            value={genreFilter || ""}
+            onChange={(e) => setGenreFilter(e.target.value || null)}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 focus:outline-none focus:border-white/20 transition-all"
+          >
+            <option value="">Alle sjangere</option>
+            {allGenres.map((g) => (
+              <option key={g.id} value={g.name}>{g.name}</option>
+            ))}
+          </select>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold">År</span>
+            <input
+              type="number"
+              placeholder="Fra"
+              value={yearFrom}
+              onChange={(e) => setYearFrom(e.target.value)}
+              className="w-16 px-2 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 placeholder-white/25 focus:outline-none focus:border-white/20 transition-all"
+            />
+            <span className="text-white/20">–</span>
+            <input
+              type="number"
+              placeholder="Til"
+              value={yearTo}
+              onChange={(e) => setYearTo(e.target.value)}
+              className="w-16 px-2 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 placeholder-white/25 focus:outline-none focus:border-white/20 transition-all"
+            />
+          </div>
+          {hasActiveFilters && (
+            <button
+              onClick={() => { setGenreFilter(null); setYearFrom(""); setYearTo(""); }}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--red)] bg-[var(--red-glow)] hover:bg-[var(--red)]/15 transition-all"
+            >
+              Nullstill
+            </button>
+          )}
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5 stagger">
-          {titles.map((t) => (
+          {filtered.map((t) => (
             <TitleCard
               key={t.id}
               tmdb_id={t.tmdb_id}
@@ -139,6 +207,7 @@ export default function WatchBankPage() {
               year={t.cache?.year}
               poster_path={t.cache?.poster_path}
               progress={t.last_season && t.last_episode ? { season: t.last_season, episode: t.last_episode } : null}
+              friendOverlap={friendOverlaps[`${t.tmdb_id}:${t.type}`]}
               isFavorite={t.favorite}
               onClick={() => setSelectedItem({ id: t.tmdb_id, type: t.type, title: t.cache?.title || `TMDB:${t.tmdb_id}`, poster_path: t.cache?.poster_path || null })}
               onAction={(action) => handleAction(t, action)}
@@ -149,7 +218,7 @@ export default function WatchBankPage() {
             />
           ))}
         </div>
-      )}
+      </>)}
 
       {addToListItem && (
         <AddToListModal
@@ -171,6 +240,7 @@ export default function WatchBankPage() {
             onClose={() => setSelectedItem(null)}
             isFavorite={t?.favorite}
             onToggleFavorite={() => handleToggleFavorite(selectedItem.id, selectedItem.type)}
+            friendOverlap={friendOverlaps[`${selectedItem.id}:${selectedItem.type}`]}
             progress={t?.last_season && t?.last_episode ? { season: t.last_season, episode: t.last_episode } : null}
             onUpdateProgress={(season, episode) => handleUpdateProgress(selectedItem.id, selectedItem.type, season, episode)}
             actions={[
