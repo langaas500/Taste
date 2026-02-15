@@ -178,16 +178,25 @@ export default function Nav() {
         <div
           className="flex flex-col h-[calc(100vh-24px)] m-3 rounded-2xl overflow-hidden relative"
           style={{
-            background: "linear-gradient(180deg, rgba(18,18,28,0.95) 0%, rgba(10,10,18,0.98) 100%)",
+            background: "linear-gradient(180deg, rgba(18,18,28,0.45) 0%, rgba(10,10,18,0.50) 100%)",
+            backdropFilter: "blur(24px) saturate(1.3)",
+            WebkitBackdropFilter: "blur(24px) saturate(1.3)",
             border: "1px solid rgba(255,255,255,0.06)",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.02) inset",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 40px rgba(229,9,20,0.08), 0 0 80px rgba(229,9,20,0.04), 0 0 0 1px rgba(255,255,255,0.02) inset",
           }}
         >
-          {/* Ambient glow top-left */}
+          {/* Ambient glow top-left - red tint */}
           <div
-            className="absolute top-0 left-0 w-40 h-40 pointer-events-none"
+            className="absolute top-0 left-0 w-48 h-48 pointer-events-none"
             style={{
-              background: "radial-gradient(circle at top left, rgba(124,92,252,0.06) 0%, transparent 70%)",
+              background: "radial-gradient(circle at top left, rgba(229,9,20,0.07) 0%, transparent 70%)",
+            }}
+          />
+          {/* Ambient glow bottom-right - red tint */}
+          <div
+            className="absolute bottom-0 right-0 w-48 h-48 pointer-events-none"
+            style={{
+              background: "radial-gradient(circle at bottom right, rgba(229,9,20,0.06) 0%, transparent 70%)",
             }}
           />
 
