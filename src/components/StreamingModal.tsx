@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { WatchProvider, WatchProviderData } from "@/lib/types";
 
@@ -145,9 +146,9 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
     ? `${Math.floor(details.runtime / 60)}t ${details.runtime % 60}m`
     : null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
       onClick={handleBackdropClick}
     >
       {/* Backdrop */}
@@ -176,7 +177,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
       )}
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] rounded-2xl bg-[#0c1022] border border-white/[0.08] shadow-2xl overflow-hidden animate-fade-in-up flex flex-col">
+      <div className="relative w-full max-w-2xl max-h-[85dvh] sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl bg-[#0c1022] border border-white/[0.08] shadow-2xl overflow-hidden animate-fade-in-up flex flex-col">
 
         {/* Close button - always on top */}
         <button
@@ -189,7 +190,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
         {/* Scrollable content */}
         <div className="overflow-y-auto flex-1 custom-scrollbar">
           {/* Backdrop header */}
-          <div className="relative h-56 sm:h-72 overflow-hidden flex-shrink-0">
+          <div className="relative h-40 sm:h-72 overflow-hidden flex-shrink-0">
             {backdropSrc && (
               <Image
                 src={backdropSrc}
@@ -399,7 +400,8 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

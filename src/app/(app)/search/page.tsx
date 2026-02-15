@@ -323,8 +323,8 @@ export default function SearchPage() {
                   </div>
                 )}
 
-                {/* Hover overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 flex flex-col justify-end p-3">
+                {/* Hover overlay - desktop only */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 flex-col justify-end p-3 hidden md:flex">
                   {actionDone ? (
                     <div className="flex items-center justify-center gap-2 py-3">
                       <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -384,6 +384,55 @@ export default function SearchPage() {
                 </h3>
                 <p className="text-[12px] text-white/25 mt-0.5 tabular-nums">{year || "—"}</p>
               </div>
+
+              {/* Mobile action buttons - always visible */}
+              {!actionDone ? (
+                <div className="flex flex-col gap-1 mt-2 md:hidden">
+                  <div className="flex gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleAction(item, "liked", fallbackType); }}
+                      className="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/15 active:scale-95 transition-all"
+                    >
+                      Like
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleAction(item, "disliked", fallbackType); }}
+                      className="flex-1 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-[10px] font-semibold border border-red-500/15 active:scale-95 transition-all"
+                    >
+                      Nah
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleAction(item, "neutral", fallbackType); }}
+                      className="flex-1 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 text-[10px] font-semibold border border-amber-500/15 active:scale-95 transition-all"
+                    >
+                      Meh
+                    </button>
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleAction(item, "watchlist", fallbackType); }}
+                      className="flex-1 py-1.5 rounded-lg bg-white/[0.06] text-white/50 text-[10px] font-semibold border border-white/[0.06] active:scale-95 transition-all"
+                    >
+                      + Watchlist
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setAddToListItem({ id: item.id, type, title }); }}
+                      className="py-1.5 px-2.5 rounded-lg bg-[var(--accent)]/10 text-[var(--accent-light)] text-[10px] font-semibold border border-[var(--accent)]/15 active:scale-95 transition-all"
+                    >
+                      List+
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 mt-2 md:hidden">
+                  <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                  <span className="text-[11px] font-semibold text-emerald-400 capitalize">
+                    {actionDone === "watchlist" ? "Lagt til" : actionDone}
+                  </span>
+                </div>
+              )}
             </div>
           );
         })}

@@ -39,9 +39,9 @@ export default function TitleCard({
   const imgSrc = poster_path ? `https://image.tmdb.org/t/p/w342${poster_path}` : null;
 
   return (
-    <div className="group relative flex flex-col cursor-pointer" onClick={onClick}>
-      {/* Poster */}
-      <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06] group-hover:border-white/[0.14] transition-all duration-500">
+    <div className="group relative flex flex-col">
+      {/* Poster - clickable for info */}
+      <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06] group-hover:border-white/[0.14] transition-all duration-500 cursor-pointer" onClick={onClick}>
         {imgSrc ? (
           <Image
             src={imgSrc}
@@ -79,8 +79,8 @@ export default function TitleCard({
           </div>
         )}
 
-        {/* Hover overlay with actions */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 flex flex-col justify-end p-3 gap-1.5">
+        {/* Hover overlay with actions - desktop only */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 flex-col justify-end p-3 gap-1.5 hidden md:flex">
           {actions && actions.length > 0 && (
             <div className="flex gap-1.5 translate-y-2 group-hover:translate-y-0 transition-transform duration-400 ease-out">
               {actions.map(({ label, action, variant = "default" }) => {
@@ -115,7 +115,7 @@ export default function TitleCard({
 
       {/* Text below poster */}
       <div className="mt-2.5 px-0.5">
-        <h3 className="text-[13px] font-medium text-white/85 leading-tight truncate group-hover:text-white transition-colors duration-300">
+        <h3 className="text-[13px] font-medium text-white/85 leading-tight truncate group-hover:text-white transition-colors duration-300 cursor-pointer" onClick={onClick}>
           {title}
         </h3>
         <div className="flex items-center gap-1.5 mt-0.5">
@@ -131,6 +131,37 @@ export default function TitleCard({
         </div>
         {children}
       </div>
+
+      {/* Mobile action buttons - always visible */}
+      {actions && actions.length > 0 && (
+        <div className="flex gap-1 mt-2 md:hidden">
+          {actions.map(({ label, action, variant = "default" }) => {
+            const isLike = action === "like" || action === "liked" || variant === "green";
+            const isDislike = action === "dislike" || action === "disliked" || variant === "red";
+            const isMeh = action === "meh" || action === "neutral" || variant === "yellow";
+            const isAccent = variant === "accent";
+
+            let btnClass = "bg-white/[0.06] text-white/50 active:bg-white/[0.12] border-white/[0.06]";
+            if (isLike) btnClass = "bg-emerald-500/10 text-emerald-400 active:bg-emerald-500/25 border-emerald-500/15";
+            if (isDislike) btnClass = "bg-red-500/10 text-red-400 active:bg-red-500/25 border-red-500/15";
+            if (isMeh) btnClass = "bg-amber-500/10 text-amber-400 active:bg-amber-500/25 border-amber-500/15";
+            if (isAccent) btnClass = "bg-[var(--accent)]/10 text-[var(--accent-light)] active:bg-[var(--accent)]/25 border-[var(--accent)]/15";
+
+            return (
+              <button
+                key={action}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAction?.(action);
+                }}
+                className={`flex-1 py-1.5 rounded-lg text-[10px] font-semibold border transition-all active:scale-95 ${btnClass}`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
