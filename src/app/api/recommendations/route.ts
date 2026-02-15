@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase-server";
 import { tmdbDiscover, tmdbTrending, tmdbSimilar, parseTitleFromTMDB } from "@/lib/tmdb";
 import { explainRecommendations, type TasteInput } from "@/lib/ai";
-import type { UserTitle, TitleCache, Recommendation } from "@/lib/types";
+import type { UserTitle, TitleCache, Recommendation, ContentFilters } from "@/lib/types";
 
 export async function GET() {
   try {
@@ -113,6 +113,9 @@ export async function GET() {
       for (const g of genres) dislikedGenres.add(g.id);
     }
 
+    // Content filters
+    const contentFilters = (profile?.content_filters || {}) as ContentFilters;
+
     type ScoredCandidate = { item: Record<string, unknown>; score: number; type: "movie" | "tv" };
     const scored: ScoredCandidate[] = [];
 
@@ -121,7 +124,22 @@ export async function GET() {
 
       const type = item._type as "movie" | "tv";
       const genreIds = (item.genre_ids as number[]) || [];
+      const originalLanguage = (item.original_language as string) || "";
+
+      // Skip excluded languages
+      if (contentFilters.excluded_languages?.includes(originalLanguage)) continue;
+
+      // Skip excluded genres
+      if (contentFilters.excluded_genres?.length) {
+        if (genreIds.some((gid) => contentFilters.excluded_genres!.includes(gid))) continue;
+      }
+
       let score = 0;
+
+      // Boost preferred languages
+      if (contentFilters.preferred_languages?.includes(originalLanguage)) {
+        score += 8;
+      }
 
       // Genre overlap with liked
       for (const gid of genreIds) {

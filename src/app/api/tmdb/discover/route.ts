@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { tmdbDiscover, tmdbGenres, tmdbProviderList } from "@/lib/tmdb";
+import type { ContentFilters } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
   try {
-    await requireUser();
+    const user = await requireUser();
     const sp = req.nextUrl.searchParams;
     const action = sp.get("action") || "discover";
 
@@ -30,15 +32,46 @@ export async function GET(req: NextRequest) {
       "primary_release_date.gte", "primary_release_date.lte",
       "first_air_date.gte", "first_air_date.lte",
       "sort_by", "page", "with_cast", "vote_count.gte",
+      "without_genres", "with_original_language",
     ];
     for (const key of forwardParams) {
       const val = sp.get(key);
       if (val) params[key] = val;
     }
 
+    // Apply user content filters if requested
+    const applyFilters = sp.get("applyFilters") === "true";
+    let contentFilters: ContentFilters = {};
+
+    if (applyFilters) {
+      const supabase = await createSupabaseServer();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("content_filters")
+        .eq("id", user.id)
+        .single();
+
+      contentFilters = (profile?.content_filters || {}) as ContentFilters;
+
+      // Merge excluded genres into TMDB params
+      if (contentFilters.excluded_genres?.length && !params.without_genres) {
+        params.without_genres = contentFilters.excluded_genres.join(",");
+      }
+    }
+
     const data = await tmdbDiscover(type, params);
+
+    // Post-filter by excluded languages (TMDB doesn't support excluding multiple)
+    let results = data.results;
+    if (applyFilters && contentFilters.excluded_languages?.length) {
+      results = results.filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (item: any) => !contentFilters.excluded_languages!.includes(item.original_language)
+      );
+    }
+
     return NextResponse.json({
-      results: data.results,
+      results,
       page: data.page,
       total_pages: data.total_pages,
       total_results: data.total_results,

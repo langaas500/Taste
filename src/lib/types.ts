@@ -55,6 +55,12 @@ export interface UserFeedback {
   created_at: string;
 }
 
+export interface ContentFilters {
+  excluded_languages?: string[];
+  excluded_genres?: number[];
+  preferred_languages?: string[];
+}
+
 export interface Profile {
   id: string;
   display_name: string | null;
@@ -62,6 +68,7 @@ export interface Profile {
   exploration_slider: number;
   taste_summary: TasteSummary | null;
   taste_summary_updated_at: string | null;
+  content_filters: ContentFilters | null;
   created_at: string;
 }
 

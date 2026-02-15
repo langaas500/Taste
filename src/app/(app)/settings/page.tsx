@@ -7,7 +7,8 @@ import GlassCard from "@/components/GlassCard";
 import GlowButton from "@/components/GlowButton";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { fetchLinks, createInvite, acceptInvite, updateLinkSharing, revokeLink, fetchLists } from "@/lib/api";
-import type { AccountLinkDisplay, CustomList } from "@/lib/types";
+import { FILTER_PRESETS, presetsToFilters, filtersToPresets } from "@/lib/filter-presets";
+import type { AccountLinkDisplay, CustomList, ContentFilters } from "@/lib/types";
 
 function SettingsContent() {
   const searchParams = useSearchParams();
@@ -29,6 +30,8 @@ function SettingsContent() {
   const [acceptCode, setAcceptCode] = useState("");
   const [acceptMsg, setAcceptMsg] = useState("");
   const [managingLinkId, setManagingLinkId] = useState<string | null>(null);
+  const [activePresets, setActivePresets] = useState<string[]>([]);
+  const [savingFilters, setSavingFilters] = useState(false);
 
   const traktMsg = searchParams.get("trakt");
   const errorMsg = searchParams.get("error");
@@ -44,6 +47,8 @@ function SettingsContent() {
       if (data.profile) {
         setExplorationSlider(data.profile.exploration_slider ?? 50);
         setDisplayName(data.profile.display_name || "");
+        const filters = (data.profile.content_filters || {}) as ContentFilters;
+        setActivePresets(filtersToPresets(filters));
       }
     } catch {}
 
@@ -122,6 +127,25 @@ function SettingsContent() {
     } catch {}
     setSavingName(false);
     setEditingName(false);
+  }
+
+  async function togglePreset(presetId: string) {
+    const newActive = activePresets.includes(presetId)
+      ? activePresets.filter((id) => id !== presetId)
+      : [...activePresets, presetId];
+    setActivePresets(newActive);
+    setSavingFilters(true);
+    try {
+      const newFilters = presetsToFilters(newActive);
+      await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content_filters: newFilters }),
+      });
+    } catch {
+      setActivePresets(activePresets);
+    }
+    setSavingFilters(false);
   }
 
   async function handleGenerateInvite() {
@@ -401,6 +425,42 @@ function SettingsContent() {
           <span className="text-sm font-mono w-8 text-center text-[var(--accent-light)]">{explorationSlider}</span>
         </div>
         {savingSlider && <p className="text-xs text-[var(--text-tertiary)] mt-1">Saving...</p>}
+      </GlassCard>
+
+      {/* Content Filters */}
+      <GlassCard hover={false} className="p-5">
+        <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">
+          Innholdsfiltre
+        </h3>
+        <p className="text-xs text-[var(--text-tertiary)] mb-4 leading-relaxed">
+          Velg hva du vil ekskludere fra anbefalinger og sok. Filtrene gjelder automatisk.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {FILTER_PRESETS.map((preset) => {
+            const isActive = activePresets.includes(preset.id);
+            return (
+              <button
+                key={preset.id}
+                onClick={() => togglePreset(preset.id)}
+                disabled={savingFilters}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border ${
+                  isActive
+                    ? "bg-[var(--accent-glow)] text-[var(--accent-light)] border-[var(--accent)]/30"
+                    : "bg-white/[0.04] text-[var(--text-tertiary)] border-white/[0.08] hover:bg-white/[0.08] hover:text-[var(--text-secondary)]"
+                } disabled:opacity-40`}
+                title={preset.description}
+              >
+                {isActive && (
+                  <svg className="w-3 h-3 inline-block mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                )}
+                {preset.label}
+              </button>
+            );
+          })}
+        </div>
+        {savingFilters && <p className="text-xs text-[var(--text-tertiary)] mt-2">Lagrer...</p>}
       </GlassCard>
 
       {/* AI Provider */}
