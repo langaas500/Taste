@@ -96,10 +96,10 @@ export default function ListsPage() {
 
       {lists.length === 0 ? (
         <EmptyState
-          title="Ingen lister enn\u00e5"
-          description="Lag egne lister for \u00e5 organisere filmene og seriene dine."
+          title="Ingen lister ennå"
+          description="Lag egne lister for å organisere filmene og seriene dine."
           action={
-            <GlowButton onClick={() => setShowCreate(true)}>Lag din f\u00f8rste liste</GlowButton>
+            <GlowButton onClick={() => setShowCreate(true)}>Lag din første liste</GlowButton>
           }
         />
       ) : (

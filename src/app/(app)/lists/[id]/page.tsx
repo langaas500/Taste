@@ -67,10 +67,10 @@ export default function ListDetailPage() {
       {list.items.length === 0 ? (
         <EmptyState
           title="Denne listen er tom"
-          description="Legg til filmer og serier fra s\u00f8k eller biblioteket ditt."
+          description="Legg til filmer og serier fra søk eller biblioteket ditt."
           action={
             <Link href="/search">
-              <GlowButton>S\u00f8k</GlowButton>
+              <GlowButton>Søk</GlowButton>
             </Link>
           }
         />

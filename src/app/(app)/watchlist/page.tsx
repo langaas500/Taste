@@ -112,7 +112,7 @@ export default function WatchlistPage() {
           description="Legg til filmer og serier du vil se senere."
           action={
             <Link href="/search">
-              <GlowButton>S\u00f8k</GlowButton>
+              <GlowButton>Søk</GlowButton>
             </Link>
           }
         />

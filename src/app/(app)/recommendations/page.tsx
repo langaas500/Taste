@@ -107,7 +107,7 @@ export default function RecommendationsPage() {
       {!loaded && (
         <EmptyState
           title="Personlige anbefalinger"
-          description="Trykk p\u00e5 knappen over for \u00e5 generere anbefalinger basert p\u00e5 biblioteket og smaksprofilen din."
+          description="Trykk på knappen over for å generere anbefalinger basert på biblioteket og smaksprofilen din."
           icon={
             <svg className="w-7 h-7 text-[var(--accent-light)]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
@@ -118,8 +118,8 @@ export default function RecommendationsPage() {
 
       {loaded && visible.length === 0 && (
         <EmptyState
-          title="Alt gjennomg\u00e5tt!"
-          description="Du har vurdert alle anbefalingene. Trykk Oppdater for \u00e5 f\u00e5 flere."
+          title="Alt gjennomgått!"
+          description="Du har vurdert alle anbefalingene. Trykk Oppdater for å få flere."
         />
       )}
 

@@ -42,6 +42,8 @@ export default function SearchPage() {
     credits: TMDBSearchResult[];
   } | null>(null);
 
+  const [topicMatch, setTopicMatch] = useState(false);
+
   // Simple search
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -50,11 +52,13 @@ export default function SearchPage() {
     setError("");
     setIsAdvancedMode(false);
     setPersonMode(null);
+    setTopicMatch(false);
     try {
       const res = await fetch(`/api/tmdb/search?q=${encodeURIComponent(query)}&type=${typeFilter}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResults(data.results || []);
+      setTopicMatch(!!data.topicMatch);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Search failed");
     }
@@ -166,7 +170,7 @@ export default function SearchPage() {
 
   return (
     <div className="animate-fade-in-up">
-      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-5">S\u00f8k</h2>
+      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-5">Søk</h2>
 
       {/* Search bar */}
       <form onSubmit={handleSearch} className="flex gap-2 mb-3 sticky top-0 z-20 -mx-4 px-4 py-2 md:static md:mx-0 md:px-0 md:py-0 bg-[var(--bg-base)]/95 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none">
@@ -181,7 +185,7 @@ export default function SearchPage() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="S\u00f8k etter filmer og serier..."
+            placeholder="Søk etter filmer og serier..."
             className="w-full pl-9 pr-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder-white/25 transition-all duration-300 focus:outline-none focus:border-white/20 focus:bg-white/[0.06]"
           />
         </div>
@@ -199,7 +203,7 @@ export default function SearchPage() {
           disabled={loading}
           className="px-5 py-2.5 bg-white/[0.08] hover:bg-white/[0.14] text-white/90 rounded-xl font-medium text-sm transition-all duration-300 disabled:opacity-30 active:scale-[0.97] border border-white/[0.08] hover:border-white/[0.15]"
         >
-          S\u00f8k
+          Søk
         </button>
       </form>
 
@@ -247,7 +251,7 @@ export default function SearchPage() {
         </div>
       )}
 
-      {isLoading && <LoadingSpinner text="S\u00f8ker..." />}
+      {isLoading && <LoadingSpinner text="Søker..." />}
 
       {/* Person filmography header */}
       {isAdvancedMode && personMode && (
@@ -457,6 +461,15 @@ export default function SearchPage() {
         </div>
       )}
 
+      {!isLoading && !isAdvancedMode && topicMatch && displayResults.length > 0 && (
+        <div className="flex items-center gap-2 mb-4 px-1">
+          <svg className="w-3.5 h-3.5 text-[var(--accent-light)]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+          </svg>
+          <span className="text-xs text-white/40">Viser også relaterte filmer og serier basert på tema</span>
+        </div>
+      )}
+
       {!isLoading && results.length === 0 && !isAdvancedMode && query && (
         <div className="text-center py-20">
           <p className="text-white/30 text-sm">Ingen resultater for &laquo;{query}&raquo;</p>
@@ -470,7 +483,7 @@ export default function SearchPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
           </div>
-          <p className="text-white/25 text-sm">S\u00f8k etter filmer og serier</p>
+          <p className="text-white/25 text-sm">Søk etter filmer og serier</p>
         </div>
       )}
 

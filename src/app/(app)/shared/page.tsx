@@ -33,7 +33,7 @@ export default function SharedPage() {
         <h2 className="text-xl font-bold text-[var(--text-primary)] mb-5">Delt med meg</h2>
         <EmptyState
           title="Ingen delte lister"
-          description="N\u00e5r noen kobler seg til deg og deler listene sine, vises de her."
+          description="Når noen kobler seg til deg og deler listene sine, vises de her."
         />
       </div>
     );

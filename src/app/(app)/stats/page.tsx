@@ -102,11 +102,11 @@ export default function StatsPage() {
       <div className="animate-fade-in-up">
         <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">Statistikk</h2>
         <EmptyState
-          title="Ingen statistikk enn\u00e5"
-          description="Begynn \u00e5 logge filmer og serier for \u00e5 se visningsstatistikken din."
+          title="Ingen statistikk ennå"
+          description="Begynn å logge filmer og serier for å se visningsstatistikken din."
           action={
             <Link href="/search">
-              <GlowButton>S\u00f8k</GlowButton>
+              <GlowButton>Søk</GlowButton>
             </Link>
           }
         />
@@ -125,7 +125,7 @@ export default function StatsPage() {
 
   const sentimentBars = [
     { label: "Likte", value: stats.liked, color: "bg-[var(--green)]", textColor: "text-[var(--green)]" },
-    { label: "N\u00f8ytral", value: stats.neutral, color: "bg-[var(--yellow)]", textColor: "text-[var(--yellow)]" },
+    { label: "Nøytral", value: stats.neutral, color: "bg-[var(--yellow)]", textColor: "text-[var(--yellow)]" },
     { label: "Mislikte", value: stats.disliked, color: "bg-[var(--red)]", textColor: "text-[var(--red)]" },
     { label: "Uvurdert", value: stats.unrated, color: "bg-[var(--text-tertiary)]", textColor: "text-[var(--text-tertiary)]" },
   ];

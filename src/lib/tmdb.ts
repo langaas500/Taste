@@ -100,6 +100,16 @@ export async function tmdbPersonCredits(personId: number) {
   return res.json();
 }
 
+export async function tmdbSearchKeywords(query: string) {
+  const res = await fetch(
+    `${BASE}/search/keyword?query=${encodeURIComponent(query)}&page=1`,
+    { headers: headers() }
+  );
+  if (!res.ok) throw new Error(`TMDB keyword search error: ${res.status}`);
+  const data = await res.json();
+  return data.results as { id: number; name: string }[];
+}
+
 export async function tmdbGenres(type: "movie" | "tv") {
   const res = await fetch(
     `${BASE}/genre/${type}/list?language=en-US`,
