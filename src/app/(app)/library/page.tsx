@@ -112,7 +112,7 @@ export default function LibraryPage() {
     const set = new Map<number, string>();
     for (const t of titles) {
       for (const g of (t.cache?.genres as { id: number; name: string }[]) || []) {
-        set.set(g.id, g.name);
+        if (g.id != null && g.name) set.set(g.id, g.name);
       }
     }
     return [...set.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "nb"));

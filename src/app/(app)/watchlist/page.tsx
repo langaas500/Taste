@@ -87,6 +87,16 @@ export default function WatchlistPage() {
     }
   }
 
+  const allGenres = useMemo(() => {
+    const set = new Map<number, string>();
+    for (const t of titles) {
+      for (const g of (t.cache?.genres as { id: number; name: string }[]) || []) {
+        if (g.id != null && g.name) set.set(g.id, g.name);
+      }
+    }
+    return [...set.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "nb"));
+  }, [titles]);
+
   if (loading) return (
     <div className="animate-fade-in-up">
       <div className="flex items-center justify-between mb-5">
@@ -95,16 +105,6 @@ export default function WatchlistPage() {
       <SkeletonGrid count={8} />
     </div>
   );
-
-  const allGenres = useMemo(() => {
-    const set = new Map<number, string>();
-    for (const t of titles) {
-      for (const g of (t.cache?.genres as { id: number; name: string }[]) || []) {
-        set.set(g.id, g.name);
-      }
-    }
-    return [...set.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "nb"));
-  }, [titles]);
 
   const hasActiveFilters = genreFilter || yearFrom || yearTo;
 

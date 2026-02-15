@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "WatchLedger",
+  title: "Logflix",
   description: "Track what you watch. Get smart, AI-powered recommendations.",
 };
 

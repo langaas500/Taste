@@ -171,7 +171,7 @@ export default function Nav() {
           <div className={`px-3 pt-4 pb-3 ${collapsed ? "px-2" : ""}`}>
             {/* Logo */}
             <div
-              className={`flex items-center mb-3 ${collapsed ? "justify-center" : ""}`}
+              className="flex items-center justify-center mb-3"
             >
               {collapsed ? (
                 <div
@@ -181,15 +181,16 @@ export default function Nav() {
                     border: "1px solid rgba(255,42,42,0.2)",
                   }}
                 >
-                  <span style={{ fontSize: 15, fontWeight: 900, color: RED }}>T</span>
+                  <span style={{ fontSize: 15, fontWeight: 900, color: RED }}>L</span>
                 </div>
               ) : (
                 <Image
                   src="/logo.png"
-                  alt="Taste"
-                  width={100}
-                  height={44}
+                  alt="Logflix"
+                  width={120}
+                  height={40}
                   className="object-contain"
+                  style={{ height: "auto" }}
                   priority
                 />
               )}
@@ -421,7 +422,7 @@ export default function Nav() {
                 </Link>
 
                 <div className="flex items-center justify-center gap-1.5 mt-2.5" style={{ fontSize: 9, color: "rgba(255,255,255,0.18)" }}>
-                  <span>Taste v0.1</span>
+                  <span>Logflix v0.1</span>
                   <span className="w-1 h-1 rounded-full inline-block" style={{ background: "#22c55e" }} />
                   <span>Koblet til</span>
                 </div>
