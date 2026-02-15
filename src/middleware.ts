@@ -33,11 +33,21 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublic =
     pathname === "/login" ||
+    pathname === "/privacy" ||
+    pathname === "/terms" ||
+    pathname === "/contact" ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico";
 
-  if (!user && !isPublic) {
+  // Guest-accessible routes (browsing without account)
+  const isGuestAllowed =
+    pathname === "/search" ||
+    pathname === "/wt-beta" ||
+    pathname.startsWith("/api/tmdb/") ||
+    pathname === "/api/wt-beta/posters";
+
+  if (!user && !isPublic && !isGuestAllowed) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

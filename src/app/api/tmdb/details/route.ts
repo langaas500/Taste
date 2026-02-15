@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { getUser } from "@/lib/auth";
 import { tmdbDetails, tmdbExternalIds, parseTitleFromTMDB } from "@/lib/tmdb";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
 
 export async function GET(req: NextRequest) {
   try {
-    await requireUser();
+    await getUser(); // allow guest access
     const tmdbId = parseInt(req.nextUrl.searchParams.get("tmdb_id") || "");
     const type = req.nextUrl.searchParams.get("type") as "movie" | "tv";
     if (!tmdbId || !type) return NextResponse.json({ error: "Missing params" }, { status: 400 });
@@ -39,8 +39,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ ...parsed, imdb_id: externalIds?.imdb_id || null, details });
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Error";
-    if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Error" }, { status: 500 });
   }
 }

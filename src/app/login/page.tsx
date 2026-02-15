@@ -1,15 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
-export default function LoginPage() {
+function LoginContent() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup">(
+    searchParams.get("mode") === "signup" ? "signup" : "login"
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -20,10 +27,21 @@ export default function LoginPage() {
     const supabase = createSupabaseBrowser();
 
     if (mode === "signup") {
+      if (!termsAccepted) {
+        setError("Du må godta brukervilkår og personvernerklæring.");
+        setLoading(false);
+        return;
+      }
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
+        options: {
+          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+          data: {
+            terms_accepted_at: new Date().toISOString(),
+            terms_version: "2025-02-15",
+          },
+        },
       });
       if (error) {
         setError(error.message);
@@ -35,7 +53,12 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
-        window.location.href = "/library";
+        // Check for guest data to migrate
+        const hasGuestData = typeof window !== "undefined" && (
+          localStorage.getItem("logflix_guest_actions") ||
+          localStorage.getItem("logflix_guest_wt_used")
+        );
+        window.location.href = hasGuestData ? "/library?migrated=guest" : "/library";
       }
     }
     setLoading(false);
@@ -55,12 +78,15 @@ export default function LoginPage() {
       <div className="w-full max-w-sm relative z-10">
         {/* Brand */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-[var(--radius-lg)] bg-[var(--accent-glow)] mb-5">
-            <svg className="w-7 h-7 text-[var(--accent-light)]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-1.5A1.125 1.125 0 0118 18.375M20.625 4.5H3.375m17.25 0c.621 0 1.125.504 1.125 1.125M20.625 4.5h-1.5C18.504 4.5 18 5.004 18 5.625m3.75 0v1.5c0 .621-.504 1.125-1.125 1.125M3.375 4.5c-.621 0-1.125.504-1.125 1.125M3.375 4.5h1.5C5.496 4.5 6 5.004 6 5.625m-3.75 0v1.5c0 .621.504 1.125 1.125 1.125m0 0h1.5m-1.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m1.5-3.75C5.496 8.25 6 7.746 6 7.125v-1.5M4.125 8.25C3.504 8.25 3 8.754 3 9.375v1.5c0 .621.504 1.125 1.125 1.125m1.5-3.75h1.5m-1.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M6 7.125v1.5" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold gradient-text">WatchLedger</h1>
+          <Image
+            src="/logo.png"
+            alt="Logflix"
+            width={160}
+            height={53}
+            className="object-contain mx-auto mb-4"
+            style={{ height: "auto" }}
+            priority
+          />
           <p className="text-[var(--text-tertiary)] text-sm mt-2">
             Hold styr på det du ser. Få smarte anbefalinger.
           </p>
@@ -97,6 +123,28 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* Terms checkbox (signup only) */}
+            {mode === "signup" && (
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-[var(--border)] bg-[var(--bg-surface)] accent-[var(--accent)] cursor-pointer"
+                />
+                <span className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                  Jeg godtar{" "}
+                  <Link href="/terms" target="_blank" className="text-[var(--accent-light)] hover:text-[var(--accent)] underline transition-colors">
+                    Brukervilkår
+                  </Link>{" "}
+                  og{" "}
+                  <Link href="/privacy" target="_blank" className="text-[var(--accent-light)] hover:text-[var(--accent)] underline transition-colors">
+                    Personvernerklæring
+                  </Link>
+                </span>
+              </label>
+            )}
+
             {error && (
               <div className="text-sm text-[var(--red)] bg-[var(--red-glow)] rounded-[var(--radius-md)] px-3.5 py-2.5 border border-[rgba(248,113,113,0.1)]">
                 {error}
@@ -110,7 +158,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (mode === "signup" && !termsAccepted)}
               className="btn-press w-full py-2.5 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_24px_var(--accent-glow-strong)] text-white rounded-[var(--radius-md)] font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none"
             >
               {loading ? (
@@ -133,7 +181,25 @@ export default function LoginPage() {
             {mode === "login" ? "Registrer deg" : "Logg inn"}
           </button>
         </p>
+
+        {/* Guest mode */}
+        <div className="text-center mt-4">
+          <Link
+            href="/search"
+            className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+          >
+            Prøv uten konto
+          </Link>
+        </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   );
 }

@@ -485,6 +485,22 @@ function SettingsContent() {
         </a>
       </GlassCard>
 
+      {/* Legal */}
+      <GlassCard hover={false} className="p-5">
+        <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">Juridisk</h3>
+        <div className="flex gap-4">
+          <a href="/privacy" className="text-sm text-[var(--accent-light)] hover:text-[var(--accent)] transition-colors font-medium">
+            Personvern
+          </a>
+          <a href="/terms" className="text-sm text-[var(--accent-light)] hover:text-[var(--accent)] transition-colors font-medium">
+            Vilkår for bruk
+          </a>
+          <a href="/contact" className="text-sm text-[var(--accent-light)] hover:text-[var(--accent)] transition-colors font-medium">
+            Kontakt
+          </a>
+        </div>
+      </GlassCard>
+
       {/* Sign out */}
       <GlassCard hover={false} className="p-5">
         <GlowButton onClick={handleSignOut} variant="danger">

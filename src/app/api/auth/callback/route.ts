@@ -7,9 +7,16 @@ export async function GET(req: NextRequest) {
 
   if (code) {
     const supabase = await createSupabaseServer();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      return NextResponse.redirect(new URL(next, req.url));
+    const { error, data } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error && data.session?.user) {
+      // New user = has no titles yet → send to WT Beta for engagement
+      const { count } = await supabase
+        .from("user_titles")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", data.session.user.id);
+
+      const destination = count === 0 ? "/wt-beta" : next;
+      return NextResponse.redirect(new URL(destination, req.url));
     }
   }
 

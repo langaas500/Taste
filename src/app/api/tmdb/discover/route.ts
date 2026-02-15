@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { getUser } from "@/lib/auth";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { tmdbDiscover, tmdbGenres, tmdbProviderList } from "@/lib/tmdb";
 import type { ContentFilters } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireUser();
+    const user = await getUser(); // allow guest access
     const sp = req.nextUrl.searchParams;
     const action = sp.get("action") || "discover";
 
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
     const applyFilters = sp.get("applyFilters") === "true";
     let contentFilters: ContentFilters = {};
 
-    if (applyFilters) {
+    if (applyFilters && user) {
       const supabase = await createSupabaseServer();
       const { data: profile } = await supabase
         .from("profiles")
@@ -77,8 +77,6 @@ export async function GET(req: NextRequest) {
       total_results: data.total_results,
     });
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Error";
-    if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Error" }, { status: 500 });
   }
 }

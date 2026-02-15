@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { getUser } from "@/lib/auth";
 import { tmdbSearchPerson, tmdbPersonCredits } from "@/lib/tmdb";
 
 export async function GET(req: NextRequest) {
   try {
-    await requireUser();
+    await getUser(); // allow guest access
     const sp = req.nextUrl.searchParams;
     const action = sp.get("action") || "search";
 
@@ -24,8 +24,6 @@ export async function GET(req: NextRequest) {
     const data = await tmdbSearchPerson(q);
     return NextResponse.json({ results: data.results });
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Error";
-    if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Error" }, { status: 500 });
   }
 }

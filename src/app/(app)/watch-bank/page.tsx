@@ -17,7 +17,7 @@ export default function WatchBankPage() {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
   const [addToListItem, setAddToListItem] = useState<{ tmdb_id: number; type: MediaType; title: string } | null>(null);
-  const [genreFilter, setGenreFilter] = useState<string | null>(null);
+  const [genreFilter, setGenreFilter] = useState<number | null>(null);
   const [yearFrom, setYearFrom] = useState("");
   const [yearTo, setYearTo] = useState("");
   const [friendOverlaps, setFriendOverlaps] = useState<Record<string, FriendOverlap[]>>({});
@@ -119,12 +119,12 @@ export default function WatchBankPage() {
     </div>
   );
 
-  const hasActiveFilters = genreFilter || yearFrom || yearTo;
+  const hasActiveFilters = genreFilter != null || yearFrom || yearTo;
 
   let filtered = [...titles];
   if (genreFilter) {
     filtered = filtered.filter((t) =>
-      ((t.cache?.genres as { id: number; name: string }[]) || []).some((g) => g.name === genreFilter)
+      ((t.cache?.genres as { id: number; name: string }[]) || []).some((g) => g.id === genreFilter)
     );
   }
   if (yearFrom) {
@@ -161,13 +161,13 @@ export default function WatchBankPage() {
       ) : (<>
         <div className="flex flex-wrap items-center gap-2 mb-5">
           <select
-            value={genreFilter || ""}
-            onChange={(e) => setGenreFilter(e.target.value || null)}
+            value={genreFilter ?? ""}
+            onChange={(e) => setGenreFilter(e.target.value ? parseInt(e.target.value, 10) : null)}
             className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 focus:outline-none focus:border-white/20 transition-all"
           >
             <option value="">Alle sjangere</option>
             {allGenres.map((g) => (
-              <option key={g.id} value={g.name}>{g.name}</option>
+              <option key={g.id} value={g.id}>{g.name}</option>
             ))}
           </select>
           <div className="flex items-center gap-1.5">

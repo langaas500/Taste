@@ -6,11 +6,15 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import StreamingModal from "@/components/StreamingModal";
 import AddToListModal from "@/components/AddToListModal";
 import AdvancedSearchPanel from "@/components/AdvancedSearchPanel";
+import ConversionWall from "@/components/ConversionWall";
 import GlowButton from "@/components/GlowButton";
 import { logTitle } from "@/lib/api";
+import { useGuestMode } from "@/hooks/useGuestMode";
+import { recordGuestTitleAction } from "@/lib/guest-actions";
 import type { TMDBSearchResult, MediaType, AdvancedSearchFilters } from "@/lib/types";
 
 export default function SearchPage() {
+  const guest = useGuestMode();
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"multi" | "movie" | "tv">("multi");
   const [results, setResults] = useState<TMDBSearchResult[]>([]);
@@ -139,6 +143,22 @@ export default function SearchPage() {
 
   // Actions (like, watchlist, etc.)
   async function handleAction(item: TMDBSearchResult, action: string, fallbackType?: MediaType) {
+    // Guest gate: track action, show wall if limit reached
+    if (guest.isGuest) {
+      if (!guest.trackAction()) return;
+      const type: MediaType = item.media_type === "movie" || item.title ? "movie" : (fallbackType || "tv");
+      const key = `${item.id}:${type}`;
+      setActionStates((prev) => ({ ...prev, [key]: action }));
+      // Record for migration after signup
+      recordGuestTitleAction({
+        tmdb_id: item.id,
+        type,
+        action: action as "liked" | "disliked" | "neutral" | "watchlist" | "watched",
+        ts: Date.now(),
+      });
+      return;
+    }
+
     const type: MediaType = item.media_type === "movie" || item.title ? "movie" : (fallbackType || "tv");
     const key = `${item.id}:${type}`;
     setActionStates((prev) => ({ ...prev, [key]: action }));
@@ -370,7 +390,7 @@ export default function SearchPage() {
                           + Se-liste
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); setAddToListItem({ id: item.id, type, title }); }}
+                          onClick={(e) => { e.stopPropagation(); if (guest.isGuest) { guest.setShowWall(true); return; } setAddToListItem({ id: item.id, type, title }); }}
                           className="py-2 px-3 rounded-lg bg-[var(--accent)]/10 text-[var(--accent-light)] text-[12px] font-semibold hover:bg-[var(--accent)]/20 transition-all duration-200 active:scale-95"
                         >
                           List+
@@ -420,7 +440,7 @@ export default function SearchPage() {
                       + Se-liste
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); setAddToListItem({ id: item.id, type, title }); }}
+                      onClick={(e) => { e.stopPropagation(); if (guest.isGuest) { guest.setShowWall(true); return; } setAddToListItem({ id: item.id, type, title }); }}
                       className="py-1.5 px-2.5 rounded-lg bg-[var(--accent)]/10 text-[var(--accent-light)] text-[10px] font-semibold border border-[var(--accent)]/15 active:scale-95 transition-all"
                     >
                       List+
@@ -487,8 +507,8 @@ export default function SearchPage() {
         </div>
       )}
 
-      {/* Add to List Modal */}
-      {addToListItem && (
+      {/* Add to List Modal (authenticated only) */}
+      {addToListItem && !guest.isGuest && (
         <AddToListModal
           tmdb_id={addToListItem.id}
           type={addToListItem.type}
@@ -496,6 +516,9 @@ export default function SearchPage() {
           onClose={() => setAddToListItem(null)}
         />
       )}
+
+      {/* Conversion Wall */}
+      <ConversionWall open={guest.showWall} onClose={() => guest.setShowWall(false)} />
 
       {/* Streaming Modal */}
       {selectedItem && (

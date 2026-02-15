@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { getUser } from "@/lib/auth";
 import { tmdbSearch, tmdbSearchKeywords, tmdbDiscover } from "@/lib/tmdb";
 
 // Norwegian topic terms → English search terms for title + keyword search
@@ -110,7 +110,7 @@ async function searchKeywordsForTerms(terms: string[]): Promise<number[]> {
 
 export async function GET(req: NextRequest) {
   try {
-    await requireUser();
+    await getUser(); // allow guest access — no auth required
     const q = req.nextUrl.searchParams.get("q");
     const type = (req.nextUrl.searchParams.get("type") as "movie" | "tv" | "multi") || "multi";
     if (!q) return NextResponse.json({ error: "Missing query" }, { status: 400 });
@@ -203,8 +203,6 @@ export async function GET(req: NextRequest) {
       topicMatch: uniqueEnglish.length > 0,
     });
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Error";
-    if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Error" }, { status: 500 });
   }
 }

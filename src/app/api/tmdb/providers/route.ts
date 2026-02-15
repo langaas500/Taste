@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { getUser } from "@/lib/auth";
 import { tmdbWatchProviders } from "@/lib/tmdb";
 
 export async function GET(req: NextRequest) {
   try {
-    await requireUser();
+    await getUser(); // allow guest access
     const tmdbId = parseInt(req.nextUrl.searchParams.get("tmdb_id") || "");
     const type = req.nextUrl.searchParams.get("type") as "movie" | "tv";
     if (!tmdbId || !type) return NextResponse.json({ error: "Missing params" }, { status: 400 });
@@ -25,8 +25,6 @@ export async function GET(req: NextRequest) {
       all_countries: Object.keys(data.results || {}),
     });
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Error";
-    if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Error" }, { status: 500 });
   }
 }

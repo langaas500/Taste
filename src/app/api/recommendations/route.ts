@@ -100,9 +100,6 @@ export async function GET() {
 
     // Score candidates
     const dislikedGenres = new Set<number>();
-    for (const tc of likedCached) {
-      // This is for disliked - we need to get disliked cache too
-    }
     const dislikedTmdbIds = disliked.map((t) => t.tmdb_id);
     const { data: dislikedCache } = await admin
       .from("titles_cache")
