@@ -24,8 +24,9 @@ export async function tmdbSearch(query: string, type: "movie" | "tv" | "multi" =
   );
 }
 
-export async function tmdbDetails(tmdbId: number, type: "movie" | "tv") {
-  const res = await fetch(`${BASE}/${type}/${tmdbId}?language=en-US`, {
+export async function tmdbDetails(tmdbId: number, type: "movie" | "tv", appendToResponse?: string) {
+  const append = appendToResponse ? `&append_to_response=${appendToResponse}` : "";
+  const res = await fetch(`${BASE}/${type}/${tmdbId}?language=en-US${append}`, {
     headers: headers(),
   });
   if (!res.ok) throw new Error(`TMDB details error: ${res.status}`);

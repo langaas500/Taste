@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     if (!tmdbId || !type) return NextResponse.json({ error: "Missing params" }, { status: 400 });
 
     const [details, externalIds] = await Promise.all([
-      tmdbDetails(tmdbId, type),
+      tmdbDetails(tmdbId, type, "videos,credits"),
       tmdbExternalIds(tmdbId, type),
     ]);
 
