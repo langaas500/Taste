@@ -7,6 +7,11 @@ const inter = Inter({ subsets: ["latin"], display: "swap" });
 export const metadata: Metadata = {
   title: "Logflix",
   description: "Track what you watch. Get smart, AI-powered recommendations.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Logflix",
+  },
 };
 
 export const viewport: Viewport = {
