@@ -178,9 +178,9 @@ export default function Nav() {
         <div
           className="flex flex-col h-[calc(100vh-24px)] m-3 rounded-2xl overflow-hidden relative"
           style={{
-            background: "linear-gradient(180deg, rgba(18,18,28,0.45) 0%, rgba(10,10,18,0.50) 100%)",
-            backdropFilter: "blur(24px) saturate(1.3)",
-            WebkitBackdropFilter: "blur(24px) saturate(1.3)",
+            background: "linear-gradient(180deg, rgba(18,18,28,0.22) 0%, rgba(10,10,18,0.25) 100%)",
+            backdropFilter: "blur(12px) saturate(1.2)",
+            WebkitBackdropFilter: "blur(12px) saturate(1.2)",
             border: "1px solid rgba(255,255,255,0.06)",
             boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 40px rgba(229,9,20,0.08), 0 0 80px rgba(229,9,20,0.04), 0 0 0 1px rgba(255,255,255,0.02) inset",
           }}
