@@ -2,7 +2,7 @@
 
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
-export default function LoadingSpinner({ text = "Loading..." }: { text?: string }) {
+export default function LoadingSpinner({ text = "Laster..." }: { text?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-2">
       <DotLottieReact

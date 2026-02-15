@@ -43,15 +43,15 @@ export default function TastePage() {
     setGenerating(false);
   }
 
-  if (loading) return <LoadingSpinner text="Loading taste profile..." />;
-  if (generating) return <AIThinkingScreen text="Analyzing your viewing history..." />;
+  if (loading) return <LoadingSpinner text="Laster smaksprofil..." />;
+  if (generating) return <AIThinkingScreen />;
 
   return (
     <div className="animate-fade-in-up">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-[var(--text-primary)]">Your Taste Profile</h2>
+        <h2 className="text-xl font-bold text-[var(--text-primary)]">Din smaksprofil</h2>
         <GlowButton onClick={generate} disabled={generating}>
-          {summary ? "Regenerate" : "Analyze My Taste"}
+          {summary ? "Generer p\u00e5 nytt" : "Analyser min smak"}
         </GlowButton>
       </div>
 
@@ -63,8 +63,8 @@ export default function TastePage() {
 
       {!summary && (
         <EmptyState
-          title="No taste profile yet"
-          description="Add some watched titles with ratings to your library, then generate your AI-powered taste analysis."
+          title="Ingen smaksprofil enn\u00e5"
+          description="Legg til noen sette titler med vurderinger i biblioteket, s\u00e5 genererer vi en AI-drevet smaksanalyse."
           icon={
             <svg className="w-7 h-7 text-[var(--accent-light)]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
@@ -79,7 +79,7 @@ export default function TastePage() {
             <div className="flex items-center gap-2 mb-3">
               <div className="w-2 h-2 rounded-full bg-[var(--green)]" />
               <h3 className="text-xs font-semibold text-[var(--green)] uppercase tracking-wider">
-                You like...
+                Du liker...
               </h3>
             </div>
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{summary.youLike}</p>
@@ -89,7 +89,7 @@ export default function TastePage() {
             <div className="flex items-center gap-2 mb-3">
               <div className="w-2 h-2 rounded-full bg-[var(--red)]" />
               <h3 className="text-xs font-semibold text-[var(--red)] uppercase tracking-wider">
-                You tend to avoid...
+                Du unng\u00e5r gjerne...
               </h3>
             </div>
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{summary.avoid}</p>
@@ -99,7 +99,7 @@ export default function TastePage() {
             <div className="flex items-center gap-2 mb-3">
               <div className="w-2 h-2 rounded-full bg-[var(--accent)]" />
               <h3 className="text-xs font-semibold text-[var(--accent-light)] uppercase tracking-wider">
-                Pacing, tone & themes
+                Tempo, tone og temaer
               </h3>
             </div>
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{summary.pacing}</p>
@@ -107,7 +107,7 @@ export default function TastePage() {
 
           {summary.updatedAt && (
             <p className="text-xs text-[var(--text-tertiary)] text-center pt-2">
-              Last updated: {new Date(summary.updatedAt).toLocaleString()}
+              Sist oppdatert: {new Date(summary.updatedAt).toLocaleString("nb-NO")}
             </p>
           )}
         </div>

@@ -19,6 +19,10 @@ interface StreamingModalProps {
   onClose: () => void;
   actions?: ModalAction[];
   onAction?: (action: string) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  progress?: { season: number; episode: number } | null;
+  onUpdateProgress?: (season: number, episode: number) => void;
 }
 
 interface TitleDetails {
@@ -56,13 +60,14 @@ interface CastMember {
   order: number;
 }
 
-export default function StreamingModal({ tmdbId, type, title, posterPath, onClose, actions, onAction }: StreamingModalProps) {
+export default function StreamingModal({ tmdbId, type, title, posterPath, onClose, actions, onAction, isFavorite, onToggleFavorite, progress, onUpdateProgress }: StreamingModalProps) {
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<TitleDetails | null>(null);
   const [providers, setProviders] = useState<WatchProviderData | null>(null);
   const [country, setCountry] = useState("");
   const [error, setError] = useState("");
   const [showTrailer, setShowTrailer] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -141,6 +146,27 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
 
   const topCast = details?.credits?.cast?.slice(0, 6) || [];
 
+  async function handleShare() {
+    const tmdbUrl = `https://www.themoviedb.org/${type}/${tmdbId}`;
+    const shareText = `${title}${details?.year ? ` (${details.year})` : ""}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareText, url: tmdbUrl });
+        return;
+      } catch {
+        // User cancelled or share failed, fall through to clipboard
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(`${shareText}\n${tmdbUrl}`);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      // Clipboard also failed, ignore
+    }
+  }
+
   // Format runtime
   const runtimeStr = details?.runtime
     ? `${Math.floor(details.runtime / 60)}t ${details.runtime % 60}m`
@@ -177,15 +203,51 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
       )}
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl max-h-[85dvh] sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl bg-[#0c1022] border border-white/[0.08] shadow-2xl overflow-hidden animate-fade-in-up flex flex-col">
+      <div className="relative w-full max-w-2xl max-h-[92dvh] sm:max-h-[90vh] rounded-t-3xl sm:rounded-2xl bg-[#0c1022] border border-white/[0.08] shadow-2xl overflow-hidden animate-fade-in-up flex flex-col">
 
-        {/* Close button - always on top */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/60 text-white/70 hover:text-white hover:bg-black/80 transition-all border border-white/10"
-        >
-          <XIcon />
-        </button>
+        {/* Mobile drag handle */}
+        <div className="sm:hidden flex justify-center pt-2.5 pb-1">
+          <div className="w-10 h-1 rounded-full bg-white/20" />
+        </div>
+
+        {/* Top buttons - always on top */}
+        <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+          {/* Favorite star */}
+          {onToggleFavorite && (
+            <button
+              onClick={onToggleFavorite}
+              aria-label={isFavorite ? "Fjern fra favoritter" : "Legg til favoritter"}
+              className="w-9 h-9 flex items-center justify-center rounded-full transition-all border border-white/10"
+              style={{ background: isFavorite ? "rgba(250,204,21,0.2)" : "rgba(0,0,0,0.6)" }}
+            >
+              <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill={isFavorite ? "#facc15" : "none"} stroke={isFavorite ? "#facc15" : "rgba(255,255,255,0.6)"} strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+              </svg>
+            </button>
+          )}
+          {/* Share button */}
+          <button
+            onClick={handleShare}
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-black/60 text-white/70 hover:text-white hover:bg-black/80 transition-all border border-white/10 relative"
+          >
+            {shareCopied ? (
+              <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+              </svg>
+            )}
+          </button>
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-black/60 text-white/70 hover:text-white hover:bg-black/80 transition-all border border-white/10"
+          >
+            <XIcon />
+          </button>
+        </div>
 
         {/* Scrollable content */}
         <div className="overflow-y-auto flex-1 custom-scrollbar">
@@ -274,6 +336,43 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                   </div>
                 )}
 
+                {/* Episode progress (Watch Bank) */}
+                {progress && onUpdateProgress && (
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-sky-500/[0.06] border border-sky-500/15">
+                    <div className="flex-shrink-0">
+                      <svg className="w-5 h-5 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[10px] text-sky-400/60 font-semibold uppercase tracking-wider mb-1">Husk hvor du var</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-sky-400">S{progress.season} E{progress.episode}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          if (progress.episode > 1) {
+                            onUpdateProgress(progress.season, progress.episode - 1);
+                          } else if (progress.season > 1) {
+                            onUpdateProgress(progress.season - 1, 1);
+                          }
+                        }}
+                        className="w-8 h-8 rounded-lg bg-white/[0.06] text-white/50 hover:bg-white/[0.12] hover:text-white flex items-center justify-center transition-all text-lg font-bold"
+                      >
+                        −
+                      </button>
+                      <button
+                        onClick={() => onUpdateProgress(progress.season, progress.episode + 1)}
+                        className="w-8 h-8 rounded-lg bg-sky-500/15 text-sky-400 hover:bg-sky-500/25 flex items-center justify-center transition-all text-lg font-bold"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Action buttons */}
                 {actions && actions.length > 0 && onAction && (
                   <div className="flex flex-wrap gap-2">
@@ -296,7 +395,8 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                             onAction(action);
                             if (action !== "add-to-list") onClose();
                           }}
-                          className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all active:scale-95 ${btnClass}`}
+                          aria-label={label.replace(/[\u{1F44D}\u{1F44E}\u{1F610}★✕+]/gu, "").trim() || label}
+                          className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-semibold border transition-all active:scale-95 ${btnClass}`}
                         >
                           {label}
                         </button>

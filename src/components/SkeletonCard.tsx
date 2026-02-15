@@ -15,15 +15,15 @@ export default function SkeletonCard({ count = 4 }: { count?: number }) {
   );
 }
 
-export function SkeletonGrid({ count = 6 }: { count?: number }) {
+export function SkeletonGrid({ count = 12 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="glass rounded-[var(--radius-lg)] overflow-hidden">
-          <div className="skeleton aspect-[2/3] w-full" />
-          <div className="p-3 space-y-2">
-            <div className="skeleton h-3.5 w-3/4 rounded" />
-            <div className="skeleton h-3 w-1/2 rounded" />
+        <div key={i}>
+          <div className="skeleton aspect-[2/3] w-full rounded-xl" />
+          <div className="mt-2 space-y-1.5 px-0.5">
+            <div className="skeleton h-3 w-3/4 rounded" />
+            <div className="skeleton h-2.5 w-1/3 rounded" />
           </div>
         </div>
       ))}

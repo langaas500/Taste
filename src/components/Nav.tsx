@@ -1,14 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
+/* ── colors ─────────────────────────────────────────────── */
+
+const RED = "#ff2a2a";
+
 /* ── route config ───────────────────────────────────────── */
 
 const mobileLinks = [
-  { href: "/search", label: "Sok", icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" },
+  { href: "/search", label: "Søk", icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" },
   { href: "/library", label: "Bibliotek", icon: "M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" },
   { href: "/recommendations", label: "For deg", icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" },
   { href: "/lists", label: "Lister", icon: "M8.25 6.75h12M8.25 12h12M8.25 17.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" },
@@ -31,7 +36,7 @@ const sidebarLinks: SidebarSection[] = [
   {
     section: "OPPDAG",
     links: [
-      { href: "/search", label: "Sok", icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" },
+      { href: "/search", label: "Søk", icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" },
       { href: "/recommendations", label: "For deg", icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z", badge: "AI" },
     ],
   },
@@ -40,6 +45,7 @@ const sidebarLinks: SidebarSection[] = [
     links: [
       { href: "/library", label: "Bibliotek", icon: "M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" },
       { href: "/watchlist", label: "Se-liste", icon: "M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" },
+      { href: "/watch-bank", label: "Watch Bank", icon: "M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" },
       { href: "/lists", label: "Lister", icon: "M8.25 6.75h12M8.25 12h12M8.25 17.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" },
     ],
   },
@@ -72,7 +78,6 @@ export default function Nav() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserEmail(user.email ?? null);
-        // Try to get display name from profile
         const { data } = await supabase.from("user_profiles").select("display_name").eq("user_id", user.id).single();
         setDisplayName(data?.display_name || null);
       }
@@ -95,73 +100,50 @@ export default function Nav() {
         style={{ paddingBottom: "var(--safe-bottom)" }}
       >
         <div
-          className="absolute top-0 left-0 right-0 h-px"
-          style={{
-            background: "linear-gradient(90deg, transparent 5%, rgba(124,92,252,0.25) 25%, rgba(229,9,20,0.2) 50%, rgba(245,197,24,0.2) 75%, transparent 95%)",
-          }}
-        />
-        <div
           className="absolute inset-0"
-          style={{
-            background: "linear-gradient(180deg, rgba(10,10,18,0.93) 0%, rgba(6,6,14,0.98) 100%)",
-          }}
+          style={{ background: "#0a0a0a", borderTop: "1px solid rgba(255,255,255,0.06)" }}
         />
-        <div className="relative flex items-stretch">
+        <div className="relative flex items-center justify-around" style={{ padding: "8px 8px 20px" }}>
           {mobileLinks.map(({ href, label, icon }) => {
             const active =
               pathname === href ||
               (href === "/settings" &&
-                ["/settings", "/stats", "/watchlist", "/taste", "/shared"].includes(pathname));
+                ["/settings", "/stats", "/watchlist", "/taste", "/shared", "/watch-bank"].includes(pathname));
             return (
               <Link
                 key={href}
                 href={href}
-                className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2.5 relative"
-                style={{ transition: "all 0.2s ease" }}
+                className="relative flex flex-col items-center gap-1 px-3 py-1.5"
               >
-                {active && (
-                  <div
-                    className="absolute top-0 left-1/2 -translate-x-1/2 h-[2px] rounded-full"
-                    style={{
-                      width: "24px",
-                      background: "linear-gradient(90deg, var(--accent), var(--accent-light))",
-                      boxShadow: "0 0 12px var(--accent)",
-                    }}
-                  />
-                )}
-                <div className="relative">
-                  {active && (
-                    <div
-                      className="absolute inset-0 rounded-full"
-                      style={{
-                        background: "radial-gradient(circle, rgba(124,92,252,0.2) 0%, transparent 70%)",
-                        transform: "scale(2.5)",
-                      }}
-                    />
-                  )}
-                  <svg
-                    className="w-5 h-5 relative"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={active ? 2.2 : 1.5}
-                    stroke="currentColor"
-                    style={{
-                      color: active ? "var(--accent-light)" : "rgba(255,255,255,0.35)",
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
-                  </svg>
-                </div>
-                <span
-                  className="text-[10px] font-semibold relative"
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={active ? 2 : 1.5}
+                  stroke="currentColor"
                   style={{
-                    color: active ? "var(--accent-light)" : "rgba(255,255,255,0.3)",
-                    transition: "color 0.2s ease",
+                    color: active ? RED : "rgba(255,255,255,0.4)",
+                    transition: "color 0.2s",
+                  }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
+                </svg>
+                <span
+                  className="text-[10px] font-medium"
+                  style={{
+                    color: active ? RED : "rgba(255,255,255,0.35)",
+                    transition: "color 0.2s",
                   }}
                 >
                   {label}
                 </span>
+                {/* Active dot */}
+                {active && (
+                  <div
+                    className="absolute bottom-0 w-1 h-1 rounded-full"
+                    style={{ background: RED }}
+                  />
+                )}
               </Link>
             );
           })}
@@ -170,66 +152,76 @@ export default function Nav() {
 
       {/* ==================== DESKTOP SIDEBAR ==================== */}
       <aside
-        className={`hidden md:flex md:flex-col md:min-h-screen md:flex-shrink-0 relative transition-all duration-300 ${
-          collapsed ? "md:w-[72px]" : "md:w-[260px]"
+        className={`hidden md:flex md:flex-col md:sticky md:top-0 md:h-screen md:flex-shrink-0 relative transition-all duration-300 ${
+          collapsed ? "md:w-[72px]" : "md:w-[240px]"
         }`}
       >
         {/* Floating sidebar container */}
         <div
           className="flex flex-col h-[calc(100vh-24px)] m-3 rounded-2xl overflow-hidden relative"
           style={{
-            background: "linear-gradient(180deg, rgba(18,18,28,0.22) 0%, rgba(10,10,18,0.25) 100%)",
-            backdropFilter: "blur(12px) saturate(1.2)",
-            WebkitBackdropFilter: "blur(12px) saturate(1.2)",
+            background: "linear-gradient(180deg, rgba(13,13,13,0.75) 0%, rgba(10,10,14,0.8) 100%)",
+            backdropFilter: "blur(6px) saturate(1.1)",
+            WebkitBackdropFilter: "blur(6px) saturate(1.1)",
             border: "1px solid rgba(255,255,255,0.06)",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 40px rgba(229,9,20,0.08), 0 0 80px rgba(229,9,20,0.04), 0 0 0 1px rgba(255,255,255,0.02) inset",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
           }}
         >
-          {/* Ambient glow top-left - red tint */}
-          <div
-            className="absolute top-0 left-0 w-48 h-48 pointer-events-none"
-            style={{
-              background: "radial-gradient(circle at top left, rgba(229,9,20,0.07) 0%, transparent 70%)",
-            }}
-          />
-          {/* Ambient glow bottom-right - red tint */}
-          <div
-            className="absolute bottom-0 right-0 w-48 h-48 pointer-events-none"
-            style={{
-              background: "radial-gradient(circle at bottom right, rgba(229,9,20,0.06) 0%, transparent 70%)",
-            }}
-          />
+          {/* ── Brand + Profile ── */}
+          <div className={`px-3 pt-4 pb-3 ${collapsed ? "px-2" : ""}`}>
+            {/* Logo */}
+            <div
+              className={`flex items-center mb-3 ${collapsed ? "justify-center" : ""}`}
+            >
+              {collapsed ? (
+                <div
+                  className="w-[34px] h-[34px] rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: "rgba(255,42,42,0.12)",
+                    border: "1px solid rgba(255,42,42,0.2)",
+                  }}
+                >
+                  <span style={{ fontSize: 15, fontWeight: 900, color: RED }}>T</span>
+                </div>
+              ) : (
+                <Image
+                  src="/logo.png"
+                  alt="Taste"
+                  width={100}
+                  height={44}
+                  className="object-contain"
+                  priority
+                />
+              )}
+            </div>
 
-          {/* ── Profile section ── */}
-          <div className={`px-4 pt-5 pb-4 ${collapsed ? "px-3" : ""}`}>
-            <div className="flex items-center gap-3 relative">
+            {/* Profile row */}
+            <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
               {/* Avatar */}
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 relative"
+                className="w-[34px] h-[34px] rounded-full flex items-center justify-center flex-shrink-0 relative"
                 style={{
-                  background: "linear-gradient(135deg, var(--accent) 0%, rgba(192,132,252,0.8) 100%)",
-                  boxShadow: "0 0 20px rgba(124,92,252,0.2)",
+                  background: "rgba(255,42,42,0.1)",
+                  border: "1.5px solid rgba(255,42,42,0.2)",
                 }}
               >
-                <span className="text-sm font-bold text-white">{initials}</span>
-                {/* Online dot */}
+                <span style={{ fontSize: 11, fontWeight: 700, color: RED }}>{initials}</span>
                 <div
-                  className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
+                  className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full"
                   style={{
                     background: "#22c55e",
-                    borderColor: "rgba(18,18,28,0.95)",
-                    boxShadow: "0 0 6px rgba(34,197,94,0.4)",
+                    border: "2px solid #0d0d0d",
                   }}
                 />
               </div>
 
               {!collapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em]" style={{ color: "rgba(255,255,255,0.25)" }}>
-                    Filmelsker
-                  </p>
-                  <p className="text-[13px] font-semibold truncate" style={{ color: "rgba(255,255,255,0.85)" }}>
+                  <p className="text-[12px] font-semibold truncate" style={{ color: "rgba(255,255,255,0.85)" }}>
                     {userName}
+                  </p>
+                  <p className="text-[10px]" style={{ color: "rgba(255,42,42,0.4)" }}>
+                    Filmelsker
                   </p>
                 </div>
               )}
@@ -238,13 +230,13 @@ export default function Nav() {
               {!collapsed && (
                 <button
                   onClick={() => setCollapsed(true)}
-                  className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200"
+                  className="flex-shrink-0 w-[26px] h-[26px] rounded-lg flex items-center justify-center transition-all duration-200"
                   style={{
                     background: "rgba(255,255,255,0.04)",
                     border: "1px solid rgba(255,255,255,0.06)",
                   }}
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="rgba(255,255,255,0.3)">
+                  <svg className="w-[13px] h-[13px]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="rgba(255,255,255,0.35)">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                   </svg>
                 </button>
@@ -254,9 +246,9 @@ export default function Nav() {
             {collapsed && (
               <button
                 onClick={() => setCollapsed(false)}
-                className="mt-3 w-full flex items-center justify-center"
+                className="mt-2.5 w-full flex items-center justify-center bg-transparent border-0 cursor-pointer"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="rgba(255,255,255,0.3)">
+                <svg className="w-[14px] h-[14px]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="rgba(255,255,255,0.25)">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
               </button>
@@ -264,26 +256,26 @@ export default function Nav() {
           </div>
 
           {/* Separator */}
-          <div className="mx-4 mb-2" style={{ height: "1px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)" }} />
+          <div className="mx-3" style={{ height: "1px", background: "rgba(255,255,255,0.06)" }} />
 
           {/* ── Nav sections ── */}
-          <nav className="flex-1 px-3 overflow-y-auto">
+          <nav className="flex-1 px-2 pt-2 overflow-y-auto" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {sidebarLinks.map(({ section, links }, sectionIdx) => (
-              <div key={sectionIdx} className="mb-1">
+              <div key={sectionIdx}>
                 {section && !collapsed && (
                   <p
-                    className="px-3 mb-1.5 mt-4 text-[10px] font-semibold tracking-[0.2em]"
-                    style={{ color: "rgba(255,255,255,0.2)" }}
+                    className="px-2 mb-1 mt-2.5 text-[10px] font-bold tracking-[0.14em]"
+                    style={{ color: "rgba(255,42,42,0.35)" }}
                   >
                     {section}
                   </p>
                 )}
 
                 {section && collapsed && sectionIdx > 0 && (
-                  <div className="my-2 mx-2" style={{ height: "1px", background: "rgba(255,255,255,0.04)" }} />
+                  <div className="my-1.5 mx-2" style={{ height: "1px", background: "rgba(255,255,255,0.04)" }} />
                 )}
 
-                <div className="space-y-0.5">
+                <div className="flex flex-col" style={{ gap: 1 }}>
                   {links.map(({ href, label, icon, badge }) => {
                     const active = pathname === href;
 
@@ -291,21 +283,19 @@ export default function Nav() {
                       <Link
                         key={href}
                         href={href}
-                        className={`group flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium relative overflow-hidden transition-all duration-200 ${
-                          collapsed ? "justify-center px-2.5" : "px-3"
+                        className={`group flex items-center gap-2.5 py-[7px] rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-150 ${
+                          collapsed ? "justify-center px-2.5" : "px-2.5"
                         }`}
                         title={collapsed ? label : undefined}
                         style={{
-                          background: active
-                            ? "rgba(255,255,255,0.07)"
-                            : "transparent",
+                          background: active ? "rgba(255,42,42,0.08)" : "transparent",
                         }}
                       >
                         {/* Hover bg */}
                         {!active && (
                           <div
-                            className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                            style={{ background: "rgba(255,255,255,0.03)" }}
+                            className="absolute inset-0 rounded-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                            style={{ background: "rgba(255,255,255,0.04)" }}
                           />
                         )}
 
@@ -314,49 +304,33 @@ export default function Nav() {
                           <div
                             className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full"
                             style={{
-                              height: "18px",
-                              background: "linear-gradient(180deg, var(--accent), var(--accent-light))",
-                              boxShadow: "0 0 10px var(--accent)",
+                              height: "55%",
+                              background: RED,
                             }}
                           />
                         )}
 
                         {/* Icon */}
-                        <div className="relative flex-shrink-0">
-                          {active && (
-                            <div
-                              className="absolute inset-0"
-                              style={{
-                                background: "radial-gradient(circle, rgba(124,92,252,0.15) 0%, transparent 70%)",
-                                transform: "scale(2.5)",
-                              }}
-                            />
-                          )}
-                          <svg
-                            className="w-[18px] h-[18px] relative"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={active ? 2 : 1.5}
-                            stroke="currentColor"
-                            style={{
-                              color: active
-                                ? "var(--accent-light)"
-                                : "rgba(255,255,255,0.3)",
-                              transition: "all 0.2s ease",
-                            }}
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
-                          </svg>
-                        </div>
+                        <svg
+                          className="w-[18px] h-[18px] flex-shrink-0 relative"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={active ? 2 : 1.5}
+                          stroke="currentColor"
+                          style={{
+                            color: active ? RED : "rgba(255,255,255,0.4)",
+                            transition: "color 0.15s",
+                          }}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
+                        </svg>
 
                         {/* Label */}
                         {!collapsed && (
                           <span
-                            className="relative transition-colors duration-200"
+                            className="relative transition-colors duration-150"
                             style={{
-                              color: active
-                                ? "rgba(255,255,255,0.95)"
-                                : "rgba(255,255,255,0.4)",
+                              color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)",
                             }}
                           >
                             {label}
@@ -366,11 +340,11 @@ export default function Nav() {
                         {/* Badge */}
                         {badge && !collapsed && (
                           <span
-                            className="relative ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-md"
+                            className="relative ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-[5px]"
                             style={{
-                              background: "linear-gradient(135deg, rgba(124,92,252,0.18) 0%, rgba(192,132,252,0.1) 100%)",
-                              color: "var(--accent-light)",
-                              border: "1px solid rgba(124,92,252,0.15)",
+                              background: "rgba(255,42,42,0.1)",
+                              color: RED,
+                              border: "1px solid rgba(255,42,42,0.15)",
                               letterSpacing: "0.05em",
                             }}
                           >
@@ -385,32 +359,29 @@ export default function Nav() {
             ))}
 
             {/* Settings - separated */}
-            <div className="mt-1">
-              <div className="mx-2 my-2" style={{ height: "1px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)" }} />
+            <div className="mt-1.5">
               <Link
                 href="/settings"
-                className={`group flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium relative overflow-hidden transition-all duration-200 ${
-                  collapsed ? "justify-center px-2.5" : "px-3"
+                className={`group flex items-center gap-2.5 py-[7px] rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-150 ${
+                  collapsed ? "justify-center px-2.5" : "px-2.5"
                 }`}
                 title={collapsed ? "Innstillinger" : undefined}
                 style={{
-                  background: pathname === "/settings" ? "rgba(255,255,255,0.07)" : "transparent",
+                  background: pathname === "/settings" ? "rgba(255,42,42,0.08)" : "transparent",
                 }}
               >
-                {!pathname.startsWith("/settings") && (
-                  <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ background: "rgba(255,255,255,0.03)" }} />
+                {pathname !== "/settings" && (
+                  <div className="absolute inset-0 rounded-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-150" style={{ background: "rgba(255,255,255,0.04)" }} />
                 )}
                 {pathname === "/settings" && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full" style={{ height: "18px", background: "linear-gradient(180deg, var(--accent), var(--accent-light))", boxShadow: "0 0 10px var(--accent)" }} />
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full" style={{ height: "55%", background: RED }} />
                 )}
-                <div className="relative flex-shrink-0">
-                  <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" strokeWidth={pathname === "/settings" ? 2 : 1.5} stroke="currentColor" style={{ color: pathname === "/settings" ? "var(--accent-light)" : "rgba(255,255,255,0.3)" }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
+                <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={pathname === "/settings" ? 2 : 1.5} stroke="currentColor" style={{ color: pathname === "/settings" ? RED : "rgba(255,255,255,0.4)", transition: "color 0.15s" }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
                 {!collapsed && (
-                  <span className="relative transition-colors duration-200" style={{ color: pathname === "/settings" ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.4)" }}>
+                  <span className="relative transition-colors duration-150" style={{ color: pathname === "/settings" ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)" }}>
                     Innstillinger
                   </span>
                 )}
@@ -420,56 +391,39 @@ export default function Nav() {
 
           {/* ── Bottom CTA card ── */}
           {!collapsed && (
-            <div className="px-3 pb-4 mt-auto">
+            <div className="px-2.5 pb-2.5 mt-auto">
               <div
-                className="rounded-xl p-4 relative overflow-hidden"
+                className="rounded-[10px] p-3 relative overflow-hidden"
                 style={{
-                  background: "linear-gradient(135deg, rgba(124,92,252,0.08) 0%, rgba(192,132,252,0.04) 100%)",
-                  border: "1px solid rgba(255,255,255,0.04)",
+                  background: "rgba(255,255,255,0.02)",
+                  border: "1px solid rgba(255,255,255,0.06)",
                 }}
               >
-                {/* Shimmer line */}
-                <div
-                  className="absolute top-0 left-[10%] right-[10%] h-px"
-                  style={{ background: "linear-gradient(90deg, transparent, rgba(124,92,252,0.25), transparent)" }}
-                />
-
-                <p className="text-[12px] font-semibold mb-1" style={{ color: "rgba(255,255,255,0.7)" }}>
+                <p className="text-[12px] font-bold mb-1" style={{ color: RED }}>
                   Kom i gang!
                 </p>
-                <p className="text-[10px] leading-relaxed mb-3" style={{ color: "rgba(255,255,255,0.25)" }}>
+                <p className="text-[11px] leading-relaxed mb-2.5" style={{ color: "rgba(255,255,255,0.35)" }}>
                   Legg til filmer og serier for personlige anbefalinger
                 </p>
 
                 <Link
                   href="/search"
-                  className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg text-[12px] font-semibold transition-all duration-200"
+                  className="flex items-center justify-center gap-1.5 w-full py-[7px] rounded-lg text-[11px] font-semibold transition-opacity duration-150 hover:opacity-90"
                   style={{
-                    background: "linear-gradient(135deg, var(--accent) 0%, rgba(192,132,252,0.9) 100%)",
+                    background: RED,
                     color: "white",
-                    boxShadow: "0 4px 16px rgba(124,92,252,0.3)",
                   }}
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                   </svg>
-                  Sok etter titler
+                  Søk etter titler
                 </Link>
-              </div>
 
-              {/* Version */}
-              <div className="mt-3 flex items-center justify-between px-1">
-                <p className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.1)" }}>
-                  Taste v0.1
-                </p>
-                <div className="flex items-center gap-1">
-                  <div
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ background: "#22c55e", boxShadow: "0 0 6px rgba(34,197,94,0.4)" }}
-                  />
-                  <p className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.12)" }}>
-                    Koblet til
-                  </p>
+                <div className="flex items-center justify-center gap-1.5 mt-2.5" style={{ fontSize: 9, color: "rgba(255,255,255,0.18)" }}>
+                  <span>Taste v0.1</span>
+                  <span className="w-1 h-1 rounded-full inline-block" style={{ background: "#22c55e" }} />
+                  <span>Koblet til</span>
                 </div>
               </div>
             </div>
@@ -477,18 +431,16 @@ export default function Nav() {
 
           {/* Collapsed bottom icon */}
           {collapsed && (
-            <div className="pb-4 mt-auto flex justify-center">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{
-                  background: "linear-gradient(135deg, var(--accent) 0%, rgba(124,92,252,0.6) 100%)",
-                  boxShadow: "0 0 16px rgba(124,92,252,0.2)",
-                }}
+            <div className="pb-3 mt-auto flex justify-center">
+              <Link
+                href="/search"
+                className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center"
+                style={{ background: RED }}
               >
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-1.5A1.125 1.125 0 0118 18.375M20.625 4.5H3.375m17.25 0c.621 0 1.125.504 1.125 1.125M20.625 4.5h-1.5C18.504 4.5 18 5.004 18 5.625m3.75 0v1.5c0 .621-.504 1.125-1.125 1.125M3.375 4.5c-.621 0-1.125.504-1.125 1.125M3.375 4.5h1.5C5.496 4.5 6 5.004 6 5.625m-3.75 0v1.5c0 .621.504 1.125 1.125 1.125m0 0h1.5m-1.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m1.5-3.75C5.496 8.25 6 7.746 6 7.125v-1.5M4.125 8.25C3.504 8.25 3 8.754 3 9.375v1.5c0 .621.504 1.125 1.125 1.125m1.5-3.75h1.5m-1.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M6 7.125v1.5" />
+                <svg className="w-[15px] h-[15px] text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
-              </div>
+              </Link>
             </div>
           )}
         </div>

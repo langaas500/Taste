@@ -166,10 +166,10 @@ export default function SearchPage() {
 
   return (
     <div className="animate-fade-in-up">
-      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-5">Search</h2>
+      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-5">S\u00f8k</h2>
 
       {/* Search bar */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-3">
+      <form onSubmit={handleSearch} className="flex gap-2 mb-3 sticky top-0 z-20 -mx-4 px-4 py-2 md:static md:mx-0 md:px-0 md:py-0 bg-[var(--bg-base)]/95 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none">
         <div className="flex-1 relative">
           <svg
             className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25"
@@ -181,7 +181,7 @@ export default function SearchPage() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search movies & TV shows..."
+            placeholder="S\u00f8k etter filmer og serier..."
             className="w-full pl-9 pr-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder-white/25 transition-all duration-300 focus:outline-none focus:border-white/20 focus:bg-white/[0.06]"
           />
         </div>
@@ -190,8 +190,8 @@ export default function SearchPage() {
           onChange={(e) => setTypeFilter(e.target.value as "multi" | "movie" | "tv")}
           className="px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-secondary)] focus:outline-none focus:border-white/20 transition-all duration-300"
         >
-          <option value="multi">All</option>
-          <option value="movie">Movies</option>
+          <option value="multi">Alle</option>
+          <option value="movie">Filmer</option>
           <option value="tv">TV</option>
         </select>
         <button
@@ -199,7 +199,7 @@ export default function SearchPage() {
           disabled={loading}
           className="px-5 py-2.5 bg-white/[0.08] hover:bg-white/[0.14] text-white/90 rounded-xl font-medium text-sm transition-all duration-300 disabled:opacity-30 active:scale-[0.97] border border-white/[0.08] hover:border-white/[0.15]"
         >
-          Search
+          S\u00f8k
         </button>
       </form>
 
@@ -213,7 +213,7 @@ export default function SearchPage() {
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
           </svg>
-          Avansert sok
+          Avansert søk
           <svg
             className={`w-3 h-3 transition-transform duration-300 ${advancedOpen ? "rotate-180" : ""}`}
             fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
@@ -227,7 +227,7 @@ export default function SearchPage() {
             onClick={() => { setIsAdvancedMode(false); setPersonMode(null); setAdvancedResults([]); setAdvancedPage(1); }}
             className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] transition-colors"
           >
-            Tilbake til vanlig sok
+            Tilbake til vanlig søk
           </button>
         )}
       </div>
@@ -247,7 +247,7 @@ export default function SearchPage() {
         </div>
       )}
 
-      {isLoading && <LoadingSpinner text={isAdvancedMode ? "Searching..." : "Searching..."} />}
+      {isLoading && <LoadingSpinner text="S\u00f8ker..." />}
 
       {/* Person filmography header */}
       {isAdvancedMode && personMode && (
@@ -270,7 +270,7 @@ export default function SearchPage() {
       {/* Advanced mode info */}
       {isAdvancedMode && !personMode && advancedResults.length > 0 && (
         <p className="text-xs text-white/30 mb-4">
-          Avansert sok — {advancedResults.length} resultater
+          Avansert søk — {advancedResults.length} resultater
         </p>
       )}
 
@@ -331,7 +331,7 @@ export default function SearchPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
                       <span className="text-[13px] font-semibold text-emerald-400 capitalize">
-                        {actionDone === "watchlist" ? "Added to list" : actionDone}
+                        {actionDone === "watchlist" ? "Lagt til" : actionDone}
                       </span>
                     </div>
                   ) : (
@@ -342,13 +342,13 @@ export default function SearchPage() {
                           onClick={(e) => { e.stopPropagation(); handleAction(item, "liked", fallbackType); }}
                           className="flex-1 py-2 rounded-lg bg-emerald-500/15 text-emerald-400 text-[12px] font-semibold tracking-wide hover:bg-emerald-500/30 transition-all duration-200 active:scale-95"
                         >
-                          Like
+                          Likte
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleAction(item, "disliked", fallbackType); }}
                           className="flex-1 py-2 rounded-lg bg-red-500/15 text-red-400 text-[12px] font-semibold tracking-wide hover:bg-red-500/30 transition-all duration-200 active:scale-95"
                         >
-                          Nah
+                          Nei
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleAction(item, "neutral", fallbackType); }}
@@ -363,7 +363,7 @@ export default function SearchPage() {
                           onClick={(e) => { e.stopPropagation(); handleAction(item, "watchlist", fallbackType); }}
                           className="flex-1 py-2 rounded-lg bg-white/[0.08] text-white/70 text-[12px] font-semibold tracking-wide hover:bg-white/[0.15] hover:text-white transition-all duration-200 active:scale-[0.97] border border-white/[0.06]"
                         >
-                          + Watchlist
+                          + Se-liste
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); setAddToListItem({ id: item.id, type, title }); }}
@@ -393,13 +393,13 @@ export default function SearchPage() {
                       onClick={(e) => { e.stopPropagation(); handleAction(item, "liked", fallbackType); }}
                       className="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/15 active:scale-95 transition-all"
                     >
-                      Like
+                      Likte
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleAction(item, "disliked", fallbackType); }}
                       className="flex-1 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-[10px] font-semibold border border-red-500/15 active:scale-95 transition-all"
                     >
-                      Nah
+                      Nei
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleAction(item, "neutral", fallbackType); }}
@@ -413,7 +413,7 @@ export default function SearchPage() {
                       onClick={(e) => { e.stopPropagation(); handleAction(item, "watchlist", fallbackType); }}
                       className="flex-1 py-1.5 rounded-lg bg-white/[0.06] text-white/50 text-[10px] font-semibold border border-white/[0.06] active:scale-95 transition-all"
                     >
-                      + Watchlist
+                      + Se-liste
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setAddToListItem({ id: item.id, type, title }); }}
@@ -453,13 +453,13 @@ export default function SearchPage() {
       {/* Empty states */}
       {!isLoading && displayResults.length === 0 && isAdvancedMode && (
         <div className="text-center py-20">
-          <p className="text-white/30 text-sm">Ingen resultater. Prov a endre filtrene.</p>
+          <p className="text-white/30 text-sm">Ingen resultater. Prøv å endre filtrene.</p>
         </div>
       )}
 
       {!isLoading && results.length === 0 && !isAdvancedMode && query && (
         <div className="text-center py-20">
-          <p className="text-white/30 text-sm">No results for &ldquo;{query}&rdquo;</p>
+          <p className="text-white/30 text-sm">Ingen resultater for &laquo;{query}&raquo;</p>
         </div>
       )}
 
@@ -470,7 +470,7 @@ export default function SearchPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
           </div>
-          <p className="text-white/25 text-sm">Search for movies and TV shows</p>
+          <p className="text-white/25 text-sm">S\u00f8k etter filmer og serier</p>
         </div>
       )}
 
@@ -493,10 +493,10 @@ export default function SearchPage() {
           posterPath={selectedItem.poster_path}
           onClose={() => setSelectedItem(null)}
           actions={[
-            { label: "Like", action: "liked", variant: "green" },
-            { label: "Nah", action: "disliked", variant: "red" },
-            { label: "Meh", action: "neutral", variant: "yellow" },
-            { label: "+ Watchlist", action: "watchlist", variant: "default" },
+            { label: "\ud83d\udc4d Likte", action: "liked", variant: "green" },
+            { label: "\ud83d\udc4e Nei", action: "disliked", variant: "red" },
+            { label: "\ud83d\ude10 Meh", action: "neutral", variant: "yellow" },
+            { label: "+ Se-liste", action: "watchlist", variant: "default" },
             { label: "List+", action: "add-to-list", variant: "accent" },
           ]}
           onAction={(action) => {

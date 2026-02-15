@@ -25,15 +25,15 @@ export default function SharedPage() {
     setLoading(false);
   }
 
-  if (loading) return <LoadingSpinner text="Loading shared lists..." />;
+  if (loading) return <LoadingSpinner text="Laster delte lister..." />;
 
   if (sharedLists.length === 0) {
     return (
       <div className="animate-fade-in-up">
-        <h2 className="text-xl font-bold text-[var(--text-primary)] mb-5">Shared with Me</h2>
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mb-5">Delt med meg</h2>
         <EmptyState
-          title="No shared lists"
-          description="When someone links with you and shares their lists, they'll appear here."
+          title="Ingen delte lister"
+          description="N\u00e5r noen kobler seg til deg og deler listene sine, vises de her."
         />
       </div>
     );
@@ -49,24 +49,24 @@ export default function SharedPage() {
 
   return (
     <div className="animate-fade-in-up">
-      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-5">Shared with Me</h2>
+      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-5">Delt med meg</h2>
 
       <div className="space-y-8">
         {Array.from(grouped.entries()).map(([key, { owner_name, lists }]) => (
           <div key={key}>
             <p className="text-xs font-semibold text-white/30 uppercase tracking-wider mb-3">
-              From {owner_name || "Unknown"}
+              Fra {owner_name || "Ukjent"}
             </p>
             {lists.map((sl) => (
               <div key={sl.list.id} className="mb-6">
                 <div className="flex items-center gap-2 mb-3">
                   <h3 className="text-base font-semibold text-white/80">{sl.list.name}</h3>
                   <span className="text-xs text-white/25">
-                    {sl.items.length} {sl.items.length === 1 ? "title" : "titles"}
+                    {sl.items.length} {sl.items.length === 1 ? "tittel" : "titler"}
                   </span>
                 </div>
                 {sl.items.length === 0 ? (
-                  <p className="text-xs text-white/20">Empty list</p>
+                  <p className="text-xs text-white/20">Tom liste</p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
                     {sl.items.map((item) => (

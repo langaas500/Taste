@@ -12,6 +12,8 @@ interface TitleCardProps {
   poster_path?: string | null;
   sentiment?: Sentiment | null;
   status?: string | null;
+  progress?: { season: number; episode: number } | null;
+  isFavorite?: boolean;
   onAction?: (action: string) => void;
   onClick?: () => void;
   actions?: { label: string; action: string; variant?: "default" | "green" | "red" | "yellow" | "accent" }[];
@@ -19,8 +21,8 @@ interface TitleCardProps {
 }
 
 const sentimentConfig = {
-  liked: { dotBg: "bg-emerald-400", color: "text-emerald-400", label: "Liked" },
-  disliked: { dotBg: "bg-red-400", color: "text-red-400", label: "Disliked" },
+  liked: { dotBg: "bg-emerald-400", color: "text-emerald-400", label: "Likte" },
+  disliked: { dotBg: "bg-red-400", color: "text-red-400", label: "Mislikte" },
   neutral: { dotBg: "bg-amber-400", color: "text-amber-400", label: "Meh" },
 };
 
@@ -30,6 +32,8 @@ export default function TitleCard({
   year,
   poster_path,
   sentiment,
+  progress,
+  isFavorite,
   onAction,
   onClick,
   actions,
@@ -72,10 +76,62 @@ export default function TitleCard({
           {type === "tv" ? "TV" : "Film"}
         </div>
 
+        {/* Progress badge (episode tracking) */}
+        {progress && (
+          <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded-md bg-black/70 text-[10px] font-bold text-sky-400 tracking-wide">
+            S{progress.season} E{progress.episode}
+          </div>
+        )}
+
+        {/* Favorite star - centered on poster */}
+        <button
+          aria-label={isFavorite ? "Fjern fra favoritter" : "Legg til favoritter"}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 z-10"
+          style={{
+            background: isFavorite ? "rgba(250,204,21,0.25)" : "rgba(0,0,0,0.5)",
+            opacity: isFavorite ? 1 : 0,
+            pointerEvents: isFavorite ? "auto" : "none",
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction?.("toggle-favorite");
+          }}
+        >
+          <svg
+            className="w-5 h-5 transition-transform duration-200 active:scale-125 drop-shadow-lg"
+            viewBox="0 0 24 24"
+            fill="#facc15"
+            stroke="#facc15"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+          </svg>
+        </button>
+        {/* Unfavorite on hover - only visible when hovering and not already favorite */}
+        {!isFavorite && (
+          <button
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAction?.("toggle-favorite");
+            }}
+          >
+            <svg
+              className="w-5 h-5 drop-shadow-lg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="rgba(255,255,255,0.6)"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+            </svg>
+          </button>
+        )}
+
         {/* Sentiment dot */}
         {sentiment && (
-          <div className="absolute top-2.5 right-2.5">
-            <span className={`block w-2.5 h-2.5 rounded-full ${sentimentConfig[sentiment].dotBg} ring-2 ring-black/30`} />
+          <div className="absolute top-2 right-2 z-10">
+            <span className={`block w-3.5 h-3.5 rounded-full ${sentimentConfig[sentiment].dotBg} ring-2 ring-black/40 shadow-lg`} />
           </div>
         )}
 
@@ -102,6 +158,7 @@ export default function TitleCard({
                       e.stopPropagation();
                       onAction?.(action);
                     }}
+                    aria-label={label.replace(/[\u{1F44D}\u{1F44E}\u{1F610}★✕+]/gu, "").trim() || label}
                     className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold tracking-wide transition-all duration-200 active:scale-95 ${btnClass}`}
                   >
                     {label}
@@ -126,6 +183,12 @@ export default function TitleCard({
               <span className={`text-[11px] ${sentimentConfig[sentiment].color}`}>
                 {sentimentConfig[sentiment].label}
               </span>
+            </>
+          )}
+          {progress && (
+            <>
+              <span className="text-white/10">·</span>
+              <span className="text-[11px] text-sky-400">S{progress.season}E{progress.episode}</span>
             </>
           )}
         </div>
@@ -154,7 +217,8 @@ export default function TitleCard({
                   e.stopPropagation();
                   onAction?.(action);
                 }}
-                className={`flex-1 py-1.5 rounded-lg text-[10px] font-semibold border transition-all active:scale-95 ${btnClass}`}
+                aria-label={label.replace(/[\u{1F44D}\u{1F44E}\u{1F610}★✕+]/gu, "").trim() || label}
+                className={`flex-1 py-2 rounded-lg text-[10px] font-semibold border transition-all active:scale-95 ${btnClass}`}
               >
                 {label}
               </button>

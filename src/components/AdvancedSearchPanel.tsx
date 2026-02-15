@@ -155,7 +155,7 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
                   type="text"
                   value={personQuery}
                   onChange={(e) => handlePersonInput(e.target.value)}
-                  placeholder="Sok etter skuespiller..."
+                  placeholder="Søk etter skuespiller..."
                   className="flex-1 px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/20 transition-all"
                 />
                 {selectedPersons.length === 1 && (
@@ -201,7 +201,7 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
               {personLoading && personQuery && (
                 <div className="absolute z-30 left-0 right-0 mt-1 glass rounded-xl border border-white/[0.08] px-3 py-3 flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white/10 border-t-white/50 rounded-full animate-spin" />
-                  <span className="text-xs text-white/40">Soker...</span>
+                  <span className="text-xs text-white/40">Søker...</span>
                 </div>
               )}
             </div>
@@ -232,13 +232,13 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
             {/* Streaming providers */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider">Strommetjeneste</label>
+                <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider">Strømmetjeneste</label>
                 {currentProviders.length > 10 && (
                   <button
                     onClick={() => setShowProviders(!showProviders)}
                     className="text-[10px] text-[var(--accent-light)] hover:text-[var(--accent)] transition-colors"
                   >
-                    {showProviders ? "Vis farre" : `Vis alle (${currentProviders.length})`}
+                    {showProviders ? "Vis færre" : `Vis alle (${currentProviders.length})`}
                   </button>
                 )}
               </div>
@@ -273,7 +273,7 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
 
             {/* Year range */}
             <div>
-              <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider mb-2 block">Arstall</label>
+              <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider mb-2 block">Årstall</label>
               <div className="flex items-center gap-3">
                 <input
                   type="number"
@@ -305,16 +305,16 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
                 onChange={(e) => onFiltersChange({ ...filters, sortBy: e.target.value })}
                 className="px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white/70 focus:outline-none focus:border-white/20 transition-all"
               >
-                <option value="popularity.desc">Mest populaer</option>
-                <option value="vote_average.desc">Hoyest rangert</option>
-                <option value="primary_release_date.desc">Nyeste forst</option>
-                <option value="primary_release_date.asc">Eldste forst</option>
+                <option value="popularity.desc">Mest populær</option>
+                <option value="vote_average.desc">Høyest rangert</option>
+                <option value="primary_release_date.desc">Nyeste først</option>
+                <option value="primary_release_date.asc">Eldste først</option>
               </select>
             </div>
 
             {/* Search button */}
             <GlowButton onClick={onSearch} fullWidth>
-              Sok med filtre
+              Søk med filtre
             </GlowButton>
           </div>
         </motion.div>

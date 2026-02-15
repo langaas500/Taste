@@ -39,7 +39,7 @@ export default function ListDetailPage() {
     );
   }
 
-  if (loading) return <LoadingSpinner text="Loading list..." />;
+  if (loading) return <LoadingSpinner text="Laster liste..." />;
   if (!list) return null;
 
   return (
@@ -60,17 +60,17 @@ export default function ListDetailPage() {
           )}
         </div>
         <span className="ml-auto text-sm text-white/30 font-medium">
-          {list.items.length} {list.items.length === 1 ? "title" : "titles"}
+          {list.items.length} {list.items.length === 1 ? "tittel" : "titler"}
         </span>
       </div>
 
       {list.items.length === 0 ? (
         <EmptyState
-          title="This list is empty"
-          description="Add movies and shows from search or your library."
+          title="Denne listen er tom"
+          description="Legg til filmer og serier fra s\u00f8k eller biblioteket ditt."
           action={
             <Link href="/search">
-              <GlowButton>Search</GlowButton>
+              <GlowButton>S\u00f8k</GlowButton>
             </Link>
           }
         />
@@ -96,7 +96,7 @@ export default function ListDetailPage() {
                 if (action === "remove") handleRemove(item.tmdb_id, item.type);
               }}
               actions={[
-                { label: "Remove", action: "remove", variant: "red" },
+                { label: "Fjern", action: "remove", variant: "red" },
               ]}
             />
           ))}

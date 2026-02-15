@@ -3,22 +3,24 @@
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import TitleCard from "@/components/TitleCard";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import { SkeletonGrid } from "@/components/SkeletonCard";
 import EmptyState from "@/components/EmptyState";
 import GlowButton from "@/components/GlowButton";
 import StreamingModal from "@/components/StreamingModal";
 import AddToListModal from "@/components/AddToListModal";
-import { removeTitle, addExclusion } from "@/lib/api";
+import { removeTitle, addExclusion, toggleFavorite } from "@/lib/api";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import type { UserTitle, TitleCache, MediaType, Recommendation } from "@/lib/types";
 
-type Filter = "all" | "liked" | "disliked" | "neutral" | "excluded";
+type Filter = "all" | "favorites" | "liked" | "disliked" | "neutral" | "excluded";
+type SortKey = "recent" | "alpha" | "year";
 
 export default function LibraryPage() {
   const [titles, setTitles] = useState<(UserTitle & { cache?: TitleCache })[]>([]);
-  const [exclusions, setExclusions] = useState<{ tmdb_id: number; type: string; reason: string | null }[]>([]);
+  const [exclusions, setExclusions] = useState<{ tmdb_id: number; type: string; reason: string | null; cache?: TitleCache }[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
+  const [sort, setSort] = useState<SortKey>("recent");
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
   const [addToListItem, setAddToListItem] = useState<{ tmdb_id: number; type: MediaType; title: string } | null>(null);
@@ -52,7 +54,11 @@ export default function LibraryPage() {
     }));
 
     setTitles(enriched);
-    setExclusions((exc || []) as { tmdb_id: number; type: string; reason: string | null }[]);
+    const enrichedExc = ((exc || []) as { tmdb_id: number; type: string; reason: string | null }[]).map((e) => ({
+      ...e,
+      cache: cacheMap.get(`${e.tmdb_id}:${e.type}`),
+    }));
+    setExclusions(enrichedExc);
     setLoading(false);
 
     // Load recommendations in background if user has titles
@@ -81,27 +87,54 @@ export default function LibraryPage() {
     setExclusions((prev) => [...prev, { tmdb_id, type, reason: "Excluded from library" }]);
   }
 
+  async function handleToggleFavorite(tmdb_id: number, type: MediaType) {
+    const t = titles.find((x) => x.tmdb_id === tmdb_id && x.type === type);
+    if (!t) return;
+    const newVal = !t.favorite;
+    await toggleFavorite(tmdb_id, type, newVal);
+    setTitles((prev) =>
+      prev.map((x) => x.tmdb_id === tmdb_id && x.type === type ? { ...x, favorite: newVal } : x)
+    );
+  }
+
   function scrollRecs(dir: "left" | "right") {
     if (!scrollRef.current) return;
     const amount = scrollRef.current.clientWidth * 0.7;
     scrollRef.current.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
   }
 
-  const filtered =
+  const filteredUnsorted =
     filter === "excluded"
       ? []
-      : filter === "all"
-        ? titles
-        : titles.filter((t) => t.sentiment === filter);
+      : filter === "favorites"
+        ? titles.filter((t) => t.favorite)
+        : filter === "all"
+          ? titles
+          : titles.filter((t) => t.sentiment === filter);
+
+  const filtered = [...filteredUnsorted].sort((a, b) => {
+    if (sort === "alpha") return (a.cache?.title || "").localeCompare(b.cache?.title || "", "nb");
+    if (sort === "year") return (b.cache?.year || 0) - (a.cache?.year || 0);
+    return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+  });
 
   const excludedSet = new Set(exclusions.map((e) => `${e.tmdb_id}:${e.type}`));
 
-  if (loading) return <LoadingSpinner text="Loading library..." />;
+  if (loading) return (
+    <div className="animate-fade-in-up">
+      <div className="mb-8">
+        <div className="skeleton h-9 w-48 rounded-lg" />
+        <div className="skeleton h-4 w-32 rounded mt-2" />
+      </div>
+      <SkeletonGrid count={12} />
+    </div>
+  );
 
   const filterTabs: { id: Filter; label: string; count: number }[] = [
     { id: "all", label: "Alle", count: titles.length },
+    { id: "favorites", label: "★ Favoritter", count: titles.filter((t) => t.favorite).length },
     { id: "liked", label: "Likte", count: titles.filter((t) => t.sentiment === "liked").length },
-    { id: "neutral", label: "Noytral", count: titles.filter((t) => t.sentiment === "neutral").length },
+    { id: "neutral", label: "Nøytral", count: titles.filter((t) => t.sentiment === "neutral").length },
     { id: "disliked", label: "Mislikte", count: titles.filter((t) => t.sentiment === "disliked").length },
     { id: "excluded", label: "Ekskluderte", count: exclusions.length },
   ];
@@ -148,35 +181,60 @@ export default function LibraryPage() {
         </div>
       </div>
 
+      {/* Sort chips */}
+      {filter !== "excluded" && filtered.length > 1 && (
+        <div className="flex items-center gap-2 mb-5">
+          <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">Sorter</span>
+          {([["recent", "Nylig"], ["alpha", "A–Å"], ["year", "År"]] as [SortKey, string][]).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setSort(key)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+                sort === key
+                  ? "bg-white/[0.1] text-white"
+                  : "bg-white/[0.03] text-white/40 hover:bg-white/[0.06] hover:text-white/60"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Library grid */}
       {filter === "excluded" ? (
         exclusions.length === 0 ? (
           <EmptyState title="Ingen ekskluderinger" description="Titler du ekskluderer vises ikke i anbefalinger." />
         ) : (
-          <div className="space-y-2 stagger">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5 stagger">
             {exclusions.map((e) => (
-              <div key={`${e.tmdb_id}:${e.type}`} className="glass rounded-[var(--radius-lg)] flex items-center justify-between p-4">
-                <span className="text-sm text-[var(--text-secondary)]">TMDB:{e.tmdb_id} ({e.type})</span>
-                <button
-                  onClick={async () => {
-                    await fetch("/api/exclusions", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tmdb_id: e.tmdb_id, type: e.type }) });
+              <TitleCard
+                key={`${e.tmdb_id}:${e.type}`}
+                tmdb_id={e.tmdb_id}
+                type={e.type as MediaType}
+                title={e.cache?.title || `TMDB:${e.tmdb_id}`}
+                year={e.cache?.year}
+                poster_path={e.cache?.poster_path}
+                onAction={(action) => {
+                  if (action === "unexclude") {
+                    fetch("/api/exclusions", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tmdb_id: e.tmdb_id, type: e.type }) });
                     setExclusions((prev) => prev.filter((x) => !(x.tmdb_id === e.tmdb_id && x.type === e.type)));
-                  }}
-                  className="btn-press px-2.5 py-1 rounded-[var(--radius-sm)] text-xs font-medium bg-[var(--red-glow)] text-[var(--red)] transition-all duration-200 hover:bg-[rgba(248,113,113,0.25)]"
-                >
-                  Fjern
-                </button>
-              </div>
+                  }
+                }}
+                actions={[
+                  { label: "Fjern ekskludering", action: "unexclude", variant: "red" },
+                ]}
+              />
             ))}
           </div>
         )
       ) : filtered.length === 0 ? (
         <EmptyState
           title="Ingen titler her"
-          description="Sok etter filmer og serier for a bygge biblioteket ditt."
+          description="Søk etter filmer og serier for å bygge biblioteket ditt."
           action={
             <Link href="/search">
-              <GlowButton>Sok</GlowButton>
+              <GlowButton>Søk</GlowButton>
             </Link>
           }
         />
@@ -191,8 +249,10 @@ export default function LibraryPage() {
               year={t.cache?.year}
               poster_path={t.cache?.poster_path}
               sentiment={t.sentiment}
+              isFavorite={t.favorite}
               onClick={() => setSelectedItem({ id: t.tmdb_id, type: t.type, title: t.cache?.title || `TMDB:${t.tmdb_id}`, poster_path: t.cache?.poster_path || null })}
               onAction={(action) => {
+                if (action === "toggle-favorite") handleToggleFavorite(t.tmdb_id, t.type);
                 if (action === "remove") handleRemove(t.tmdb_id, t.type);
                 if (action === "exclude") handleExclude(t.tmdb_id, t.type);
                 if (action === "add-to-list") setAddToListItem({ tmdb_id: t.tmdb_id, type: t.type, title: t.cache?.title || `TMDB:${t.tmdb_id}` });
@@ -219,7 +279,7 @@ export default function LibraryPage() {
                 For deg
               </h2>
               <p className="text-sm text-[var(--text-tertiary)] mt-1">
-                Basert pa din smak
+                Basert på din smak
               </p>
             </div>
             <Link href="/recommendations">
@@ -266,7 +326,7 @@ export default function LibraryPage() {
                     className="group flex-shrink-0 w-[140px] sm:w-[160px] cursor-pointer"
                     onClick={() => setSelectedItem({ id: rec.tmdb_id, type: rec.type, title: rec.title, poster_path: rec.poster_path })}
                   >
-                    <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06] group-hover:border-white/[0.14] transition-all duration-500 group-hover:shadow-[0_8px_30px_rgba(124,92,252,0.12)]">
+                    <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06] group-hover:border-white/[0.14] transition-all duration-500 group-hover:shadow-[0_8px_30px_rgba(255,42,42,0.12)]">
                       {imgSrc ? (
                         <Image
                           src={imgSrc}
@@ -305,7 +365,7 @@ export default function LibraryPage() {
       {recsLoading && titles.length >= 3 && (
         <div className="mt-12">
           <h2 className="text-2xl font-extrabold tracking-tight text-[var(--text-primary)] mb-2">For deg</h2>
-          <p className="text-sm text-[var(--text-tertiary)] mb-5">Basert pa din smak</p>
+          <p className="text-sm text-[var(--text-tertiary)] mb-5">Basert på din smak</p>
           <div className="flex gap-4 overflow-hidden">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="flex-shrink-0 w-[140px] sm:w-[160px]">
@@ -327,27 +387,32 @@ export default function LibraryPage() {
         />
       )}
 
-      {selectedItem && (
-        <StreamingModal
-          tmdbId={selectedItem.id}
-          type={selectedItem.type}
-          title={selectedItem.title}
-          posterPath={selectedItem.poster_path}
-          onClose={() => setSelectedItem(null)}
-          actions={[
-            { label: "List+", action: "add-to-list", variant: "accent" },
-            ...(excludedSet.has(`${selectedItem.id}:${selectedItem.type}`)
-              ? [{ label: "Ekskludert", action: "excluded", variant: "red" as const }]
-              : [{ label: "Ekskluder", action: "exclude", variant: "red" as const }]),
-            { label: "Fjern", action: "remove", variant: "default" },
-          ]}
-          onAction={(action) => {
-            if (action === "remove") handleRemove(selectedItem.id, selectedItem.type);
-            if (action === "exclude") handleExclude(selectedItem.id, selectedItem.type);
-            if (action === "add-to-list") setAddToListItem({ tmdb_id: selectedItem.id, type: selectedItem.type, title: selectedItem.title });
-          }}
-        />
-      )}
+      {selectedItem && (() => {
+        const t = titles.find((x) => x.tmdb_id === selectedItem.id && x.type === selectedItem.type);
+        return (
+          <StreamingModal
+            tmdbId={selectedItem.id}
+            type={selectedItem.type}
+            title={selectedItem.title}
+            posterPath={selectedItem.poster_path}
+            onClose={() => setSelectedItem(null)}
+            isFavorite={t?.favorite}
+            onToggleFavorite={() => handleToggleFavorite(selectedItem.id, selectedItem.type)}
+            actions={[
+              { label: "List+", action: "add-to-list", variant: "accent" },
+              ...(excludedSet.has(`${selectedItem.id}:${selectedItem.type}`)
+                ? [{ label: "Ekskludert", action: "excluded", variant: "red" as const }]
+                : [{ label: "Ekskluder", action: "exclude", variant: "red" as const }]),
+              { label: "Fjern", action: "remove", variant: "default" },
+            ]}
+            onAction={(action) => {
+              if (action === "remove") handleRemove(selectedItem.id, selectedItem.type);
+              if (action === "exclude") handleExclude(selectedItem.id, selectedItem.type);
+              if (action === "add-to-list") setAddToListItem({ tmdb_id: selectedItem.id, type: selectedItem.type, title: selectedItem.title });
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }

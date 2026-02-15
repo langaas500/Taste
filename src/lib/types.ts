@@ -1,5 +1,5 @@
 export type MediaType = "movie" | "tv";
-export type Status = "watched" | "watchlist";
+export type Status = "watched" | "watchlist" | "watching";
 export type Sentiment = "liked" | "disliked" | "neutral";
 export type FeedbackType = "like_suggestion" | "not_for_me";
 
@@ -32,6 +32,7 @@ export interface UserTitle {
   note: string | null;
   last_season: number | null;
   last_episode: number | null;
+  favorite: boolean;
   watched_at: string | null;
   created_at: string;
   updated_at: string;

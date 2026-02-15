@@ -28,7 +28,7 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
-        setMessage("Check your email for a confirmation link.");
+        setMessage("Sjekk e-posten din for en bekreftelseslenke.");
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -48,7 +48,7 @@ export default function LoginPage() {
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse 50% 40% at 50% 30%, rgba(124, 92, 252, 0.08) 0%, transparent 70%)",
+            "radial-gradient(ellipse 50% 40% at 50% 30%, rgba(255, 42, 42, 0.08) 0%, transparent 70%)",
         }}
       />
 
@@ -62,7 +62,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-2xl font-bold gradient-text">WatchLedger</h1>
           <p className="text-[var(--text-tertiary)] text-sm mt-2">
-            Track what you watch. Get smart recommendations.
+            Hold styr på det du ser. Få smarte anbefalinger.
           </p>
         </div>
 
@@ -71,7 +71,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">
-                Email
+                E-post
               </label>
               <input
                 type="email"
@@ -79,12 +79,12 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[var(--radius-md)] text-[var(--text-primary)] text-sm placeholder-[var(--text-tertiary)] input-glow transition-all duration-200 focus:outline-none"
-                placeholder="you@example.com"
+                placeholder="din@epost.no"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">
-                Password
+                Passord
               </label>
               <input
                 type="password"
@@ -93,7 +93,7 @@ export default function LoginPage() {
                 required
                 minLength={6}
                 className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[var(--radius-md)] text-[var(--text-primary)] text-sm placeholder-[var(--text-tertiary)] input-glow transition-all duration-200 focus:outline-none"
-                placeholder="Min 6 characters"
+                placeholder="Minst 6 tegn"
               />
             </div>
 
@@ -116,21 +116,21 @@ export default function LoginPage() {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  {mode === "login" ? "Signing in..." : "Creating account..."}
+                  {mode === "login" ? "Logger inn..." : "Oppretter konto..."}
                 </span>
-              ) : mode === "login" ? "Sign In" : "Create Account"}
+              ) : mode === "login" ? "Logg inn" : "Opprett konto"}
             </button>
           </form>
         </div>
 
         {/* Toggle mode */}
         <p className="text-center text-sm text-[var(--text-tertiary)] mt-5">
-          {mode === "login" ? "No account? " : "Already have an account? "}
+          {mode === "login" ? "Ingen konto? " : "Har du allerede en konto? "}
           <button
             onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setMessage(""); }}
             className="text-[var(--accent-light)] hover:text-[var(--accent)] font-medium transition-colors"
           >
-            {mode === "login" ? "Sign up" : "Sign in"}
+            {mode === "login" ? "Registrer deg" : "Logg inn"}
           </button>
         </p>
       </div>

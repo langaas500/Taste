@@ -1,17 +1,25 @@
-"use client";
-
 import { useState, useEffect } from "react";
 
 const messages = [
-  "Analyzing your taste...",
-  "Mapping patterns...",
-  "Finding unexpected connections...",
-  "Scanning hidden gems...",
-  "Weighing your preferences...",
-  "Curating your picks...",
+  { text: "Spolerer ingen filmer...", emoji: "🤫" },
+  { text: "Blar gjennom samlingen din...", emoji: "🎬" },
+  { text: "Finner mønster i galskapen...", emoji: "🔍" },
+  { text: "Bedømmer smaken din (litt)...", emoji: "👀" },
+  { text: "Sjekker guilty pleasures...", emoji: "🍿" },
+  { text: "Analyserer binge-vanene...", emoji: "📺" },
+  { text: "Teller explosjoner vs. tårer...", emoji: "💥" },
+  { text: "Kalibrerer cringe-toleransen...", emoji: "😬" },
+  { text: "Noterer at du likte den filmen...", emoji: "📝" },
+  { text: "Nesten ferdig, bare én episode til...", emoji: "⏳" },
 ];
 
-export default function AIThinkingScreen({ text }: { text?: string }) {
+const filmStrip = () => {
+  const holes = [];
+  for (let i = 0; i < 20; i++) holes.push(i);
+  return holes;
+};
+
+export default function AIThinkingScreen() {
   const [msgIndex, setMsgIndex] = useState(0);
   const [fade, setFade] = useState(true);
 
@@ -21,69 +29,163 @@ export default function AIThinkingScreen({ text }: { text?: string }) {
       setTimeout(() => {
         setMsgIndex((prev) => (prev + 1) % messages.length);
         setFade(true);
-      }, 300);
-    }, 2500);
+      }, 250);
+    }, 2800);
     return () => clearInterval(interval);
   }, []);
 
+  const currentMsg = messages[msgIndex];
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-[var(--bg-base)]">
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            background: `
-              radial-gradient(ellipse 80% 60% at 50% 40%, rgba(124, 92, 252, 0.15) 0%, transparent 70%),
-              radial-gradient(ellipse 60% 40% at 30% 60%, rgba(99, 102, 241, 0.1) 0%, transparent 60%),
-              radial-gradient(ellipse 50% 50% at 70% 30%, rgba(168, 85, 247, 0.08) 0%, transparent 60%)
-            `,
-            animation: "glow-pulse 4s ease-in-out infinite",
-          }}
-        />
+    <div style={{
+      position: "relative",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      minHeight: "70vh", overflow: "hidden", borderRadius: 16,
+    }}>
+      {/* Subtle ambient light */}
+      <div style={{
+        position: "absolute", top: "30%", left: "50%", transform: "translate(-50%, -50%)",
+        width: 600, height: 600, borderRadius: "50%", pointerEvents: "none",
+        background: "radial-gradient(circle, rgba(255,42,42,0.04) 0%, transparent 60%)",
+      }} />
+
+      {/* Film strip left */}
+      <div style={{
+        position: "absolute", left: 40, top: 0, bottom: 0, width: 32, opacity: 0.04,
+        display: "flex", flexDirection: "column", gap: 4, paddingTop: 20,
+        animation: "stripScroll 20s linear infinite",
+      }}>
+        {filmStrip().map((i) => (
+          <div key={`l${i}`} style={{
+            width: 32, height: 24, borderRadius: 3,
+            border: "2px solid rgba(255,255,255,0.8)",
+          }} />
+        ))}
       </div>
 
-      {/* Orbiting particles */}
-      <div className="absolute" style={{ width: 160, height: 160 }}>
-        <div
-          className="absolute w-2 h-2 rounded-full bg-[var(--accent)] opacity-60"
-          style={{ animation: "orbit 6s linear infinite", top: "50%", left: "50%" }}
-        />
-        <div
-          className="absolute w-1.5 h-1.5 rounded-full bg-[var(--accent-light)] opacity-40"
-          style={{ animation: "orbit-reverse 8s linear infinite", top: "50%", left: "50%" }}
-        />
-        <div
-          className="absolute w-1 h-1 rounded-full bg-purple-400 opacity-50"
-          style={{ animation: "orbit 10s linear infinite", top: "50%", left: "50%", animationDelay: "-3s" }}
-        />
+      {/* Film strip right */}
+      <div style={{
+        position: "absolute", right: 40, top: 0, bottom: 0, width: 32, opacity: 0.04,
+        display: "flex", flexDirection: "column", gap: 4, paddingTop: 40,
+        animation: "stripScroll 25s linear infinite reverse",
+      }}>
+        {filmStrip().map((i) => (
+          <div key={`r${i}`} style={{
+            width: 32, height: 24, borderRadius: 3,
+            border: "2px solid rgba(255,255,255,0.8)",
+          }} />
+        ))}
       </div>
 
-      {/* Glass card */}
-      <div className="relative glass-strong rounded-[var(--radius-xl)] p-8 max-w-xs mx-4 text-center">
-        <div className="w-12 h-12 mx-auto mb-5 rounded-full bg-[var(--accent-glow)] flex items-center justify-center">
-          <div className="w-6 h-6 rounded-full bg-[var(--accent)] opacity-80" style={{ animation: "glow-pulse 2s ease-in-out infinite" }} />
+      {/* Main content */}
+      <div style={{
+        position: "relative", textAlign: "center", maxWidth: 360, padding: "0 24px",
+      }}>
+        {/* Icon circle */}
+        <div style={{
+          width: 72, height: 72, margin: "0 auto 28px", position: "relative",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          {/* Pulsing rings */}
+          <div style={{
+            position: "absolute", inset: -8, borderRadius: "50%",
+            border: "1px solid rgba(255,42,42,0.15)",
+            animation: "ping 2s cubic-bezier(0, 0, 0.2, 1) infinite",
+          }} />
+          <div style={{
+            position: "absolute", inset: -4, borderRadius: "50%",
+            border: "1px solid rgba(255,42,42,0.08)",
+            animation: "ping 2s cubic-bezier(0, 0, 0.2, 1) infinite",
+            animationDelay: "0.5s",
+          }} />
+
+          <div style={{
+            width: 72, height: 72, borderRadius: "50%",
+            background: "rgba(255,42,42,0.08)",
+            border: "1px solid rgba(255,42,42,0.15)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 32,
+            animation: "breathe 3s ease-in-out infinite",
+          }}>
+            <span style={{
+              transition: "opacity 0.25s",
+              opacity: fade ? 1 : 0,
+            }}>
+              {currentMsg.emoji}
+            </span>
+          </div>
         </div>
 
-        <p
-          className={`text-sm font-medium text-[var(--text-primary)] transition-opacity duration-300 ${fade ? "opacity-100" : "opacity-0"}`}
-        >
-          {text || messages[msgIndex]}
-        </p>
+        {/* Message */}
+        <div style={{
+          fontSize: 16, fontWeight: 600, color: "rgba(255,255,255,0.85)",
+          marginBottom: 8, minHeight: 24,
+          transition: "opacity 0.25s",
+          opacity: fade ? 1 : 0,
+        }}>
+          {currentMsg.text}
+        </div>
 
-        <div className="mt-4 flex justify-center gap-1">
+        {/* Three dots */}
+        <div style={{
+          display: "flex", justifyContent: "center", gap: 6, marginBottom: 0,
+        }}>
           {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="w-1 h-1 rounded-full bg-[var(--accent)]"
-              style={{
-                animation: "glow-pulse 1.5s ease-in-out infinite",
-                animationDelay: `${i * 200}ms`,
-              }}
-            />
+            <div key={i} style={{
+              width: 4, height: 4, borderRadius: "50%",
+              background: "rgba(255,42,42,0.5)",
+              animation: "dotPulse 1.4s ease-in-out infinite",
+              animationDelay: `${i * 0.2}s`,
+            }} />
+          ))}
+        </div>
+
+        {/* Time estimate */}
+        <div style={{
+          marginTop: 24,
+          fontSize: 12, color: "rgba(255,255,255,0.25)",
+          letterSpacing: "0.02em",
+        }}>
+          Dette kan ta 10–20 sekunder
+        </div>
+
+        {/* Bottom emoji row */}
+        <div style={{
+          marginTop: 56, display: "flex", justifyContent: "center", gap: 20,
+        }}>
+          {["🎬", "🎭", "🎞️", "📽️", "🍿"].map((e, i) => (
+            <span key={i} style={{
+              fontSize: 28,
+              animation: "float 3s ease-in-out infinite",
+              animationDelay: `${i * 0.4}s`,
+            }}>{e}</span>
           ))}
         </div>
       </div>
+
+      <style>{`
+        @keyframes ping {
+          0% { transform: scale(1); opacity: 1; }
+          75%, 100% { transform: scale(1.6); opacity: 0; }
+        }
+        @keyframes breathe {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+        @keyframes dotPulse {
+          0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+          40% { opacity: 1; transform: scale(1.2); }
+        }
+        @keyframes stripScroll {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-280px); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -21,8 +21,23 @@ export function logTitle(data: {
   status: string;
   sentiment?: string;
   rating?: number;
+  last_season?: number;
+  last_episode?: number;
+  favorite?: boolean;
 }) {
   return api("/api/log", { method: "POST", body: JSON.stringify(data) });
+}
+
+export function updateTitle(tmdb_id: number, type: string, updates: Record<string, unknown>) {
+  return api("/api/log", { method: "PATCH", body: JSON.stringify({ tmdb_id, type, ...updates }) });
+}
+
+export function updateProgress(tmdb_id: number, type: string, season: number, episode: number) {
+  return updateTitle(tmdb_id, type, { last_season: season, last_episode: episode });
+}
+
+export function toggleFavorite(tmdb_id: number, type: string, favorite: boolean) {
+  return updateTitle(tmdb_id, type, { favorite });
 }
 
 export function removeTitle(tmdb_id: number, type: string) {

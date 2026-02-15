@@ -57,14 +57,14 @@ export default function ListsPage() {
     } catch {}
   }
 
-  if (loading) return <LoadingSpinner text="Loading lists..." />;
+  if (loading) return <LoadingSpinner text="Laster lister..." />;
 
   return (
     <div className="animate-fade-in-up">
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-bold text-[var(--text-primary)]">My Lists</h2>
+        <h2 className="text-xl font-bold text-[var(--text-primary)]">Mine lister</h2>
         <GlowButton onClick={() => setShowCreate(!showCreate)} size="sm">
-          + New List
+          + Ny liste
         </GlowButton>
       </div>
 
@@ -77,18 +77,18 @@ export default function ListsPage() {
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); if (e.key === "Escape") setShowCreate(false); }}
               autoFocus
-              placeholder="List name..."
+              placeholder="Listenavn..."
               maxLength={50}
               className="flex-1 px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder-white/25 focus:outline-none focus:border-white/20 transition-all"
             />
             <GlowButton onClick={handleCreate} disabled={creating || !newName.trim()} size="sm">
-              {creating ? "Creating..." : "Create"}
+              {creating ? "Oppretter..." : "Opprett"}
             </GlowButton>
             <button
               onClick={() => setShowCreate(false)}
               className="px-3 py-2 text-sm text-white/40 hover:text-white/60 transition-colors"
             >
-              Cancel
+              Avbryt
             </button>
           </div>
         </GlassCard>
@@ -96,10 +96,10 @@ export default function ListsPage() {
 
       {lists.length === 0 ? (
         <EmptyState
-          title="No lists yet"
-          description="Create custom lists to organize your movies and shows."
+          title="Ingen lister enn\u00e5"
+          description="Lag egne lister for \u00e5 organisere filmene og seriene dine."
           action={
-            <GlowButton onClick={() => setShowCreate(true)}>Create Your First List</GlowButton>
+            <GlowButton onClick={() => setShowCreate(true)}>Lag din f\u00f8rste liste</GlowButton>
           }
         />
       ) : (
@@ -133,7 +133,7 @@ export default function ListsPage() {
                     {list.name}
                   </h3>
                   <p className="text-xs text-white/30 mt-0.5">
-                    {list.item_count} {list.item_count === 1 ? "title" : "titles"}
+                    {list.item_count} {list.item_count === 1 ? "tittel" : "titler"}
                   </p>
                 </div>
                 <button

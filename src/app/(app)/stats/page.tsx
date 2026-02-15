@@ -95,18 +95,18 @@ export default function StatsPage() {
     setLoading(false);
   }
 
-  if (loading) return <LoadingSpinner text="Crunching numbers..." />;
+  if (loading) return <LoadingSpinner text="Knuser tall..." />;
 
   if (!stats || stats.totalWatched === 0) {
     return (
       <div className="animate-fade-in-up">
-        <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">Stats</h2>
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">Statistikk</h2>
         <EmptyState
-          title="No stats yet"
-          description="Start tracking shows and movies to see your viewing statistics."
+          title="Ingen statistikk enn\u00e5"
+          description="Begynn \u00e5 logge filmer og serier for \u00e5 se visningsstatistikken din."
           action={
             <Link href="/search">
-              <GlowButton>Search</GlowButton>
+              <GlowButton>S\u00f8k</GlowButton>
             </Link>
           }
         />
@@ -117,22 +117,22 @@ export default function StatsPage() {
   const maxGenre = stats.topGenres[0]?.count || 1;
 
   const overviewCards = [
-    { label: "Watched", value: stats.totalWatched, color: "text-[var(--accent-light)]" },
-    { label: "Watchlist", value: stats.totalWatchlist, color: "text-[var(--yellow)]" },
-    { label: "Movies", value: stats.movies, color: "text-[var(--text-primary)]" },
-    { label: "TV Shows", value: stats.tvShows, color: "text-[var(--text-primary)]" },
+    { label: "Sett", value: stats.totalWatched, color: "text-[var(--accent-light)]" },
+    { label: "Se-liste", value: stats.totalWatchlist, color: "text-[var(--yellow)]" },
+    { label: "Filmer", value: stats.movies, color: "text-[var(--text-primary)]" },
+    { label: "Serier", value: stats.tvShows, color: "text-[var(--text-primary)]" },
   ];
 
   const sentimentBars = [
-    { label: "Liked", value: stats.liked, color: "bg-[var(--green)]", textColor: "text-[var(--green)]" },
-    { label: "Neutral", value: stats.neutral, color: "bg-[var(--yellow)]", textColor: "text-[var(--yellow)]" },
-    { label: "Disliked", value: stats.disliked, color: "bg-[var(--red)]", textColor: "text-[var(--red)]" },
-    { label: "Unrated", value: stats.unrated, color: "bg-[var(--text-tertiary)]", textColor: "text-[var(--text-tertiary)]" },
+    { label: "Likte", value: stats.liked, color: "bg-[var(--green)]", textColor: "text-[var(--green)]" },
+    { label: "N\u00f8ytral", value: stats.neutral, color: "bg-[var(--yellow)]", textColor: "text-[var(--yellow)]" },
+    { label: "Mislikte", value: stats.disliked, color: "bg-[var(--red)]", textColor: "text-[var(--red)]" },
+    { label: "Uvurdert", value: stats.unrated, color: "bg-[var(--text-tertiary)]", textColor: "text-[var(--text-tertiary)]" },
   ];
 
   return (
     <div className="animate-fade-in-up">
-      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6">Stats</h2>
+      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6">Statistikk</h2>
 
       {/* Overview cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -147,7 +147,7 @@ export default function StatsPage() {
       {/* Sentiment breakdown */}
       <GlassCard hover={false} className="p-5 mb-4">
         <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-4">
-          Sentiment
+          Vurdering
         </h3>
         <div className="flex gap-4">
           {sentimentBars.map(({ label, value, color, textColor }) => (
@@ -165,7 +165,7 @@ export default function StatsPage() {
         </div>
         {stats.avgRating && (
           <p className="text-sm text-[var(--text-tertiary)] text-center mt-4 pt-4 border-t border-[var(--border)]">
-            Average rating: <span className="text-[var(--text-primary)] font-semibold">{stats.avgRating}/10</span>
+            Gjennomsnittlig vurdering: <span className="text-[var(--text-primary)] font-semibold">{stats.avgRating}/10</span>
           </p>
         )}
       </GlassCard>
@@ -174,7 +174,7 @@ export default function StatsPage() {
       {stats.topGenres.length > 0 && (
         <GlassCard hover={false} className="p-5 mb-4">
           <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-4">
-            Top Genres
+            Toppsjangre
           </h3>
           <div className="space-y-3">
             {stats.topGenres.map(({ name, count }) => (
@@ -197,7 +197,7 @@ export default function StatsPage() {
       {stats.recentlyWatched.length > 0 && (
         <GlassCard hover={false} className="p-5">
           <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-4">
-            Recently Watched
+            Nylig sett
           </h3>
           <div className="space-y-2.5">
             {stats.recentlyWatched.map((item, i) => (

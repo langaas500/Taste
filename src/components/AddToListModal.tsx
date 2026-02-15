@@ -93,7 +93,7 @@ export default function AddToListModal({ tmdb_id, type, title, onClose }: AddToL
         {/* Header */}
         <div className="p-4 border-b border-white/[0.06]">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-white">Add to List</h3>
+            <h3 className="text-sm font-semibold text-white">Legg til i liste</h3>
             <button
               onClick={onClose}
               className="w-7 h-7 flex items-center justify-center rounded-full bg-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.12] transition-all"
@@ -113,7 +113,7 @@ export default function AddToListModal({ tmdb_id, type, title, onClose }: AddToL
               <div className="w-5 h-5 border-2 border-white/10 border-t-white/50 rounded-full animate-spin" />
             </div>
           ) : lists.length === 0 ? (
-            <p className="text-xs text-white/30 text-center py-6">No lists yet. Create one below.</p>
+            <p className="text-xs text-white/30 text-center py-6">Ingen lister ennå. Lag en nedenfor.</p>
           ) : (
             <div className="space-y-1">
               {lists.map((list) => {
@@ -155,7 +155,7 @@ export default function AddToListModal({ tmdb_id, type, title, onClose }: AddToL
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
-              placeholder="New list name..."
+              placeholder="Nytt listenavn..."
               maxLength={50}
               className="flex-1 px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/20 transition-all"
             />
@@ -164,7 +164,7 @@ export default function AddToListModal({ tmdb_id, type, title, onClose }: AddToL
               disabled={creating || !newName.trim()}
               className="px-3 py-2 bg-[var(--accent)]/15 text-[var(--accent-light)] rounded-lg text-xs font-semibold hover:bg-[var(--accent)]/25 transition-all disabled:opacity-30"
             >
-              {creating ? "..." : "Create"}
+              {creating ? "..." : "Opprett"}
             </button>
           </div>
         </div>
