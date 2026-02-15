@@ -4,12 +4,20 @@ import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import type { WatchProvider, WatchProviderData } from "@/lib/types";
 
+interface ModalAction {
+  label: string;
+  action: string;
+  variant?: "default" | "green" | "red" | "yellow" | "accent";
+}
+
 interface StreamingModalProps {
   tmdbId: number;
   type: "movie" | "tv";
   title: string;
   posterPath?: string | null;
   onClose: () => void;
+  actions?: ModalAction[];
+  onAction?: (action: string) => void;
 }
 
 interface TitleDetails {
@@ -47,7 +55,7 @@ interface CastMember {
   order: number;
 }
 
-export default function StreamingModal({ tmdbId, type, title, posterPath, onClose }: StreamingModalProps) {
+export default function StreamingModal({ tmdbId, type, title, posterPath, onClose, actions, onAction }: StreamingModalProps) {
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<TitleDetails | null>(null);
   const [providers, setProviders] = useState<WatchProviderData | null>(null);
@@ -262,6 +270,37 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                         {g.name}
                       </span>
                     ))}
+                  </div>
+                )}
+
+                {/* Action buttons */}
+                {actions && actions.length > 0 && onAction && (
+                  <div className="flex flex-wrap gap-2">
+                    {actions.map(({ label, action, variant = "default" }) => {
+                      const isLike = action === "like" || action === "liked" || variant === "green";
+                      const isDislike = action === "dislike" || action === "disliked" || variant === "red";
+                      const isMeh = action === "meh" || action === "neutral" || variant === "yellow";
+                      const isAccent = variant === "accent";
+
+                      let btnClass = "bg-white/[0.06] text-white/60 hover:bg-white/[0.12] hover:text-white border-white/[0.08]";
+                      if (isLike) btnClass = "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border-emerald-500/20";
+                      if (isDislike) btnClass = "bg-red-500/15 text-red-400 hover:bg-red-500/25 border-red-500/20";
+                      if (isMeh) btnClass = "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border-amber-500/20";
+                      if (isAccent) btnClass = "bg-[var(--accent)]/15 text-[var(--accent-light)] hover:bg-[var(--accent)]/25 border-[var(--accent)]/20";
+
+                      return (
+                        <button
+                          key={action}
+                          onClick={() => {
+                            onAction(action);
+                            if (action !== "add-to-list") onClose();
+                          }}
+                          className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all active:scale-95 ${btnClass}`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
 

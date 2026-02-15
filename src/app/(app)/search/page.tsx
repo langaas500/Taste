@@ -443,6 +443,21 @@ export default function SearchPage() {
           title={selectedItem.title}
           posterPath={selectedItem.poster_path}
           onClose={() => setSelectedItem(null)}
+          actions={[
+            { label: "Like", action: "liked", variant: "green" },
+            { label: "Nah", action: "disliked", variant: "red" },
+            { label: "Meh", action: "neutral", variant: "yellow" },
+            { label: "+ Watchlist", action: "watchlist", variant: "default" },
+            { label: "List+", action: "add-to-list", variant: "accent" },
+          ]}
+          onAction={(action) => {
+            if (action === "add-to-list") {
+              setAddToListItem({ id: selectedItem.id, type: selectedItem.type, title: selectedItem.title });
+              return;
+            }
+            const item = displayResults.find((r) => r.id === selectedItem.id);
+            if (item) handleAction(item, action, fallbackType);
+          }}
         />
       )}
     </div>

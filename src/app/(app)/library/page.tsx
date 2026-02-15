@@ -334,6 +334,18 @@ export default function LibraryPage() {
           title={selectedItem.title}
           posterPath={selectedItem.poster_path}
           onClose={() => setSelectedItem(null)}
+          actions={[
+            { label: "List+", action: "add-to-list", variant: "accent" },
+            ...(excludedSet.has(`${selectedItem.id}:${selectedItem.type}`)
+              ? [{ label: "Ekskludert", action: "excluded", variant: "red" as const }]
+              : [{ label: "Ekskluder", action: "exclude", variant: "red" as const }]),
+            { label: "Fjern", action: "remove", variant: "default" },
+          ]}
+          onAction={(action) => {
+            if (action === "remove") handleRemove(selectedItem.id, selectedItem.type);
+            if (action === "exclude") handleExclude(selectedItem.id, selectedItem.type);
+            if (action === "add-to-list") setAddToListItem({ tmdb_id: selectedItem.id, type: selectedItem.type, title: selectedItem.title });
+          }}
         />
       )}
     </div>

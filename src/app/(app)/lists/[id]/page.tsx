@@ -110,6 +110,12 @@ export default function ListDetailPage() {
           title={selectedItem.title}
           posterPath={selectedItem.poster_path}
           onClose={() => setSelectedItem(null)}
+          actions={[
+            { label: "Fjern fra liste", action: "remove", variant: "red" },
+          ]}
+          onAction={(action) => {
+            if (action === "remove") handleRemove(selectedItem.id, selectedItem.type);
+          }}
         />
       )}
     </div>

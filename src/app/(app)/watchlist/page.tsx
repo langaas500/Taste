@@ -119,15 +119,28 @@ export default function WatchlistPage() {
         />
       )}
 
-      {selectedItem && (
-        <StreamingModal
-          tmdbId={selectedItem.id}
-          type={selectedItem.type}
-          title={selectedItem.title}
-          posterPath={selectedItem.poster_path}
-          onClose={() => setSelectedItem(null)}
-        />
-      )}
+      {selectedItem && (() => {
+        const t = titles.find((x) => x.tmdb_id === selectedItem.id && x.type === selectedItem.type);
+        return (
+          <StreamingModal
+            tmdbId={selectedItem.id}
+            type={selectedItem.type}
+            title={selectedItem.title}
+            posterPath={selectedItem.poster_path}
+            onClose={() => setSelectedItem(null)}
+            actions={[
+              { label: "List+", action: "add-to-list", variant: "accent" },
+              { label: "👍", action: "liked", variant: "green" },
+              { label: "👎", action: "disliked", variant: "red" },
+              { label: "😐", action: "neutral", variant: "yellow" },
+              { label: "✕", action: "remove", variant: "default" },
+            ]}
+            onAction={(action) => {
+              if (t) handleAction(t, action);
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }
