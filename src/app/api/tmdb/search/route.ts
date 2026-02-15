@@ -98,10 +98,10 @@ const TOPIC_MAP: Record<string, string[]> = {
 
 async function searchKeywordsForTerms(terms: string[]): Promise<number[]> {
   const keywordIds: Set<number> = new Set();
-  const searches = terms.slice(0, 5).map((term) => tmdbSearchKeywords(term));
+  const searches = terms.slice(0, 8).map((term) => tmdbSearchKeywords(term));
   const results = await Promise.all(searches);
   for (const keywords of results) {
-    for (const kw of keywords.slice(0, 3)) {
+    for (const kw of keywords.slice(0, 5)) {
       keywordIds.add(kw.id);
     }
   }
@@ -134,26 +134,50 @@ export async function GET(req: NextRequest) {
       searchKeywordsForTerms(allSearchTerms),
     ]);
 
-    // If we found keywords, run discover queries for extra results
+    // If we found keywords, run discover queries for extra results (multiple pages)
     let topicResults: Record<string, unknown>[] = [];
     if (keywordIds.length > 0) {
       const keywordStr = keywordIds.join(",");
       const types: ("movie" | "tv")[] =
         type === "multi" ? ["movie", "tv"] : [type as "movie" | "tv"];
 
-      const discovers = types.map((t) =>
+      // Fetch page 1 for all types
+      const page1 = types.map((t) =>
         tmdbDiscover(t, {
           with_keywords: keywordStr,
           sort_by: "popularity.desc",
-          "vote_count.gte": "10",
         })
       );
+      const page1Results = await Promise.all(page1);
 
-      const discoverResults = await Promise.all(discovers);
       for (let i = 0; i < types.length; i++) {
         const t = types[i];
-        for (const item of discoverResults[i].results || []) {
+        for (const item of page1Results[i].results || []) {
           topicResults.push({ ...item, media_type: t });
+        }
+      }
+
+      // Fetch page 2 for types that have more results
+      const page2Requests: { type: "movie" | "tv"; promise: Promise<Record<string, unknown>> }[] = [];
+      for (let i = 0; i < types.length; i++) {
+        if ((page1Results[i].total_pages || 0) > 1) {
+          page2Requests.push({
+            type: types[i],
+            promise: tmdbDiscover(types[i], {
+              with_keywords: keywordStr,
+              sort_by: "popularity.desc",
+              page: "2",
+            }),
+          });
+        }
+      }
+      if (page2Requests.length > 0) {
+        const page2Results = await Promise.all(page2Requests.map((r) => r.promise));
+        for (let i = 0; i < page2Requests.length; i++) {
+          const t = page2Requests[i].type;
+          for (const item of (page2Results[i] as Record<string, unknown[]>).results || []) {
+            topicResults.push({ ...(item as Record<string, unknown>), media_type: t });
+          }
         }
       }
     }
