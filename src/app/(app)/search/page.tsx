@@ -83,7 +83,7 @@ export default function SearchPage() {
         params.set("with_genres", advancedFilters.genres.join(","));
       }
       if (advancedFilters.providers.length > 0) {
-        params.set("with_watch_providers", advancedFilters.providers.join(","));
+        params.set("with_watch_providers", advancedFilters.providers.join("|"));
         params.set("watch_region", "NO");
       }
       if (advancedFilters.yearFrom) {
@@ -103,7 +103,7 @@ export default function SearchPage() {
         params.set("sort_by", sortBy);
       }
       if (advancedFilters.withCast.length > 0) {
-        params.set("with_cast", advancedFilters.withCast.join(","));
+        params.set("with_cast", advancedFilters.withCast.join("|"));
       }
       params.set("vote_count.gte", "50");
       params.set("page", String(page));
@@ -146,7 +146,7 @@ export default function SearchPage() {
     // Guest gate: track action, show wall if limit reached
     if (guest.isGuest) {
       if (!guest.trackAction()) return;
-      const type: MediaType = item.media_type === "movie" || item.title ? "movie" : (fallbackType || "tv");
+      const type: MediaType = item.media_type === "movie" ? "movie" : item.media_type === "tv" ? "tv" : (fallbackType || (item.title ? "movie" : "tv"));
       const key = `${item.id}:${type}`;
       setActionStates((prev) => ({ ...prev, [key]: action }));
       // Record for migration after signup
@@ -159,7 +159,7 @@ export default function SearchPage() {
       return;
     }
 
-    const type: MediaType = item.media_type === "movie" || item.title ? "movie" : (fallbackType || "tv");
+    const type: MediaType = item.media_type === "movie" ? "movie" : item.media_type === "tv" ? "tv" : (fallbackType || (item.title ? "movie" : "tv"));
     const key = `${item.id}:${type}`;
     setActionStates((prev) => ({ ...prev, [key]: action }));
     try {
@@ -301,7 +301,7 @@ export default function SearchPage() {
       {/* Results grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
         {displayResults.map((item) => {
-          const type: MediaType = item.media_type === "movie" || item.title ? "movie" : (fallbackType || "tv");
+          const type: MediaType = item.media_type === "movie" ? "movie" : item.media_type === "tv" ? "tv" : (fallbackType || (item.title ? "movie" : "tv"));
           const key = `${item.id}:${type}`;
           const actionDone = actionStates[key];
           const title = item.title || item.name || "Unknown";

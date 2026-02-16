@@ -62,28 +62,32 @@ export async function GET() {
 
     // Build candidate pool
     const candidates = new Map<string, Record<string, unknown>>();
+    const skipIds = new Set([...excludedIds, ...notForMeIds]);
 
-    // 1. Discover by top genres
-    const genreStr = topGenreIds.join(",");
-    if (genreStr) {
-      const [discoverMovies, discoverTv] = await Promise.all([
-        tmdbDiscover("movie", { with_genres: genreStr, "vote_count.gte": "50" }),
-        tmdbDiscover("tv", { with_genres: genreStr, "vote_count.gte": "50" }),
-      ]);
-      for (const item of [...(discoverMovies.results || []), ...(discoverTv.results || [])]) {
-        const type = item.title ? "movie" : "tv";
-        const key = `${item.id}:${type}`;
-        if (!excludedIds.has(key)) candidates.set(key, { ...item, _type: type });
-      }
+    function addCandidate(item: Record<string, unknown>, type: "movie" | "tv") {
+      const key = `${item.id}:${type}`;
+      if (!skipIds.has(key)) candidates.set(key, { ...item, _type: type });
     }
 
-    // 2. Similar to top liked titles
-    const topLiked = liked.slice(0, 3);
-    for (const t of topLiked) {
-      const similar = await tmdbSimilar(t.tmdb_id, t.type);
-      for (const item of similar.results || []) {
-        const key = `${item.id}:${t.type}`;
-        if (!excludedIds.has(key)) candidates.set(key, { ...item, _type: t.type });
+    // 1. Discover by top genres — random pages for variety
+    const genreStr = topGenreIds.join(",");
+    if (genreStr) {
+      const randomPage = String(Math.floor(Math.random() * 5) + 1);
+      const [discoverMovies, discoverTv] = await Promise.all([
+        tmdbDiscover("movie", { with_genres: genreStr, "vote_count.gte": "50", page: randomPage }),
+        tmdbDiscover("tv", { with_genres: genreStr, "vote_count.gte": "50", page: randomPage }),
+      ]);
+      for (const item of discoverMovies.results || []) addCandidate(item, "movie");
+      for (const item of discoverTv.results || []) addCandidate(item, "tv");
+    }
+
+    // 2. Similar to random selection of liked titles (up to 5)
+    const shuffledLiked = [...liked].sort(() => Math.random() - 0.5).slice(0, 5);
+    const similarPromises = shuffledLiked.map((t) => tmdbSimilar(t.tmdb_id, t.type).then((res) => ({ results: res.results, type: t.type })));
+    const similarResults = await Promise.all(similarPromises);
+    for (const { results, type } of similarResults) {
+      for (const item of results || []) {
+        addCandidate(item, type);
       }
     }
 
@@ -93,9 +97,20 @@ export async function GET() {
       for (const item of trending.results || []) {
         const type = item.media_type === "movie" ? "movie" : item.media_type === "tv" ? "tv" : null;
         if (!type) continue;
-        const key = `${item.id}:${type}`;
-        if (!excludedIds.has(key)) candidates.set(key, { ...item, _type: type });
+        addCandidate(item, type);
       }
+    }
+
+    // 4. If pool is still small, fetch an additional discover page with broader genres
+    if (candidates.size < 40 && topGenreIds.length > 0) {
+      const extraPage = String(Math.floor(Math.random() * 3) + 6);
+      const singleGenre = topGenreIds[Math.floor(Math.random() * topGenreIds.length)];
+      const [extraMovies, extraTv] = await Promise.all([
+        tmdbDiscover("movie", { with_genres: String(singleGenre), "vote_count.gte": "20", page: extraPage }),
+        tmdbDiscover("tv", { with_genres: String(singleGenre), "vote_count.gte": "20", page: extraPage }),
+      ]);
+      for (const item of extraMovies.results || []) addCandidate(item, "movie");
+      for (const item of extraTv.results || []) addCandidate(item, "tv");
     }
 
     // Score candidates
@@ -117,7 +132,7 @@ export async function GET() {
     const scored: ScoredCandidate[] = [];
 
     for (const [key, item] of candidates) {
-      if (excludedIds.has(key) || notForMeIds.has(key)) continue;
+      if (skipIds.has(key)) continue;
 
       const type = item._type as "movie" | "tv";
       const genreIds = (item.genre_ids as number[]) || [];

@@ -49,8 +49,18 @@ export default function RecommendationsPage() {
       await submitFeedback(rec.tmdb_id, rec.type, "like_suggestion");
     } else if (action === "not_for_me") {
       await submitFeedback(rec.tmdb_id, rec.type, "not_for_me");
+      const timer = setTimeout(() => {
+        setDismissed((prev) => new Set(prev).add(key));
+        setDismissTimers((prev) => { const n = { ...prev }; delete n[key]; return n; });
+      }, 1500);
+      setDismissTimers((prev) => ({ ...prev, [key]: timer }));
     } else if (action === "exclude") {
       await addExclusion(rec.tmdb_id, rec.type, "From recommendations");
+      const timer = setTimeout(() => {
+        setDismissed((prev) => new Set(prev).add(key));
+        setDismissTimers((prev) => { const n = { ...prev }; delete n[key]; return n; });
+      }, 1500);
+      setDismissTimers((prev) => ({ ...prev, [key]: timer }));
     }
   }
 
@@ -83,6 +93,7 @@ export default function RecommendationsPage() {
     if (timer) clearTimeout(timer);
     setDismissTimers((prev) => { const n = { ...prev }; delete n[key]; return n; });
     setActionStates((prev) => { const n = { ...prev }; delete n[key]; return n; });
+    setFeedbackStates((prev) => { const n = { ...prev }; delete n[key]; return n; });
   }
 
   const visible = recs.filter((r) => !dismissed.has(`${r.tmdb_id}:${r.type}`));

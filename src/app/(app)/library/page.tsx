@@ -83,23 +83,29 @@ export default function LibraryPage() {
   }
 
   async function handleRemove(tmdb_id: number, type: MediaType) {
-    await removeTitle(tmdb_id, type);
-    setTitles((prev) => prev.filter((t) => !(t.tmdb_id === tmdb_id && t.type === type)));
+    try {
+      await removeTitle(tmdb_id, type);
+      setTitles((prev) => prev.filter((t) => !(t.tmdb_id === tmdb_id && t.type === type)));
+    } catch { /* keep state unchanged on failure */ }
   }
 
   async function handleExclude(tmdb_id: number, type: MediaType) {
-    await addExclusion(tmdb_id, type, "Excluded from library");
-    setExclusions((prev) => [...prev, { tmdb_id, type, reason: "Excluded from library" }]);
+    try {
+      await addExclusion(tmdb_id, type, "Excluded from library");
+      setExclusions((prev) => [...prev, { tmdb_id, type, reason: "Excluded from library" }]);
+    } catch { /* keep state unchanged on failure */ }
   }
 
   async function handleToggleFavorite(tmdb_id: number, type: MediaType) {
     const t = titles.find((x) => x.tmdb_id === tmdb_id && x.type === type);
     if (!t) return;
     const newVal = !t.favorite;
-    await toggleFavorite(tmdb_id, type, newVal);
-    setTitles((prev) =>
-      prev.map((x) => x.tmdb_id === tmdb_id && x.type === type ? { ...x, favorite: newVal } : x)
-    );
+    try {
+      await toggleFavorite(tmdb_id, type, newVal);
+      setTitles((prev) =>
+        prev.map((x) => x.tmdb_id === tmdb_id && x.type === type ? { ...x, favorite: newVal } : x)
+      );
+    } catch { /* keep state unchanged on failure */ }
   }
 
   function scrollRecs(dir: "left" | "right") {
@@ -302,12 +308,17 @@ export default function LibraryPage() {
         )
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Ingen titler her"
-          description="Søk etter filmer og serier for å bygge biblioteket ditt."
+          title="Biblioteket er tomt"
+          description="Start med å logge noe du har sett, eller importer seerhistorikken din fra Netflix."
           action={
-            <Link href="/search">
-              <GlowButton>Søk</GlowButton>
-            </Link>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Link href="/search">
+                <GlowButton>Søk etter titler</GlowButton>
+              </Link>
+              <Link href="/timemachine" className="px-4 py-2 rounded-[var(--radius-md)] text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--glass-border)] hover:border-[var(--glass-hover)] transition-colors">
+                Importer fra Netflix
+              </Link>
+            </div>
           }
         />
       ) : (

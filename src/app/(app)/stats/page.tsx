@@ -103,11 +103,16 @@ export default function StatsPage() {
         <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">Statistikk</h2>
         <EmptyState
           title="Ingen statistikk ennå"
-          description="Begynn å logge filmer og serier for å se visningsstatistikken din."
+          description="Logg filmer og serier for å se visningsstatistikken din. Du kan også importere seerhistorikk fra Netflix."
           action={
-            <Link href="/search">
-              <GlowButton>Søk</GlowButton>
-            </Link>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Link href="/search">
+                <GlowButton>Søk etter titler</GlowButton>
+              </Link>
+              <Link href="/timemachine" className="px-4 py-2 rounded-[var(--radius-md)] text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--glass-border)] hover:border-[var(--glass-hover)] transition-colors">
+                Importer fra Netflix
+              </Link>
+            </div>
           }
         />
       </div>

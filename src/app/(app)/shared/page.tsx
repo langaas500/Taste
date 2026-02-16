@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import TitleCard from "@/components/TitleCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyState from "@/components/EmptyState";
+import GlowButton from "@/components/GlowButton";
 import StreamingModal from "@/components/StreamingModal";
 import { fetchSharedLists } from "@/lib/api";
 import type { SharedList, TitleCache, MediaType } from "@/lib/types";
@@ -33,7 +35,12 @@ export default function SharedPage() {
         <h2 className="text-xl font-bold text-[var(--text-primary)] mb-5">Delt med meg</h2>
         <EmptyState
           title="Ingen delte lister"
-          description="Når noen kobler seg til deg og deler listene sine, vises de her."
+          description="Inviter en venn for å dele filmsmak! Del koblingskoden din fra innstillinger, så kan dere se hverandres lister her."
+          action={
+            <Link href="/settings">
+              <GlowButton>Gå til innstillinger</GlowButton>
+            </Link>
+          }
         />
       </div>
     );
@@ -54,9 +61,19 @@ export default function SharedPage() {
       <div className="space-y-8">
         {Array.from(grouped.entries()).map(([key, { owner_name, lists }]) => (
           <div key={key}>
-            <p className="text-xs font-semibold text-white/30 uppercase tracking-wider mb-3">
-              Fra {owner_name || "Ukjent"}
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold text-white/30 uppercase tracking-wider">
+                Fra {owner_name || "Ukjent"}
+              </p>
+              {lists[0]?.list && (
+                <Link
+                  href={`/compare/${(lists[0].list as { user_id: string }).user_id}`}
+                  className="text-[10px] font-medium text-[var(--accent-light)] hover:text-[var(--accent)] transition-colors"
+                >
+                  Sammenlign smak
+                </Link>
+              )}
+            </div>
             {lists.map((sl) => (
               <div key={sl.list.id} className="mb-6">
                 <div className="flex items-center gap-2 mb-3">

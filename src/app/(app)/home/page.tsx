@@ -1,0 +1,413 @@
+"use client";
+
+import { useEffect, useState, useRef } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import StreamingModal from "@/components/StreamingModal";
+import { logTitle } from "@/lib/api";
+import { createSupabaseBrowser } from "@/lib/supabase-browser";
+import type { UserTitle, TitleCache, MediaType, Recommendation } from "@/lib/types";
+
+interface DashboardData {
+  watching: (UserTitle & { cache?: TitleCache })[];
+  recentlyLogged: (UserTitle & { cache?: TitleCache })[];
+  recommendations: Recommendation[];
+  trending: { tmdb_id: number; type: MediaType; title: string; poster_path: string | null; year: string }[];
+  totalTitles: number;
+}
+
+export default function HomePage() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
+
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  async function loadDashboard() {
+    const supabase = createSupabaseBrowser();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+
+    // Parallel data fetching
+    const [titlesRes, cacheRes, recsRes, trendingRes] = await Promise.all([
+      supabase.from("user_titles").select("*").eq("user_id", user.id).order("updated_at", { ascending: false }),
+      supabase.from("titles_cache").select("*"),
+      fetch("/api/recommendations").then((r) => r.json()).catch(() => ({ recommendations: [] })),
+      fetch("/api/tmdb/discover?type=movie&sort_by=popularity.desc&page=1").then((r) => r.json()).catch(() => ({ results: [] })),
+    ]);
+
+    const cacheMap = new Map<string, TitleCache>();
+    for (const c of (cacheRes.data || []) as TitleCache[]) {
+      cacheMap.set(`${c.tmdb_id}:${c.type}`, c);
+    }
+
+    const allTitles = ((titlesRes.data || []) as UserTitle[]).map((t) => ({
+      ...t,
+      cache: cacheMap.get(`${t.tmdb_id}:${t.type}`),
+    }));
+
+    const watching = allTitles.filter((t) => t.status === "watching");
+    const recentlyLogged = allTitles.filter((t) => t.status === "watched").slice(0, 10);
+
+    const trendingItems = ((trendingRes.results || []) as Record<string, unknown>[])
+      .filter((r) => r.poster_path)
+      .slice(0, 12)
+      .map((r) => ({
+        tmdb_id: r.id as number,
+        type: (r.media_type === "tv" ? "tv" : "movie") as MediaType,
+        title: (r.title || r.name) as string,
+        poster_path: r.poster_path as string,
+        year: ((r.release_date || r.first_air_date) as string || "").slice(0, 4),
+      }));
+
+    setData({
+      watching,
+      recentlyLogged,
+      recommendations: (recsRes.recommendations || []).slice(0, 10),
+      trending: trendingItems,
+      totalTitles: allTitles.length,
+    });
+    setLoading(false);
+  }
+
+  async function handleQuickAction(tmdb_id: number, type: MediaType, action: string) {
+    try {
+      if (action === "watchlist") {
+        await logTitle({ tmdb_id, type, status: "watchlist" });
+      } else if (action === "liked") {
+        await logTitle({ tmdb_id, type, status: "watched", sentiment: "liked" });
+      }
+    } catch {
+      // Silent fail for quick actions
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="animate-fade-in-up space-y-10">
+        <div>
+          <div className="skeleton h-8 w-48 rounded-lg mb-2" />
+          <div className="skeleton h-4 w-32 rounded" />
+        </div>
+        {[1, 2].map((i) => (
+          <div key={i}>
+            <div className="skeleton h-5 w-32 rounded mb-4" />
+            <div className="flex gap-3 overflow-hidden">
+              {Array.from({ length: 6 }).map((_, j) => (
+                <div key={j} className="flex-shrink-0 w-[130px]">
+                  <div className="skeleton aspect-[2/3] w-full rounded-xl" />
+                  <div className="skeleton h-3 w-20 mt-2 rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const showImportBanner = data.totalTitles < 20;
+
+  return (
+    <div className="animate-fade-in-up space-y-10">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">
+          Hjem
+        </h1>
+        <p className="text-sm text-[var(--text-tertiary)] mt-0.5">
+          {data.totalTitles} titler i samlingen din
+        </p>
+      </div>
+
+      {/* Import banner for new users */}
+      {showImportBanner && (
+        <Link
+          href="/timemachine"
+          className="block glass rounded-[var(--radius-lg)] p-4 border border-[var(--accent)]/20 hover:border-[var(--accent)]/40 transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[var(--accent-glow)] flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-[var(--accent-light)]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">Importer seerhistorikk</p>
+              <p className="text-xs text-[var(--text-tertiary)]">Hent inn det du allerede har sett fra Netflix og andre tjenester</p>
+            </div>
+            <svg className="w-5 h-5 text-[var(--text-tertiary)] flex-shrink-0 ml-auto" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </div>
+        </Link>
+      )}
+
+      {/* Section: Fortsett å se (Watch Bank) */}
+      {data.watching.length > 0 && (
+        <DashboardSection title="Fortsett å se" href="/watch-bank">
+          <HorizontalScroll>
+            {data.watching.map((t) => (
+              <PosterCard
+                key={`w-${t.tmdb_id}:${t.type}`}
+                title={t.cache?.title || `TMDB:${t.tmdb_id}`}
+                posterPath={t.cache?.poster_path || null}
+                subtitle={t.last_season && t.last_episode ? `S${t.last_season} E${t.last_episode}` : undefined}
+                onClick={() => setSelectedItem({
+                  id: t.tmdb_id,
+                  type: t.type,
+                  title: t.cache?.title || `TMDB:${t.tmdb_id}`,
+                  poster_path: t.cache?.poster_path || null,
+                })}
+              />
+            ))}
+          </HorizontalScroll>
+        </DashboardSection>
+      )}
+
+      {/* Section: For deg (Recommendations) */}
+      {data.recommendations.length > 0 && (
+        <DashboardSection title="For deg" href="/recommendations">
+          <HorizontalScroll>
+            {data.recommendations.map((rec) => (
+              <PosterCard
+                key={`r-${rec.tmdb_id}:${rec.type}`}
+                title={rec.title}
+                posterPath={rec.poster_path || null}
+                subtitle={rec.tags?.[0]}
+                onClick={() => setSelectedItem({
+                  id: rec.tmdb_id,
+                  type: rec.type,
+                  title: rec.title,
+                  poster_path: rec.poster_path || null,
+                })}
+                quickActions={[
+                  { label: "+", action: "liked", title: "Sett og likte" },
+                  { label: "Se", action: "watchlist", title: "Legg i se-liste" },
+                ]}
+                onQuickAction={(action) => handleQuickAction(rec.tmdb_id, rec.type, action)}
+              />
+            ))}
+          </HorizontalScroll>
+        </DashboardSection>
+      )}
+
+      {/* Section: Nylig logget */}
+      {data.recentlyLogged.length > 0 && (
+        <DashboardSection title="Nylig logget" href="/library">
+          <HorizontalScroll>
+            {data.recentlyLogged.map((t) => (
+              <PosterCard
+                key={`l-${t.tmdb_id}:${t.type}`}
+                title={t.cache?.title || `TMDB:${t.tmdb_id}`}
+                posterPath={t.cache?.poster_path || null}
+                sentiment={t.sentiment as "liked" | "disliked" | "neutral" | null}
+                onClick={() => setSelectedItem({
+                  id: t.tmdb_id,
+                  type: t.type,
+                  title: t.cache?.title || `TMDB:${t.tmdb_id}`,
+                  poster_path: t.cache?.poster_path || null,
+                })}
+              />
+            ))}
+          </HorizontalScroll>
+        </DashboardSection>
+      )}
+
+      {/* Section: Populært nå (Trending — always visible) */}
+      {data.trending.length > 0 && (
+        <DashboardSection title="Populært nå" href="/search">
+          <HorizontalScroll>
+            {data.trending.map((t) => (
+              <PosterCard
+                key={`t-${t.tmdb_id}:${t.type}`}
+                title={t.title}
+                posterPath={t.poster_path}
+                subtitle={t.year}
+                onClick={() => setSelectedItem({
+                  id: t.tmdb_id,
+                  type: t.type,
+                  title: t.title,
+                  poster_path: t.poster_path,
+                })}
+                quickActions={[
+                  { label: "+", action: "liked", title: "Sett og likte" },
+                  { label: "Se", action: "watchlist", title: "Legg i se-liste" },
+                ]}
+                onQuickAction={(action) => handleQuickAction(t.tmdb_id, t.type, action)}
+              />
+            ))}
+          </HorizontalScroll>
+        </DashboardSection>
+      )}
+
+      {/* Streaming Modal */}
+      {selectedItem && (
+        <StreamingModal
+          tmdbId={selectedItem.id}
+          type={selectedItem.type}
+          title={selectedItem.title}
+          posterPath={selectedItem.poster_path}
+          onClose={() => setSelectedItem(null)}
+          actions={[
+            { label: "Sett", action: "liked", variant: "green" },
+            { label: "Mislikte", action: "disliked", variant: "red" },
+            { label: "Se-liste", action: "watchlist", variant: "default" },
+          ]}
+          onAction={(action) => handleQuickAction(selectedItem.id, selectedItem.type, action)}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ── Subcomponents ── */
+
+function DashboardSection({ title, href, children }: { title: string; href: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">{title}</h2>
+        <Link
+          href={href}
+          className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] font-medium transition-colors"
+        >
+          Se alle
+        </Link>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function HorizontalScroll({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  function scroll(dir: "left" | "right") {
+    if (!ref.current) return;
+    const amount = ref.current.clientWidth * 0.7;
+    ref.current.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
+  }
+
+  return (
+    <div className="relative group/scroll">
+      {/* Arrow buttons (desktop only) */}
+      <button
+        onClick={() => scroll("left")}
+        className="hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 z-20 w-8 h-8 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm border border-white/[0.08] text-white/60 hover:text-white transition-all opacity-0 group-hover/scroll:opacity-100"
+      >
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+      </button>
+      <button
+        onClick={() => scroll("right")}
+        className="hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 z-20 w-8 h-8 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm border border-white/[0.08] text-white/60 hover:text-white transition-all opacity-0 group-hover/scroll:opacity-100"
+      >
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </button>
+
+      <div
+        ref={ref}
+        className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth -mx-4 px-4 pb-1"
+        style={{ scrollSnapType: "x mandatory" }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function PosterCard({
+  title,
+  posterPath,
+  subtitle,
+  sentiment,
+  onClick,
+  quickActions,
+  onQuickAction,
+}: {
+  title: string;
+  posterPath: string | null;
+  subtitle?: string;
+  sentiment?: "liked" | "disliked" | "neutral" | null;
+  onClick: () => void;
+  quickActions?: { label: string; action: string; title: string }[];
+  onQuickAction?: (action: string) => void;
+}) {
+  const imgSrc = posterPath ? `https://image.tmdb.org/t/p/w342${posterPath}` : null;
+
+  const sentimentColor =
+    sentiment === "liked" ? "var(--green)" :
+    sentiment === "disliked" ? "var(--red)" :
+    sentiment === "neutral" ? "var(--yellow)" : null;
+
+  return (
+    <div
+      className="group flex-shrink-0 w-[120px] sm:w-[140px] cursor-pointer"
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <div
+        className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06] group-hover:border-white/[0.14] transition-all duration-300"
+        onClick={onClick}
+      >
+        {imgSrc ? (
+          <Image
+            src={imgSrc}
+            alt={title}
+            fill
+            sizes="140px"
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-white/10">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+              <rect x="2" y="3" width="20" height="18" rx="2" />
+            </svg>
+          </div>
+        )}
+
+        {/* Sentiment badge */}
+        {sentimentColor && (
+          <div className="absolute top-1.5 left-1.5">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ background: sentimentColor, boxShadow: `0 0 6px ${sentimentColor}` }} />
+          </div>
+        )}
+
+        {/* Quick actions on hover */}
+        {quickActions && quickActions.length > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 flex gap-0.5 p-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/80 to-transparent pt-6">
+            {quickActions.map((qa) => (
+              <button
+                key={qa.action}
+                title={qa.title}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickAction?.(qa.action);
+                }}
+                className="flex-1 py-1.5 text-[10px] font-semibold text-white/80 hover:text-white bg-white/[0.1] hover:bg-white/[0.2] rounded-lg transition-all backdrop-blur-sm"
+              >
+                {qa.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-1.5 px-0.5">
+        <p className="text-[11px] font-medium text-white/60 leading-tight truncate group-hover:text-white/80 transition-colors">
+          {title}
+        </p>
+        {subtitle && (
+          <p className="text-[10px] text-white/25 mt-0.5">{subtitle}</p>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -54,26 +54,30 @@ export default function WatchBankPage() {
   async function handleUpdateProgress(tmdb_id: number, type: MediaType, season: number, episode: number) {
     season = Math.max(1, season);
     episode = Math.max(1, episode);
-    await updateProgress(tmdb_id, type, season, episode);
-    setTitles((prev) =>
-      prev.map((t) =>
-        t.tmdb_id === tmdb_id && t.type === type
-          ? { ...t, last_season: season, last_episode: episode }
-          : t
-      )
-    );
+    try {
+      await updateProgress(tmdb_id, type, season, episode);
+      setTitles((prev) =>
+        prev.map((t) =>
+          t.tmdb_id === tmdb_id && t.type === type
+            ? { ...t, last_season: season, last_episode: episode }
+            : t
+        )
+      );
+    } catch { /* keep state unchanged on failure */ }
   }
 
   async function handleToggleFavorite(tmdb_id: number, type: MediaType) {
     const t = titles.find((x) => x.tmdb_id === tmdb_id && x.type === type);
     if (!t) return;
     const newVal = !t.favorite;
-    await toggleFavorite(tmdb_id, type, newVal);
-    setTitles((prev) =>
-      prev.map((x) =>
-        x.tmdb_id === tmdb_id && x.type === type ? { ...x, favorite: newVal } : x
-      )
-    );
+    try {
+      await toggleFavorite(tmdb_id, type, newVal);
+      setTitles((prev) =>
+        prev.map((x) =>
+          x.tmdb_id === tmdb_id && x.type === type ? { ...x, favorite: newVal } : x
+        )
+      );
+    } catch { /* keep state unchanged on failure */ }
   }
 
   async function handleAction(t: UserTitle & { cache?: TitleCache }, action: string) {
@@ -85,18 +89,20 @@ export default function WatchBankPage() {
       handleToggleFavorite(t.tmdb_id, t.type);
       return;
     }
-    if (action === "remove") {
-      await removeTitle(t.tmdb_id, t.type);
-      setTitles((prev) => prev.filter((x) => x.id !== t.id));
-    } else if (action === "liked" || action === "disliked" || action === "neutral") {
-      await logTitle({
-        tmdb_id: t.tmdb_id,
-        type: t.type,
-        status: "watched",
-        sentiment: action,
-      });
-      setTitles((prev) => prev.filter((x) => x.id !== t.id));
-    }
+    try {
+      if (action === "remove") {
+        await removeTitle(t.tmdb_id, t.type);
+        setTitles((prev) => prev.filter((x) => x.id !== t.id));
+      } else if (action === "liked" || action === "disliked" || action === "neutral") {
+        await logTitle({
+          tmdb_id: t.tmdb_id,
+          type: t.type,
+          status: "watched",
+          sentiment: action,
+        });
+        setTitles((prev) => prev.filter((x) => x.id !== t.id));
+      }
+    } catch { /* keep state unchanged on failure */ }
   }
 
   const allGenres = useMemo(() => {
@@ -149,11 +155,14 @@ export default function WatchBankPage() {
       {titles.length === 0 ? (
         <div className="glass rounded-xl px-6 py-12">
           <div className="flex flex-col items-center justify-center gap-4 text-center">
-            <h3 className="text-lg font-semibold text-white">Ingen serier lagret</h3>
-            <p className="text-sm text-white/50 max-w-sm leading-relaxed">Legg til serier du vil fortsette senere, så husker vi hvilken episode du er på.</p>
-            <div className="mt-3">
+            <h3 className="text-lg font-semibold text-white">Ingen pågående serier</h3>
+            <p className="text-sm text-white/50 max-w-sm leading-relaxed">Finn noe nytt å se! Legg til serier du følger med på, så husker vi hvilken episode du er på.</p>
+            <div className="mt-3 flex flex-wrap gap-3 justify-center">
               <Link href="/search">
-                <GlowButton>Søk etter serier</GlowButton>
+                <GlowButton>Finn noe nytt</GlowButton>
+              </Link>
+              <Link href="/recommendations" className="px-4 py-2 rounded-[var(--radius-md)] text-sm font-medium text-white/50 hover:text-white border border-white/10 hover:border-white/20 transition-colors">
+                Anbefalinger
               </Link>
             </div>
           </div>

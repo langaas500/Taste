@@ -58,10 +58,12 @@ export default function WatchlistPage() {
     const t = titles.find((x) => x.tmdb_id === tmdb_id && x.type === type);
     if (!t) return;
     const newVal = !t.favorite;
-    await toggleFavorite(tmdb_id, type, newVal);
-    setTitles((prev) =>
-      prev.map((x) => x.tmdb_id === tmdb_id && x.type === type ? { ...x, favorite: newVal } : x)
-    );
+    try {
+      await toggleFavorite(tmdb_id, type, newVal);
+      setTitles((prev) =>
+        prev.map((x) => x.tmdb_id === tmdb_id && x.type === type ? { ...x, favorite: newVal } : x)
+      );
+    } catch { /* keep state unchanged on failure */ }
   }
 
   async function handleAction(t: UserTitle & { cache?: TitleCache }, action: string) {
@@ -73,18 +75,20 @@ export default function WatchlistPage() {
       setAddToListItem({ tmdb_id: t.tmdb_id, type: t.type, title: t.cache?.title || `TMDB:${t.tmdb_id}` });
       return;
     }
-    if (action === "remove") {
-      await removeTitle(t.tmdb_id, t.type);
-      setTitles((prev) => prev.filter((x) => x.id !== t.id));
-    } else if (action === "liked" || action === "disliked" || action === "neutral") {
-      await logTitle({
-        tmdb_id: t.tmdb_id,
-        type: t.type,
-        status: "watched",
-        sentiment: action,
-      });
-      setTitles((prev) => prev.filter((x) => x.id !== t.id));
-    }
+    try {
+      if (action === "remove") {
+        await removeTitle(t.tmdb_id, t.type);
+        setTitles((prev) => prev.filter((x) => x.id !== t.id));
+      } else if (action === "liked" || action === "disliked" || action === "neutral") {
+        await logTitle({
+          tmdb_id: t.tmdb_id,
+          type: t.type,
+          status: "watched",
+          sentiment: action,
+        });
+        setTitles((prev) => prev.filter((x) => x.id !== t.id));
+      }
+    } catch { /* keep state unchanged on failure */ }
   }
 
   const allGenres = useMemo(() => {
@@ -139,11 +143,16 @@ export default function WatchlistPage() {
       {titles.length === 0 ? (
         <EmptyState
           title="Se-listen er tom"
-          description="Legg til filmer og serier du vil se senere."
+          description="Legg til filmer og serier du vil se senere. Finn noe nytt via søk eller la oss anbefale noe for deg."
           action={
-            <Link href="/search">
-              <GlowButton>Søk</GlowButton>
-            </Link>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Link href="/search">
+                <GlowButton>Søk</GlowButton>
+              </Link>
+              <Link href="/recommendations" className="px-4 py-2 rounded-[var(--radius-md)] text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--glass-border)] hover:border-[var(--glass-hover)] transition-colors">
+                Anbefalinger
+              </Link>
+            </div>
           }
         />
       ) : (<>

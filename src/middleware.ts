@@ -53,10 +53,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect logged-in users from /login to /library
+  // Redirect logged-in users from /login to /home
   if (user && pathname === "/login") {
     const url = request.nextUrl.clone();
-    url.pathname = "/library";
+    url.pathname = "/home";
     return NextResponse.redirect(url);
   }
 

@@ -417,8 +417,7 @@ function SettingsContent() {
             max={100}
             value={explorationSlider}
             onChange={(e) => setExplorationSlider(parseInt(e.target.value))}
-            onMouseUp={() => saveSlider(explorationSlider)}
-            onTouchEnd={() => saveSlider(explorationSlider)}
+            onPointerUp={() => saveSlider(explorationSlider)}
             className="flex-1"
           />
           <span className="text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-wide">Utforsk</span>

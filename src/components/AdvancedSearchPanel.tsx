@@ -23,6 +23,7 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
   const [selectedPersons, setSelectedPersons] = useState<{ id: number; name: string }[]>([]);
   const [showProviders, setShowProviders] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const abortRef = useRef<AbortController>(null);
 
   // Fetch genres when type changes
   useEffect(() => {
@@ -51,15 +52,17 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
       .catch(() => {});
   }, [isOpen, filters.type, providers]);
 
-  // Debounced person search
+  // Debounced person search with abort to prevent stale results
   const handlePersonInput = useCallback((val: string) => {
     setPersonQuery(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!val.trim()) { setPersonResults([]); return; }
     debounceRef.current = setTimeout(async () => {
+      abortRef.current?.abort();
+      abortRef.current = new AbortController();
       setPersonLoading(true);
       try {
-        const res = await fetch(`/api/tmdb/person?action=search&q=${encodeURIComponent(val)}`);
+        const res = await fetch(`/api/tmdb/person?action=search&q=${encodeURIComponent(val)}`, { signal: abortRef.current.signal });
         const data = await res.json();
         setPersonResults((data.results || []).slice(0, 8));
       } catch {}

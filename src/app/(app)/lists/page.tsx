@@ -25,6 +25,7 @@ export default function ListsPage() {
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadData();
@@ -41,12 +42,15 @@ export default function ListsPage() {
   async function handleCreate() {
     if (!newName.trim()) return;
     setCreating(true);
+    setError("");
     try {
       const data = await createList(newName.trim());
       setLists((prev) => [{ ...data.list, item_count: 0, thumbnails: [] } as ListWithMeta, ...prev]);
       setNewName("");
       setShowCreate(false);
-    } catch {}
+    } catch {
+      setError("Kunne ikke opprette listen. Prøv igjen.");
+    }
     setCreating(false);
   }
 
@@ -54,7 +58,7 @@ export default function ListsPage() {
     try {
       await deleteList(id);
       setLists((prev) => prev.filter((l) => l.id !== id));
-    } catch {}
+    } catch { /* keep list in state on failure */ }
   }
 
   if (loading) return <LoadingSpinner text="Laster lister..." />;
@@ -84,6 +88,7 @@ export default function ListsPage() {
             <GlowButton onClick={handleCreate} disabled={creating || !newName.trim()} size="sm">
               {creating ? "Oppretter..." : "Opprett"}
             </GlowButton>
+            {error && <span className="text-xs text-red-400 self-center">{error}</span>}
             <button
               onClick={() => setShowCreate(false)}
               className="px-3 py-2 text-sm text-white/40 hover:text-white/60 transition-colors"
