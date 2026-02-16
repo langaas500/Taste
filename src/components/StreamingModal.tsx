@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { WatchProvider, WatchProviderData, FriendOverlap } from "@/lib/types";
+import { getStreamingUrl } from "@/lib/streaming-links";
 
 interface ModalAction {
   label: string;
@@ -61,7 +62,31 @@ interface CastMember {
   order: number;
 }
 
+interface SimilarAvailableTitle {
+  tmdb_id: number;
+  type: "movie" | "tv";
+  title: string;
+  year: number | null;
+  poster_path: string | null;
+  vote_average: number | null;
+  providers: {
+    flatrate?: { provider_id: number; provider_name: string; logo_path: string | null }[];
+    rent?: { provider_id: number; provider_name: string; logo_path: string | null }[];
+    buy?: { provider_id: number; provider_name: string; logo_path: string | null }[];
+  };
+}
+
 export default function StreamingModal({ tmdbId, type, title, posterPath, onClose, actions, onAction, isFavorite, onToggleFavorite, progress, onUpdateProgress, friendOverlap }: StreamingModalProps) {
+  // Override state for navigating to a similar title within the modal
+  const [overrideTitle, setOverrideTitle] = useState<{
+    tmdbId: number; type: "movie" | "tv"; title: string; posterPath: string | null;
+  } | null>(null);
+
+  const activeTmdbId = overrideTitle?.tmdbId ?? tmdbId;
+  const activeType = overrideTitle?.type ?? type;
+  const activeTitle = overrideTitle?.title ?? title;
+  const activePosterPath = overrideTitle?.posterPath ?? posterPath;
+
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<TitleDetails | null>(null);
   const [providers, setProviders] = useState<WatchProviderData | null>(null);
@@ -69,13 +94,26 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
   const [error, setError] = useState("");
   const [showTrailer, setShowTrailer] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [netflixId, setNetflixId] = useState<string | null>(null);
+  const [netflixLoading, setNetflixLoading] = useState(false);
+  const [similarAvailable, setSimilarAvailable] = useState<SimilarAvailableTitle[]>([]);
+  const [similarLoading, setSimilarLoading] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
+    setDetails(null);
+    setProviders(null);
+    setError("");
+    setNetflixId(null);
+    setSimilarAvailable([]);
+    setSimilarLoading(false);
+    setShowTrailer(false);
+
     async function fetchData() {
       try {
         const [detailsRes, providersRes] = await Promise.all([
-          fetch(`/api/tmdb/details?tmdb_id=${tmdbId}&type=${type}`),
-          fetch(`/api/tmdb/providers?tmdb_id=${tmdbId}&type=${type}`),
+          fetch(`/api/tmdb/details?tmdb_id=${activeTmdbId}&type=${activeType}`),
+          fetch(`/api/tmdb/providers?tmdb_id=${activeTmdbId}&type=${activeType}`),
         ]);
         const detailsData = await detailsRes.json();
         const providersData = await providersRes.json();
@@ -107,7 +145,37 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
       setLoading(false);
     }
     fetchData();
-  }, [tmdbId, type]);
+  }, [activeTmdbId, activeType]);
+
+  // Fetch Netflix ID when Netflix is in flatrate providers
+  useEffect(() => {
+    if (!providers?.flatrate) return;
+    const hasNetflix = providers.flatrate.some((p) =>
+      p.provider_name.toLowerCase().includes("netflix")
+    );
+    if (!hasNetflix) return;
+
+    setNetflixLoading(true);
+    fetch(`/api/netflix-id?tmdb_id=${activeTmdbId}&type=${activeType}`)
+      .then((r) => r.json())
+      .then((data) => setNetflixId(data.netflix_id || null))
+      .catch(() => null)
+      .finally(() => setNetflixLoading(false));
+  }, [providers, activeTmdbId, activeType]);
+
+  const hasProviders = providers && (providers.flatrate?.length || providers.rent?.length || providers.buy?.length);
+
+  // Fetch similar available titles when no providers found
+  useEffect(() => {
+    if (loading || hasProviders || !details) return;
+    setSimilarLoading(true);
+    fetch(`/api/tmdb/similar-available?tmdb_id=${activeTmdbId}&type=${activeType}`)
+      .then((r) => r.json())
+      .then((data) => setSimilarAvailable(data.results || []))
+      .catch(() => setSimilarAvailable([]))
+      .finally(() => setSimilarLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, hasProviders, details, activeTmdbId, activeType]);
 
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose();
@@ -138,18 +206,17 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
     (v) => v.site === "YouTube"
   );
 
-  const hasProviders = providers && (providers.flatrate?.length || providers.rent?.length || providers.buy?.length);
   const backdropSrc = details?.backdrop_path
     ? `https://image.tmdb.org/t/p/w1280${details.backdrop_path}`
-    : posterPath
-      ? `https://image.tmdb.org/t/p/w780${posterPath}`
+    : activePosterPath
+      ? `https://image.tmdb.org/t/p/w780${activePosterPath}`
       : null;
 
   const topCast = details?.credits?.cast?.slice(0, 6) || [];
 
   async function handleShare() {
-    const tmdbUrl = `https://www.themoviedb.org/${type}/${tmdbId}`;
-    const shareText = `${title}${details?.year ? ` (${details.year})` : ""}`;
+    const tmdbUrl = `https://www.themoviedb.org/${activeType}/${activeTmdbId}`;
+    const shareText = `${activeTitle}${details?.year ? ` (${details.year})` : ""}`;
 
     if (navigator.share) {
       try {
@@ -214,7 +281,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
         {/* Top buttons - always on top */}
         <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
           {/* Favorite star */}
-          {onToggleFavorite && (
+          {!overrideTitle && onToggleFavorite && (
             <button
               onClick={onToggleFavorite}
               aria-label={isFavorite ? "Fjern fra favoritter" : "Legg til favoritter"}
@@ -268,18 +335,18 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
             {/* Title overlay at bottom of backdrop */}
             <div className="absolute bottom-0 left-0 right-0 p-5 flex items-end gap-4">
               {/* Small poster */}
-              {posterPath && (
+              {activePosterPath && (
                 <div className="relative w-20 h-[120px] rounded-lg overflow-hidden border border-white/10 shadow-lg flex-shrink-0 hidden sm:block">
                   <Image
-                    src={`https://image.tmdb.org/t/p/w342${posterPath}`}
-                    alt={title}
+                    src={`https://image.tmdb.org/t/p/w342${activePosterPath}`}
+                    alt={activeTitle}
                     fill
                     className="object-cover"
                   />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight">{title}</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight">{activeTitle}</h2>
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   {details?.year && (
                     <span className="text-sm text-white/50">{details.year}</span>
@@ -290,7 +357,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                       <span className="text-sm text-white/50">{runtimeStr}</span>
                     </>
                   )}
-                  {type === "tv" && details?.number_of_seasons && (
+                  {activeType === "tv" && details?.number_of_seasons && (
                     <>
                       <span className="text-white/20">·</span>
                       <span className="text-sm text-white/50">
@@ -323,6 +390,19 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
 
             {!loading && !error && details && (
               <>
+                {/* Back to original title */}
+                {overrideTitle && (
+                  <button
+                    onClick={() => setOverrideTitle(null)}
+                    className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                    </svg>
+                    Tilbake til «{title}»
+                  </button>
+                )}
+
                 {/* Genres */}
                 {details.genres.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
@@ -337,8 +417,8 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                   </div>
                 )}
 
-                {/* Episode progress (Watch Bank) */}
-                {progress && onUpdateProgress && (
+                {/* Episode progress (Watch Bank) — only for original title */}
+                {!overrideTitle && progress && onUpdateProgress && (
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-sky-500/[0.06] border border-sky-500/15">
                     <div className="flex-shrink-0">
                       <svg className="w-5 h-5 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -374,8 +454,8 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                   </div>
                 )}
 
-                {/* Action buttons */}
-                {actions && actions.length > 0 && onAction && (
+                {/* Action buttons — only for original title */}
+                {!overrideTitle && actions && actions.length > 0 && onAction && (
                   <div className="flex flex-wrap gap-2">
                     {actions.map(({ label, action, variant = "default" }) => {
                       const isLike = action === "like" || action === "liked" || variant === "green";
@@ -457,8 +537,8 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                   </div>
                 )}
 
-                {/* Friend overlap */}
-                {friendOverlap && friendOverlap.length > 0 && (
+                {/* Friend overlap — only for original title */}
+                {!overrideTitle && friendOverlap && friendOverlap.length > 0 && (
                   <div>
                     <p className="text-[11px] text-white/30 font-semibold uppercase tracking-wider mb-2">Venner som har denne</p>
                     <div className="space-y-1.5">
@@ -484,14 +564,153 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                   </div>
                 )}
 
-                {/* Streaming providers */}
+                {/* Streaming deep links + providers */}
                 <div>
                   <p className="text-[11px] text-white/30 font-semibold uppercase tracking-wider mb-2">
                     Tilgjengelig i {country || "..."}
                   </p>
 
                   {!hasProviders && (
-                    <p className="text-sm text-white/30">Ingen strømmetjenester tilgjengelig</p>
+                    <div>
+                      <p className="text-sm text-white/40 mb-3">Ikke tilgjengelig for strømming i {country || "Norge"}</p>
+
+                      {similarLoading && (
+                        <div className="flex items-center gap-2 py-4">
+                          <div className="w-4 h-4 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
+                          <span className="text-xs text-white/30">Finner lignende titler du kan se...</span>
+                        </div>
+                      )}
+
+                      {!similarLoading && similarAvailable.length > 0 && (
+                        <div>
+                          <p className="text-[11px] text-emerald-400/70 font-semibold uppercase tracking-wider mb-2.5">
+                            Se dette i stedet
+                          </p>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                            {similarAvailable.map((item) => (
+                              <button
+                                key={item.tmdb_id}
+                                onClick={() => setOverrideTitle({
+                                  tmdbId: item.tmdb_id,
+                                  type: item.type,
+                                  title: item.title,
+                                  posterPath: item.poster_path,
+                                })}
+                                className="text-left group rounded-xl overflow-hidden bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.15] transition-all"
+                              >
+                                <div className="relative aspect-[2/3] bg-white/[0.03]">
+                                  {item.poster_path ? (
+                                    <Image
+                                      src={`https://image.tmdb.org/t/p/w185${item.poster_path}`}
+                                      alt={item.title}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs px-1 text-center">
+                                      {item.title}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-1.5">
+                                  <p className="text-[11px] text-white/70 font-medium truncate group-hover:text-white transition-colors">
+                                    {item.title}
+                                  </p>
+                                  {item.year && (
+                                    <p className="text-[10px] text-white/30">{item.year}</p>
+                                  )}
+                                  {item.providers.flatrate && item.providers.flatrate.length > 0 && (
+                                    <div className="flex gap-1 mt-1">
+                                      {item.providers.flatrate.slice(0, 3).map((prov) => (
+                                        prov.logo_path && (
+                                          <Image
+                                            key={prov.provider_id}
+                                            src={`https://image.tmdb.org/t/p/w45${prov.logo_path}`}
+                                            alt={prov.provider_name}
+                                            width={16}
+                                            height={16}
+                                            className="rounded-sm"
+                                          />
+                                        )
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {!similarLoading && similarAvailable.length === 0 && !loading && (
+                        <p className="text-xs text-white/20">Fant ingen lignende titler tilgjengelig i {country || "Norge"}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Deep link buttons for flatrate providers */}
+                  {providers?.flatrate && providers.flatrate.length > 0 && (
+                    <div className="space-y-2 mb-3">
+                      {providers.flatrate.map((p) => {
+                        const isNetflix = p.provider_name.toLowerCase().includes("netflix");
+                        const link = isNetflix && netflixLoading
+                          ? null
+                          : getStreamingUrl(p.provider_name, activeTitle, isNetflix ? netflixId : null);
+
+                        if (!link && !isNetflix) return null;
+
+                        return (
+                          <a
+                            key={`link-${p.provider_id}`}
+                            href={link?.url || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => { if (!link) e.preventDefault(); }}
+                            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl border transition-all active:scale-[0.98] ${
+                              isNetflix
+                                ? "bg-[#E50914]/15 border-[#E50914]/25 hover:bg-[#E50914]/25"
+                                : "bg-white/[0.06] border-white/[0.08] hover:bg-white/[0.12]"
+                            }`}
+                          >
+                            {p.logo_path && (
+                              <Image
+                                src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
+                                alt={p.provider_name}
+                                width={28}
+                                height={28}
+                                className="rounded"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              {isNetflix && netflixLoading ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-4 h-4 border-2 border-[#E50914]/30 border-t-[#E50914] rounded-full animate-spin" />
+                                  <span className="text-sm text-white/50">Henter Netflix-link...</span>
+                                </div>
+                              ) : (
+                                <>
+                                  <span className={`text-sm font-semibold ${isNetflix ? "text-[#E50914]" : "text-white/80"}`}>
+                                    {link?.isDirect
+                                      ? `Åpne i ${p.provider_name}`
+                                      : `Søk i ${p.provider_name}`}
+                                  </span>
+                                  <p className="text-[11px] text-white/35 mt-0.5">
+                                    {link?.isDirect
+                                      ? `Åpner tittelen direkte i ${p.provider_name}`
+                                      : `Åpner ${p.provider_name} og søker etter tittelen`}
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                            {link && !netflixLoading && (
+                              <svg className="w-4 h-4 text-white/30 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                              </svg>
+                            )}
+                          </a>
+                        );
+                      })}
+                    </div>
                   )}
 
                   {hasProviders && (

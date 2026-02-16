@@ -11,6 +11,7 @@ import GlowButton from "@/components/GlowButton";
 import { logTitle } from "@/lib/api";
 import { useGuestMode } from "@/hooks/useGuestMode";
 import { recordGuestTitleAction } from "@/lib/guest-actions";
+import Link from "next/link";
 import type { TMDBSearchResult, MediaType, AdvancedSearchFilters } from "@/lib/types";
 
 export default function SearchPage() {
@@ -190,7 +191,22 @@ export default function SearchPage() {
 
   return (
     <div className="animate-fade-in-up">
-      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-5">Søk</h2>
+      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">Søk</h2>
+
+      {/* Wrapped teaser */}
+      <Link
+        href="/wrapped"
+        className="flex items-center gap-3 px-3.5 py-2.5 mb-4 rounded-xl bg-gradient-to-r from-[var(--accent)]/10 to-purple-500/10 border border-[var(--accent)]/15 hover:border-[var(--accent)]/30 transition-all group"
+      >
+        <span className="text-lg">🎬</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-[var(--text-primary)]">Din Wrapped er klar</p>
+          <p className="text-[10px] text-[var(--text-tertiary)]">Se ditt år i film og serier</p>
+        </div>
+        <svg className="w-4 h-4 text-[var(--text-tertiary)] group-hover:text-[var(--accent-light)] transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </Link>
 
       {/* Search bar */}
       <form onSubmit={handleSearch} className="flex gap-2 mb-3 sticky top-0 z-20 -mx-4 px-4 py-2 md:static md:mx-0 md:px-0 md:py-0 bg-[var(--bg-base)]/95 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none">

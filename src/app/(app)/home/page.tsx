@@ -5,7 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import StreamingModal from "@/components/StreamingModal";
 import { logTitle } from "@/lib/api";
-import { createSupabaseBrowser } from "@/lib/supabase-browser";
+import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-browser";
+import { prefetchNetflixIds } from "@/lib/prefetch-netflix-ids";
 import type { UserTitle, TitleCache, MediaType, Recommendation } from "@/lib/types";
 
 interface DashboardData {
@@ -31,19 +32,16 @@ export default function HomePage() {
     if (!user) { setLoading(false); return; }
 
     // Parallel data fetching
-    const [titlesRes, cacheRes, recsRes, trendingRes] = await Promise.all([
+    const [titlesRes, recsRes, trendingRes] = await Promise.all([
       supabase.from("user_titles").select("*").eq("user_id", user.id).order("updated_at", { ascending: false }),
-      supabase.from("titles_cache").select("*"),
       fetch("/api/recommendations").then((r) => r.json()).catch(() => ({ recommendations: [] })),
       fetch("/api/tmdb/discover?type=movie&sort_by=popularity.desc&page=1").then((r) => r.json()).catch(() => ({ results: [] })),
     ]);
 
-    const cacheMap = new Map<string, TitleCache>();
-    for (const c of (cacheRes.data || []) as TitleCache[]) {
-      cacheMap.set(`${c.tmdb_id}:${c.type}`, c);
-    }
+    const userTitles = (titlesRes.data || []) as UserTitle[];
+    const cacheMap = await fetchCacheForTitles(supabase, userTitles.map((t) => ({ tmdb_id: t.tmdb_id, type: t.type })));
 
-    const allTitles = ((titlesRes.data || []) as UserTitle[]).map((t) => ({
+    const allTitles = userTitles.map((t) => ({
       ...t,
       cache: cacheMap.get(`${t.tmdb_id}:${t.type}`),
     }));
@@ -70,6 +68,13 @@ export default function HomePage() {
       totalTitles: allTitles.length,
     });
     setLoading(false);
+
+    // Prefetch Netflix IDs for watching + recommendations (best-effort)
+    const prefetchItems = [
+      ...watching.map((t) => ({ id: t.tmdb_id, type: t.type })),
+      ...((recsRes.recommendations || []) as Recommendation[]).slice(0, 10).map((r: Recommendation) => ({ id: r.tmdb_id, type: r.type })),
+    ];
+    if (prefetchItems.length > 0) prefetchNetflixIds(prefetchItems);
   }
 
   async function handleQuickAction(tmdb_id: number, type: MediaType, action: string) {

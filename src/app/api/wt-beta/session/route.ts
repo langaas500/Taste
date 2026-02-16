@@ -1,0 +1,171 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth";
+import { createSupabaseServer } from "@/lib/supabase-server";
+import { fetchWTTitles } from "@/lib/wt-titles";
+import type { Mood } from "@/lib/wt-titles";
+
+const VALID_MOODS = new Set<Mood>(["light", "dark", "thriller", "action", "romance", "horror"]);
+
+function generateCode(): string {
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+// POST: Create a new WT session
+export async function POST(req: NextRequest) {
+  try {
+    const user = await requireUser();
+    const supabase = await createSupabaseServer();
+
+    // Parse mood from body
+    let mood: Mood | undefined;
+    try {
+      const body = await req.json();
+      if (body.mood && VALID_MOODS.has(body.mood)) mood = body.mood;
+    } catch {
+      /* no body or invalid JSON — mood stays undefined */
+    }
+
+    // Get user exclusions + liked history for title pool
+    const [{ data: userTitles }, { data: exclusions }] = await Promise.all([
+      supabase.from("user_titles").select("tmdb_id, type, sentiment, favorite").eq("user_id", user.id),
+      supabase.from("user_exclusions").select("tmdb_id, type").eq("user_id", user.id),
+    ]);
+
+    const excludeIds = new Set<string>();
+    userTitles?.forEach((t: { tmdb_id: number; type: string }) =>
+      excludeIds.add(`${t.tmdb_id}:${t.type}`)
+    );
+    exclusions?.forEach((t: { tmdb_id: number; type: string }) =>
+      excludeIds.add(`${t.tmdb_id}:${t.type}`)
+    );
+
+    // Extract seeds and genre frequencies from liked titles
+    const seedLiked: { tmdb_id: number; type: "movie" | "tv"; title: string }[] = [];
+    const genreCount: Record<number, number> = {};
+    const likedTitles = (userTitles || []).filter(
+      (t: { sentiment?: string; favorite?: boolean }) =>
+        t.sentiment === "liked" || t.favorite
+    );
+
+    if (likedTitles.length > 0) {
+      const likedIds = likedTitles.map((t: { tmdb_id: number }) => t.tmdb_id);
+      const { data: cached } = await supabase
+        .from("titles_cache")
+        .select("tmdb_id, type, title, genres")
+        .in("tmdb_id", likedIds.slice(0, 20));
+
+      if (cached && cached.length > 0) {
+        for (const c of cached.slice(0, 5)) {
+          seedLiked.push({ tmdb_id: c.tmdb_id, type: c.type as "movie" | "tv", title: c.title });
+        }
+        for (const c of cached) {
+          const genres = c.genres as { id: number }[] | number[] | null;
+          if (Array.isArray(genres)) {
+            for (const g of genres) {
+              const gid = typeof g === "number" ? g : g.id;
+              if (gid) genreCount[gid] = (genreCount[gid] || 0) + 1;
+            }
+          }
+        }
+      }
+    }
+
+    const likedGenreIds = Object.entries(genreCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([id]) => Number(id));
+
+    const titles = await fetchWTTitles({ mood, seedLiked, excludeIds, likedGenreIds });
+    if (titles.length === 0) {
+      return NextResponse.json({ error: "Could not fetch titles" }, { status: 500 });
+    }
+
+    // Generate unique code (retry on collision)
+    let code = generateCode();
+    let attempts = 0;
+    while (attempts < 5) {
+      const { data: existing } = await supabase
+        .from("wt_sessions")
+        .select("id")
+        .eq("code", code)
+        .eq("status", "waiting")
+        .maybeSingle();
+
+      if (!existing) break;
+      code = generateCode();
+      attempts++;
+    }
+
+    const { data: session, error } = await supabase
+      .from("wt_sessions")
+      .insert({
+        code,
+        host_id: user.id,
+        titles,
+        status: "waiting",
+      })
+      .select("id, code, status")
+      .single();
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    return NextResponse.json({ session: { ...session, titles } });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Error";
+    if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+// GET: Poll session state
+export async function GET(req: NextRequest) {
+  try {
+    const user = await requireUser();
+    const sessionId = req.nextUrl.searchParams.get("id");
+
+    if (!sessionId) {
+      return NextResponse.json({ error: "Missing session id" }, { status: 400 });
+    }
+
+    const supabase = await createSupabaseServer();
+    const { data: session, error } = await supabase
+      .from("wt_sessions")
+      .select("id, code, host_id, guest_id, host_swipes, guest_swipes, match_tmdb_id, match_type, status, updated_at")
+      .eq("id", sessionId)
+      .single();
+
+    if (error || !session) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+
+    // Verify user is part of session
+    if (session.host_id !== user.id && session.guest_id !== user.id) {
+      return NextResponse.json({ error: "Not part of this session" }, { status: 403 });
+    }
+
+    const isHost = session.host_id === user.id;
+
+    return NextResponse.json({
+      session: {
+        id: session.id,
+        code: session.code,
+        status: session.status,
+        partner_joined: !!session.guest_id,
+        my_swipes: isHost ? session.host_swipes : session.guest_swipes,
+        partner_swipes: isHost ? session.guest_swipes : session.host_swipes,
+        match_tmdb_id: session.match_tmdb_id,
+        match_type: session.match_type,
+        updated_at: session.updated_at,
+      },
+    });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Error";
+    if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}

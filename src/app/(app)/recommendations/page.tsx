@@ -8,7 +8,10 @@ import GlowButton from "@/components/GlowButton";
 import StreamingModal from "@/components/StreamingModal";
 import AddToListModal from "@/components/AddToListModal";
 import { submitFeedback, addExclusion, logTitle } from "@/lib/api";
+import { prefetchNetflixIds } from "@/lib/prefetch-netflix-ids";
 import type { Recommendation, MediaType } from "@/lib/types";
+
+type TypeFilter = "all" | "tv" | "movie";
 
 export default function RecommendationsPage() {
   const [recs, setRecs] = useState<Recommendation[]>([]);
@@ -21,20 +24,32 @@ export default function RecommendationsPage() {
   const [dismissTimers, setDismissTimers] = useState<Record<string, ReturnType<typeof setTimeout>>>({});
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
   const [addToListItem, setAddToListItem] = useState<{ tmdb_id: number; type: MediaType; title: string } | null>(null);
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [includedOnly, setIncludedOnly] = useState(false);
 
   useEffect(() => {
-    loadRecs();
+    const stored = localStorage.getItem("logflix_included_only") === "true";
+    if (stored) setIncludedOnly(true);
+    loadRecs(stored ? "included" : undefined);
   }, []);
 
-  async function loadRecs() {
+  async function loadRecs(availability?: "included") {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/recommendations");
+      const url = availability
+        ? `/api/recommendations?availability=${availability}`
+        : "/api/recommendations";
+      const res = await fetch(url);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      setRecs(data.recommendations || []);
+      const recsData = data.recommendations || [];
+      setRecs(recsData);
       setLoaded(true);
+      // Prefetch Netflix IDs for recommendations (best-effort)
+      if (recsData.length > 0) {
+        prefetchNetflixIds(recsData.map((r: Recommendation) => ({ id: r.tmdb_id, type: r.type })));
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load recommendations");
     }
@@ -96,7 +111,16 @@ export default function RecommendationsPage() {
     setFeedbackStates((prev) => { const n = { ...prev }; delete n[key]; return n; });
   }
 
-  const visible = recs.filter((r) => !dismissed.has(`${r.tmdb_id}:${r.type}`));
+  function toggleIncludedOnly() {
+    const next = !includedOnly;
+    setIncludedOnly(next);
+    localStorage.setItem("logflix_included_only", String(next));
+    loadRecs(next ? "included" : undefined);
+  }
+
+  const visible = recs
+    .filter((r) => !dismissed.has(`${r.tmdb_id}:${r.type}`))
+    .filter((r) => typeFilter === "all" || r.type === typeFilter);
 
   if (loading) return <AIThinkingScreen />;
 
@@ -104,10 +128,43 @@ export default function RecommendationsPage() {
     <div className="animate-fade-in-up">
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-xl font-bold text-[var(--text-primary)]">For deg</h2>
-        <GlowButton onClick={loadRecs} disabled={loading}>
+        <GlowButton onClick={() => loadRecs(includedOnly ? "included" : undefined)} disabled={loading}>
           {loaded ? "Oppdater" : "Hent anbefalinger"}
         </GlowButton>
       </div>
+
+      {loaded && recs.length > 0 && (
+        <div className="flex items-center gap-2 mb-5 flex-wrap">
+          <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">Type</span>
+          {([["all", "Alle"], ["tv", "Serier"], ["movie", "Film"]] as [TypeFilter, string][]).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setTypeFilter(key)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+                typeFilter === key
+                  ? "bg-white/[0.1] text-white"
+                  : "bg-white/[0.03] text-white/40 hover:bg-white/[0.06] hover:text-white/60"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+
+          <div className="w-px h-4 bg-white/10 mx-1" />
+
+          <button
+            onClick={toggleIncludedOnly}
+            disabled={loading}
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+              includedOnly
+                ? "bg-[var(--accent-glow)] text-[var(--accent-light)]"
+                : "bg-white/[0.03] text-white/40 hover:bg-white/[0.06] hover:text-white/60"
+            } disabled:opacity-40`}
+          >
+            {includedOnly ? "✓ " : ""}Kun inkludert i abonnement
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="text-sm text-[var(--red)] bg-[var(--red-glow)] rounded-[var(--radius-md)] px-3.5 py-2.5 mb-4 border border-[rgba(248,113,113,0.1)]">

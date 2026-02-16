@@ -1,0 +1,694 @@
+Nå har jeg god oversikt over Netflix CSV-formatet. Det finnes to varianter:
+
+Enkel historikk fra netflix.com/viewingactivity — bare Title, Date
+Full datanedlasting fra netflix.com/account/getmyinfo — ViewingActivity.csv med Profile Name, Start Time, Duration, Title, ...
+
+Tittelformatet er "Show Name: Season 1: Episode Name" for serier og bare "Movie Name" for filmer.
+Her er en komplett import-side og API-route:
+1. Import-side — /app/import/netflix/page.tsx
+tsx"use client";
+
+import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+interface ParsedTitle {
+  originalTitle: string;
+  showName: string;
+  season: string | null;
+  episode: string | null;
+  isMovie: boolean;
+  date: string | null;
+}
+
+interface MatchedItem {
+  parsed: ParsedTitle;
+  tmdb: {
+    id: number;
+    title: string;
+    poster_path: string | null;
+    media_type: "movie" | "tv";
+    year: string;
+  } | null;
+  status: "matched" | "unmatched" | "skipped";
+}
+
+export default function NetflixImportPage() {
+  const router = useRouter();
+  const [step, setStep] = useState<"upload" | "parsing" | "review" | "importing" | "done">("upload");
+  const [dragOver, setDragOver] = useState(false);
+  const [parsedTitles, setParsedTitles] = useState<ParsedTitle[]>([]);
+  const [matchedItems, setMatchedItems] = useState<MatchedItem[]>([]);
+  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [importResult, setImportResult] = useState({ added: 0, skipped: 0 });
+  const [error, setError] = useState("");
+
+  // Parse the Netflix CSV file
+  function parseNetflixCSV(text: string): ParsedTitle[] {
+    const lines = text.trim().split("\n");
+    const titles = new Map<string, ParsedTitle>();
+
+    // Detect format: simple (Title, Date) or full (Profile Name, Start Time, Duration, ...)
+    const header = lines[0].toLowerCase();
+    const isFullFormat = header.includes("profile name") || header.includes("start time") || header.includes("duration");
+    const isSimpleFormat = header.includes("title") && header.includes("date");
+
+    const startIndex = (isFullFormat || isSimpleFormat) ? 1 : 0;
+
+    for (let i = startIndex; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      let title = "";
+      let date: string | null = null;
+
+      if (isFullFormat) {
+        // Full format: Profile Name, Start Time, Duration, Attributes, Title, ...
+        const cols = parseCSVLine(line);
+        title = cols[4] || cols[0] || "";
+        date = cols[1] || null;
+      } else {
+        // Simple format: "Title","Date" or Title,Date
+        const cols = parseCSVLine(line);
+        title = cols[0] || "";
+        date = cols[1] || null;
+      }
+
+      if (!title) continue;
+
+      // Skip trailers, hooks, teasers
+      const lowerTitle = title.toLowerCase();
+      if (
+        lowerTitle.includes("(trailer)") ||
+        lowerTitle.includes("hook") ||
+        lowerTitle.includes("teaser") ||
+        lowerTitle.includes("recap")
+      ) continue;
+
+      // Parse "Show Name: Season X: Episode Name"
+      const parts = title.split(":").map((p) => p.trim());
+      const showName = parts[0];
+      const season = parts.length > 1 ? parts[1] : null;
+      const episode = parts.length > 2 ? parts.slice(2).join(": ") : null;
+      const isMovie = parts.length === 1;
+
+      // Deduplicate: keep unique show names (for TV) or movie titles
+      const key = isMovie ? title : showName;
+      if (!titles.has(key)) {
+        titles.set(key, {
+          originalTitle: title,
+          showName,
+          season,
+          episode,
+          isMovie,
+          date,
+        });
+      }
+    }
+
+    return Array.from(titles.values());
+  }
+
+  // Parse a single CSV line handling quoted fields
+  function parseCSVLine(line: string): string[] {
+    const result: string[] = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === "," && !inQuotes) {
+        result.push(current.trim());
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  }
+
+  // Handle file upload
+  const handleFile = useCallback(async (file: File) => {
+    setError("");
+
+    if (!file.name.endsWith(".csv")) {
+      setError("Vennligst last opp en CSV-fil.");
+      return;
+    }
+
+    setStep("parsing");
+
+    try {
+      const text = await file.text();
+      const parsed = parseNetflixCSV(text);
+
+      if (parsed.length === 0) {
+        setError("Fant ingen titler i filen. Er dette riktig Netflix-fil?");
+        setStep("upload");
+        return;
+      }
+
+      setParsedTitles(parsed);
+      setProgress({ current: 0, total: parsed.length });
+
+      // Match against TMDB in batches
+      const matched: MatchedItem[] = [];
+      const batchSize = 5;
+
+      for (let i = 0; i < parsed.length; i += batchSize) {
+        const batch = parsed.slice(i, i + batchSize);
+        const results = await Promise.all(
+          batch.map(async (item) => {
+            try {
+              const res = await fetch(
+                `/api/import/netflix/match?` +
+                  new URLSearchParams({
+                    query: item.showName,
+                    type: item.isMovie ? "movie" : "tv",
+                  })
+              );
+              const data = await res.json();
+              return {
+                parsed: item,
+                tmdb: data.result || null,
+                status: data.result ? "matched" : "unmatched",
+              } as MatchedItem;
+            } catch {
+              return {
+                parsed: item,
+                tmdb: null,
+                status: "unmatched",
+              } as MatchedItem;
+            }
+          })
+        );
+
+        matched.push(...results);
+        setProgress({ current: Math.min(i + batchSize, parsed.length), total: parsed.length });
+      }
+
+      setMatchedItems(matched);
+      // Auto-select all matched items
+      const autoSelected = new Set<number>();
+      matched.forEach((item, idx) => {
+        if (item.status === "matched") autoSelected.add(idx);
+      });
+      setSelectedItems(autoSelected);
+      setStep("review");
+    } catch (err) {
+      setError("Kunne ikke lese filen. Prøv igjen.");
+      setStep("upload");
+    }
+  }, []);
+
+  // Handle drag & drop
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(false);
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    },
+    [handleFile]
+  );
+
+  // Toggle item selection
+  function toggleItem(idx: number) {
+    setSelectedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  }
+
+  // Select/deselect all
+  function toggleAll() {
+    if (selectedItems.size === matchedItems.filter((i) => i.tmdb).length) {
+      setSelectedItems(new Set());
+    } else {
+      const all = new Set<number>();
+      matchedItems.forEach((item, idx) => {
+        if (item.tmdb) all.add(idx);
+      });
+      setSelectedItems(all);
+    }
+  }
+
+  // Import selected items
+  async function handleImport() {
+    setStep("importing");
+    const toImport = Array.from(selectedItems)
+      .map((idx) => matchedItems[idx])
+      .filter((item) => item.tmdb);
+
+    setProgress({ current: 0, total: toImport.length });
+
+    let added = 0;
+    let skipped = 0;
+    const batchSize = 10;
+
+    for (let i = 0; i < toImport.length; i += batchSize) {
+      const batch = toImport.slice(i, i + batchSize);
+
+      try {
+        const res = await fetch("/api/import/netflix/add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: batch.map((item) => ({
+              tmdb_id: item.tmdb!.id,
+              media_type: item.tmdb!.media_type,
+              title: item.tmdb!.title,
+              poster_path: item.tmdb!.poster_path,
+              status: "watched",
+            })),
+          }),
+        });
+
+        const data = await res.json();
+        added += data.added || 0;
+        skipped += data.skipped || 0;
+      } catch {
+        skipped += batch.length;
+      }
+
+      setProgress({ current: Math.min(i + batchSize, toImport.length), total: toImport.length });
+    }
+
+    setImportResult({ added, skipped });
+    setStep("done");
+  }
+
+  const matchedCount = matchedItems.filter((i) => i.tmdb).length;
+  const unmatchedCount = matchedItems.filter((i) => !i.tmdb).length;
+
+  return (
+    <div className="min-h-dvh bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      <div className="max-w-2xl mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="mb-8">
+          <Link
+            href="/library"
+            className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors mb-4 inline-block"
+          >
+            ← Tilbake til biblioteket
+          </Link>
+          <h1 className="text-2xl font-bold mb-2">Importer fra Netflix</h1>
+          <p className="text-[var(--text-secondary)] text-sm">
+            Last opp din Netflix-historikk og legg til alt du har sett i Logflix.
+          </p>
+        </div>
+
+        {/* Step: Upload */}
+        {step === "upload" && (
+          <div>
+            {/* Instructions */}
+            <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl p-5 mb-6">
+              <h2 className="text-sm font-semibold mb-3">Slik henter du filen:</h2>
+              <ol className="space-y-2 text-sm text-[var(--text-secondary)]">
+                <li className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-bold flex items-center justify-center">1</span>
+                  <span>
+                    Gå til{" "}
+                    
+                      href="https://www.netflix.com/viewingactivity"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--accent-light)] underline"
+                    >
+                      netflix.com/viewingactivity
+                    </a>
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-bold flex items-center justify-center">2</span>
+                  <span>Scroll helt ned og klikk <strong>«Last ned alt»</strong></span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-bold flex items-center justify-center">3</span>
+                  <span>Last opp CSV-filen her</span>
+                </li>
+              </ol>
+            </div>
+
+            {/* Drop zone */}
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all cursor-pointer ${
+                dragOver
+                  ? "border-[var(--accent)] bg-[var(--accent)]/5"
+                  : "border-[var(--border)] hover:border-[var(--text-tertiary)]"
+              }`}
+              onClick={() => document.getElementById("file-input")?.click()}
+            >
+              <input
+                id="file-input"
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFile(file);
+                }}
+              />
+              <div className="text-4xl mb-3">📺</div>
+              <p className="text-[var(--text-secondary)] mb-1">
+                Dra og slipp CSV-filen her
+              </p>
+              <p className="text-xs text-[var(--text-tertiary)]">
+                eller klikk for å velge fil
+              </p>
+            </div>
+
+            {error && (
+              <div className="mt-4 text-sm text-[var(--red)] bg-[var(--red-glow)] rounded-xl px-4 py-3 border border-[rgba(248,113,113,0.1)]">
+                {error}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Step: Parsing / Matching */}
+        {step === "parsing" && (
+          <div className="text-center py-16">
+            <div className="w-12 h-12 border-3 border-[var(--border)] border-t-[var(--accent)] rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-[var(--text-secondary)] mb-2">Matcher titler med TMDB...</p>
+            <p className="text-sm text-[var(--text-tertiary)]">
+              {progress.current} / {progress.total} titler
+            </p>
+            <div className="w-64 mx-auto mt-4 h-1.5 bg-[var(--bg-surface)] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[var(--accent)] rounded-full transition-all duration-300"
+                style={{
+                  width: progress.total > 0
+                    ? `${(progress.current / progress.total) * 100}%`
+                    : "0%",
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Step: Review */}
+        {step === "review" && (
+          <div>
+            {/* Summary bar */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex gap-4 text-sm">
+                <span className="text-[var(--green)]">✓ {matchedCount} funnet</span>
+                {unmatchedCount > 0 && (
+                  <span className="text-[var(--text-tertiary)]">✗ {unmatchedCount} ikke funnet</span>
+                )}
+              </div>
+              <button
+                onClick={toggleAll}
+                className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] transition-colors"
+              >
+                {selectedItems.size === matchedCount ? "Fjern alle" : "Velg alle"}
+              </button>
+            </div>
+
+            {/* Items list */}
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+              {matchedItems.map((item, idx) => (
+                <div
+                  key={idx}
+                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                    !item.tmdb
+                      ? "opacity-40 border-[var(--border)] bg-[var(--bg-surface)]/50"
+                      : selectedItems.has(idx)
+                      ? "border-[var(--accent)]/30 bg-[var(--accent)]/5"
+                      : "border-[var(--border)] bg-[var(--bg-surface)]"
+                  }`}
+                  onClick={() => item.tmdb && toggleItem(idx)}
+                >
+                  {/* Checkbox */}
+                  <div
+                    className={`w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border transition-all ${
+                      selectedItems.has(idx)
+                        ? "bg-[var(--accent)] border-[var(--accent)]"
+                        : "border-[var(--border)]"
+                    }`}
+                  >
+                    {selectedItems.has(idx) && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* Poster */}
+                  {item.tmdb?.poster_path ? (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w92${item.tmdb.poster_path}`}
+                      alt=""
+                      className="w-10 h-14 rounded object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-14 rounded bg-[var(--bg-surface)] flex-shrink-0 flex items-center justify-center text-xs text-[var(--text-tertiary)]">
+                      ?
+                    </div>
+                  )}
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {item.tmdb?.title || item.parsed.showName}
+                    </p>
+                    <p className="text-xs text-[var(--text-tertiary)]">
+                      {item.tmdb ? (
+                        <>
+                          {item.tmdb.media_type === "tv" ? "Serie" : "Film"}
+                          {item.tmdb.year && ` · ${item.tmdb.year}`}
+                        </>
+                      ) : (
+                        "Ikke funnet i TMDB"
+                      )}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Import button */}
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setStep("upload")}
+                className="px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                Avbryt
+              </button>
+              <button
+                onClick={handleImport}
+                disabled={selectedItems.size === 0}
+                className="flex-1 py-2.5 bg-[var(--accent)] hover:brightness-110 text-white rounded-xl font-medium text-sm transition-all disabled:opacity-40 disabled:pointer-events-none"
+              >
+                Importer {selectedItems.size} titler
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step: Importing */}
+        {step === "importing" && (
+          <div className="text-center py-16">
+            <div className="w-12 h-12 border-3 border-[var(--border)] border-t-[var(--accent)] rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-[var(--text-secondary)] mb-2">Legger til i biblioteket...</p>
+            <p className="text-sm text-[var(--text-tertiary)]">
+              {progress.current} / {progress.total}
+            </p>
+            <div className="w-64 mx-auto mt-4 h-1.5 bg-[var(--bg-surface)] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[var(--accent)] rounded-full transition-all duration-300"
+                style={{
+                  width: progress.total > 0
+                    ? `${(progress.current / progress.total) * 100}%`
+                    : "0%",
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Step: Done */}
+        {step === "done" && (
+          <div className="text-center py-16">
+            <div className="text-5xl mb-4">🎉</div>
+            <h2 className="text-xl font-bold mb-2">Import ferdig!</h2>
+            <p className="text-[var(--text-secondary)] mb-1">
+              <span className="text-[var(--green)] font-semibold">{importResult.added}</span> titler lagt til i biblioteket
+            </p>
+            {importResult.skipped > 0 && (
+              <p className="text-sm text-[var(--text-tertiary)]">
+                {importResult.skipped} hoppet over (allerede i biblioteket)
+              </p>
+            )}
+            <div className="flex gap-3 justify-center mt-8">
+              <button
+                onClick={() => {
+                  setStep("upload");
+                  setMatchedItems([]);
+                  setSelectedItems(new Set());
+                }}
+                className="px-5 py-2.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] rounded-xl transition-colors"
+              >
+                Importer flere
+              </button>
+              <button
+                onClick={() => router.push("/library")}
+                className="px-5 py-2.5 bg-[var(--accent)] hover:brightness-110 text-white rounded-xl font-medium text-sm transition-all"
+              >
+                Gå til biblioteket
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+2. API-route for TMDB-matching — /app/api/import/netflix/match/route.ts
+tsimport { NextRequest, NextResponse } from "next/server";
+
+const TMDB_TOKEN = process.env.TMDB_ACCESS_TOKEN!;
+
+export async function GET(req: NextRequest) {
+  const query = req.nextUrl.searchParams.get("query");
+  const type = req.nextUrl.searchParams.get("type") || "multi";
+
+  if (!query) {
+    return NextResponse.json({ result: null });
+  }
+
+  try {
+    const searchType = type === "movie" ? "movie" : type === "tv" ? "tv" : "multi";
+    const res = await fetch(
+      `https://api.themoviedb.org/3/search/${searchType}?` +
+        new URLSearchParams({
+          query,
+          language: "no-NO",
+          page: "1",
+        }),
+      {
+        headers: { Authorization: `Bearer ${TMDB_TOKEN}` },
+      }
+    );
+
+    const data = await res.json();
+    const first = data.results?.[0];
+
+    if (!first) {
+      // Retry with English if no Norwegian results
+      const enRes = await fetch(
+        `https://api.themoviedb.org/3/search/${searchType}?` +
+          new URLSearchParams({
+            query,
+            language: "en-US",
+            page: "1",
+          }),
+        {
+          headers: { Authorization: `Bearer ${TMDB_TOKEN}` },
+        }
+      );
+      const enData = await enRes.json();
+      const enFirst = enData.results?.[0];
+
+      if (!enFirst) {
+        return NextResponse.json({ result: null });
+      }
+
+      return NextResponse.json({
+        result: {
+          id: enFirst.id,
+          title: enFirst.title || enFirst.name,
+          poster_path: enFirst.poster_path,
+          media_type: enFirst.media_type || searchType,
+          year: (enFirst.release_date || enFirst.first_air_date || "").slice(0, 4),
+        },
+      });
+    }
+
+    return NextResponse.json({
+      result: {
+        id: first.id,
+        title: first.title || first.name,
+        poster_path: first.poster_path,
+        media_type: first.media_type || searchType,
+        year: (first.release_date || first.first_air_date || "").slice(0, 4),
+      },
+    });
+  } catch (err) {
+    return NextResponse.json({ result: null }, { status: 500 });
+  }
+}
+3. API-route for å legge til i biblioteket — /app/api/import/netflix/add/route.ts
+tsimport { NextRequest, NextResponse } from "next/server";
+import { createSupabaseServer } from "@/lib/supabase-server";
+
+export async function POST(req: NextRequest) {
+  const supabase = createSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { items } = await req.json();
+  let added = 0;
+  let skipped = 0;
+
+  for (const item of items) {
+    // Check if already in library
+    const { data: existing } = await supabase
+      .from("library")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("tmdb_id", item.tmdb_id)
+      .eq("media_type", item.media_type)
+      .single();
+
+    if (existing) {
+      skipped++;
+      continue;
+    }
+
+    const { error } = await supabase.from("library").insert({
+      user_id: user.id,
+      tmdb_id: item.tmdb_id,
+      media_type: item.media_type,
+      title: item.title,
+      poster_path: item.poster_path,
+      status: "watched",
+      source: "netflix_import",
+    });
+
+    if (!error) added++;
+    else skipped++;
+  }
+
+  return NextResponse.json({ added, skipped });
+}
+Hva dette gjør:
+
+Brukeren drar inn Netflix CSV → parser titler og fjerner duplikater/trailere
+Matcher hver unik tittel mot TMDB (norsk først, fallback til engelsk)
+Viser en review-liste med plakater der brukeren kan velge/fjerne titler
+Importerer valgte titler til Supabase med status: "watched" og source: "netflix_import"
+Progress-bar i alle steg, og ferdig-skjerm med statistikk
+
+Du må tilpasse Supabase-tabellnavnene til ditt schema, men logikken er klar

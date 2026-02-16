@@ -8,15 +8,18 @@ import GlowButton from "@/components/GlowButton";
 import StreamingModal from "@/components/StreamingModal";
 import AddToListModal from "@/components/AddToListModal";
 import { logTitle, updateProgress, toggleFavorite, removeTitle, fetchFriendOverlaps } from "@/lib/api";
-import { createSupabaseBrowser } from "@/lib/supabase-browser";
+import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-browser";
 import Link from "next/link";
 import type { UserTitle, TitleCache, MediaType, FriendOverlap } from "@/lib/types";
+
+type TypeFilter = "all" | "tv" | "movie";
 
 export default function WatchBankPage() {
   const [titles, setTitles] = useState<(UserTitle & { cache?: TitleCache })[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
   const [addToListItem, setAddToListItem] = useState<{ tmdb_id: number; type: MediaType; title: string } | null>(null);
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [genreFilter, setGenreFilter] = useState<number | null>(null);
   const [yearFrom, setYearFrom] = useState("");
   const [yearTo, setYearTo] = useState("");
@@ -32,18 +35,13 @@ export default function WatchBankPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const [{ data: ut }, { data: cache }] = await Promise.all([
-      supabase.from("user_titles").select("*").eq("user_id", user.id).eq("status", "watching").order("updated_at", { ascending: false }),
-      supabase.from("titles_cache").select("*"),
-    ]);
+    const { data: ut } = await supabase.from("user_titles").select("*").eq("user_id", user.id).eq("status", "watching").order("updated_at", { ascending: false });
 
-    const cacheMap = new Map<string, TitleCache>();
-    for (const c of (cache || []) as TitleCache[]) {
-      cacheMap.set(`${c.tmdb_id}:${c.type}`, c);
-    }
+    const userTitles = (ut || []) as UserTitle[];
+    const cacheMap = await fetchCacheForTitles(supabase, userTitles.map((t) => ({ tmdb_id: t.tmdb_id, type: t.type })));
 
     setTitles(
-      ((ut || []) as UserTitle[]).map((t) => ({
+      userTitles.map((t) => ({
         ...t,
         cache: cacheMap.get(`${t.tmdb_id}:${t.type}`),
       }))
@@ -125,9 +123,12 @@ export default function WatchBankPage() {
     </div>
   );
 
-  const hasActiveFilters = genreFilter != null || yearFrom || yearTo;
+  const hasActiveFilters = typeFilter !== "all" || genreFilter != null || yearFrom || yearTo;
 
   let filtered = [...titles];
+  if (typeFilter !== "all") {
+    filtered = filtered.filter((t) => t.type === typeFilter);
+  }
   if (genreFilter) {
     filtered = filtered.filter((t) =>
       ((t.cache?.genres as { id: number; name: string }[]) || []).some((g) => g.id === genreFilter)
@@ -168,15 +169,31 @@ export default function WatchBankPage() {
           </div>
         </div>
       ) : (<>
-        <div className="flex flex-wrap items-center gap-2 mb-5">
+        <div className="flex flex-wrap items-center gap-4 mb-5">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">Type</span>
+            {([["all", "Alle"], ["tv", "Serier"], ["movie", "Film"]] as [TypeFilter, string][]).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setTypeFilter(key)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+                  typeFilter === key
+                    ? "bg-white/[0.1] text-white"
+                    : "bg-white/[0.03] text-white/40 hover:bg-white/[0.06] hover:text-white/60"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <select
             value={genreFilter ?? ""}
             onChange={(e) => setGenreFilter(e.target.value ? parseInt(e.target.value, 10) : null)}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 focus:outline-none focus:border-white/20 transition-all"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#111627] border border-white/[0.08] text-white/70 focus:outline-none focus:border-white/20 transition-all [color-scheme:dark]"
           >
-            <option value="">Alle sjangere</option>
+            <option value="" className="bg-[#111627] text-white/70">Alle sjangere</option>
             {allGenres.map((g) => (
-              <option key={g.id} value={g.id}>{g.name}</option>
+              <option key={g.id} value={g.id} className="bg-[#111627] text-white/70">{g.name}</option>
             ))}
           </select>
           <div className="flex items-center gap-1.5">
@@ -199,7 +216,7 @@ export default function WatchBankPage() {
           </div>
           {hasActiveFilters && (
             <button
-              onClick={() => { setGenreFilter(null); setYearFrom(""); setYearTo(""); }}
+              onClick={() => { setTypeFilter("all"); setGenreFilter(null); setYearFrom(""); setYearTo(""); }}
               className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--red)] bg-[var(--red-glow)] hover:bg-[var(--red)]/15 transition-all"
             >
               Nullstill

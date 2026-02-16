@@ -29,13 +29,16 @@ interface MatchedItem {
 
 export default function NetflixImportPage() {
   const router = useRouter();
-  const [step, setStep] = useState<"upload" | "parsing" | "review" | "importing" | "done">("upload");
+  const [step, setStep] = useState<"upload" | "profile" | "parsing" | "review" | "importing" | "done">("upload");
   const [dragOver, setDragOver] = useState(false);
   const [matchedItems, setMatchedItems] = useState<MatchedItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [importResult, setImportResult] = useState({ added: 0, skipped: 0 });
   const [error, setError] = useState("");
+  const [csvText, setCsvText] = useState("");
+  const [profiles, setProfiles] = useState<{ name: string; count: number }[]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
 
   // Parse a single CSV line handling quoted fields
   function parseCSVLine(line: string): string[] {
@@ -63,36 +66,136 @@ export default function NetflixImportPage() {
     return result;
   }
 
+  // Detect if a string looks like a date/timestamp (YYYY-MM-DD... or DD/MM/YYYY...)
+  function looksLikeDate(s: string): boolean {
+    const t = s.trim();
+    return /^\d{4}-\d{2}-\d{2}/.test(t) || /^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(t);
+  }
+
+  // Extract unique Netflix profiles from CSV
+  function extractProfiles(text: string): { name: string; count: number }[] {
+    const lines = text.trim().split("\n");
+    if (lines.length < 2) return [];
+
+    const headerCols = parseCSVLine(lines[0]);
+    const headerLower = headerCols.map((h) => h.toLowerCase().trim());
+    let profileIdx = headerLower.findIndex((h) => h === "profile name");
+    if (profileIdx === -1) profileIdx = headerLower.findIndex((h) => h.includes("profile"));
+
+    if (profileIdx === -1) return [];
+
+    // Find supplemental type column to skip trailers
+    let supplementalIdx = headerLower.findIndex((h) => h.includes("supplemental"));
+
+    const counts = new Map<string, number>();
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCSVLine(lines[i]);
+      const profile = (cols[profileIdx] || "").trim();
+      if (!profile) continue;
+      // Skip trailers/hooks
+      if (supplementalIdx >= 0 && (cols[supplementalIdx] || "").trim()) continue;
+      counts.set(profile, (counts.get(profile) || 0) + 1);
+    }
+
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
   // Parse the Netflix CSV file
-  function parseNetflixCSV(text: string): ParsedTitle[] {
+  function parseNetflixCSV(text: string, profileFilter?: string): ParsedTitle[] {
     const lines = text.trim().split("\n");
     const titles = new Map<string, ParsedTitle>();
 
-    // Detect format: simple (Title, Date) or full (Profile Name, Start Time, Duration, ...)
-    const header = lines[0].toLowerCase();
-    const isFullFormat = header.includes("profile name") || header.includes("start time") || header.includes("duration");
-    const isSimpleFormat = header.includes("title") && header.includes("date");
+    if (lines.length < 2) return [];
 
-    const startIndex = isFullFormat || isSimpleFormat ? 1 : 0;
+    // Parse header row to find column indices dynamically
+    const headerCols = parseCSVLine(lines[0]);
+    const headerLower = headerCols.map((h) => h.toLowerCase().trim());
+
+    // Find profile column for filtering
+    let profileIdx = headerLower.findIndex((h) => h === "profile name");
+    if (profileIdx === -1) profileIdx = headerLower.findIndex((h) => h.includes("profile"));
+
+    // Find supplemental type column to skip trailers
+    let supplementalIdx = headerLower.findIndex((h) => h.includes("supplemental"));
+
+    // Find title column: look for "title" in any header
+    let titleIdx = headerLower.findIndex((h) => h === "title");
+    if (titleIdx === -1) titleIdx = headerLower.findIndex((h) => h.includes("title"));
+
+    // Find date column: look for "date", "start time", etc.
+    let dateIdx = headerLower.findIndex((h) => h === "date" || h === "start time");
+    if (dateIdx === -1) dateIdx = headerLower.findIndex((h) => h.includes("date") || h.includes("time"));
+
+    // Fallback: if no title column found in header, detect from first data row
+    if (titleIdx === -1 && lines.length > 1) {
+      const firstRow = parseCSVLine(lines[1]);
+      // The title column is the one that doesn't look like a date, duration, number, or country code
+      for (let c = 0; c < firstRow.length; c++) {
+        const val = firstRow[c].trim();
+        if (!val) continue;
+        // Skip if it looks like a date, duration (HH:MM:SS), number-only, or short code
+        if (looksLikeDate(val)) continue;
+        if (/^\d{1,2}:\d{2}:\d{2}$/.test(val)) continue;
+        if (/^\d+$/.test(val)) continue;
+        if (val.length <= 3 && /^[A-Z]{2,3}$/.test(val)) continue;
+        // This column likely contains the title
+        titleIdx = c;
+        break;
+      }
+      // Also find the date column from data
+      if (dateIdx === -1) {
+        for (let c = 0; c < firstRow.length; c++) {
+          if (c === titleIdx) continue;
+          if (looksLikeDate(firstRow[c].trim())) {
+            dateIdx = c;
+            break;
+          }
+        }
+      }
+    }
+
+    // Last resort fallback: simple format (title=0, date=1)
+    if (titleIdx === -1) titleIdx = 0;
+
+    const startIndex = 1; // always skip header row
 
     for (let i = startIndex; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
 
-      let title = "";
-      let date: string | null = null;
+      const cols = parseCSVLine(line);
 
-      if (isFullFormat) {
-        const cols = parseCSVLine(line);
-        title = cols[4] || cols[0] || "";
-        date = cols[1] || null;
-      } else {
-        const cols = parseCSVLine(line);
-        title = cols[0] || "";
-        date = cols[1] || null;
+      // Filter by profile if specified
+      if (profileFilter && profileIdx >= 0) {
+        const rowProfile = (cols[profileIdx] || "").trim();
+        if (rowProfile !== profileFilter) continue;
       }
 
+      // Skip trailers/hooks/supplemental content
+      if (supplementalIdx >= 0 && (cols[supplementalIdx] || "").trim()) continue;
+
+      let title = (cols[titleIdx] || "").trim();
+      const date = dateIdx >= 0 ? (cols[dateIdx] || "").trim() : null;
+
       if (!title) continue;
+
+      // Safety: if "title" still looks like a date, the detection was wrong — try other columns
+      if (looksLikeDate(title)) {
+        let found = false;
+        for (let c = 0; c < cols.length; c++) {
+          const val = cols[c].trim();
+          if (!val || looksLikeDate(val)) continue;
+          if (/^\d{1,2}:\d{2}:\d{2}$/.test(val)) continue;
+          if (/^\d+$/.test(val)) continue;
+          if (val.length <= 3 && /^[A-Z]{2,3}$/.test(val)) continue;
+          title = val;
+          found = true;
+          break;
+        }
+        if (!found) continue;
+      }
 
       // Skip trailers, hooks, teasers
       const lowerTitle = title.toLowerCase();
@@ -119,7 +222,7 @@ export default function NetflixImportPage() {
           season,
           episode,
           isMovie,
-          date,
+          date: date && !looksLikeDate(date) ? null : date,
         });
       }
     }
@@ -127,7 +230,7 @@ export default function NetflixImportPage() {
     return Array.from(titles.values());
   }
 
-  // Handle file upload
+  // Handle file upload — detect profiles first
   const handleFile = useCallback(async (file: File) => {
     setError("");
 
@@ -136,11 +239,33 @@ export default function NetflixImportPage() {
       return;
     }
 
+    try {
+      const text = await file.text();
+      setCsvText(text);
+
+      const detectedProfiles = extractProfiles(text);
+      if (detectedProfiles.length > 1) {
+        setProfiles(detectedProfiles);
+        setSelectedProfile(null);
+        setStep("profile");
+        return;
+      }
+
+      // Single profile or no profile column — go straight to parsing
+      startMatching(text, detectedProfiles.length === 1 ? detectedProfiles[0].name : undefined);
+    } catch {
+      setError("Kunne ikke lese filen. Prøv igjen.");
+      setStep("upload");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Start TMDB matching for selected profile
+  async function startMatching(text: string, profileFilter?: string) {
     setStep("parsing");
 
     try {
-      const text = await file.text();
-      const parsed = parseNetflixCSV(text);
+      const parsed = parseNetflixCSV(text, profileFilter);
 
       if (parsed.length === 0) {
         setError("Fant ingen titler i filen. Er dette riktig Netflix-fil?");
@@ -198,8 +323,7 @@ export default function NetflixImportPage() {
       setError("Kunne ikke lese filen. Prøv igjen.");
       setStep("upload");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }
 
   // Handle drag & drop
   const handleDrop = useCallback(
@@ -374,6 +498,73 @@ export default function NetflixImportPage() {
               {error}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Step: Profile Selection */}
+      {step === "profile" && (
+        <div>
+          <div className="glass rounded-[var(--radius-lg)] p-5 mb-5">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">Velg profil</h3>
+            <p className="text-xs text-[var(--text-tertiary)] mb-4">
+              Vi fant flere Netflix-profiler i filen. Velg hvilken profil du vil importere fra.
+            </p>
+
+            <div className="space-y-2">
+              {profiles.map((p) => (
+                <button
+                  key={p.name}
+                  onClick={() => setSelectedProfile(p.name)}
+                  className={`w-full flex items-center justify-between p-3 rounded-[var(--radius-md)] border transition-all text-left ${
+                    selectedProfile === p.name
+                      ? "border-[var(--accent)]/30 bg-[var(--accent-glow)]"
+                      : "border-[var(--glass-border)] bg-white/[0.02] hover:border-[var(--text-tertiary)]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
+                      selectedProfile === p.name
+                        ? "bg-[var(--accent)] text-white"
+                        : "bg-white/[0.06] text-[var(--text-secondary)]"
+                    }`}>
+                      {p.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className={`text-sm font-medium ${
+                      selectedProfile === p.name ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"
+                    }`}>
+                      {p.name}
+                    </span>
+                  </div>
+                  <span className="text-xs text-[var(--text-tertiary)]">
+                    {p.count} avspillinger
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <GlowButton
+              variant="ghost"
+              onClick={() => {
+                setStep("upload");
+                setCsvText("");
+                setProfiles([]);
+                setSelectedProfile(null);
+              }}
+            >
+              Tilbake
+            </GlowButton>
+            <GlowButton
+              onClick={() => {
+                if (selectedProfile) startMatching(csvText, selectedProfile);
+              }}
+              disabled={!selectedProfile}
+              fullWidth
+            >
+              Importer fra {selectedProfile || "..."}
+            </GlowButton>
+          </div>
         </div>
       )}
 

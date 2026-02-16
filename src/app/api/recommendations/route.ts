@@ -1,15 +1,22 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase-server";
 import { tmdbDiscover, tmdbTrending, tmdbSimilar, parseTitleFromTMDB } from "@/lib/tmdb";
 import { explainRecommendations, type TasteInput } from "@/lib/ai";
 import type { UserTitle, TitleCache, Recommendation, ContentFilters } from "@/lib/types";
+import { getWatchProvidersCachedBatch } from "@/lib/watch-providers-cache";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const user = await requireUser();
     const supabase = await createSupabaseServer();
     const admin = createSupabaseAdmin();
+
+    const availability = req.nextUrl.searchParams.get("availability");
+    const availabilityMode =
+      availability === "streamable" || availability === "included"
+        ? availability
+        : "all";
 
     // Get user data
     const [
@@ -178,9 +185,80 @@ export async function GET() {
       scored.push({ item, score, type });
     }
 
-    // Sort and take top 20
+    // Sort candidates by score
     scored.sort((a, b) => b.score - a.score);
-    const top20 = scored.slice(0, 20);
+
+    // Apply availability filtering if requested (batch DB lookup, NO N+1)
+    let top20: ScoredCandidate[];
+
+    if (availabilityMode !== "all") {
+      const INITIAL_POOL = 60;
+      const EXPANDED_POOL = 120;
+      const THIN_THRESHOLD = 12;
+
+      function filterByAvailability(
+        pool: ScoredCandidate[],
+        providerMap: Map<string, { providers: Record<string, unknown> | null }>
+      ): ScoredCandidate[] {
+        return pool.filter((s) => {
+          const key = `${s.item.id}:${s.type}`;
+          const cached = providerMap.get(key);
+          if (!cached?.providers) return false;
+
+          const p = cached.providers as {
+            flatrate?: unknown[];
+            rent?: unknown[];
+            buy?: unknown[];
+          };
+
+          if (availabilityMode === "included") {
+            return (p.flatrate?.length || 0) > 0;
+          }
+          // streamable: any provider type in NO
+          return (
+            (p.flatrate?.length || 0) +
+              (p.rent?.length || 0) +
+              (p.buy?.length || 0) >
+            0
+          );
+        });
+      }
+
+      // Pass 1: initial pool
+      const pool1 = scored.slice(0, INITIAL_POOL);
+      const batchItems1 = pool1.map((s) => ({
+        tmdbId: s.item.id as number,
+        type: s.type,
+      }));
+      const providerMap1 = await getWatchProvidersCachedBatch({
+        items: batchItems1,
+        country: "NO",
+      });
+      const filtered1 = filterByAvailability(pool1, providerMap1);
+
+      // Pass 2: expand pool only for "included" when results are thin
+      if (
+        availabilityMode === "included" &&
+        filtered1.length < THIN_THRESHOLD &&
+        scored.length > INITIAL_POOL
+      ) {
+        const pool2 = scored.slice(0, EXPANDED_POOL);
+        const batchItems2 = pool2.map((s) => ({
+          tmdbId: s.item.id as number,
+          type: s.type,
+        }));
+        const providerMap2 = await getWatchProvidersCachedBatch({
+          items: batchItems2,
+          country: "NO",
+        });
+        const filtered2 = filterByAvailability(pool2, providerMap2);
+        top20 = filtered2.slice(0, 20);
+      } else {
+        top20 = filtered1.slice(0, 20);
+      }
+    } else {
+      top20 = scored.slice(0, 20);
+    }
 
     // Cache titles and build response
     const results: {

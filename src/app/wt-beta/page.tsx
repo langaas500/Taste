@@ -2,24 +2,58 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { logTitle } from "@/lib/api";
 
 /* ── constants ─────────────────────────────────────────── */
 
 const RED = "#ff2a2a";
-const POSTER_CACHE_KEY = "wt_posters_v1";
+const TITLES_CACHE_KEY = "wt_titles_v2";
+const PROFILE_CACHE_KEY = "wt_profile_v2";
+const PARTNER_CACHE_KEY = "wt_partner_v2";
+
+/* ── genre map ─────────────────────────────────────────── */
+
+const GENRE_MAP: Record<number, { name: string; color: string }> = {
+  28: { name: "Action", color: "#5a1a1a" },
+  12: { name: "Eventyr", color: "#2d5a27" },
+  16: { name: "Animasjon", color: "#4a2d5a" },
+  35: { name: "Komedie", color: "#5a4a2d" },
+  80: { name: "Krim", color: "#1a1a2d" },
+  99: { name: "Dokumentar", color: "#3d3d1a" },
+  18: { name: "Drama", color: "#2d2d5a" },
+  10751: { name: "Familie", color: "#5a2d4a" },
+  14: { name: "Fantasy", color: "#1a3d5a" },
+  36: { name: "Historie", color: "#3d2d1a" },
+  27: { name: "Skrekk", color: "#3d1a1a" },
+  10402: { name: "Musikk", color: "#5a1a4a" },
+  9648: { name: "Mysterium", color: "#1a2d4a" },
+  10749: { name: "Romantikk", color: "#5a2d4a" },
+  878: { name: "Sci-Fi", color: "#1a4a5a" },
+  53: { name: "Thriller", color: "#2d1a3d" },
+  10752: { name: "Krig", color: "#3d1a3d" },
+  37: { name: "Western", color: "#5a4a1a" },
+  10759: { name: "Action", color: "#5a1a1a" },
+  10762: { name: "Barn", color: "#5a2d4a" },
+  10763: { name: "Nyheter", color: "#3d3d1a" },
+  10764: { name: "Reality", color: "#5a4a2d" },
+  10765: { name: "Sci-Fi", color: "#1a4a5a" },
+  10766: { name: "Såpe", color: "#5a2d4a" },
+  10767: { name: "Prat", color: "#2d5a27" },
+  10768: { name: "Krig", color: "#1a1a2d" },
+};
 
 /* ── types ─────────────────────────────────────────────── */
 
-interface MockTitle {
-  id: number;
+interface WTTitle {
   tmdb_id: number;
   title: string;
-  year: number;
+  year: number | null;
   type: "movie" | "tv";
-  genre: string;
-  why: string;
-  platform: string;
-  color: string;
+  genre_ids: number[];
+  overview: string;
+  poster_path: string | null;
+  vote_average: number | null;
+  reason?: string;
 }
 
 interface TasteProfile {
@@ -28,82 +62,70 @@ interface TasteProfile {
   disliked: number[];
 }
 
-type Screen = "intro" | "onboarding" | "together";
+type Screen = "intro" | "mood" | "onboarding" | "together" | "waiting" | "join";
 type Rating = "liked" | "meh" | "disliked";
 type SwipeAction = "like" | "nope" | "meh";
+type Mode = "solo" | "paired";
+type Mood = "light" | "dark" | "thriller" | "action" | "romance" | "horror";
 
-/* ── 40 mock titles ────────────────────────────────────── */
-
-const MOCK_TITLES: MockTitle[] = [
-  { id: 1, tmdb_id: 1396, title: "Breaking Bad", year: 2008, type: "tv", genre: "Drama", why: "Perfekt for dere som elsker intenst drama", platform: "Netflix", color: "#2d5a27" },
-  { id: 2, tmdb_id: 278, title: "The Shawshank Redemption", year: 1994, type: "movie", genre: "Drama", why: "En tidløs klassiker alle kan enes om", platform: "Max", color: "#8b6914" },
-  { id: 3, tmdb_id: 66732, title: "Stranger Things", year: 2016, type: "tv", genre: "Sci-Fi", why: "Nostalgi og spenning i perfekt blanding", platform: "Netflix", color: "#8b1a1a" },
-  { id: 4, tmdb_id: 496243, title: "Parasite", year: 2019, type: "movie", genre: "Thriller", why: "Uforutsigbar historie som holder dere på kanten", platform: "Lei", color: "#2d2d5a" },
-  { id: 5, tmdb_id: 2316, title: "The Office", year: 2005, type: "tv", genre: "Komedie", why: "Perfekt for en avslappet kveld", platform: "Max", color: "#5a4a2d" },
-  { id: 6, tmdb_id: 27205, title: "Inception", year: 2010, type: "movie", genre: "Sci-Fi", why: "Visuelt storslått med dypt plot", platform: "Netflix", color: "#1a3d5a" },
-  { id: 7, tmdb_id: 136315, title: "The Bear", year: 2022, type: "tv", genre: "Drama", why: "Intenst og fengslende fra første episode", platform: "Disney+", color: "#5a2d2d" },
-  { id: 8, tmdb_id: 545611, title: "Everything Everywhere All at Once", year: 2022, type: "movie", genre: "Action", why: "Kreativt og rørende på samme tid", platform: "Lei", color: "#4a2d5a" },
-  { id: 9, tmdb_id: 76331, title: "Succession", year: 2018, type: "tv", genre: "Drama", why: "Familiedrama på sitt mest underholdende", platform: "Max", color: "#2d4a2d" },
-  { id: 10, tmdb_id: 157336, title: "Interstellar", year: 2014, type: "movie", genre: "Sci-Fi", why: "Episk romfart med emosjonell kjerne", platform: "Prime", color: "#1a1a4a" },
-  { id: 11, tmdb_id: 93405, title: "Squid Game", year: 2021, type: "tv", genre: "Thriller", why: "Intens og fartsfylt spenning", platform: "Netflix", color: "#5a1a3d" },
-  { id: 12, tmdb_id: 155, title: "The Dark Knight", year: 2008, type: "movie", genre: "Action", why: "Superheltfilm som går utover sjangeren", platform: "Max", color: "#1a1a2d" },
-  { id: 13, tmdb_id: 119051, title: "Wednesday", year: 2022, type: "tv", genre: "Komedie", why: "Mørk humor med sjarm", platform: "Netflix", color: "#2d1a3d" },
-  { id: 14, tmdb_id: 872585, title: "Oppenheimer", year: 2023, type: "movie", genre: "Drama", why: "Historisk drama i storformat", platform: "Lei", color: "#3d2d1a" },
-  { id: 15, tmdb_id: 97546, title: "Ted Lasso", year: 2020, type: "tv", genre: "Komedie", why: "Feelgood-serie som varmer hjertet", platform: "Apple TV+", color: "#2d5a4a" },
-  { id: 16, tmdb_id: 438631, title: "Dune", year: 2021, type: "movie", genre: "Sci-Fi", why: "Visuell sci-fi-opplevelse", platform: "Max", color: "#5a4a1a" },
-  { id: 17, tmdb_id: 100088, title: "The Last of Us", year: 2023, type: "tv", genre: "Drama", why: "Sterke karakterer i postapokalyptisk setting", platform: "Max", color: "#3d5a2d" },
-  { id: 18, tmdb_id: 244786, title: "Whiplash", year: 2014, type: "movie", genre: "Drama", why: "Nerve og intensitet fra start til slutt", platform: "Netflix", color: "#5a3d1a" },
-  { id: 19, tmdb_id: 95396, title: "Severance", year: 2022, type: "tv", genre: "Thriller", why: "Mystisk og avhengighetsskapende", platform: "Apple TV+", color: "#1a4a5a" },
-  { id: 20, tmdb_id: 120467, title: "The Grand Budapest Hotel", year: 2014, type: "movie", genre: "Komedie", why: "Visuell komedie med sjel", platform: "Disney+", color: "#5a1a4a" },
-  { id: 21, tmdb_id: 70523, title: "Dark", year: 2017, type: "tv", genre: "Sci-Fi", why: "Kompleks tidsreisehistorie som belønner oppmerksomhet", platform: "Netflix", color: "#1a2d4a" },
-  { id: 22, tmdb_id: 419430, title: "Get Out", year: 2017, type: "movie", genre: "Thriller", why: "Smart skrekk med viktig budskap", platform: "Prime", color: "#3d1a1a" },
-  { id: 23, tmdb_id: 67070, title: "Fleabag", year: 2016, type: "tv", genre: "Komedie", why: "Skarp humor og ekte følelser", platform: "Prime", color: "#4a3d2d" },
-  { id: 24, tmdb_id: 324857, title: "Spider-Man: Into the Spider-Verse", year: 2018, type: "movie", genre: "Animasjon", why: "Visuelt nyskapende og underholdende", platform: "Netflix", color: "#2d1a5a" },
-  { id: 25, tmdb_id: 87108, title: "Chernobyl", year: 2019, type: "tv", genre: "Drama", why: "Gripende historisk fortelling", platform: "Max", color: "#3d3d1a" },
-  { id: 26, tmdb_id: 346698, title: "Barbie", year: 2023, type: "movie", genre: "Komedie", why: "Overraskende smart og morsom", platform: "Max", color: "#5a2d4a" },
-  { id: 27, tmdb_id: 83867, title: "Andor", year: 2022, type: "tv", genre: "Sci-Fi", why: "Star Wars på sitt mest modne", platform: "Disney+", color: "#1a3d3d" },
-  { id: 28, tmdb_id: 414906, title: "The Batman", year: 2022, type: "movie", genre: "Action", why: "Mørk detektivhistorie i Gotham", platform: "Max", color: "#1a1a3d" },
-  { id: 29, tmdb_id: 154521, title: "Beef", year: 2023, type: "tv", genre: "Drama", why: "Uventet og avhengighetsskapende", platform: "Netflix", color: "#5a2d1a" },
-  { id: 30, tmdb_id: 329865, title: "Arrival", year: 2016, type: "movie", genre: "Sci-Fi", why: "Tankevekkende sci-fi med dybde", platform: "Prime", color: "#2d3d5a" },
-  { id: 31, tmdb_id: 111803, title: "The White Lotus", year: 2021, type: "tv", genre: "Drama", why: "Satirisk drama med strålende rollefigurer", platform: "Max", color: "#4a5a2d" },
-  { id: 32, tmdb_id: 546554, title: "Knives Out", year: 2019, type: "movie", genre: "Thriller", why: "Morsom og smart mysteriefilm", platform: "Prime", color: "#3d2d4a" },
-  { id: 33, tmdb_id: 126308, title: "Shogun", year: 2024, type: "tv", genre: "Drama", why: "Episk historisk drama fra Japan", platform: "Disney+", color: "#5a1a1a" },
-  { id: 34, tmdb_id: 792307, title: "Poor Things", year: 2023, type: "movie", genre: "Drama", why: "Visuelt unik og tankevekkende", platform: "Disney+", color: "#3d1a5a" },
-  { id: 35, tmdb_id: 94605, title: "Arcane", year: 2021, type: "tv", genre: "Animasjon", why: "Animasjon som sprenger sjangeren", platform: "Netflix", color: "#1a5a3d" },
-  { id: 36, tmdb_id: 361743, title: "Top Gun: Maverick", year: 2022, type: "movie", genre: "Action", why: "Adrenalinfylt underholdning", platform: "Prime", color: "#2d4a5a" },
-  { id: 37, tmdb_id: 106379, title: "Fallout", year: 2024, type: "tv", genre: "Sci-Fi", why: "Postapokalyptisk eventyr med humor", platform: "Prime", color: "#4a2d1a" },
-  { id: 38, tmdb_id: 840430, title: "The Holdovers", year: 2023, type: "movie", genre: "Drama", why: "Varm historie om uventede vennskap", platform: "Lei", color: "#2d5a5a" },
-  { id: 39, tmdb_id: 119299, title: "Slow Horses", year: 2022, type: "tv", genre: "Thriller", why: "Britisk spionserie med bitt", platform: "Apple TV+", color: "#4a4a2d" },
-  { id: 40, tmdb_id: 593643, title: "The Menu", year: 2022, type: "movie", genre: "Thriller", why: "Mørk satire som underholder", platform: "Disney+", color: "#3d1a3d" },
+const MOODS: { id: Mood; label: string; color: string }[] = [
+  { id: "light",    label: "Lett & morsom",    color: "#fbbf24" },
+  { id: "dark",     label: "Mørk & intens",   color: "#6366f1" },
+  { id: "thriller", label: "Smart thriller",   color: "#14b8a6" },
+  { id: "action",   label: "Action & tempo",   color: "#ef4444" },
+  { id: "romance",  label: "Romantikk",        color: "#ec4899" },
+  { id: "horror",   label: "Skrekk",           color: "#84cc16" },
 ];
 
 /* ── helpers ───────────────────────────────────────────── */
 
-function generateMockPartner(): TasteProfile {
-  const ids = MOCK_TITLES.map((t) => t.id);
+function getGenreColor(genre_ids: number[]): string {
+  for (const id of genre_ids) {
+    if (GENRE_MAP[id]) return GENRE_MAP[id].color;
+  }
+  return "#2d2d5a";
+}
+
+function getGenreName(genre_ids: number[]): string {
+  for (const id of genre_ids) {
+    if (GENRE_MAP[id]) return GENRE_MAP[id].name;
+  }
+  return "Film/Serie";
+}
+
+function generateMockPartner(titles: WTTitle[]): TasteProfile {
+  const ids = titles.map((t) => t.tmdb_id);
   const shuffled = [...ids];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
+  const count = shuffled.length;
+  const likeCount = Math.ceil(count * 0.35);
+  const mehCount = Math.ceil(count * 0.25);
   return {
-    liked: shuffled.slice(0, 14),
-    meh: shuffled.slice(14, 24),
-    disliked: shuffled.slice(24, 34),
+    liked: shuffled.slice(0, likeCount),
+    meh: shuffled.slice(likeCount, likeCount + mehCount),
+    disliked: shuffled.slice(likeCount + mehCount),
   };
 }
 
-function computeRecs(profile: TasteProfile, partner: TasteProfile, excluded: number[]): MockTitle[] {
+function computeRecs(
+  titles: WTTitle[],
+  profile: TasteProfile,
+  partner: TasteProfile,
+  excluded: number[]
+): WTTitle[] {
   const excludeSet = new Set([...profile.disliked, ...partner.disliked, ...excluded]);
 
-  const scored = MOCK_TITLES
-    .filter((t) => !excludeSet.has(t.id))
+  const scored = titles
+    .filter((t) => !excludeSet.has(t.tmdb_id))
     .map((t) => {
       let score = 0;
-      if (profile.liked.includes(t.id)) score += 2;
-      if (partner.liked.includes(t.id)) score += 2;
-      if (profile.meh.includes(t.id)) score += 1;
-      if (partner.meh.includes(t.id)) score += 1;
+      if (profile.liked.includes(t.tmdb_id)) score += 2;
+      if (partner.liked.includes(t.tmdb_id)) score += 2;
+      if (profile.meh.includes(t.tmdb_id)) score += 1;
+      if (partner.meh.includes(t.tmdb_id)) score += 1;
       return { t, score };
     })
     .sort((a, b) => b.score - a.score);
@@ -117,11 +139,6 @@ function computeRecs(profile: TasteProfile, partner: TasteProfile, excluded: num
   }
 
   return top.slice(0, 7).map((s) => s.t);
-}
-
-function posterUrl(posters: Record<string, string>, t: MockTitle): string | null {
-  const key = `${t.tmdb_id}:${t.type}`;
-  return posters[key] ? `https://image.tmdb.org/t/p/w500${posters[key]}` : null;
 }
 
 function clamp(n: number, min: number, max: number) {
@@ -139,14 +156,13 @@ function hexToRgb(hex: string) {
 
 function Poster({
   title,
-  posters,
   size = "large",
 }: {
-  title: MockTitle;
-  posters: Record<string, string>;
+  title: WTTitle;
   size?: "large" | "small" | "medium";
 }) {
-  const url = posterUrl(posters, title);
+  const url = title.poster_path ? `https://image.tmdb.org/t/p/w500${title.poster_path}` : null;
+  const color = getGenreColor(title.genre_ids);
 
   const sizeClass =
     size === "large" ? "w-full aspect-[2/3]" : size === "medium" ? "w-full aspect-[2/3]" : "w-16 h-24";
@@ -154,7 +170,7 @@ function Poster({
   const rounded = size === "small" ? "rounded-lg" : "rounded-2xl";
 
   return (
-    <div className={`relative overflow-hidden ${sizeClass} ${rounded}`} style={{ background: `linear-gradient(135deg, ${title.color}, ${title.color}66)` }}>
+    <div className={`relative overflow-hidden ${sizeClass} ${rounded}`} style={{ background: `linear-gradient(135deg, ${color}, ${color}66)` }}>
       <span className={`absolute inset-0 flex items-center justify-center ${textSize} font-black`} style={{ color: "rgba(255,255,255,0.15)" }}>
         {title.title.substring(0, 2).toUpperCase()}
       </span>
@@ -309,20 +325,35 @@ function useInputMode() {
 /* ── page component ────────────────────────────────────── */
 
 export default function WTBetaPage() {
+  const [titles, setTitles] = useState<WTTitle[]>([]);
+  const [titlesLoading, setTitlesLoading] = useState(true);
   const [screen, setScreen] = useState<Screen>("intro");
   const [profile, setProfile] = useState<TasteProfile>({ liked: [], meh: [], disliked: [] });
   const [partner, setPartner] = useState<TasteProfile | null>(null);
   const [timer, setTimer] = useState(180);
   const [timerRunning, setTimerRunning] = useState(false);
-  const [recs, setRecs] = useState<MockTitle[]>([]);
+  const [recs, setRecs] = useState<WTTitle[]>([]);
   const [excluded, setExcluded] = useState<number[]>([]);
-  const [chosen, setChosen] = useState<MockTitle | null>(null);
+  const [chosen, setChosen] = useState<WTTitle | null>(null);
   const [undoInfo, setUndoInfo] = useState<{ msg: string; fn: () => void } | null>(null);
   const [mounted, setMounted] = useState(false);
   const [lowData, setLowData] = useState(false);
-  const [posters, setPosters] = useState<Record<string, string>>({});
-  const [matchOverlay, setMatchOverlay] = useState<{ title: MockTitle; color: string } | null>(null);
+  const [matchOverlay, setMatchOverlay] = useState<{ title: WTTitle; color: string } | null>(null);
   const [microToast, setMicroToast] = useState<string | null>(null);
+
+  // mood state
+  const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
+  const [moodIntent, setMoodIntent] = useState<"solo" | "paired">("solo");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  // paired mode state
+  const [mode, setMode] = useState<Mode>("solo");
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionCode, setSessionCode] = useState("");
+  const [joinCode, setJoinCode] = useState("");
+  const [partnerJoined, setPartnerJoined] = useState(false);
+  const [partnerSwipeCount, setPartnerSwipeCount] = useState(0);
+  const [sessionError, setSessionError] = useState("");
 
   const undoTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const microTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -335,39 +366,38 @@ export default function WTBetaPage() {
   const { isTouch } = useInputMode();
   const isDesktop = mounted && !isTouch;
 
-  /* ── load localStorage + fetch posters on mount ── */
+  /* ── load localStorage on mount (titles fetched after mood selection) ── */
   useEffect(() => {
     setMounted(true);
+    setTitlesLoading(false); // no auto-fetch; intro shows immediately
     try {
-      const p = localStorage.getItem("logflix_profile_v1");
+      const p = localStorage.getItem(PROFILE_CACHE_KEY);
       if (p) setProfile(JSON.parse(p));
-      const pp = localStorage.getItem("logflix_partner_v1");
+      const pp = localStorage.getItem(PARTNER_CACHE_KEY);
       if (pp) setPartner(JSON.parse(pp));
     } catch {
       /* empty */
     }
-
-    const cached = localStorage.getItem(POSTER_CACHE_KEY);
-    if (cached) {
-      try {
-        setPosters(JSON.parse(cached));
-        return;
-      } catch {
-        /* refetch */
-      }
-    }
-
-    const ids = MOCK_TITLES.map((t) => `${t.tmdb_id}:${t.type}`).join(",");
-    fetch(`/api/wt-beta/posters?ids=${ids}`)
-      .then((r) => r.json())
-      .then((data: Record<string, string>) => {
-        setPosters(data);
-        localStorage.setItem(POSTER_CACHE_KEY, JSON.stringify(data));
-      })
-      .catch(() => {
-        /* posters optional */
-      });
   }, []);
+
+  /* ── fetch titles with mood ── */
+  async function fetchTitlesForMood(mood: Mood) {
+    setTitlesLoading(true);
+    try {
+      const res = await fetch(`/api/wt-beta/titles?mood=${mood}`);
+      const data = await res.json();
+      const t: WTTitle[] = data.titles || [];
+      setTitles(t);
+      if (t.length > 0) {
+        localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify(t));
+      }
+      return t;
+    } catch {
+      return [];
+    } finally {
+      setTitlesLoading(false);
+    }
+  }
 
   /* ── countdown timer ── */
   useEffect(() => {
@@ -386,9 +416,8 @@ export default function WTBetaPage() {
 
   /* ── memo profile progress ── */
   const ratedIds = useMemo(() => new Set([...profile.liked, ...profile.meh, ...profile.disliked]), [profile.liked, profile.meh, profile.disliked]);
-  const hasProfile = ratedIds.size > 0;
-  const profileComplete = ratedIds.size >= MOCK_TITLES.length;
-  const currentTitle = useMemo(() => MOCK_TITLES.find((t) => !ratedIds.has(t.id)), [ratedIds]);
+  const profileComplete = titles.length > 0 && ratedIds.size >= titles.length;
+  const currentTitle = useMemo(() => titles.find((t) => !ratedIds.has(t.tmdb_id)), [ratedIds, titles]);
   const progress = ratedIds.size;
 
   /* ── auto-transition when onboarding completes ── */
@@ -420,21 +449,31 @@ export default function WTBetaPage() {
   /* ── rate a title in onboarding ── */
   function rate(rating: Rating) {
     if (!currentTitle) return;
-    const next: TasteProfile = { ...profile, [rating]: [...profile[rating], currentTitle.id] };
+    const next: TasteProfile = { ...profile, [rating]: [...profile[rating], currentTitle.tmdb_id] };
     setProfile(next);
-    localStorage.setItem("logflix_profile_v1", JSON.stringify(next));
+    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(next));
+
+    // Persist to Supabase (fire-and-forget)
+    const sentimentMap: Record<Rating, string> = { liked: "liked", meh: "neutral", disliked: "disliked" };
+    logTitle({
+      tmdb_id: currentTitle.tmdb_id,
+      type: currentTitle.type,
+      status: "watched",
+      sentiment: sentimentMap[rating],
+    }).catch(() => {/* auth may not be available */});
+
     const totalRated = next.liked.length + next.meh.length + next.disliked.length;
-    if (totalRated >= MOCK_TITLES.length) goTogether(next);
+    if (totalRated >= titles.length) goTogether(next);
   }
 
   /* ── enter together mode ── */
   function ensurePartner(): TasteProfile {
     let part = partner;
     if (!part) {
-      part = generateMockPartner();
+      part = generateMockPartner(titles);
       setPartner(part);
       try {
-        localStorage.setItem("logflix_partner_v1", JSON.stringify(part));
+        localStorage.setItem(PARTNER_CACHE_KEY, JSON.stringify(part));
       } catch {
         /* ignore */
       }
@@ -448,7 +487,7 @@ export default function WTBetaPage() {
     const totalRated = prof.liked.length + prof.meh.length + prof.disliked.length;
     setLowData(totalRated === 0);
 
-    setRecs(computeRecs(prof, part, excluded));
+    setRecs(computeRecs(titles, prof, part, excluded));
     setScreen("together");
     setTimer(180);
     setTimerRunning(true);
@@ -461,8 +500,9 @@ export default function WTBetaPage() {
 
   /* ── reset everything ── */
   function reset() {
-    localStorage.removeItem("logflix_profile_v1");
-    localStorage.removeItem("logflix_partner_v1");
+    localStorage.removeItem(PROFILE_CACHE_KEY);
+    localStorage.removeItem(PARTNER_CACHE_KEY);
+    localStorage.removeItem(TITLES_CACHE_KEY);
     setProfile({ liked: [], meh: [], disliked: [] });
     setPartner(null);
     setExcluded([]);
@@ -477,10 +517,33 @@ export default function WTBetaPage() {
     setMicroToast(null);
     setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
     setFly({ active: false, x: 0, y: 0, rot: 0 });
+
+    // Clear mood + paired state
+    setSelectedMood(null);
+    setMoodIntent("solo");
+    setAdvancedOpen(false);
+    setMode("solo");
+    setSessionId(null);
+    setSessionCode("");
+    setJoinCode("");
+    setPartnerJoined(false);
+    setPartnerSwipeCount(0);
+    setSessionError("");
   }
 
   /* ── commit choice ───────────────────────────────────── */
-  function commitChoice(t: MockTitle, action: SwipeAction) {
+  function commitChoice(t: WTTitle, action: SwipeAction) {
+    // Paired mode: submit to server, advance card, no local match detection
+    if (mode === "paired") {
+      submitPairedSwipe(t, action);
+      setRecs((r) => r.slice(1));
+      if (action === "like") {
+        logTitle({ tmdb_id: t.tmdb_id, type: t.type, status: "watched", sentiment: "liked" }).catch(() => {});
+      }
+      return;
+    }
+
+    // Solo mode: local match detection with mock partner
     const prevRecs = [...recs];
     const prevExcluded = [...excluded];
     const prevTimerRunning = timerRunning;
@@ -488,18 +551,18 @@ export default function WTBetaPage() {
     const part = ensurePartner();
 
     if (action === "like") {
-      const isMatch = part.liked.includes(t.id);
+      const isMatch = part.liked.includes(t.tmdb_id);
 
       if (isMatch) {
         setChosen(t);
         setTimerRunning(false);
-        setMatchOverlay({ title: t, color: t.color });
+        setMatchOverlay({ title: t, color: getGenreColor(t.genre_ids) });
+
+        logTitle({ tmdb_id: t.tmdb_id, type: t.type, status: "watchlist" }).catch(() => {});
 
         try {
           if (typeof navigator !== "undefined" && "vibrate" in navigator) (navigator as any).vibrate?.(35);
-        } catch {
-          /* ignore */
-        }
+        } catch { /* ignore */ }
 
         showUndo(`MATCH «${t.title}»`, () => {
           setChosen(null);
@@ -512,8 +575,10 @@ export default function WTBetaPage() {
         return;
       }
 
+      logTitle({ tmdb_id: t.tmdb_id, type: t.type, status: "watched", sentiment: "liked" }).catch(() => {});
+
       showMicro("Ikke match… fortsett 🫱");
-      setExcluded((e) => [...e, t.id]);
+      setExcluded((e) => [...e, t.tmdb_id]);
       setRecs((r) => r.slice(1));
       showUndo(`Du likte «${t.title}» (ikke match)`, () => {
         setExcluded(prevExcluded);
@@ -522,7 +587,7 @@ export default function WTBetaPage() {
       return;
     }
 
-    setExcluded((e) => [...e, t.id]);
+    setExcluded((e) => [...e, t.tmdb_id]);
     setRecs((r) => r.slice(1));
     showUndo(action === "nope" ? `Fjernet «${t.title}»` : `Meh på «${t.title}»`, () => {
       setExcluded(prevExcluded);
@@ -534,9 +599,9 @@ export default function WTBetaPage() {
     const prevRecs = [...recs];
     const prevExcl = [...excluded];
     const part = ensurePartner();
-    const newExcl = [...excluded, ...recs.map((r) => r.id)];
+    const newExcl = [...excluded, ...recs.map((r) => r.tmdb_id)];
     setExcluded(newExcl);
-    setRecs(computeRecs(profile, part, newExcl));
+    setRecs(computeRecs(titles, profile, part, newExcl));
     showUndo("Nye forslag lastet", () => {
       setExcluded(prevExcl);
       setRecs(prevRecs);
@@ -544,6 +609,141 @@ export default function WTBetaPage() {
 
     setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
     setFly({ active: false, x: 0, y: 0, rot: 0 });
+  }
+
+  /* ── paired mode: create session ── */
+  async function createSession(mood?: Mood) {
+    setSessionError("");
+    setTitlesLoading(true);
+    try {
+      const res = await fetch("/api/wt-beta/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mood }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setSessionId(data.session.id);
+      setSessionCode(data.session.code);
+      setTitles(data.session.titles);
+      localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify(data.session.titles));
+      setMode("paired");
+      setScreen("waiting");
+    } catch (e: unknown) {
+      setSessionError(e instanceof Error ? e.message : "Kunne ikke opprette runde");
+    }
+    setTitlesLoading(false);
+  }
+
+  /* ── paired mode: join session ── */
+  async function joinSession() {
+    if (!joinCode.trim()) return;
+    setSessionError("");
+    setTitlesLoading(true);
+    try {
+      const res = await fetch("/api/wt-beta/session/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: joinCode.trim() }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setSessionId(data.session.id);
+      setTitles(data.session.titles);
+      localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify(data.session.titles));
+      setMode("paired");
+      // Guest goes straight to swiping
+      setRecs([...data.session.titles]);
+      setScreen("together");
+      setTimer(180);
+      setTimerRunning(true);
+      setChosen(null);
+      setMatchOverlay(null);
+    } catch (e: unknown) {
+      setSessionError(e instanceof Error ? e.message : "Kunne ikke bli med");
+    }
+    setTitlesLoading(false);
+  }
+
+  /* ── paired mode: poll for partner state ── */
+  useEffect(() => {
+    if (mode !== "paired" || !sessionId) return;
+    if (chosen) return; // stop polling after match
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/wt-beta/session?id=${sessionId}`);
+        const data = await res.json();
+        if (!data.session) return;
+
+        // Partner joined?
+        if (!partnerJoined && data.session.partner_joined) {
+          setPartnerJoined(true);
+          // Host: start the game
+          if (screen === "waiting") {
+            setRecs([...titles]);
+            setScreen("together");
+            setTimer(180);
+            setTimerRunning(true);
+          }
+        }
+
+        // Update partner swipe count
+        const pSwipes = data.session.partner_swipes || {};
+        setPartnerSwipeCount(Object.keys(pSwipes).length);
+
+        // Match detected server-side?
+        if (data.session.match_tmdb_id && !chosen) {
+          const matchTitle = titles.find(
+            (t) => t.tmdb_id === data.session.match_tmdb_id
+          );
+          if (matchTitle) {
+            setChosen(matchTitle);
+            setTimerRunning(false);
+            setMatchOverlay({ title: matchTitle, color: getGenreColor(matchTitle.genre_ids) });
+          }
+        }
+      } catch {
+        /* polling error, retry next interval */
+      }
+    };
+
+    const interval = setInterval(poll, 2000);
+    poll(); // immediate first poll
+    return () => clearInterval(interval);
+  }, [mode, sessionId, partnerJoined, screen, titles, chosen]);
+
+  /* ── paired mode: submit swipe to server ── */
+  function submitPairedSwipe(t: WTTitle, action: SwipeAction) {
+    if (!sessionId) return;
+    fetch("/api/wt-beta/session/swipe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: sessionId,
+        tmdb_id: t.tmdb_id,
+        type: t.type,
+        action,
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        // Instant match detection from swipe response
+        if (data.match && !chosen) {
+          const matchTitle = titles.find(
+            (mt) => mt.tmdb_id === data.match.tmdb_id
+          );
+          if (matchTitle) {
+            setChosen(matchTitle);
+            setTimerRunning(false);
+            setMatchOverlay({ title: matchTitle, color: getGenreColor(matchTitle.genre_ids) });
+            try {
+              if (typeof navigator !== "undefined" && "vibrate" in navigator) (navigator as any).vibrate?.(35);
+            } catch { /* ignore */ }
+          }
+        }
+      })
+      .catch(() => {});
   }
 
   /* ── desktop keyboard controls ───────────────────────── */
@@ -667,7 +867,7 @@ export default function WTBetaPage() {
   const top = recs[0] || null;
   const next = recs[1] || null;
 
-  const bgColor = chosen?.color || top?.color || "#0a0a0f";
+  const bgColor = chosen ? getGenreColor(chosen.genre_ids) : top ? getGenreColor(top.genre_ids) : "#0a0a0f";
   const glowLike = clamp((swipe.x - 20) / 180, 0, 1);
   const glowNope = clamp((-swipe.x - 20) / 180, 0, 1);
   const glowMeh = clamp((swipe.y - 40) / 220, 0, 1);
@@ -692,14 +892,21 @@ export default function WTBetaPage() {
       <div className="relative z-10 min-h-dvh flex flex-col">
         {/* ── top bar ── */}
         <div className="flex items-center justify-between px-4 py-3 shrink-0">
-          <Link href="/library" className="text-xs font-medium no-underline" style={{ color: "rgba(255,255,255,0.4)" }}>
+          <Link href="/home" className="text-xs font-medium no-underline" style={{ color: "rgba(255,255,255,0.4)" }}>
             &larr; Logflix
           </Link>
 
           {screen === "together" && !chosen && (
-            <span className="text-sm font-mono font-bold tabular-nums" style={{ color: timer <= 30 ? RED : "rgba(255,255,255,0.5)" }}>
-              {mm}:{ss}
-            </span>
+            <div className="flex items-center gap-3">
+              {mode === "paired" && (
+                <span className="text-[11px] font-medium px-2 py-1 rounded-lg" style={{ background: "rgba(255,42,42,0.12)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,42,42,0.15)" }}>
+                  Partner: {partnerSwipeCount} swipes
+                </span>
+              )}
+              <span className="text-sm font-mono font-bold tabular-nums" style={{ color: timer <= 30 ? RED : "rgba(255,255,255,0.5)" }}>
+                {mm}:{ss}
+              </span>
+            </div>
           )}
 
           <button onClick={reset} className="text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.25)" }}>
@@ -718,27 +925,229 @@ export default function WTBetaPage() {
                   </svg>
                 </div>
 
-                <h1 className="text-2xl font-bold text-white mb-2">Se sammen på 3 minutter</h1>
+                <h1 className="text-2xl font-bold text-white mb-2">Se sammen p&aring; 3 minutter</h1>
                 <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
-                  Mobil: swipe. Desktop: piltaster og knapper. Match = begge liker.
+                  Finn noe &aring; se sammen. Swipe p&aring; mobil, piltaster p&aring; desktop. Match = begge liker.
                 </p>
 
                 <div className="flex flex-col gap-3">
-                  <button onClick={() => (profileComplete ? goTogether() : setScreen("onboarding"))} className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90" style={{ background: RED, minHeight: 48 }}>
-                    {profileComplete ? "Se forslag" : "Start"}
+                  {/* Primary CTA: solo flow */}
+                  <button
+                    onClick={() => { setMoodIntent("solo"); setScreen("mood"); }}
+                    className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                    style={{ background: RED, minHeight: 48 }}
+                  >
+                    Start 3-min runde
                   </button>
 
+                  {/* Avansert toggle */}
                   <button
-                    onClick={() => goTogether()}
-                    className="w-full py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
-                    style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.08)", minHeight: 48 }}
+                    onClick={() => setAdvancedOpen((v) => !v)}
+                    className="flex items-center justify-center gap-1.5 w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer transition-colors"
+                    style={{ color: "rgba(255,255,255,0.35)" }}
                   >
-                    Hopp rett til forslag
+                    Avansert
+                    <svg
+                      className="w-3 h-3 transition-transform duration-200"
+                      style={{ transform: advancedOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                      fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
                   </button>
+
+                  {/* Avansert options (collapsible) */}
+                  {advancedOpen && (
+                    <div className="flex flex-col gap-2">
+                      {/* Paired mode: go to mood then create session */}
+                      <button
+                        onClick={() => { setMoodIntent("paired"); setScreen("mood"); }}
+                        className="w-full py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
+                        style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.12)", minHeight: 44 }}
+                      >
+                        Spill p&aring; hver deres telefon
+                      </button>
+
+                      {/* Paired mode: join session */}
+                      <button
+                        onClick={() => setScreen("join")}
+                        className="w-full py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
+                        style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.06)", minHeight: 44 }}
+                      >
+                        Bli med i runde
+                      </button>
+                    </div>
+                  )}
+
+                  {sessionError && (
+                    <p className="text-xs mt-1 text-center" style={{ color: "#f87171" }}>{sessionError}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MOOD SELECTOR */}
+          {screen === "mood" && (
+            <div className="flex-1 flex items-center justify-center px-6">
+              <div className="text-center max-w-sm w-full">
+                <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center" style={{ background: "rgba(255,42,42,0.1)", border: "1px solid rgba(255,42,42,0.15)" }}>
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke={RED}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.047 8.287 8.287 0 009 9.601a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.468 5.99 5.99 0 00-1.925 3.547 5.975 5.975 0 01-2.133-1.001A3.75 3.75 0 0012 18z" />
+                  </svg>
                 </div>
 
-                {!hasProfile && <p className="text-[11px] mt-4" style={{ color: "rgba(255,255,255,0.25)" }}>Lite datagrunnlag. Funker likevel.</p>}
-                {hasProfile && !profileComplete && <p className="text-[11px] mt-4" style={{ color: "rgba(255,255,255,0.3)" }}>Du har {progress} av {MOCK_TITLES.length} vurderinger lagret.</p>}
+                <h2 className="text-xl font-bold text-white mb-2">Hva er stemningen i kveld?</h2>
+                <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
+                  Velg &eacute;n. Vi tilpasser forslagene.
+                </p>
+
+                {titlesLoading ? (
+                  <div className="flex items-center justify-center gap-2 py-8">
+                    <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: `${RED} transparent ${RED} ${RED}` }} />
+                    <span className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Henter forslag&hellip;</span>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {MOODS.map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={async () => {
+                          setSelectedMood(m.id);
+                          if (moodIntent === "paired") {
+                            await createSession(m.id);
+                          } else {
+                            const fetched = await fetchTitlesForMood(m.id);
+                            if (fetched.length > 0) {
+                              if (profileComplete) {
+                                goTogether();
+                              } else {
+                                setScreen("onboarding");
+                              }
+                            }
+                          }
+                        }}
+                        className="flex flex-col items-center gap-1.5 py-4 rounded-xl text-sm font-semibold transition-all active:scale-95"
+                        style={{
+                          background: `${m.color}12`,
+                          border: `1px solid ${m.color}30`,
+                          color: m.color,
+                          minHeight: 56,
+                        }}
+                      >
+                        <span className="text-base font-bold">{m.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {sessionError && (
+                  <p className="text-xs mt-3 text-center" style={{ color: "#f87171" }}>{sessionError}</p>
+                )}
+
+                <button
+                  onClick={() => { setScreen("intro"); setSessionError(""); }}
+                  className="text-xs font-medium bg-transparent border-0 cursor-pointer mt-6"
+                  style={{ color: "rgba(255,255,255,0.3)" }}
+                >
+                  &larr; Tilbake
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* WAITING (host waits for partner to join) */}
+          {screen === "waiting" && (
+            <div className="flex-1 flex items-center justify-center px-6">
+              <div className="text-center max-w-sm w-full">
+                <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center" style={{ background: "rgba(255,42,42,0.1)", border: "1px solid rgba(255,42,42,0.15)" }}>
+                  <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: `${RED} transparent ${RED} ${RED}` }} />
+                </div>
+
+                <h2 className="text-xl font-bold text-white mb-2">Venter p&aring; partner&hellip;</h2>
+                <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
+                  Del koden nedenfor med den du vil se med.
+                </p>
+
+                {/* Session code */}
+                <div className="mb-6">
+                  <div
+                    className="inline-flex items-center gap-3 px-6 py-4 rounded-2xl cursor-pointer transition-all active:scale-95"
+                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(sessionCode).catch(() => {});
+                      showMicro("Kode kopiert!");
+                    }}
+                  >
+                    <span className="text-3xl font-mono font-black tracking-[0.3em] text-white">{sessionCode}</span>
+                    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="rgba(255,255,255,0.5)">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                    </svg>
+                  </div>
+                  <p className="text-[11px] mt-3" style={{ color: "rgba(255,255,255,0.3)" }}>Trykk for &aring; kopiere</p>
+                </div>
+
+                <button
+                  onClick={() => { setScreen("intro"); setMode("solo"); setSessionId(null); setSessionCode(""); }}
+                  className="text-xs font-medium bg-transparent border-0 cursor-pointer"
+                  style={{ color: "rgba(255,255,255,0.3)" }}
+                >
+                  &larr; Avbryt
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* JOIN (guest enters code) */}
+          {screen === "join" && (
+            <div className="flex-1 flex items-center justify-center px-6">
+              <div className="text-center max-w-sm w-full">
+                <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center" style={{ background: "rgba(255,42,42,0.1)", border: "1px solid rgba(255,42,42,0.15)" }}>
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke={RED}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                  </svg>
+                </div>
+
+                <h2 className="text-xl font-bold text-white mb-2">Bli med i runde</h2>
+                <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
+                  Skriv inn koden du fikk av den andre.
+                </p>
+
+                <div className="flex flex-col items-center gap-3">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, ""))}
+                    onKeyDown={(e) => { if (e.key === "Enter") joinSession(); }}
+                    placeholder="KODE"
+                    className="w-48 text-center text-2xl font-mono font-black tracking-[0.3em] py-3 rounded-xl border-0 outline-none"
+                    style={{ background: "rgba(255,255,255,0.06)", color: "white", caretColor: RED }}
+                    autoFocus
+                  />
+
+                  <button
+                    onClick={joinSession}
+                    disabled={joinCode.length < 4 || titlesLoading}
+                    className="w-48 py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+                    style={{ background: RED, minHeight: 44 }}
+                  >
+                    {titlesLoading ? "Kobler til…" : "Bli med"}
+                  </button>
+
+                  {sessionError && (
+                    <p className="text-xs mt-1" style={{ color: "#f87171" }}>{sessionError}</p>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => { setScreen("intro"); setJoinCode(""); setSessionError(""); }}
+                  className="text-xs font-medium bg-transparent border-0 cursor-pointer mt-6"
+                  style={{ color: "rgba(255,255,255,0.3)" }}
+                >
+                  &larr; Tilbake
+                </button>
               </div>
             </div>
           )}
@@ -749,25 +1158,25 @@ export default function WTBetaPage() {
               <div className="w-full max-w-[260px] mb-5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>
-                    {progress + 1} / {MOCK_TITLES.length}
+                    {progress + 1} / {titles.length}
                   </span>
                   <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
-                    {currentTitle.genre}
+                    {getGenreName(currentTitle.genre_ids)}
                   </span>
                 </div>
                 <div className="w-full h-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
-                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${(progress / MOCK_TITLES.length) * 100}%`, background: RED }} />
+                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${(progress / titles.length) * 100}%`, background: RED }} />
                 </div>
               </div>
 
               <div className="w-full max-w-[260px]">
                 <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <Poster title={currentTitle} posters={posters} size="large" />
+                  <Poster title={currentTitle} size="large" />
                   <div className="p-4">
                     <h2 className="text-lg font-bold text-white mb-1">{currentTitle.title}</h2>
                     <div className="flex items-center gap-2">
                       <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-                        {currentTitle.year}
+                        {currentTitle.year || "—"}
                       </span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ background: currentTitle.type === "movie" ? "rgba(59,130,246,0.15)" : "rgba(168,85,247,0.15)", color: currentTitle.type === "movie" ? "#60a5fa" : "#a78bfa" }}>
                         {currentTitle.type === "movie" ? "Film" : "Serie"}
@@ -778,13 +1187,13 @@ export default function WTBetaPage() {
 
                 <div className="flex gap-3 mt-4">
                   <button onClick={() => rate("disliked")} className="flex-1 py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(239,68,68,0.12)", color: "#f87171", border: "1px solid rgba(239,68,68,0.15)", minHeight: 48 }}>
-                    👎 Nei
+                    &#128078; Nei
                   </button>
                   <button onClick={() => rate("meh")} className="flex-1 py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(234,179,8,0.12)", color: "#fbbf24", border: "1px solid rgba(234,179,8,0.15)", minHeight: 48 }}>
-                    😐 Meh
+                    &#128528; Meh
                   </button>
                   <button onClick={() => rate("liked")} className="flex-1 py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(34,197,94,0.12)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.15)", minHeight: 48 }}>
-                    👍 Liker
+                    &#128077; Liker
                   </button>
                 </div>
 
@@ -816,11 +1225,11 @@ export default function WTBetaPage() {
                       </p>
 
                       <div className="rounded-3xl overflow-hidden w-full max-w-[320px]" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}>
-                        <Poster title={chosen} posters={posters} size="medium" />
+                        <Poster title={chosen} size="medium" />
                         <div className="p-5 text-center">
                           <h3 className="text-xl font-bold text-white">{chosen.title}</h3>
                           <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-                            {chosen.year} &middot; {chosen.platform}
+                            {chosen.year} &middot; {getGenreName(chosen.genre_ids)}
                           </p>
                         </div>
                       </div>
@@ -866,7 +1275,7 @@ export default function WTBetaPage() {
                             Ingen flere forslag tilgjengelig.
                           </p>
                           <button onClick={reset} className="mt-4 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: RED }}>
-                            Start på nytt
+                            Start p&aring; nytt
                           </button>
                         </div>
                       ) : (
@@ -875,11 +1284,11 @@ export default function WTBetaPage() {
                           {next && (
                             <div className="absolute inset-x-0 mx-auto w-full max-w-[520px]" style={{ transform: "translateY(16px) scale(0.965)", opacity: 0.65 }}>
                               <div className="rounded-3xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                                <Poster title={next} posters={posters} size="large" />
+                                <Poster title={next} size="large" />
                                 <div className="p-4">
                                   <h3 className="text-base font-bold text-white truncate">{next.title}</h3>
                                   <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.35)" }}>
-                                    {next.year} · {next.platform}
+                                    {next.year} &middot; {getGenreName(next.genre_ids)}
                                   </p>
                                 </div>
                               </div>
@@ -909,7 +1318,7 @@ export default function WTBetaPage() {
                                 }}
                               >
                                 <div className="relative">
-                                  <Poster title={top} posters={posters} size="large" />
+                                  <Poster title={top} size="large" />
 
                                   <div className="absolute top-3 left-3 pointer-events-none">
                                     <span className="text-[11px] font-semibold px-2 py-1 rounded-lg" style={{ background: "rgba(0,0,0,0.32)", border: "1px solid rgba(255,255,255,0.10)", color: "rgba(255,255,255,0.75)" }}>
@@ -922,12 +1331,17 @@ export default function WTBetaPage() {
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                       <h3 className="text-lg font-bold text-white truncate">{top.title}</h3>
-                                      <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.35)", lineHeight: 1.4 }}>
-                                        {top.why}
+                                      <p className="text-sm mt-1 line-clamp-2" style={{ color: "rgba(255,255,255,0.35)", lineHeight: 1.4 }}>
+                                        {top.overview}
                                       </p>
                                       <p className="text-xs mt-2" style={{ color: "rgba(255,255,255,0.35)" }}>
-                                        {top.year} · {top.platform}
+                                        {top.year} &middot; {getGenreName(top.genre_ids)}
                                       </p>
+                                      {top.reason && (
+                                        <p className="text-[11px] mt-1.5 italic" style={{ color: "rgba(255,255,255,0.28)" }}>
+                                          {top.reason}
+                                        </p>
+                                      )}
                                     </div>
 
                                     <span className="text-[10px] px-2 py-1 rounded-lg font-semibold shrink-0" style={{ background: top.type === "movie" ? "rgba(59,130,246,0.15)" : "rgba(168,85,247,0.15)", color: top.type === "movie" ? "#60a5fa" : "#a78bfa" }}>
@@ -942,13 +1356,13 @@ export default function WTBetaPage() {
                                 {isDesktop ? (
                                   <>
                                     <button onClick={() => top && commitChoice(top, "nope")} className="px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(239,68,68,0.12)", color: "#f87171", border: "1px solid rgba(239,68,68,0.18)", minHeight: 44 }}>
-                                      ← Ikke for oss
+                                      &larr; Ikke for oss
                                     </button>
                                     <button onClick={() => top && commitChoice(top, "meh")} className="px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(234,179,8,0.12)", color: "#fbbf24", border: "1px solid rgba(234,179,8,0.18)", minHeight: 44 }}>
-                                      ↓ Meh
+                                      &darr; Meh
                                     </button>
                                     <button onClick={() => top && commitChoice(top, "like")} className="px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(34,197,94,0.14)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.20)", minHeight: 44 }}>
-                                      → Se nå
+                                      &rarr; Se n&aring;
                                     </button>
                                     <button onClick={nyeForslag} className="px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.10)", minHeight: 44 }}>
                                       R Shuffle
@@ -989,7 +1403,7 @@ export default function WTBetaPage() {
                           Ikke for oss
                         </span>
                         <span className="text-xs font-mono px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.65)", border: "1px solid rgba(255,255,255,0.10)" }}>
-                          ←
+                          &larr;
                         </span>
                       </div>
 
@@ -998,16 +1412,16 @@ export default function WTBetaPage() {
                           Meh
                         </span>
                         <span className="text-xs font-mono px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.65)", border: "1px solid rgba(255,255,255,0.10)" }}>
-                          ↓
+                          &darr;
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between">
                         <span className="text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
-                          Se nå (match)
+                          Se n&aring; (match)
                         </span>
                         <span className="text-xs font-mono px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.65)", border: "1px solid rgba(255,255,255,0.10)" }}>
-                          →
+                          &rarr;
                         </span>
                       </div>
 
@@ -1024,7 +1438,7 @@ export default function WTBetaPage() {
                     <div className="mt-5 p-4 rounded-2xl" style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.08)" }}>
                       <div className="text-sm font-semibold text-white">Match-logikk</div>
                       <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
-                        Du får <span style={{ color: "rgba(255,255,255,0.75)" }}>MATCH</span> når dere begge liker samme tittel. Da kommer fireworks og dere er ferdige.
+                        Du f&aring;r <span style={{ color: "rgba(255,255,255,0.75)" }}>MATCH</span> n&aring;r dere begge liker samme tittel. Da kommer fireworks og dere er ferdige.
                       </p>
                     </div>
 
@@ -1069,7 +1483,7 @@ export default function WTBetaPage() {
                 </div>
                 <div className="text-2xl font-black mt-2 text-white">{matchOverlay.title.title}</div>
                 <div className="text-xs mt-2" style={{ color: "rgba(255,255,255,0.45)" }}>
-                  {matchOverlay.title.year} · {matchOverlay.title.platform}
+                  {matchOverlay.title.year} &middot; {getGenreName(matchOverlay.title.genre_ids)}
                 </div>
                 <div className="mt-5 flex items-center justify-center gap-2">
                   <button

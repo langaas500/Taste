@@ -9,18 +9,20 @@ import GlowButton from "@/components/GlowButton";
 import StreamingModal from "@/components/StreamingModal";
 import AddToListModal from "@/components/AddToListModal";
 import { removeTitle, addExclusion, toggleFavorite, fetchFriendOverlaps } from "@/lib/api";
-import { createSupabaseBrowser } from "@/lib/supabase-browser";
+import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-browser";
 import Link from "next/link";
 import type { UserTitle, TitleCache, MediaType, Recommendation, FriendOverlap } from "@/lib/types";
 
 type Filter = "all" | "favorites" | "liked" | "disliked" | "neutral" | "excluded";
 type SortKey = "recent" | "alpha" | "year";
+type TypeFilter = "all" | "tv" | "movie";
 
 export default function LibraryPage() {
   const [titles, setTitles] = useState<(UserTitle & { cache?: TitleCache })[]>([]);
   const [exclusions, setExclusions] = useState<{ tmdb_id: number; type: string; reason: string | null; cache?: TitleCache }[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<SortKey>("recent");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [genreFilter, setGenreFilter] = useState<number | null>(null);
   const [yearFrom, setYearFrom] = useState("");
   const [yearTo, setYearTo] = useState("");
@@ -41,16 +43,16 @@ export default function LibraryPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const [{ data: ut }, { data: exc }, { data: cache }] = await Promise.all([
+    const [{ data: ut }, { data: exc }] = await Promise.all([
       supabase.from("user_titles").select("*").eq("user_id", user.id).eq("status", "watched").order("updated_at", { ascending: false }),
       supabase.from("user_exclusions").select("*").eq("user_id", user.id),
-      supabase.from("titles_cache").select("*"),
     ]);
 
-    const cacheMap = new Map<string, TitleCache>();
-    for (const c of (cache || []) as TitleCache[]) {
-      cacheMap.set(`${c.tmdb_id}:${c.type}`, c);
-    }
+    const allKeys = [
+      ...((ut || []) as UserTitle[]).map((t) => ({ tmdb_id: t.tmdb_id, type: t.type })),
+      ...((exc || []) as { tmdb_id: number; type: string }[]).map((e) => ({ tmdb_id: e.tmdb_id, type: e.type })),
+    ];
+    const cacheMap = await fetchCacheForTitles(supabase, allKeys);
 
     const enriched = ((ut || []) as UserTitle[]).map((t) => ({
       ...t,
@@ -124,7 +126,7 @@ export default function LibraryPage() {
     return [...set.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "nb"));
   }, [titles]);
 
-  const hasActiveFilters = genreFilter != null || yearFrom || yearTo;
+  const hasActiveFilters = typeFilter !== "all" || genreFilter != null || yearFrom || yearTo;
 
   const filteredUnsorted =
     filter === "excluded"
@@ -136,6 +138,9 @@ export default function LibraryPage() {
           : titles.filter((t) => t.sentiment === filter);
 
   let afterFilters = filteredUnsorted;
+  if (typeFilter !== "all") {
+    afterFilters = afterFilters.filter((t) => t.type === typeFilter);
+  }
   if (genreFilter != null) {
     afterFilters = afterFilters.filter((t) =>
       ((t.cache?.genres as { id: number; name: string }[]) || []).some((g) => g.id === genreFilter)
@@ -217,23 +222,43 @@ export default function LibraryPage() {
         </div>
       </div>
 
-      {/* Sort chips */}
-      {filter !== "excluded" && filtered.length > 1 && (
-        <div className="flex items-center gap-2 mb-5">
-          <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">Sorter</span>
-          {([["recent", "Nylig"], ["alpha", "A–Å"], ["year", "År"]] as [SortKey, string][]).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setSort(key)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
-                sort === key
-                  ? "bg-white/[0.1] text-white"
-                  : "bg-white/[0.03] text-white/40 hover:bg-white/[0.06] hover:text-white/60"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+      {/* Type filter + Sort chips */}
+      {filter !== "excluded" && titles.length > 0 && (
+        <div className="flex flex-wrap items-center gap-4 mb-5">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">Type</span>
+            {([["all", "Alle"], ["tv", "Serier"], ["movie", "Film"]] as [TypeFilter, string][]).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setTypeFilter(key)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+                  typeFilter === key
+                    ? "bg-white/[0.1] text-white"
+                    : "bg-white/[0.03] text-white/40 hover:bg-white/[0.06] hover:text-white/60"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {filtered.length > 1 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">Sorter</span>
+              {([["recent", "Nylig"], ["alpha", "A–Å"], ["year", "År"]] as [SortKey, string][]).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setSort(key)}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    sort === key
+                      ? "bg-white/[0.1] text-white"
+                      : "bg-white/[0.03] text-white/40 hover:bg-white/[0.06] hover:text-white/60"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -243,11 +268,11 @@ export default function LibraryPage() {
           <select
             value={genreFilter ?? ""}
             onChange={(e) => setGenreFilter(e.target.value ? parseInt(e.target.value, 10) : null)}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 focus:outline-none focus:border-white/20 transition-all"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#111627] border border-white/[0.08] text-white/70 focus:outline-none focus:border-white/20 transition-all [color-scheme:dark]"
           >
-            <option value="">Alle sjangere</option>
+            <option value="" className="bg-[#111627] text-white/70">Alle sjangere</option>
             {allGenres.map((g) => (
-              <option key={g.id} value={g.id}>{g.name}</option>
+              <option key={g.id} value={g.id} className="bg-[#111627] text-white/70">{g.name}</option>
             ))}
           </select>
           <div className="flex items-center gap-1.5">
@@ -270,7 +295,7 @@ export default function LibraryPage() {
           </div>
           {hasActiveFilters && (
             <button
-              onClick={() => { setGenreFilter(null); setYearFrom(""); setYearTo(""); }}
+              onClick={() => { setTypeFilter("all"); setGenreFilter(null); setYearFrom(""); setYearTo(""); }}
               className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--red)] bg-[var(--red-glow)] hover:bg-[var(--red)]/15 transition-all"
             >
               Nullstill

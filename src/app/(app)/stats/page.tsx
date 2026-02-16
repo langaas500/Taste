@@ -5,7 +5,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyState from "@/components/EmptyState";
 import GlassCard from "@/components/GlassCard";
 import GlowButton from "@/components/GlowButton";
-import { createSupabaseBrowser } from "@/lib/supabase-browser";
+import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-browser";
 import Link from "next/link";
 import type { UserTitle, TitleCache } from "@/lib/types";
 
@@ -36,16 +36,10 @@ export default function StatsPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const [{ data: ut }, { data: cache }] = await Promise.all([
-      supabase.from("user_titles").select("*").eq("user_id", user.id),
-      supabase.from("titles_cache").select("*"),
-    ]);
+    const { data: ut } = await supabase.from("user_titles").select("*").eq("user_id", user.id);
 
     const titles = (ut || []) as UserTitle[];
-    const cacheMap = new Map<string, TitleCache>();
-    for (const c of (cache || []) as TitleCache[]) {
-      cacheMap.set(`${c.tmdb_id}:${c.type}`, c);
-    }
+    const cacheMap = await fetchCacheForTitles(supabase, titles.map((t) => ({ tmdb_id: t.tmdb_id, type: t.type })));
 
     const watched = titles.filter((t) => t.status === "watched");
     const watchlist = titles.filter((t) => t.status === "watchlist");
