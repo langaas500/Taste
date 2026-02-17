@@ -11,10 +11,10 @@ function sleep(ms: number) {
 
 export async function POST(req: NextRequest) {
   try {
-    // Protect with service role key as bearer token
+    // Protect with BACKFILL_SECRET env var
     const auth = req.headers.get("authorization");
-    const expected = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!auth || auth !== `Bearer ${expected}`) {
+    const secret = process.env.BACKFILL_SECRET;
+    if (!secret || !auth || auth !== `Bearer ${secret}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

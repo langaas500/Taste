@@ -32,9 +32,8 @@ export default function HomePage() {
     if (!user) { setLoading(false); return; }
 
     // Parallel data fetching
-    const [titlesRes, recsRes, trendingRes] = await Promise.all([
+    const [titlesRes, trendingRes] = await Promise.all([
       supabase.from("user_titles").select("*").eq("user_id", user.id).order("updated_at", { ascending: false }),
-      fetch("/api/recommendations").then((r) => r.json()).catch(() => ({ recommendations: [] })),
       fetch("/api/tmdb/discover?type=movie&sort_by=popularity.desc&page=1").then((r) => r.json()).catch(() => ({ results: [] })),
     ]);
 
@@ -63,17 +62,14 @@ export default function HomePage() {
     setData({
       watching,
       recentlyLogged,
-      recommendations: (recsRes.recommendations || []).slice(0, 10),
+      recommendations: [],
       trending: trendingItems,
       totalTitles: allTitles.length,
     });
     setLoading(false);
 
-    // Prefetch Netflix IDs for watching + recommendations (best-effort)
-    const prefetchItems = [
-      ...watching.map((t) => ({ id: t.tmdb_id, type: t.type })),
-      ...((recsRes.recommendations || []) as Recommendation[]).slice(0, 10).map((r: Recommendation) => ({ id: r.tmdb_id, type: r.type })),
-    ];
+    // Prefetch Netflix IDs for watching titles (best-effort)
+    const prefetchItems = watching.map((t) => ({ id: t.tmdb_id, type: t.type }));
     if (prefetchItems.length > 0) prefetchNetflixIds(prefetchItems);
   }
 

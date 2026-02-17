@@ -31,11 +31,11 @@ export async function GET() {
     const estimatedHours = Math.round(movies.length * 2 + tvShows.length * 7.5);
 
     // Sentiment distribution
-    const sentimentCounts = { liked: 0, ok: 0, disliked: 0, unrated: 0 };
+    const sentimentCounts = { liked: 0, neutral: 0, disliked: 0, unrated: 0 };
     for (const t of titles as { sentiment: string | null }[]) {
       if (t.sentiment === "liked") sentimentCounts.liked++;
       else if (t.sentiment === "disliked") sentimentCounts.disliked++;
-      else if (t.sentiment === "ok") sentimentCounts.ok++;
+      else if (t.sentiment === "neutral") sentimentCounts.neutral++;
       else sentimentCounts.unrated++;
     }
 

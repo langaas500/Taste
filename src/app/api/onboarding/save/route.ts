@@ -12,40 +12,51 @@ export async function POST(req: NextRequest) {
     // Save rated titles
     if (Array.isArray(titles) && titles.length > 0) {
       const now = new Date().toISOString();
-      for (const item of titles) {
-        const { tmdb_id, type, sentiment } = item;
-        if (!tmdb_id || !type || !sentiment) continue;
+      const rows = titles
+        .filter(
+          (item): item is { tmdb_id: number; type: string; sentiment: string } =>
+            !!(item.tmdb_id && item.type && item.sentiment)
+        )
+        .map((item) => ({
+          user_id: user.id,
+          tmdb_id: item.tmdb_id,
+          type: item.type,
+          status: "watched",
+          sentiment: item.sentiment,
+          watched_at: now,
+          updated_at: now,
+        }));
 
-        await supabase.from("user_titles").upsert(
-          {
-            user_id: user.id,
-            tmdb_id,
-            type,
-            status: "watched",
-            sentiment,
-            watched_at: now,
-            updated_at: now,
-          },
-          { onConflict: "user_id,tmdb_id,type" }
-        );
+      if (rows.length > 0) {
+        const { error } = await supabase
+          .from("user_titles")
+          .upsert(rows, { onConflict: "user_id,tmdb_id,type" });
+
+        if (error) {
+          return NextResponse.json({ error: error.message }, { status: 500 });
+        }
 
         // Cache in background
-        cacheTitleIfNeeded(tmdb_id, type).catch(() => {});
+        for (const row of rows) {
+          cacheTitleIfNeeded(row.tmdb_id, row.type).catch(() => {});
+        }
       }
     }
 
-    // Save streaming services to profile
+    // Save streaming services and mark onboarding completed
+    const profileUpdate: Record<string, unknown> = { onboarding_completed: true };
     if (Array.isArray(streaming_services)) {
-      await supabase
-        .from("profiles")
-        .update({ streaming_services, onboarding_completed: true })
-        .eq("id", user.id);
-    } else {
-      // Just mark onboarding completed
-      await supabase
-        .from("profiles")
-        .update({ onboarding_completed: true })
-        .eq("id", user.id);
+      profileUpdate.streaming_services = streaming_services;
+    }
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update(profileUpdate)
+      .eq("id", user.id);
+
+    if (profileError) {
+      // Non-fatal: onboarding titles are already saved — log and continue
+      console.error("onboarding profile update failed:", profileError.message);
     }
 
     // Trigger taste summary generation in background

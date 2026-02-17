@@ -9,8 +9,8 @@ export function createSupabaseBrowser() {
 }
 
 /**
- * Fetch titles_cache rows matching the given tmdb_ids.
- * Supabase caps responses at 1000 rows, so we batch .in() queries
+ * Fetch titles_cache rows matching the given (tmdb_id, type) pairs.
+ * Dedupes by composite key before querying, then batches .in() calls
  * in chunks of 200 to stay within URL-length limits.
  */
 export async function fetchCacheForTitles(
@@ -20,7 +20,9 @@ export async function fetchCacheForTitles(
   const cacheMap = new Map<string, TitleCache>();
   if (keys.length === 0) return cacheMap;
 
-  const dedupedIds = [...new Set(keys.map((k) => k.tmdb_id))];
+  // Dedupe by composite key (tmdb_id + type) first, then extract unique IDs for the query
+  const dedupedPairs = [...new Map(keys.map((k) => [`${k.tmdb_id}:${k.type}`, k])).values()];
+  const dedupedIds = [...new Set(dedupedPairs.map((k) => k.tmdb_id))];
 
   const CHUNK = 200;
   for (let i = 0; i < dedupedIds.length; i += CHUNK) {

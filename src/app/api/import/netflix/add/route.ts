@@ -12,50 +12,60 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No items provided" }, { status: 400 });
     }
 
+    // Filter to valid items only
+    const validItems = items.filter(
+      (item): item is { tmdb_id: number; type: string } => !!(item.tmdb_id && item.type)
+    );
+    const skippedInvalid = items.length - validItems.length;
+
+    if (validItems.length === 0) {
+      return NextResponse.json({ added: 0, skipped: items.length });
+    }
+
     const supabase = await createSupabaseServer();
-    let added = 0;
-    let skipped = 0;
+    const incomingIds = validItems.map((i) => i.tmdb_id);
 
-    for (const item of items) {
-      const { tmdb_id, type } = item;
-      if (!tmdb_id || !type) {
-        skipped++;
-        continue;
-      }
+    // Single query to find all existing user_titles matching these tmdb_ids
+    const { data: existingRows } = await supabase
+      .from("user_titles")
+      .select("tmdb_id, type")
+      .eq("user_id", user.id)
+      .in("tmdb_id", incomingIds);
 
-      // Check if already in library
-      const { data: existing } = await supabase
-        .from("user_titles")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("tmdb_id", tmdb_id)
-        .eq("type", type)
-        .single();
+    const existingSet = new Set<string>();
+    for (const row of existingRows || []) {
+      existingSet.add(`${row.tmdb_id}:${row.type}`);
+    }
 
-      if (existing) {
-        skipped++;
-        continue;
-      }
-
-      const { error } = await supabase.from("user_titles").insert({
+    const now = new Date().toISOString();
+    const newRows = validItems
+      .filter((item) => !existingSet.has(`${item.tmdb_id}:${item.type}`))
+      .map((item) => ({
         user_id: user.id,
-        tmdb_id,
-        type,
+        tmdb_id: item.tmdb_id,
+        type: item.type,
         status: "watched",
-        watched_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+        watched_at: now,
+        updated_at: now,
+      }));
 
-      if (!error) {
-        added++;
-        // Cache title metadata in background
-        cacheTitleIfNeeded(tmdb_id, type).catch(() => {});
-      } else {
-        skipped++;
+    const skipped = skippedInvalid + (validItems.length - newRows.length);
+
+    if (newRows.length > 0) {
+      // Bulk upsert in chunks of 100
+      const CHUNK = 100;
+      for (let i = 0; i < newRows.length; i += CHUNK) {
+        await supabase
+          .from("user_titles")
+          .upsert(newRows.slice(i, i + CHUNK), { onConflict: "user_id,tmdb_id,type" });
+      }
+      // Cache title metadata in background
+      for (const row of newRows) {
+        cacheTitleIfNeeded(row.tmdb_id, row.type).catch(() => {});
       }
     }
 
-    return NextResponse.json({ added, skipped });
+    return NextResponse.json({ added: newRows.length, skipped });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });

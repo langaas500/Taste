@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
-// POST: Submit a swipe action
+// POST: Submit a swipe action (atomic — writes to wt_session_swipes)
 export async function POST(req: NextRequest) {
   try {
     const user = await requireUser();
@@ -17,9 +17,11 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = await createSupabaseServer();
+
+    // Verify user is part of this session and check current match state
     const { data: session, error: fetchError } = await supabase
       .from("wt_sessions")
-      .select("id, host_id, guest_id, host_swipes, guest_swipes, status, match_tmdb_id")
+      .select("id, host_id, guest_id, status, match_tmdb_id")
       .eq("id", session_id)
       .single();
 
@@ -32,67 +34,79 @@ export async function POST(req: NextRequest) {
     }
 
     if (session.match_tmdb_id) {
-      return NextResponse.json({ error: "Session already matched", match: { tmdb_id: session.match_tmdb_id } }, { status: 200 });
+      return NextResponse.json(
+        { error: "Session already matched", match: { tmdb_id: session.match_tmdb_id } },
+        { status: 200 }
+      );
     }
 
     const isHost = session.host_id === user.id;
-    const key = `${tmdb_id}:${type}`;
 
-    // Update swipes
-    const mySwipes = isHost
-      ? { ...(session.host_swipes as Record<string, string>), [key]: action }
-      : session.host_swipes;
-    const theirSwipes = !isHost
-      ? { ...(session.guest_swipes as Record<string, string>), [key]: action }
-      : session.guest_swipes;
+    // Atomically upsert the swipe — UNIQUE constraint prevents duplicates
+    const { error: swipeError } = await supabase
+      .from("wt_session_swipes")
+      .upsert(
+        {
+          session_id,
+          user_id: user.id,
+          tmdb_id,
+          media_type: type,
+          decision: action,
+        },
+        { onConflict: "session_id,user_id,tmdb_id,media_type" }
+      );
 
-    const hostSwipes = isHost ? mySwipes : session.host_swipes;
-    const guestSwipes = !isHost ? theirSwipes : session.guest_swipes;
+    if (swipeError) {
+      return NextResponse.json({ error: swipeError.message }, { status: 500 });
+    }
 
-    // Check for match: both liked (or superliked) the same title
+    // Check for match: query partner's swipe for this title
     let matchFound: { tmdb_id: number; type: string } | null = null;
     let doubleSuperMatch: { tmdb_id: number; type: string } | null = null;
 
     if (action === "like" || action === "superlike") {
-      const partnerSwipes = isHost
-        ? (session.guest_swipes as Record<string, string>)
-        : (session.host_swipes as Record<string, string>);
+      const partnerId = isHost ? session.guest_id : session.host_id;
+      if (partnerId) {
+        const { data: partnerSwipe } = await supabase
+          .from("wt_session_swipes")
+          .select("decision")
+          .eq("session_id", session_id)
+          .eq("user_id", partnerId)
+          .eq("tmdb_id", tmdb_id)
+          .eq("media_type", type)
+          .maybeSingle();
 
-      if (partnerSwipes[key] === "like" || partnerSwipes[key] === "superlike") {
-        matchFound = { tmdb_id, type };
-        // Double super: both superliked the same title
-        if (action === "superlike" && partnerSwipes[key] === "superlike") {
-          doubleSuperMatch = { tmdb_id, type };
+        if (
+          partnerSwipe &&
+          (partnerSwipe.decision === "like" || partnerSwipe.decision === "superlike")
+        ) {
+          matchFound = { tmdb_id, type };
+          if (action === "superlike" && partnerSwipe.decision === "superlike") {
+            doubleSuperMatch = { tmdb_id, type };
+          }
         }
       }
     }
 
-    const updateData: Record<string, unknown> = {
-      host_swipes: hostSwipes,
-      guest_swipes: guestSwipes,
-      updated_at: new Date().toISOString(),
-    };
-
+    // Update session: set match or just bump updated_at for partner polling
     if (matchFound) {
-      updateData.match_tmdb_id = matchFound.tmdb_id;
-      updateData.match_type = matchFound.type;
-      updateData.status = "matched";
+      await supabase
+        .from("wt_sessions")
+        .update({
+          match_tmdb_id: matchFound.tmdb_id,
+          match_type: matchFound.type,
+          status: "matched",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", session_id);
+    } else {
+      await supabase
+        .from("wt_sessions")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", session_id);
     }
 
-    const { error: updateError } = await supabase
-      .from("wt_sessions")
-      .update(updateData)
-      .eq("id", session_id);
-
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      ok: true,
-      match: matchFound,
-      doubleSuperMatch,
-    });
+    return NextResponse.json({ ok: true, match: matchFound, doubleSuperMatch });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });

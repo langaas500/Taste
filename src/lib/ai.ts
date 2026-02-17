@@ -82,6 +82,17 @@ function stripMarkdownFences(text: string): string {
   return text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
 }
 
+/** Safe JSON.parse wrapper — never throws. */
+export function safeParseJson<T>(
+  raw: string
+): { ok: true; data: T } | { ok: false; error: string } {
+  try {
+    return { ok: true, data: JSON.parse(stripMarkdownFences(raw)) as T };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 export interface TasteInput {
   liked: { title: string; type: string; genres: string[] }[];
   disliked: { title: string; type: string; genres: string[] }[];
@@ -111,7 +122,9 @@ Return ONLY valid JSON, no markdown fences.`;
     { role: "user", content: prompt },
   ], 0.3);
 
-  return JSON.parse(stripMarkdownFences(result));
+  const parsed = safeParseJson<{ youLike: string; avoid: string; pacing: string }>(result);
+  if (!parsed.ok) throw new Error(`AI returned invalid JSON: ${parsed.error}`);
+  return parsed.data;
 }
 
 export async function explainRecommendations(
@@ -137,7 +150,9 @@ Return ONLY valid JSON, no markdown fences.`;
     { role: "user", content: prompt },
   ], 0.3);
 
-  return JSON.parse(stripMarkdownFences(result));
+  const parsed = safeParseJson<{ title: string; why: string; tags: string[] }[]>(result);
+  if (!parsed.ok) throw new Error(`AI returned invalid JSON: ${parsed.error}`);
+  return parsed.data;
 }
 
 export async function testAIConnection(): Promise<{ ok: boolean; provider: string; error?: string }> {

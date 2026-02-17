@@ -18,17 +18,35 @@ CREATE TABLE IF NOT EXISTS public.wt_sessions (
 
 ALTER TABLE public.wt_sessions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can read sessions they are part of"
-  ON public.wt_sessions FOR SELECT
-  USING (auth.uid() = host_id OR auth.uid() = guest_id);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'Users can read sessions they are part of' AND tablename = 'wt_sessions'
+  ) THEN
+    CREATE POLICY "Users can read sessions they are part of"
+      ON public.wt_sessions FOR SELECT
+      USING (auth.uid() = host_id OR auth.uid() = guest_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can create sessions"
-  ON public.wt_sessions FOR INSERT
-  WITH CHECK (auth.uid() = host_id);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'Users can create sessions' AND tablename = 'wt_sessions'
+  ) THEN
+    CREATE POLICY "Users can create sessions"
+      ON public.wt_sessions FOR INSERT
+      WITH CHECK (auth.uid() = host_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can update sessions they are part of"
-  ON public.wt_sessions FOR UPDATE
-  USING (auth.uid() = host_id OR auth.uid() = guest_id);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'Users can update sessions they are part of' AND tablename = 'wt_sessions'
+  ) THEN
+    CREATE POLICY "Users can update sessions they are part of"
+      ON public.wt_sessions FOR UPDATE
+      USING (auth.uid() = host_id OR auth.uid() = guest_id);
+  END IF;
+END $$;
 
 -- Index for code lookups
 CREATE INDEX IF NOT EXISTS idx_wt_sessions_code ON public.wt_sessions (code);

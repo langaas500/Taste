@@ -147,7 +147,7 @@ export async function GET(req: NextRequest) {
     const supabase = await createSupabaseServer();
     const { data: session, error } = await supabase
       .from("wt_sessions")
-      .select("id, code, host_id, guest_id, host_swipes, guest_swipes, match_tmdb_id, match_type, status, updated_at")
+      .select("id, code, host_id, guest_id, match_tmdb_id, match_type, status, updated_at")
       .eq("id", sessionId)
       .single();
 
@@ -159,7 +159,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Not part of this session" }, { status: 403 });
     }
 
-    const isHost = session.host_id === user.id;
+    // Read swipes from the atomic wt_session_swipes table
+    const { data: swipeRows } = await supabase
+      .from("wt_session_swipes")
+      .select("user_id, tmdb_id, media_type, decision")
+      .eq("session_id", sessionId);
+
+    const mySwipes: Record<string, string> = {};
+    const partnerSwipes: Record<string, string> = {};
+    for (const s of swipeRows || []) {
+      const key = `${s.tmdb_id}:${s.media_type}`;
+      if (s.user_id === user.id) {
+        mySwipes[key] = s.decision;
+      } else {
+        partnerSwipes[key] = s.decision;
+      }
+    }
 
     return NextResponse.json({
       session: {
@@ -167,8 +182,8 @@ export async function GET(req: NextRequest) {
         code: session.code,
         status: session.status,
         partner_joined: !!session.guest_id,
-        my_swipes: isHost ? session.host_swipes : session.guest_swipes,
-        partner_swipes: isHost ? session.guest_swipes : session.host_swipes,
+        my_swipes: mySwipes,
+        partner_swipes: partnerSwipes,
         match_tmdb_id: session.match_tmdb_id,
         match_type: session.match_type,
         updated_at: session.updated_at,

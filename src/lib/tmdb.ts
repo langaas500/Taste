@@ -9,11 +9,29 @@ function headers() {
   };
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Fetch wrapper with TMDB_API_KEY validation and 429 retry/backoff. */
+async function tmdbFetch(url: string): Promise<Response> {
+  if (!process.env.TMDB_API_KEY) {
+    throw new Error("TMDB_API_KEY is not set");
+  }
+  const opts = { headers: headers() };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await fetch(url, opts);
+    if (res.status !== 429) return res;
+    const retryAfter = parseInt(res.headers.get("Retry-After") || "1", 10);
+    await sleep(Math.max(retryAfter, 1) * 1000);
+  }
+  throw new Error("TMDB rate limit exceeded after 3 retries");
+}
+
 export async function tmdbSearch(query: string, type: "movie" | "tv" | "multi" = "multi") {
   const endpoint = type === "multi" ? "search/multi" : `search/${type}`;
-  const res = await fetch(
-    `${BASE}/${endpoint}?query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`,
-    { headers: headers() }
+  const res = await tmdbFetch(
+    `${BASE}/${endpoint}?query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`
   );
   if (!res.ok) throw new Error(`TMDB search error: ${res.status}`);
   const data = await res.json();
@@ -26,17 +44,13 @@ export async function tmdbSearch(query: string, type: "movie" | "tv" | "multi" =
 
 export async function tmdbDetails(tmdbId: number, type: "movie" | "tv", appendToResponse?: string) {
   const append = appendToResponse ? `&append_to_response=${appendToResponse}` : "";
-  const res = await fetch(`${BASE}/${type}/${tmdbId}?language=en-US${append}`, {
-    headers: headers(),
-  });
+  const res = await tmdbFetch(`${BASE}/${type}/${tmdbId}?language=en-US${append}`);
   if (!res.ok) throw new Error(`TMDB details error: ${res.status}`);
   return res.json();
 }
 
 export async function tmdbExternalIds(tmdbId: number, type: "movie" | "tv") {
-  const res = await fetch(`${BASE}/${type}/${tmdbId}/external_ids`, {
-    headers: headers(),
-  });
+  const res = await tmdbFetch(`${BASE}/${type}/${tmdbId}/external_ids`);
   if (!res.ok) return null;
   return res.json();
 }
@@ -51,59 +65,48 @@ export async function tmdbDiscover(
     page: "1",
     ...params,
   });
-  const res = await fetch(`${BASE}/discover/${type}?${qs}`, {
-    headers: headers(),
-  });
+  const res = await tmdbFetch(`${BASE}/discover/${type}?${qs}`);
   if (!res.ok) throw new Error(`TMDB discover error: ${res.status}`);
   return res.json();
 }
 
 export async function tmdbTrending(type: "movie" | "tv" | "all" = "all", window: "day" | "week" = "week") {
-  const res = await fetch(`${BASE}/trending/${type}/${window}?language=en-US`, {
-    headers: headers(),
-  });
+  const res = await tmdbFetch(`${BASE}/trending/${type}/${window}?language=en-US`);
   if (!res.ok) throw new Error(`TMDB trending error: ${res.status}`);
   return res.json();
 }
 
 export async function tmdbSimilar(tmdbId: number, type: "movie" | "tv") {
-  const res = await fetch(`${BASE}/${type}/${tmdbId}/similar?language=en-US&page=1`, {
-    headers: headers(),
-  });
+  const res = await tmdbFetch(`${BASE}/${type}/${tmdbId}/similar?language=en-US&page=1`);
   if (!res.ok) return { results: [] };
   return res.json();
 }
 
 export async function tmdbWatchProviders(tmdbId: number, type: "movie" | "tv") {
-  const res = await fetch(`${BASE}/${type}/${tmdbId}/watch/providers`, {
-    headers: headers(),
-  });
+  const res = await tmdbFetch(`${BASE}/${type}/${tmdbId}/watch/providers`);
   if (!res.ok) return { results: {} };
   return res.json();
 }
 
 export async function tmdbSearchPerson(query: string, page = 1) {
-  const res = await fetch(
-    `${BASE}/search/person?query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=${page}`,
-    { headers: headers() }
+  const res = await tmdbFetch(
+    `${BASE}/search/person?query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=${page}`
   );
   if (!res.ok) throw new Error(`TMDB person search error: ${res.status}`);
   return res.json();
 }
 
 export async function tmdbPersonCredits(personId: number) {
-  const res = await fetch(
-    `${BASE}/person/${personId}/combined_credits?language=en-US`,
-    { headers: headers() }
+  const res = await tmdbFetch(
+    `${BASE}/person/${personId}/combined_credits?language=en-US`
   );
   if (!res.ok) throw new Error(`TMDB person credits error: ${res.status}`);
   return res.json();
 }
 
 export async function tmdbSearchKeywords(query: string) {
-  const res = await fetch(
-    `${BASE}/search/keyword?query=${encodeURIComponent(query)}&page=1`,
-    { headers: headers() }
+  const res = await tmdbFetch(
+    `${BASE}/search/keyword?query=${encodeURIComponent(query)}&page=1`
   );
   if (!res.ok) throw new Error(`TMDB keyword search error: ${res.status}`);
   const data = await res.json();
@@ -111,18 +114,14 @@ export async function tmdbSearchKeywords(query: string) {
 }
 
 export async function tmdbGenres(type: "movie" | "tv") {
-  const res = await fetch(
-    `${BASE}/genre/${type}/list?language=en-US`,
-    { headers: headers() }
-  );
+  const res = await tmdbFetch(`${BASE}/genre/${type}/list?language=en-US`);
   if (!res.ok) throw new Error(`TMDB genres error: ${res.status}`);
   return res.json();
 }
 
 export async function tmdbProviderList(type: "movie" | "tv", region = "NO") {
-  const res = await fetch(
-    `${BASE}/watch/providers/${type}?language=en-US&watch_region=${region}`,
-    { headers: headers() }
+  const res = await tmdbFetch(
+    `${BASE}/watch/providers/${type}?language=en-US&watch_region=${region}`
   );
   if (!res.ok) throw new Error(`TMDB provider list error: ${res.status}`);
   return res.json();
