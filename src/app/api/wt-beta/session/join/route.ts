@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
     const { data: session, error: findError } = await admin
       .from("wt_sessions")
-      .select("id, host_id, guest_id, titles, status")
+      .select("id, host_id, guest_id, titles, deck_seed, status")
       .eq("code", code.toUpperCase().trim())
       .single();
 
@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
       session: {
         id: session.id,
         titles: session.titles,
+        deck_seed: session.deck_seed ?? null,
         status: "active",
       },
     });

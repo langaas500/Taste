@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    if (!["like", "nope", "meh"].includes(action)) {
+    if (!["like", "nope", "meh", "superlike"].includes(action)) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
@@ -49,15 +49,21 @@ export async function POST(req: NextRequest) {
     const hostSwipes = isHost ? mySwipes : session.host_swipes;
     const guestSwipes = !isHost ? theirSwipes : session.guest_swipes;
 
-    // Check for match: both liked the same title
+    // Check for match: both liked (or superliked) the same title
     let matchFound: { tmdb_id: number; type: string } | null = null;
-    if (action === "like") {
+    let doubleSuperMatch: { tmdb_id: number; type: string } | null = null;
+
+    if (action === "like" || action === "superlike") {
       const partnerSwipes = isHost
         ? (session.guest_swipes as Record<string, string>)
         : (session.host_swipes as Record<string, string>);
 
-      if (partnerSwipes[key] === "like") {
+      if (partnerSwipes[key] === "like" || partnerSwipes[key] === "superlike") {
         matchFound = { tmdb_id, type };
+        // Double super: both superliked the same title
+        if (action === "superlike" && partnerSwipes[key] === "superlike") {
+          doubleSuperMatch = { tmdb_id, type };
+        }
       }
     }
 
@@ -85,6 +91,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       match: matchFound,
+      doubleSuperMatch,
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";

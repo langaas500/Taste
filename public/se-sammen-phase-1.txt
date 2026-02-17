@@ -1,0 +1,39 @@
+STRICT CLAUDE CODE TASK (PHASE 1/3) — DO NOT DEVIATE
+
+CONTEXT
+This Next.js App Router project already has a “Se sammen” page/flow implemented.
+Your job is to UPGRADE the existing implementation, not create a new concept.
+
+HARD RULES
+- Do NOT add new dependencies.
+- Do NOT refactor unrelated pages.
+- Do NOT change existing routes unless explicitly required.
+- Use the existing “Se sammen” route/page as the base. FIND IT first.
+- Keep changes minimal and localized to the Se sammen feature + its direct helpers.
+- Output FULL CONTENT of every file you modify (complete files), and list exact file paths.
+
+PHASE 1 GOAL
+1) Locate and identify:
+   - The current “Se sammen” page file(s)
+   - Any shared components used by it
+   - Any API routes used by it (if any)
+   - Any state/session logic used by it (if any)
+
+2) Provide a brief repo-local plan (in 8-12 bullets) describing:
+   - What you will change in Phase 2 and Phase 3
+   - Which specific files you will touch
+   - What you will NOT touch
+
+3) Implement ONLY these minimal changes now:
+   A) Ensure the “Se sammen” experience is clearly the MAIN entry point (landing).
+      - If there is a current main landing at src/app/page.tsx, update it to immediately present the “Se sammen” CTA or redirect to the existing Se sammen route.
+      - Do NOT break logged-in dashboard routes.
+   B) Add a subtle bottom-right link from Se sammen to the existing “dashboard/library/explore” area (whatever exists).
+   C) Ensure Se sammen does NOT require login.
+
+DO NOT implement the new fullscreen swipe UI yet. That’s Phase 2.
+
+DELIVERABLES
+- List all files discovered for Se sammen.
+- Full updated content of only the files you modified in this phase.
+- A tight plan for Phase 2 and Phase 3 (bullets).

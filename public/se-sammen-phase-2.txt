@@ -1,0 +1,50 @@
+STRICT CLAUDE CODE TASK (PHASE 2/3) — DO NOT DEVIATE
+
+HARD RULES
+- Do NOT add new dependencies.
+- Do NOT rewrite the entire app styling system.
+- Only modify the existing Se sammen page/components and directly related helpers.
+- Mobile-first.
+- Fullscreen immersive cards.
+- Next card must be pre-rendered underneath (no perceptible “loading” between cards).
+- Animations must be subtle and fast (200–300ms).
+- Output FULL CONTENT of every file you modify.
+
+PHASE 2 GOAL
+Upgrade the existing Se sammen UI/interaction to match these requirements:
+
+UI REQUIREMENTS
+1) Fullscreen card experience:
+   - Poster image as background (or gradient placeholder if missing)
+   - Dark gradient overlay for readability
+   - Title + short 1-line “why”/tagline near bottom
+   - Provider badges/icons subtle (if available)
+   - No navbar/footer distractions on this route
+
+2) Inputs:
+   - Swipe right = 👍
+   - Swipe left = 👎
+   - Tap ⭐ = Super-like (1 per round; enforce in Phase 3 if not here)
+   - No “skip” button (skip == 👎)
+
+3) Timing capture per title:
+   - decisionTime in ms (from when card becomes active to user action)
+   - store this in state along with decision type
+
+4) Timer:
+   - Round 1 timer (3 minutes) displayed as thin progress bar at top
+   - Avoid big timer numbers
+
+5) Desktop:
+   - Must still be usable
+   - Allow click buttons for 👍 / 👎 / ⭐ in addition to drag (do NOT remove swipe)
+   - Keep it simple
+
+DATA
+- Use the existing title source if the project already has one.
+- If Se sammen currently uses mock titles, keep using them.
+- Do NOT add new external data sources in this phase.
+
+DELIVERABLES
+- Full updated files
+- Short bullet list of what was changed and where

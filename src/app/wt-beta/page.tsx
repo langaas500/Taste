@@ -1,15 +1,51 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import Link from "next/link";
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { logTitle } from "@/lib/api";
+import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
 /* ── constants ─────────────────────────────────────────── */
 
 const RED = "#ff2a2a";
-const TITLES_CACHE_KEY = "wt_titles_v2";
-const PROFILE_CACHE_KEY = "wt_profile_v2";
-const PARTNER_CACHE_KEY = "wt_partner_v2";
+const TITLES_CACHE_KEY = "wt_titles_v3";
+const GUEST_PROFILE_KEY = "wt_guest_profile_v1";
+const ROUND1_LIMIT = 25;
+const ROUND2_LIMIT = 15;
+const ROUND1_DURATION = 180;
+const ROUND2_DURATION = 120;
+
+/* ── poster ribbon — static curated palette ─────────────── */
+
+// 12 distinct gradient pairs (genre moods). Tiles appear at low opacity for atmosphere.
+const RIBBON_COLORS: [string, string][] = [
+  ["#8b1a1a", "#4a0a0a"], // crimson       — action/thriller
+  ["#1a1a8b", "#0a0a4a"], // navy          — sci-fi/drama
+  ["#1a6b25", "#0a3d14"], // forest green  — adventure/nature
+  ["#6b1a8b", "#3d0a4a"], // violet        — fantasy/horror
+  ["#8b5a1a", "#4a300a"], // amber         — period/western
+  ["#1a8b6b", "#0a4a3d"], // teal          — crime/mystery
+  ["#8b3a1a", "#4a1e0a"], // sienna        — thriller
+  ["#1a3a8b", "#0a1e4a"], // midnight blue — drama
+  ["#4a8b1a", "#274a0a"], // olive         — war/history
+  ["#8b1a4a", "#4a0a27"], // rose          — romance
+  ["#1a8b8b", "#0a4a4a"], // cyan          — sci-fi
+  ["#5a3a8b", "#2d1e4a"], // indigo        — mystery
+];
+
+/* ── streaming providers ───────────────────────────────── */
+
+const VIAPLAY_REGIONS = new Set(["NO", "SE", "DK", "FI", "IS"]);
+
+interface Provider { id: number; name: string; }
+const PROVIDERS: Provider[] = [
+  { id: 8,    name: "Netflix" },
+  { id: 9,    name: "Prime Video" },
+  { id: 337,  name: "Disney+" },
+  { id: 1899, name: "Max" },
+  { id: 350,  name: "Apple TV+" },
+  { id: 76,   name: "Viaplay" },
+];
 
 /* ── genre map ─────────────────────────────────────────── */
 
@@ -56,28 +92,28 @@ interface WTTitle {
   reason?: string;
 }
 
-interface TasteProfile {
-  liked: number[];
-  meh: number[];
-  disliked: number[];
+interface TitlesCacheEntry {
+  titles: WTTitle[];
+  mood: string;
+  ts: number;
 }
 
-type Screen = "intro" | "mood" | "onboarding" | "together" | "waiting" | "join";
-type Rating = "liked" | "meh" | "disliked";
-type SwipeAction = "like" | "nope" | "meh";
+interface GuestProfile {
+  liked: { tmdb_id: number; type: "movie" | "tv"; title: string; genre_ids: number[] }[];
+}
+
+type Screen = "intro" | "providers" | "together" | "waiting" | "join";
+type SwipeAction = "like" | "nope" | "meh"; // meh kept for API compat, not used in UI
 type Mode = "solo" | "paired";
-type Mood = "light" | "dark" | "thriller" | "action" | "romance" | "horror";
+type RoundPhase = "swiping" | "results" | "no-match" | "winner" | "double-super";
+type RitualState = "idle" | "arming" | "countdown" | "done";
 
-const MOODS: { id: Mood; label: string; color: string }[] = [
-  { id: "light",    label: "Lett & morsom",    color: "#fbbf24" },
-  { id: "dark",     label: "Mørk & intens",   color: "#6366f1" },
-  { id: "thriller", label: "Smart thriller",   color: "#14b8a6" },
-  { id: "action",   label: "Action & tempo",   color: "#ef4444" },
-  { id: "romance",  label: "Romantikk",        color: "#ec4899" },
-  { id: "horror",   label: "Skrekk",           color: "#84cc16" },
-];
+interface RoundMatch {
+  title: WTTitle;
+  decisionTime: number; // ms — ranking signal only, never shown to user
+}
 
-/* ── helpers ───────────────────────────────────────────── */
+/* ── helpers ─────────────────────────────────────────────── */
 
 function getGenreColor(genre_ids: number[]): string {
   for (const id of genre_ids) {
@@ -93,260 +129,113 @@ function getGenreName(genre_ids: number[]): string {
   return "Film/Serie";
 }
 
-function generateMockPartner(titles: WTTitle[]): TasteProfile {
+function generateMockPartner(titles: WTTitle[]): { liked: number[] } {
   const ids = titles.map((t) => t.tmdb_id);
   const shuffled = [...ids];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  const count = shuffled.length;
-  const likeCount = Math.ceil(count * 0.35);
-  const mehCount = Math.ceil(count * 0.25);
-  return {
-    liked: shuffled.slice(0, likeCount),
-    meh: shuffled.slice(likeCount, likeCount + mehCount),
-    disliked: shuffled.slice(likeCount + mehCount),
-  };
+  return { liked: shuffled.slice(0, Math.ceil(shuffled.length * 0.35)) };
 }
 
-function computeRecs(
-  titles: WTTitle[],
-  profile: TasteProfile,
-  partner: TasteProfile,
-  excluded: number[]
-): WTTitle[] {
-  const excludeSet = new Set([...profile.disliked, ...partner.disliked, ...excluded]);
-
-  const scored = titles
-    .filter((t) => !excludeSet.has(t.tmdb_id))
-    .map((t) => {
-      let score = 0;
-      if (profile.liked.includes(t.tmdb_id)) score += 2;
-      if (partner.liked.includes(t.tmdb_id)) score += 2;
-      if (profile.meh.includes(t.tmdb_id)) score += 1;
-      if (partner.meh.includes(t.tmdb_id)) score += 1;
-      return { t, score };
-    })
-    .sort((a, b) => b.score - a.score);
-
-  const top = scored.slice(0, Math.min(12, scored.length));
-  for (let i = top.length - 1; i > 0; i--) {
-    if (Math.random() < 0.1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [top[i], top[j]] = [top[j], top[i]];
-    }
+function readTitlesCache(): WTTitle[] {
+  try {
+    const raw = localStorage.getItem(TITLES_CACHE_KEY);
+    if (!raw) return [];
+    const entry = JSON.parse(raw) as TitlesCacheEntry;
+    if (!Array.isArray(entry.titles)) return [];
+    if (Date.now() - (entry.ts || 0) > 24 * 60 * 60 * 1000) return [];
+    return entry.titles;
+  } catch {
+    return [];
   }
-
-  return top.slice(0, 7).map((s) => s.t);
 }
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-function hexToRgb(hex: string) {
-  const h = hex.replace("#", "").trim();
-  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
-  const num = parseInt(full, 16);
-  return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+function saveGuestLike(t: WTTitle) {
+  try {
+    const raw = localStorage.getItem(GUEST_PROFILE_KEY);
+    const profile: GuestProfile = raw ? JSON.parse(raw) : { liked: [] };
+    if (!profile.liked.some((l) => l.tmdb_id === t.tmdb_id)) {
+      profile.liked.unshift({ tmdb_id: t.tmdb_id, type: t.type, title: t.title, genre_ids: t.genre_ids });
+      if (profile.liked.length > 50) profile.liked = profile.liked.slice(0, 50);
+    }
+    localStorage.setItem(GUEST_PROFILE_KEY, JSON.stringify(profile));
+  } catch { /* storage full */ }
 }
 
-/* ── poster component ──────────────────────────────────── */
-
-function Poster({
-  title,
-  size = "large",
-}: {
-  title: WTTitle;
-  size?: "large" | "small" | "medium";
-}) {
-  const url = title.poster_path ? `https://image.tmdb.org/t/p/w500${title.poster_path}` : null;
-  const color = getGenreColor(title.genre_ids);
-
-  const sizeClass =
-    size === "large" ? "w-full aspect-[2/3]" : size === "medium" ? "w-full aspect-[2/3]" : "w-16 h-24";
-  const textSize = size === "large" ? "text-5xl" : size === "medium" ? "text-4xl" : "text-lg";
-  const rounded = size === "small" ? "rounded-lg" : "rounded-2xl";
-
-  return (
-    <div className={`relative overflow-hidden ${sizeClass} ${rounded}`} style={{ background: `linear-gradient(135deg, ${color}, ${color}66)` }}>
-      <span className={`absolute inset-0 flex items-center justify-center ${textSize} font-black`} style={{ color: "rgba(255,255,255,0.15)" }}>
-        {title.title.substring(0, 2).toUpperCase()}
-      </span>
-
-      {url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={url}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = "none";
-          }}
-        />
-      )}
-
-      {/* poster glass gradient */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.00) 38%, rgba(0,0,0,0.55) 100%)",
-        }}
-      />
-    </div>
-  );
-}
-
-/* ── fireworks overlay (no libs) ───────────────────────── */
-
-function Fireworks({ color, onDone }: { color: string; onDone: () => void }) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const rafRef = useRef<number | null>(null);
-  const startedRef = useRef(false);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const resize = () => {
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      canvas.width = Math.floor(window.innerWidth * dpr);
-      canvas.height = Math.floor(window.innerHeight * dpr);
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const base = hexToRgb(color);
-    const mkColor = (a: number) => `rgba(${base.r},${base.g},${base.b},${a})`;
-
-    type P = { x: number; y: number; vx: number; vy: number; r: number; life: number; max: number; a: number };
-    const parts: P[] = [];
-    const t0 = performance.now();
-
-    const spawnBurst = (x: number, y: number, count: number) => {
-      for (let i = 0; i < count; i++) {
-        const ang = Math.random() * Math.PI * 2;
-        const sp = 2.5 + Math.random() * 4.8;
-        parts.push({ x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 0.6, r: 1.2 + Math.random() * 2.4, life: 0, max: 44 + Math.random() * 30, a: 0.95 });
-      }
-    };
-
-    if (!startedRef.current) {
-      startedRef.current = true;
-      // 3 bursts
-      for (let b = 0; b < 3; b++) {
-        const bx = window.innerWidth * (0.25 + Math.random() * 0.5);
-        const by = window.innerHeight * (0.26 + Math.random() * 0.38);
-        spawnBurst(bx, by, 85);
+function buildGuestParams(): string {
+  try {
+    const raw = localStorage.getItem(GUEST_PROFILE_KEY);
+    if (!raw) return "";
+    const profile: GuestProfile = JSON.parse(raw);
+    if (!profile.liked || profile.liked.length === 0) return "";
+    const seeds = profile.liked.slice(0, 5).map((l) => `${l.tmdb_id}:${l.type}`).join(",");
+    const genreCount: Record<number, number> = {};
+    for (const l of profile.liked) {
+      for (const gid of l.genre_ids) {
+        genreCount[gid] = (genreCount[gid] || 0) + 1;
       }
     }
-
-    const step = () => {
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      ctx.fillStyle = "rgba(0,0,0,0.18)";
-      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-
-      for (let i = parts.length - 1; i >= 0; i--) {
-        const p = parts[i];
-        p.life += 1;
-        p.vy += 0.08;
-        p.x += p.vx;
-        p.y += p.vy;
-        const k = 1 - p.life / p.max;
-        const alpha = clamp(p.a * k, 0, 1);
-
-        ctx.beginPath();
-        ctx.fillStyle = mkColor(alpha);
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.strokeStyle = mkColor(alpha * 0.6);
-        ctx.lineWidth = 1;
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x - p.vx * 1.8, p.y - p.vy * 1.8);
-        ctx.stroke();
-
-        if (p.life >= p.max) parts.splice(i, 1);
-      }
-
-      const elapsed = performance.now() - t0;
-      if (parts.length === 0 || elapsed > 1900) {
-        if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        window.removeEventListener("resize", resize);
-        onDone();
-        return;
-      }
-
-      rafRef.current = requestAnimationFrame(step);
-    };
-
-    rafRef.current = requestAnimationFrame(step);
-
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      window.removeEventListener("resize", resize);
-    };
-  }, [color, onDone]);
-
-  return <canvas ref={canvasRef} className="fixed inset-0 z-[80] pointer-events-none" aria-hidden="true" />;
+    const genres = Object.entries(genreCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([id]) => id)
+      .join(",");
+    const params = new URLSearchParams();
+    params.set("seed_liked", seeds);
+    if (genres) params.set("liked_genres", genres);
+    return params.toString();
+  } catch {
+    return "";
+  }
 }
 
-/* ── input mode detection ──────────────────────────────── */
+/* ── input mode detection ─────────────────────────────── */
 
 function useInputMode() {
   const [isTouch, setIsTouch] = useState(false);
-
   useEffect(() => {
-    const coarse = typeof window !== "undefined" && typeof window.matchMedia !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
-    const hasTouch = typeof navigator !== "undefined" && ((navigator as any).maxTouchPoints ?? 0) > 0;
-
-    setIsTouch(Boolean(coarse || hasTouch));
-
-    const onResize = () => {
-      const coarseNow = window.matchMedia("(pointer: coarse)").matches;
-      setIsTouch(Boolean(coarseNow || ((navigator as any).maxTouchPoints ?? 0) > 0));
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const check = () => setIsTouch(Boolean(window.matchMedia("(pointer: coarse)").matches || ((navigator as any).maxTouchPoints ?? 0) > 0));
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
-
   return { isTouch };
 }
 
-/* ── page component ────────────────────────────────────── */
+/* ── page component ─────────────────────────────────────── */
 
 export default function WTBetaPage() {
   const [titles, setTitles] = useState<WTTitle[]>([]);
-  const [titlesLoading, setTitlesLoading] = useState(true);
+  const [titlesLoading, setTitlesLoading] = useState(false);
   const [screen, setScreen] = useState<Screen>("intro");
-  const [profile, setProfile] = useState<TasteProfile>({ liked: [], meh: [], disliked: [] });
-  const [partner, setPartner] = useState<TasteProfile | null>(null);
-  const [timer, setTimer] = useState(180);
+  const [timer, setTimer] = useState(ROUND1_DURATION);
   const [timerRunning, setTimerRunning] = useState(false);
-  const [recs, setRecs] = useState<WTTitle[]>([]);
-  const [excluded, setExcluded] = useState<number[]>([]);
-  const [chosen, setChosen] = useState<WTTitle | null>(null);
-  const [undoInfo, setUndoInfo] = useState<{ msg: string; fn: () => void } | null>(null);
+
+  const [deck, setDeck] = useState<WTTitle[]>([]);
+  const [deckIndex, setDeckIndex] = useState(0);
+  const [deckExtending, setDeckExtending] = useState(false);
+
+  const [chosen, setChosen] = useState<WTTitle | null>(null); // paired polling compat
   const [mounted, setMounted] = useState(false);
-  const [lowData, setLowData] = useState(false);
-  const [matchOverlay, setMatchOverlay] = useState<{ title: WTTitle; color: string } | null>(null);
-  const [microToast, setMicroToast] = useState<string | null>(null);
-
-  // mood state
-  const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
-  const [moodIntent, setMoodIntent] = useState<"solo" | "paired">("solo");
+  const [ribbonPosters, setRibbonPosters] = useState<string[]>([]);
+  const [preferenceMode, setPreferenceMode] = useState<"series" | "movies" | "mix">("series");
+  const [selectedProviders, setSelectedProviders] = useState<number[]>([]);
+  const [userRegion, setUserRegion] = useState("US");
+  const [matchRevealPhase, setMatchRevealPhase] = useState<0 | 1 | 2>(0);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [introFading, setIntroFading] = useState(false);
+  const [ritualState, setRitualState] = useState<RitualState>("idle");
+  const [ritualPhase, setRitualPhase] = useState<0 | 1 | 2>(0);
+  const [returnedToday, setReturnedToday] = useState(false);
+  const ritualTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  // paired mode state
   const [mode, setMode] = useState<Mode>("solo");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionCode, setSessionCode] = useState("");
@@ -355,173 +244,270 @@ export default function WTBetaPage() {
   const [partnerSwipeCount, setPartnerSwipeCount] = useState(0);
   const [sessionError, setSessionError] = useState("");
 
-  const undoTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const microTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // Round engine
+  const [roundPhase, setRoundPhase] = useState<RoundPhase>("swiping");
+  const [round, setRound] = useState<1 | 2>(1);
+  const [roundMatches, setRoundMatches] = useState<RoundMatch[]>([]);
+  const [compromiseTitle, setCompromiseTitle] = useState<WTTitle | null>(null);
+  const [finalWinner, setFinalWinner] = useState<WTTitle | null>(null);
+  const [superLikeUsed, setSuperLikeUsed] = useState(false);
 
-  // swipe state
+  const superLikedIdRef = useRef<number | null>(null);
+  const cardStartTime = useRef<number>(0);
+  const swipeTimings = useRef<Record<number, number>>({});
+  const sessionSwipes = useRef<Record<number, SwipeAction>>({});
+  const roundEndingRef = useRef(false);
+  const deckRef = useRef<WTTitle[]>([]);
+  deckRef.current = deck;
+  const extendingRef = useRef(false);
+  const partnerRef = useRef<{ liked: number[] } | null>(null);
+
   const [swipe, setSwipe] = useState<{ x: number; y: number; rot: number; dragging: boolean }>({ x: 0, y: 0, rot: 0, dragging: false });
-  const [fly, setFly] = useState<{ active: boolean; x: number; y: number; rot: number }>({ active: false, x: 0, y: 0, rot: 0 });
+  const [fly, setFly] = useState<{ active: boolean; x: number; rot: number }>({ active: false, x: 0, rot: 0 });
   const ptr = useRef<{ id: number | null; sx: number; sy: number; target: HTMLElement | null }>({ id: null, sx: 0, sy: 0, target: null });
 
   const { isTouch } = useInputMode();
   const isDesktop = mounted && !isTouch;
+  const router = useRouter();
 
-  /* ── load localStorage on mount (titles fetched after mood selection) ── */
+  /* ── mount ── */
   useEffect(() => {
     setMounted(true);
-    setTitlesLoading(false); // no auto-fetch; intro shows immediately
     try {
-      const p = localStorage.getItem(PROFILE_CACHE_KEY);
-      if (p) setProfile(JSON.parse(p));
-      const pp = localStorage.getItem(PARTNER_CACHE_KEY);
-      if (pp) setPartner(JSON.parse(pp));
-    } catch {
-      /* empty */
-    }
+      const saved = localStorage.getItem("ss_pref_mode");
+      if (saved === "series" || saved === "movies" || saved === "mix") {
+        setPreferenceMode(saved as "series" | "movies" | "mix");
+      }
+      const today = new Date().toISOString().slice(0, 10);
+      if (localStorage.getItem("ss_last_play_date") === today) {
+        setReturnedToday(true);
+      }
+    } catch { /* ignore */ }
   }, []);
 
-  /* ── fetch titles with mood ── */
-  async function fetchTitlesForMood(mood: Mood) {
-    setTitlesLoading(true);
-    try {
-      const res = await fetch(`/api/wt-beta/titles?mood=${mood}`);
-      const data = await res.json();
-      const t: WTTitle[] = data.titles || [];
-      setTitles(t);
-      if (t.length > 0) {
-        localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify(t));
-      }
-      return t;
-    } catch {
-      return [];
-    } finally {
-      setTitlesLoading(false);
-    }
-  }
+  /* ── ritual timer cleanup ── */
+  useEffect(() => {
+    return () => { ritualTimers.current.forEach(clearTimeout); };
+  }, []);
 
-  /* ── countdown timer ── */
+  /* ── ribbon: fetch trending posters (TV 70 % / Movie 30 %) + capture region ── */
+  useEffect(() => {
+    fetch("/api/wt-beta/ribbon")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.region) setUserRegion(data.region as string);
+        if (Array.isArray(data.posters) && data.posters.length > 0) {
+          setRibbonPosters(data.posters as string[]);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  /* ── countdown ── */
   useEffect(() => {
     if (!timerRunning || timer <= 0) return;
     const id = setInterval(() => {
-      setTimer((t) => {
-        if (t <= 1) {
-          setTimerRunning(false);
-          return 0;
-        }
-        return t - 1;
-      });
+      setTimer((t) => { if (t <= 1) { setTimerRunning(false); return 0; } return t - 1; });
     }, 1000);
     return () => clearInterval(id);
   }, [timerRunning, timer]);
 
-  /* ── memo profile progress ── */
-  const ratedIds = useMemo(() => new Set([...profile.liked, ...profile.meh, ...profile.disliked]), [profile.liked, profile.meh, profile.disliked]);
-  const profileComplete = titles.length > 0 && ratedIds.size >= titles.length;
-  const currentTitle = useMemo(() => titles.find((t) => !ratedIds.has(t.tmdb_id)), [ratedIds, titles]);
-  const progress = ratedIds.size;
-
-  /* ── auto-transition when onboarding completes ── */
+  /* ── card timing ── */
   useEffect(() => {
-    if (screen === "onboarding" && profileComplete) goTogether(profile);
+    if (screen === "together" && roundPhase === "swiping") {
+      cardStartTime.current = Date.now();
+    }
+  }, [deckIndex, screen, roundPhase]);
+
+  /* ── auto-extend deck (solo) ── */
+  useEffect(() => {
+    if (mode !== "solo") return;
+    if (deck.length < 4 || deckIndex < deck.length - 3) return;
+    if (extendingRef.current) return;
+    extendingRef.current = true;
+    setDeckExtending(true);
+    const seenIds = new Set(deckRef.current.map((t) => t.tmdb_id));
+    const extendParams = new URLSearchParams(buildGuestParams() || "");
+    extendParams.set("preference", preferenceMode);
+    fetch(`/api/wt-beta/titles?${extendParams}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const fresh: WTTitle[] = (Array.isArray(data.titles) ? data.titles : []).filter((t: WTTitle) => !seenIds.has(t.tmdb_id));
+        if (fresh.length > 0) setDeck((d) => [...d, ...fresh]);
+        else {
+          const cached = readTitlesCache().filter((t) => !seenIds.has(t.tmdb_id));
+          if (cached.length > 0) setDeck((d) => [...d, ...cached]);
+        }
+      })
+      .catch(() => {
+        const cached = readTitlesCache().filter((t) => !seenIds.has(t.tmdb_id));
+        if (cached.length > 0) setDeck((d) => [...d, ...cached]);
+      })
+      .finally(() => { extendingRef.current = false; setDeckExtending(false); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, profileComplete]);
+  }, [deckIndex, deck.length, mode]);
 
-  /* ── undo helpers ── */
-  const showUndo = useCallback((msg: string, fn: () => void) => {
-    if (undoTimer.current) clearTimeout(undoTimer.current);
-    setUndoInfo({ msg, fn });
-    undoTimer.current = setTimeout(() => setUndoInfo(null), 3000);
-  }, []);
+  /* ── round engine ─────────────────────────────────────── */
 
-  function doUndo() {
-    if (!undoInfo) return;
-    undoInfo.fn();
-    setUndoInfo(null);
-    if (undoTimer.current) clearTimeout(undoTimer.current);
+  async function endRound(r: 1 | 2) {
+    if (roundEndingRef.current) return;
+    roundEndingRef.current = true;
+    setTimerRunning(false);
+
+    let myLikedIds: number[] = [];
+    let theirLikedIds: number[] = [];
+
+    if (mode === "solo") {
+      myLikedIds = Object.entries(sessionSwipes.current)
+        .filter(([, a]) => a === "like")
+        .map(([id]) => Number(id));
+      theirLikedIds = partnerRef.current?.liked ?? [];
+    } else {
+      try {
+        const res = await fetch(`/api/wt-beta/session?id=${sessionId}`);
+        const data = await res.json();
+        if (data.session) {
+          const mySw = (data.session.my_swipes ?? {}) as Record<string, string>;
+          const theirSw = (data.session.partner_swipes ?? {}) as Record<string, string>;
+          myLikedIds = Object.entries(mySw).filter(([, a]) => a === "like" || a === "superlike").map(([k]) => Number(k.split(":")[0]));
+          theirLikedIds = Object.entries(theirSw).filter(([, a]) => a === "like" || a === "superlike").map(([k]) => Number(k.split(":")[0]));
+        }
+      } catch { /* fall through */ }
+    }
+
+    const d = deckRef.current;
+    const mutualIds = myLikedIds.filter((id) => theirLikedIds.includes(id));
+
+    if (r === 1) {
+      if (mutualIds.length > 0) {
+        const matches: RoundMatch[] = mutualIds
+          .map((id) => { const title = d.find((t) => t.tmdb_id === id); return title ? { title, decisionTime: swipeTimings.current[id] ?? Infinity } : null; })
+          .filter((m): m is RoundMatch => m !== null)
+          .sort((a, b) => a.decisionTime - b.decisionTime)
+          .slice(0, 3);
+        setRoundMatches(matches);
+        setRoundPhase("results");
+      } else {
+        const sortedMine = [...myLikedIds].sort((a, b) => (swipeTimings.current[a] ?? Infinity) - (swipeTimings.current[b] ?? Infinity));
+        const cid = sortedMine[0] ?? theirLikedIds[0] ?? null;
+        setCompromiseTitle(cid != null ? d.find((t) => t.tmdb_id === cid) ?? null : null);
+        setRoundPhase("no-match");
+      }
+    } else {
+      const candidates = mutualIds.length > 0 ? mutualIds : myLikedIds.length > 0 ? myLikedIds : theirLikedIds;
+      const sorted = [...candidates].sort((a, b) => (swipeTimings.current[a] ?? Infinity) - (swipeTimings.current[b] ?? Infinity));
+      const wid = sorted[0] ?? d[0]?.tmdb_id;
+      setFinalWinner(wid != null ? d.find((t) => t.tmdb_id === wid) ?? d[0] ?? null : d[0] ?? null);
+      setRoundPhase("winner");
+    }
   }
 
-  function showMicro(msg: string) {
-    if (microTimer.current) clearTimeout(microTimer.current);
-    setMicroToast(msg);
-    microTimer.current = setTimeout(() => setMicroToast(null), 900);
+  function startFinalRound() {
+    roundEndingRef.current = false;
+    setRound(2);
+    setRoundPhase("swiping");
+    setTimer(ROUND2_DURATION);
+    setTimerRunning(true);
+    setSuperLikeUsed(false);
+    superLikedIdRef.current = null;
   }
 
-  /* ── rate a title in onboarding ── */
-  function rate(rating: Rating) {
-    if (!currentTitle) return;
-    const next: TasteProfile = { ...profile, [rating]: [...profile[rating], currentTitle.tmdb_id] };
-    setProfile(next);
-    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(next));
+  /* ── timer = 0 → end round ── */
+  useEffect(() => {
+    if (timer !== 0 || screen !== "together" || roundPhase !== "swiping" || !!chosen) return;
+    endRound(round as 1 | 2);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timer]);
 
-    // Persist to Supabase (fire-and-forget)
-    const sentimentMap: Record<Rating, string> = { liked: "liked", meh: "neutral", disliked: "disliked" };
-    logTitle({
-      tmdb_id: currentTitle.tmdb_id,
-      type: currentTitle.type,
-      status: "watched",
-      sentiment: sentimentMap[rating],
-    }).catch(() => {/* auth may not be available */});
+  /* ── deckIndex passes limit → end round ── */
+  useEffect(() => {
+    if (screen !== "together" || roundPhase !== "swiping" || !!chosen) return;
+    if (round === 1 && deckIndex >= ROUND1_LIMIT) endRound(1);
+    if (round === 2 && deckIndex >= ROUND1_LIMIT + ROUND2_LIMIT) endRound(2);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deckIndex]);
 
-    const totalRated = next.liked.length + next.meh.length + next.disliked.length;
-    if (totalRated >= titles.length) goTogether(next);
-  }
+  /* ── match moment reveal sequence ── */
+  useEffect(() => {
+    if (roundPhase !== "winner") { setMatchRevealPhase(0); return; }
+    const t1 = window.setTimeout(() => setMatchRevealPhase(1), 400);
+    const t2 = window.setTimeout(() => setMatchRevealPhase(2), 1200);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [roundPhase]);
 
   /* ── enter together mode ── */
-  function ensurePartner(): TasteProfile {
-    let part = partner;
-    if (!part) {
-      part = generateMockPartner(titles);
-      setPartner(part);
-      try {
-        localStorage.setItem(PARTNER_CACHE_KEY, JSON.stringify(part));
-      } catch {
-        /* ignore */
+  async function goTogether() {
+    setTitlesLoading(true);
+    let ts: WTTitle[] = [];
+    try {
+      const params = new URLSearchParams();
+      const gp = buildGuestParams();
+      if (gp) {
+        for (const [k, v] of new URLSearchParams(gp).entries()) params.set(k, v);
       }
-    }
-    return part!;
-  }
-
-  function goTogether(p?: TasteProfile) {
-    const prof = p || profile;
-    const part = ensurePartner();
-    const totalRated = prof.liked.length + prof.meh.length + prof.disliked.length;
-    setLowData(totalRated === 0);
-
-    setRecs(computeRecs(titles, prof, part, excluded));
+      if (selectedProviders.length > 0) {
+        params.set("providers", selectedProviders.join(","));
+        params.set("region", userRegion);
+      }
+      params.set("preference", preferenceMode);
+      const url = `/api/wt-beta/titles?${params}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        ts = Array.isArray(data.titles) ? data.titles : [];
+        if (ts.length > 0) {
+          try { localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify({ titles: ts, mood: "", ts: Date.now() })); } catch { /* storage full */ }
+        }
+      }
+    } catch { /* ignore */ }
+    if (ts.length === 0) ts = readTitlesCache();
+    setTitlesLoading(false);
+    if (ts.length === 0) return;
+    partnerRef.current = generateMockPartner(ts);
+    setTitles(ts);
+    setDeck([...ts]);
+    setDeckIndex(0);
     setScreen("together");
-    setTimer(180);
+    try { localStorage.setItem("ss_last_play_date", new Date().toISOString().slice(0, 10)); } catch { /* ignore */ }
+    setTimer(ROUND1_DURATION);
     setTimerRunning(true);
     setChosen(null);
-    setMatchOverlay(null);
-
+    setSuperLikeUsed(false);
+    superLikedIdRef.current = null;
+    swipeTimings.current = {};
+    sessionSwipes.current = {};
+    roundEndingRef.current = false;
+    setRound(1);
+    setRoundPhase("swiping");
+    setRoundMatches([]);
+    setCompromiseTitle(null);
+    setFinalWinner(null);
     setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
-    setFly({ active: false, x: 0, y: 0, rot: 0 });
+    setFly({ active: false, x: 0, rot: 0 });
   }
 
-  /* ── reset everything ── */
+  /* ── reset ── */
   function reset() {
-    localStorage.removeItem(PROFILE_CACHE_KEY);
-    localStorage.removeItem(PARTNER_CACHE_KEY);
-    localStorage.removeItem(TITLES_CACHE_KEY);
-    setProfile({ liked: [], meh: [], disliked: [] });
-    setPartner(null);
-    setExcluded([]);
-    setChosen(null);
-    setTimer(180);
-    setTimerRunning(false);
-    setRecs([]);
-    setUndoInfo(null);
-    setLowData(false);
     setScreen("intro");
-    setMatchOverlay(null);
-    setMicroToast(null);
-    setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
-    setFly({ active: false, x: 0, y: 0, rot: 0 });
-
-    // Clear mood + paired state
-    setSelectedMood(null);
-    setMoodIntent("solo");
-    setAdvancedOpen(false);
+    setTitles([]);
+    setDeck([]);
+    setDeckIndex(0);
+    setDeckExtending(false);
+    extendingRef.current = false;
+    setChosen(null);
+    setTimer(ROUND1_DURATION);
+    setTimerRunning(false);
+    setSuperLikeUsed(false);
+    superLikedIdRef.current = null;
+    swipeTimings.current = {};
+    sessionSwipes.current = {};
+    roundEndingRef.current = false;
+    setRound(1);
+    setRoundPhase("swiping");
+    setRoundMatches([]);
+    setCompromiseTitle(null);
+    setFinalWinner(null);
+    setMatchRevealPhase(0);
     setMode("solo");
     setSessionId(null);
     setSessionCode("");
@@ -529,325 +515,132 @@ export default function WTBetaPage() {
     setPartnerJoined(false);
     setPartnerSwipeCount(0);
     setSessionError("");
+    partnerRef.current = null;
+    setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
+    setFly({ active: false, x: 0, rot: 0 });
   }
 
-  /* ── commit choice ───────────────────────────────────── */
+  /* ── ritual start sequence ── */
+  function startRitual(onComplete: () => void) {
+    if (ritualState !== "idle") return;
+    ritualTimers.current.forEach(clearTimeout);
+    ritualTimers.current = [];
+    setRitualState("arming");
+    setRitualPhase(0);
+    const t1 = setTimeout(() => setRitualState("countdown"), 250);
+    const t2 = setTimeout(() => setRitualPhase(1), 650);
+    const t3 = setTimeout(() => setRitualPhase(2), 950);
+    const t4 = setTimeout(() => setRitualState("done"), 1250);
+    const t5 = setTimeout(() => {
+      setRitualState("idle");
+      setRitualPhase(0);
+      onComplete();
+    }, 1550);
+    ritualTimers.current = [t1, t2, t3, t4, t5];
+  }
+
+  /* ── commit choice ── */
   function commitChoice(t: WTTitle, action: SwipeAction) {
-    // Paired mode: submit to server, advance card, no local match detection
+    if (!(t.tmdb_id in swipeTimings.current)) {
+      swipeTimings.current[t.tmdb_id] = Date.now() - cardStartTime.current;
+    }
+    sessionSwipes.current[t.tmdb_id] = action;
     if (mode === "paired") {
       submitPairedSwipe(t, action);
-      setRecs((r) => r.slice(1));
-      if (action === "like") {
-        logTitle({ tmdb_id: t.tmdb_id, type: t.type, status: "watched", sentiment: "liked" }).catch(() => {});
-      }
+      setDeckIndex((i) => i + 1);
+      if (action === "like") logTitle({ tmdb_id: t.tmdb_id, type: t.type, status: "watched", sentiment: "liked" }).catch(() => {});
       return;
     }
-
-    // Solo mode: local match detection with mock partner
-    const prevRecs = [...recs];
-    const prevExcluded = [...excluded];
-    const prevTimerRunning = timerRunning;
-    const prevTimer = timer;
-    const part = ensurePartner();
-
     if (action === "like") {
-      const isMatch = part.liked.includes(t.tmdb_id);
-
-      if (isMatch) {
-        setChosen(t);
-        setTimerRunning(false);
-        setMatchOverlay({ title: t, color: getGenreColor(t.genre_ids) });
-
-        logTitle({ tmdb_id: t.tmdb_id, type: t.type, status: "watchlist" }).catch(() => {});
-
-        try {
-          if (typeof navigator !== "undefined" && "vibrate" in navigator) (navigator as any).vibrate?.(35);
-        } catch { /* ignore */ }
-
-        showUndo(`MATCH «${t.title}»`, () => {
-          setChosen(null);
-          setRecs(prevRecs);
-          setExcluded(prevExcluded);
-          setMatchOverlay(null);
-          setTimer(prevTimer);
-          setTimerRunning(prevTimerRunning && prevTimer > 0);
-        });
-        return;
-      }
-
       logTitle({ tmdb_id: t.tmdb_id, type: t.type, status: "watched", sentiment: "liked" }).catch(() => {});
-
-      showMicro("Ikke match… fortsett 🫱");
-      setExcluded((e) => [...e, t.tmdb_id]);
-      setRecs((r) => r.slice(1));
-      showUndo(`Du likte «${t.title}» (ikke match)`, () => {
-        setExcluded(prevExcluded);
-        setRecs(prevRecs);
-      });
-      return;
+      saveGuestLike(t);
     }
-
-    setExcluded((e) => [...e, t.tmdb_id]);
-    setRecs((r) => r.slice(1));
-    showUndo(action === "nope" ? `Fjernet «${t.title}»` : `Meh på «${t.title}»`, () => {
-      setExcluded(prevExcluded);
-      setRecs(prevRecs);
-    });
+    setDeckIndex((i) => i + 1);
   }
 
-  function nyeForslag() {
-    const prevRecs = [...recs];
-    const prevExcl = [...excluded];
-    const part = ensurePartner();
-    const newExcl = [...excluded, ...recs.map((r) => r.tmdb_id)];
-    setExcluded(newExcl);
-    setRecs(computeRecs(titles, profile, part, newExcl));
-    showUndo("Nye forslag lastet", () => {
-      setExcluded(prevExcl);
-      setRecs(prevRecs);
-    });
-
-    setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
-    setFly({ active: false, x: 0, y: 0, rot: 0 });
-  }
-
-  /* ── paired mode: create session ── */
-  async function createSession(mood?: Mood) {
-    setSessionError("");
-    setTitlesLoading(true);
-    try {
-      const res = await fetch("/api/wt-beta/session", {
+  /* ── super-like (1 per round) ── */
+  function handleSuperLike() {
+    if (superLikeUsed) return;
+    const t = deck[deckIndex];
+    if (!t) return;
+    setSuperLikeUsed(true);
+    superLikedIdRef.current = t.tmdb_id;
+    swipeTimings.current[t.tmdb_id] = Date.now() - cardStartTime.current;
+    sessionSwipes.current[t.tmdb_id] = "like";
+    if (mode === "solo") {
+      saveGuestLike(t);
+      setFinalWinner(t);
+      setTimerRunning(false);
+      setRoundPhase("winner");
+      logTitle({ tmdb_id: t.tmdb_id, type: t.type, status: "watchlist" }).catch(() => {});
+    } else {
+      fetch("/api/wt-beta/session/swipe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mood }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setSessionId(data.session.id);
-      setSessionCode(data.session.code);
-      setTitles(data.session.titles);
-      localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify(data.session.titles));
-      setMode("paired");
-      setScreen("waiting");
-    } catch (e: unknown) {
-      setSessionError(e instanceof Error ? e.message : "Kunne ikke opprette runde");
-    }
-    setTitlesLoading(false);
-  }
-
-  /* ── paired mode: join session ── */
-  async function joinSession() {
-    if (!joinCode.trim()) return;
-    setSessionError("");
-    setTitlesLoading(true);
-    try {
-      const res = await fetch("/api/wt-beta/session/join", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: joinCode.trim() }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setSessionId(data.session.id);
-      setTitles(data.session.titles);
-      localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify(data.session.titles));
-      setMode("paired");
-      // Guest goes straight to swiping
-      setRecs([...data.session.titles]);
-      setScreen("together");
-      setTimer(180);
-      setTimerRunning(true);
-      setChosen(null);
-      setMatchOverlay(null);
-    } catch (e: unknown) {
-      setSessionError(e instanceof Error ? e.message : "Kunne ikke bli med");
-    }
-    setTitlesLoading(false);
-  }
-
-  /* ── paired mode: poll for partner state ── */
-  useEffect(() => {
-    if (mode !== "paired" || !sessionId) return;
-    if (chosen) return; // stop polling after match
-
-    const poll = async () => {
-      try {
-        const res = await fetch(`/api/wt-beta/session?id=${sessionId}`);
-        const data = await res.json();
-        if (!data.session) return;
-
-        // Partner joined?
-        if (!partnerJoined && data.session.partner_joined) {
-          setPartnerJoined(true);
-          // Host: start the game
-          if (screen === "waiting") {
-            setRecs([...titles]);
-            setScreen("together");
-            setTimer(180);
-            setTimerRunning(true);
-          }
-        }
-
-        // Update partner swipe count
-        const pSwipes = data.session.partner_swipes || {};
-        setPartnerSwipeCount(Object.keys(pSwipes).length);
-
-        // Match detected server-side?
-        if (data.session.match_tmdb_id && !chosen) {
-          const matchTitle = titles.find(
-            (t) => t.tmdb_id === data.session.match_tmdb_id
-          );
-          if (matchTitle) {
-            setChosen(matchTitle);
-            setTimerRunning(false);
-            setMatchOverlay({ title: matchTitle, color: getGenreColor(matchTitle.genre_ids) });
-          }
-        }
-      } catch {
-        /* polling error, retry next interval */
-      }
-    };
-
-    const interval = setInterval(poll, 2000);
-    poll(); // immediate first poll
-    return () => clearInterval(interval);
-  }, [mode, sessionId, partnerJoined, screen, titles, chosen]);
-
-  /* ── paired mode: submit swipe to server ── */
-  function submitPairedSwipe(t: WTTitle, action: SwipeAction) {
-    if (!sessionId) return;
-    fetch("/api/wt-beta/session/swipe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        session_id: sessionId,
-        tmdb_id: t.tmdb_id,
-        type: t.type,
-        action,
-      }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        // Instant match detection from swipe response
-        if (data.match && !chosen) {
-          const matchTitle = titles.find(
-            (mt) => mt.tmdb_id === data.match.tmdb_id
-          );
-          if (matchTitle) {
-            setChosen(matchTitle);
-            setTimerRunning(false);
-            setMatchOverlay({ title: matchTitle, color: getGenreColor(matchTitle.genre_ids) });
-            try {
-              if (typeof navigator !== "undefined" && "vibrate" in navigator) (navigator as any).vibrate?.(35);
-            } catch { /* ignore */ }
-          }
-        }
+        body: JSON.stringify({ session_id: sessionId, tmdb_id: t.tmdb_id, type: t.type, action: "superlike" }),
       })
-      .catch(() => {});
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.doubleSuperMatch) {
+            const mt = titles.find((x) => x.tmdb_id === data.doubleSuperMatch.tmdb_id);
+            if (mt) { setFinalWinner(mt); setRoundPhase("double-super"); setTimerRunning(false); }
+          }
+        })
+        .catch(() => {});
+      setDeckIndex((i) => i + 1);
+    }
   }
 
-  /* ── desktop keyboard controls ───────────────────────── */
+  /* ── keyboard (desktop) ── */
   useEffect(() => {
-    if (!mounted) return;
-    if (screen !== "together") return;
-    if (chosen) return;
-    if (!isDesktop) return;
-    if (matchOverlay) return;
-
+    if (!mounted || screen !== "together" || roundPhase !== "swiping" || chosen || !isDesktop) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
-      const top = recs[0];
+      const top = deckRef.current[deckIndex];
       if (!top) return;
-
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        commitChoice(top, "nope");
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        commitChoice(top, "like");
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        commitChoice(top, "meh");
-      } else if (e.key.toLowerCase() === "r") {
-        e.preventDefault();
-        nyeForslag();
-      }
+      if (e.key === "ArrowLeft") { e.preventDefault(); commitChoice(top, "nope"); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); commitChoice(top, "like"); }
     };
-
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [mounted, screen, chosen, isDesktop, matchOverlay, recs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, screen, roundPhase, chosen, isDesktop, deckIndex]);
 
-  /* ── swipe handlers (MOBILE ONLY) ────────────────────── */
+  /* ── pointer handlers ── */
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    if (screen !== "together") return;
-    if (chosen) return;
-    if (!recs[0]) return;
-    if (fly.active) return;
-    if (isDesktop) return; // desktop: no swipe
-
-    ptr.current.id = e.pointerId;
-    ptr.current.sx = e.clientX;
-    ptr.current.sy = e.clientY;
-    ptr.current.target = e.currentTarget;
-
+    if (screen !== "together" || roundPhase !== "swiping" || chosen || !deck[deckIndex] || fly.active || isDesktop) return;
+    ptr.current = { id: e.pointerId, sx: e.clientX, sy: e.clientY, target: e.currentTarget };
     e.currentTarget.setPointerCapture(e.pointerId);
     setSwipe({ x: 0, y: 0, rot: 0, dragging: true });
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (ptr.current.id !== e.pointerId) return;
-    if (!swipe.dragging) return;
-
+    if (ptr.current.id !== e.pointerId || !swipe.dragging) return;
     const dx = e.clientX - ptr.current.sx;
-    const dy = e.clientY - ptr.current.sy;
-    const rot = clamp(dx / 18, -14, 14);
-    setSwipe({ x: dx, y: dy, rot, dragging: true });
+    setSwipe({ x: dx, y: 0, rot: clamp(dx / 18, -14, 14), dragging: true });
   }
 
   function endSwipe(action?: SwipeAction) {
-    const top = recs[0];
+    const top = deck[deckIndex];
     if (!top) return;
-
-    const dx = swipe.x;
-    const dy = swipe.y;
-
-    const likeThreshold = 120;
-    const nopeThreshold = -120;
-    const mehThreshold = 120;
-
     let decided: SwipeAction | null = action || null;
     if (!decided) {
-      if (dx > likeThreshold) decided = "like";
-      else if (dx < nopeThreshold) decided = "nope";
-      else if (dy > mehThreshold && Math.abs(dx) < 140) decided = "meh";
+      if (swipe.x > 100) decided = "like";
+      else if (swipe.x < -100) decided = "nope";
     }
-
-    if (!decided) {
-      setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
-      return;
-    }
-
-    const outX = decided === "like" ? window.innerWidth * 0.9 : decided === "nope" ? -window.innerWidth * 0.9 : dx * 0.25;
-    const outY = decided === "meh" ? window.innerHeight * 0.8 : dy * 0.2;
-    const outRot = decided === "like" ? 18 : decided === "nope" ? -18 : swipe.rot * 0.5;
-
-    setFly({ active: true, x: outX, y: outY, rot: outRot });
-
+    if (!decided) { setSwipe({ x: 0, y: 0, rot: 0, dragging: false }); return; }
+    const outX = decided === "like" ? window.innerWidth * 1.1 : -window.innerWidth * 1.1;
+    setFly({ active: true, x: outX, rot: decided === "like" ? 20 : -20 });
     window.setTimeout(() => {
-      setFly({ active: false, x: 0, y: 0, rot: 0 });
+      setFly({ active: false, x: 0, rot: 0 });
       setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
       commitChoice(top, decided!);
-    }, 160);
+    }, 200);
   }
 
   function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
     if (ptr.current.id !== e.pointerId) return;
-    try {
-      ptr.current.target?.releasePointerCapture(e.pointerId);
-    } catch {
-      /* ignore */
-    }
+    try { ptr.current.target?.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
     ptr.current.id = null;
     endSwipe();
   }
@@ -858,674 +651,945 @@ export default function WTBetaPage() {
     setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
   }
 
+  /* ── paired: create session ── */
+  async function createSession() {
+    setSessionError(""); setTitlesLoading(true);
+    try {
+      const res = await fetch("/api/wt-beta/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setSessionId(data.session.id);
+      setSessionCode(data.session.code);
+      setTitles(data.session.titles);
+      try { localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify({ titles: data.session.titles, mood: "", ts: Date.now() })); } catch { /* ignore */ }
+      setMode("paired"); setScreen("waiting");
+    } catch (e: unknown) {
+      setSessionError(e instanceof Error ? e.message : "Kunne ikke opprette runde");
+    }
+    setTitlesLoading(false);
+  }
+
+  /* ── paired: join session ── */
+  async function joinSession() {
+    if (!joinCode.trim()) return;
+    setSessionError(""); setTitlesLoading(true);
+    try {
+      const res = await fetch("/api/wt-beta/session/join", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: joinCode.trim() }) });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setSessionId(data.session.id);
+      setTitles(data.session.titles);
+      setDeck([...data.session.titles]);
+      setDeckIndex(0);
+      setMode("paired"); setScreen("together");
+      setTimer(ROUND1_DURATION); setTimerRunning(true);
+      setChosen(null);
+    } catch (e: unknown) {
+      setSessionError(e instanceof Error ? e.message : "Kunne ikke bli med");
+    }
+    setTitlesLoading(false);
+  }
+
+  /* ── paired: poll ── */
+  useEffect(() => {
+    if (mode !== "paired" || !sessionId) return;
+    if (chosen || roundPhase !== "swiping") return;
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/wt-beta/session?id=${sessionId}`);
+        const data = await res.json();
+        if (!data.session) return;
+        if (!partnerJoined && data.session.partner_joined) {
+          setPartnerJoined(true);
+          if (screen === "waiting") {
+            setDeck([...titles]); setDeckIndex(0);
+            setScreen("together"); setTimer(ROUND1_DURATION); setTimerRunning(true);
+          }
+        }
+        setPartnerSwipeCount(Object.keys(data.session.partner_swipes || {}).length);
+        if (superLikedIdRef.current) {
+          const myId = superLikedIdRef.current;
+          const myTitle = titles.find((t) => t.tmdb_id === myId);
+          if (myTitle) {
+            const key = `${myId}:${myTitle.type}`;
+            const partnerSw = (data.session.partner_swipes ?? {}) as Record<string, string>;
+            if (partnerSw[key] === "superlike") {
+              setFinalWinner(myTitle); setRoundPhase("double-super"); setTimerRunning(false); return;
+            }
+          }
+        }
+        if (data.session.match_tmdb_id && !chosen) {
+          const mt = titles.find((t) => t.tmdb_id === data.session.match_tmdb_id);
+          if (mt) { setChosen(mt); setFinalWinner(mt); setRoundPhase("winner"); setTimerRunning(false); }
+        }
+      } catch { /* retry */ }
+    };
+    const interval = setInterval(poll, 2000);
+    poll();
+    return () => clearInterval(interval);
+  }, [mode, sessionId, partnerJoined, screen, titles, chosen, roundPhase]);
+
+  /* ── paired: submit swipe ── */
+  function submitPairedSwipe(t: WTTitle, action: SwipeAction) {
+    if (!sessionId) return;
+    fetch("/api/wt-beta/session/swipe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId, tmdb_id: t.tmdb_id, type: t.type, action }),
+    }).catch(() => {});
+  }
+
   /* ── hydration guard ── */
   if (!mounted) return null;
 
-  const mm = String(Math.floor(timer / 60)).padStart(2, "0");
-  const ss = String(timer % 60).padStart(2, "0");
+  const top = deck[deckIndex] ?? null;
+  const deckExhausted = deck.length > 0 && deckIndex >= deck.length;
+  const maxTimer = round === 1 ? ROUND1_DURATION : ROUND2_DURATION;
+  const timerPct = Math.round((timer / maxTimer) * 100);
 
-  const top = recs[0] || null;
-  const next = recs[1] || null;
-
-  const bgColor = chosen ? getGenreColor(chosen.genre_ids) : top ? getGenreColor(top.genre_ids) : "#0a0a0f";
-  const glowLike = clamp((swipe.x - 20) / 180, 0, 1);
-  const glowNope = clamp((-swipe.x - 20) / 180, 0, 1);
-  const glowMeh = clamp((swipe.y - 40) / 220, 0, 1);
-
-  const hint = isDesktop ? "← → ↓  (R = shuffle)" : swipe.dragging ? "Slipp" : "Dra";
+  /* ── shared card styles ── */
+  const btnBase: React.CSSProperties = {
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.10)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+    cursor: "pointer",
+    flexShrink: 0,
+    transition: "transform 100ms",
+  };
 
   return (
-    <div className="min-h-dvh flex flex-col relative" style={{ background: `radial-gradient(circle at 25% 0%, ${bgColor}33, #0a0a0f 60%)` }}>
-      {/* vignette overlay (makes desktop look intentional) */}
+    <div className="min-h-dvh" style={{ background: "#0a0a0f" }}>
+      {/* Vignette overlay */}
       <div
         className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,.72) 55%, rgba(0,0,0,.92) 100%)",
-          backdropFilter: "blur(6px)",
-          WebkitBackdropFilter: "blur(6px)",
-          zIndex: 0,
-        }}
+        style={{ background: "radial-gradient(ellipse 90% 90% at 50% 50%, transparent 38%, rgba(0,0,0,0.72) 100%)", zIndex: 0 }}
       />
 
-      {/* content wrapper */}
       <div className="relative z-10 min-h-dvh flex flex-col">
-        {/* ── top bar ── */}
-        <div className="flex items-center justify-between px-4 py-3 shrink-0">
-          <Link href="/home" className="text-xs font-medium no-underline" style={{ color: "rgba(255,255,255,0.4)" }}>
-            &larr; Logflix
-          </Link>
 
-          {screen === "together" && !chosen && (
-            <div className="flex items-center gap-3">
-              {mode === "paired" && (
-                <span className="text-[11px] font-medium px-2 py-1 rounded-lg" style={{ background: "rgba(255,42,42,0.12)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,42,42,0.15)" }}>
-                  Partner: {partnerSwipeCount} swipes
-                </span>
-              )}
-              <span className="text-sm font-mono font-bold tabular-nums" style={{ color: timer <= 30 ? RED : "rgba(255,255,255,0.5)" }}>
-                {mm}:{ss}
-              </span>
-            </div>
-          )}
+        {/* ── INTRO ── */}
+        {screen === "intro" && (
+          <div
+            className="flex-1 flex flex-col"
+            style={{
+              position: "relative",
+              opacity: introFading ? 0.88 : 1,
+              filter: ritualState !== "idle" ? "blur(1px)" : "none",
+              transition: introFading ? "opacity 220ms ease-out" : ritualState !== "idle" ? "filter 250ms ease-out" : "opacity 0ms",
+            }}
+          >
 
-          <button onClick={reset} className="text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.25)" }}>
-            Reset
-          </button>
-        </div>
+            {/* ── Keyframes ── */}
+            <style dangerouslySetInnerHTML={{ __html: `
+              @keyframes atmo-drift {
+                0%   { transform: translate(0%,    0%); }
+                25%  { transform: translate(2.2%,  1.4%); }
+                55%  { transform: translate(-1.8%, 2.6%); }
+                80%  { transform: translate(1.5%,  -1.2%); }
+                100% { transform: translate(0%,    0%); }
+              }
+              .atmo-drift { animation: atmo-drift 38s linear infinite; }
+              @keyframes ribbon-scroll {
+                from { transform: translateX(0); }
+                to   { transform: translateX(-50%); }
+              }
+              .ribbon-track { animation: ribbon-scroll 40s linear infinite; }
+              .cta-btn { transition: filter 180ms ease, transform 140ms ease, opacity 150ms; }
+              .cta-btn:hover:not(:disabled) { filter: brightness(1.08); transform: scale(1.015); }
+              .cta-btn:active:not(:disabled) { filter: brightness(0.96); }
+            `}} />
 
-        <div className="flex-1 flex flex-col">
-          {/* INTRO */}
-          {screen === "intro" && (
-            <div className="flex-1 flex items-center justify-center px-6">
-              <div className="text-center max-w-sm w-full">
-                <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center" style={{ background: "rgba(255,42,42,0.1)", border: "1px solid rgba(255,42,42,0.15)" }}>
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke={RED}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
-                  </svg>
-                </div>
-
-                <h1 className="text-2xl font-bold text-white mb-2">Se sammen p&aring; 3 minutter</h1>
-                <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
-                  Finn noe &aring; se sammen. Swipe p&aring; mobil, piltaster p&aring; desktop. Match = begge liker.
-                </p>
-
-                <div className="flex flex-col gap-3">
-                  {/* Primary CTA: solo flow */}
-                  <button
-                    onClick={() => { setMoodIntent("solo"); setScreen("mood"); }}
-                    className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                    style={{ background: RED, minHeight: 48 }}
-                  >
-                    Start 3-min runde
-                  </button>
-
-                  {/* Avansert toggle */}
-                  <button
-                    onClick={() => setAdvancedOpen((v) => !v)}
-                    className="flex items-center justify-center gap-1.5 w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer transition-colors"
-                    style={{ color: "rgba(255,255,255,0.35)" }}
-                  >
-                    Avansert
-                    <svg
-                      className="w-3 h-3 transition-transform duration-200"
-                      style={{ transform: advancedOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-                      fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                    </svg>
-                  </button>
-
-                  {/* Avansert options (collapsible) */}
-                  {advancedOpen && (
-                    <div className="flex flex-col gap-2">
-                      {/* Paired mode: go to mood then create session */}
-                      <button
-                        onClick={() => { setMoodIntent("paired"); setScreen("mood"); }}
-                        className="w-full py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
-                        style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.12)", minHeight: 44 }}
-                      >
-                        Spill p&aring; hver deres telefon
-                      </button>
-
-                      {/* Paired mode: join session */}
-                      <button
-                        onClick={() => setScreen("join")}
-                        className="w-full py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
-                        style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.06)", minHeight: 44 }}
-                      >
-                        Bli med i runde
-                      </button>
-                    </div>
-                  )}
-
-                  {sessionError && (
-                    <p className="text-xs mt-1 text-center" style={{ color: "#f87171" }}>{sessionError}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* MOOD SELECTOR */}
-          {screen === "mood" && (
-            <div className="flex-1 flex items-center justify-center px-6">
-              <div className="text-center max-w-sm w-full">
-                <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center" style={{ background: "rgba(255,42,42,0.1)", border: "1px solid rgba(255,42,42,0.15)" }}>
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke={RED}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.047 8.287 8.287 0 009 9.601a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.468 5.99 5.99 0 00-1.925 3.547 5.975 5.975 0 01-2.133-1.001A3.75 3.75 0 0012 18z" />
-                  </svg>
-                </div>
-
-                <h2 className="text-xl font-bold text-white mb-2">Hva er stemningen i kveld?</h2>
-                <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
-                  Velg &eacute;n. Vi tilpasser forslagene.
-                </p>
-
-                {titlesLoading ? (
-                  <div className="flex items-center justify-center gap-2 py-8">
-                    <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: `${RED} transparent ${RED} ${RED}` }} />
-                    <span className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Henter forslag&hellip;</span>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    {MOODS.map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={async () => {
-                          setSelectedMood(m.id);
-                          if (moodIntent === "paired") {
-                            await createSession(m.id);
-                          } else {
-                            const fetched = await fetchTitlesForMood(m.id);
-                            if (fetched.length > 0) {
-                              if (profileComplete) {
-                                goTogether();
-                              } else {
-                                setScreen("onboarding");
-                              }
-                            }
-                          }
-                        }}
-                        className="flex flex-col items-center gap-1.5 py-4 rounded-xl text-sm font-semibold transition-all active:scale-95"
-                        style={{
-                          background: `${m.color}12`,
-                          border: `1px solid ${m.color}30`,
-                          color: m.color,
-                          minHeight: 56,
-                        }}
-                      >
-                        <span className="text-base font-bold">{m.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {sessionError && (
-                  <p className="text-xs mt-3 text-center" style={{ color: "#f87171" }}>{sessionError}</p>
-                )}
-
-                <button
-                  onClick={() => { setScreen("intro"); setSessionError(""); }}
-                  className="text-xs font-medium bg-transparent border-0 cursor-pointer mt-6"
-                  style={{ color: "rgba(255,255,255,0.3)" }}
-                >
-                  &larr; Tilbake
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* WAITING (host waits for partner to join) */}
-          {screen === "waiting" && (
-            <div className="flex-1 flex items-center justify-center px-6">
-              <div className="text-center max-w-sm w-full">
-                <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center" style={{ background: "rgba(255,42,42,0.1)", border: "1px solid rgba(255,42,42,0.15)" }}>
-                  <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: `${RED} transparent ${RED} ${RED}` }} />
-                </div>
-
-                <h2 className="text-xl font-bold text-white mb-2">Venter p&aring; partner&hellip;</h2>
-                <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
-                  Del koden nedenfor med den du vil se med.
-                </p>
-
-                {/* Session code */}
-                <div className="mb-6">
-                  <div
-                    className="inline-flex items-center gap-3 px-6 py-4 rounded-2xl cursor-pointer transition-all active:scale-95"
-                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}
-                    onClick={() => {
-                      navigator.clipboard.writeText(sessionCode).catch(() => {});
-                      showMicro("Kode kopiert!");
-                    }}
-                  >
-                    <span className="text-3xl font-mono font-black tracking-[0.3em] text-white">{sessionCode}</span>
-                    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="rgba(255,255,255,0.5)">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
-                    </svg>
-                  </div>
-                  <p className="text-[11px] mt-3" style={{ color: "rgba(255,255,255,0.3)" }}>Trykk for &aring; kopiere</p>
-                </div>
-
-                <button
-                  onClick={() => { setScreen("intro"); setMode("solo"); setSessionId(null); setSessionCode(""); }}
-                  className="text-xs font-medium bg-transparent border-0 cursor-pointer"
-                  style={{ color: "rgba(255,255,255,0.3)" }}
-                >
-                  &larr; Avbryt
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* JOIN (guest enters code) */}
-          {screen === "join" && (
-            <div className="flex-1 flex items-center justify-center px-6">
-              <div className="text-center max-w-sm w-full">
-                <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center" style={{ background: "rgba(255,42,42,0.1)", border: "1px solid rgba(255,42,42,0.15)" }}>
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke={RED}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                  </svg>
-                </div>
-
-                <h2 className="text-xl font-bold text-white mb-2">Bli med i runde</h2>
-                <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
-                  Skriv inn koden du fikk av den andre.
-                </p>
-
-                <div className="flex flex-col items-center gap-3">
-                  <input
-                    type="text"
-                    maxLength={6}
-                    value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, ""))}
-                    onKeyDown={(e) => { if (e.key === "Enter") joinSession(); }}
-                    placeholder="KODE"
-                    className="w-48 text-center text-2xl font-mono font-black tracking-[0.3em] py-3 rounded-xl border-0 outline-none"
-                    style={{ background: "rgba(255,255,255,0.06)", color: "white", caretColor: RED }}
-                    autoFocus
-                  />
-
-                  <button
-                    onClick={joinSession}
-                    disabled={joinCode.length < 4 || titlesLoading}
-                    className="w-48 py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-                    style={{ background: RED, minHeight: 44 }}
-                  >
-                    {titlesLoading ? "Kobler til…" : "Bli med"}
-                  </button>
-
-                  {sessionError && (
-                    <p className="text-xs mt-1" style={{ color: "#f87171" }}>{sessionError}</p>
-                  )}
-                </div>
-
-                <button
-                  onClick={() => { setScreen("intro"); setJoinCode(""); setSessionError(""); }}
-                  className="text-xs font-medium bg-transparent border-0 cursor-pointer mt-6"
-                  style={{ color: "rgba(255,255,255,0.3)" }}
-                >
-                  &larr; Tilbake
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ONBOARDING */}
-          {screen === "onboarding" && currentTitle && (
-            <div className="flex-1 flex flex-col items-center justify-center px-6">
-              <div className="w-full max-w-[260px] mb-5">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>
-                    {progress + 1} / {titles.length}
-                  </span>
-                  <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
-                    {getGenreName(currentTitle.genre_ids)}
-                  </span>
-                </div>
-                <div className="w-full h-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
-                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${(progress / titles.length) * 100}%`, background: RED }} />
-                </div>
-              </div>
-
-              <div className="w-full max-w-[260px]">
-                <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <Poster title={currentTitle} size="large" />
-                  <div className="p-4">
-                    <h2 className="text-lg font-bold text-white mb-1">{currentTitle.title}</h2>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-                        {currentTitle.year || "—"}
-                      </span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ background: currentTitle.type === "movie" ? "rgba(59,130,246,0.15)" : "rgba(168,85,247,0.15)", color: currentTitle.type === "movie" ? "#60a5fa" : "#a78bfa" }}>
-                        {currentTitle.type === "movie" ? "Film" : "Serie"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 mt-4">
-                  <button onClick={() => rate("disliked")} className="flex-1 py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(239,68,68,0.12)", color: "#f87171", border: "1px solid rgba(239,68,68,0.15)", minHeight: 48 }}>
-                    &#128078; Nei
-                  </button>
-                  <button onClick={() => rate("meh")} className="flex-1 py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(234,179,8,0.12)", color: "#fbbf24", border: "1px solid rgba(234,179,8,0.15)", minHeight: 48 }}>
-                    &#128528; Meh
-                  </button>
-                  <button onClick={() => rate("liked")} className="flex-1 py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(34,197,94,0.12)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.15)", minHeight: 48 }}>
-                    &#128077; Liker
-                  </button>
-                </div>
-
-                <button onClick={() => goTogether()} className="w-full mt-3 py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.25)" }}>
-                  Hopp over &rarr;
-                </button>
-              </div>
-            </div>
-          )}
-
-          {screen === "onboarding" && !currentTitle && !profileComplete && (
-            <div className="flex-1 flex items-center justify-center">
-              <p style={{ color: "rgba(255,255,255,0.4)" }}>Laster...</p>
-            </div>
-          )}
-
-          {/* TOGETHER */}
-          {screen === "together" && (
-            <div className="flex-1 px-4 pb-8 pt-2 overflow-hidden">
-              {/* desktop layout: center card + right panel */}
-              <div className="h-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-center">
-                {/* main (card) */}
-                <div className="flex flex-col items-center justify-center">
-                  {chosen ? (
-                    <div className="w-full flex flex-col items-center justify-center text-center py-8">
-                      <h2 className="text-3xl font-black text-white">MATCH!</h2>
-                      <p className="text-sm mt-2 mb-6" style={{ color: "rgba(255,255,255,0.45)" }}>
-                        Begge likte den. Ferdig.
-                      </p>
-
-                      <div className="rounded-3xl overflow-hidden w-full max-w-[320px]" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}>
-                        <Poster title={chosen} size="medium" />
-                        <div className="p-5 text-center">
-                          <h3 className="text-xl font-bold text-white">{chosen.title}</h3>
-                          <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-                            {chosen.year} &middot; {getGenreName(chosen.genre_ids)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2 mt-6">
-                        <button
-                          onClick={() => {
-                            setChosen(null);
-                            setMatchOverlay(null);
-                            if (timer > 0) setTimerRunning(true);
-                          }}
-                          className="px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95"
-                          style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.08)", minHeight: 44 }}
-                        >
-                          Velg en annen
-                        </button>
-
-                        <button onClick={nyeForslag} className="px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.08)", minHeight: 44 }}>
-                          Shuffle
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="w-full max-w-[520px] mb-4 text-center lg:text-left">
-                        <div className="flex items-center justify-between gap-3">
-                          <h2 className="text-xl lg:text-2xl font-bold text-white">Swipe</h2>
-                          <span className="text-[11px] font-semibold px-2 py-1 rounded-lg" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.70)" }}>
-                            {isDesktop ? "← → ↓ (R=shuffle)" : "Swipe høyre/venstre. Ned=meh"}
-                          </span>
-                        </div>
-
-                        {lowData && (
-                          <p className="text-[11px] mt-2" style={{ color: "rgba(255,255,255,0.28)" }}>
-                            Lite datagrunnlag. Funker likevel.
-                          </p>
-                        )}
-                      </div>
-
-                      {recs.length === 0 ? (
-                        <div className="w-full flex flex-col items-center justify-center text-center py-12">
-                          <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
-                            Ingen flere forslag tilgjengelig.
-                          </p>
-                          <button onClick={reset} className="mt-4 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: RED }}>
-                            Start p&aring; nytt
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="relative w-full flex items-center justify-center select-none">
-                          {/* next card */}
-                          {next && (
-                            <div className="absolute inset-x-0 mx-auto w-full max-w-[520px]" style={{ transform: "translateY(16px) scale(0.965)", opacity: 0.65 }}>
-                              <div className="rounded-3xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                                <Poster title={next} size="large" />
-                                <div className="p-4">
-                                  <h3 className="text-base font-bold text-white truncate">{next.title}</h3>
-                                  <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.35)" }}>
-                                    {next.year} &middot; {getGenreName(next.genre_ids)}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* top card */}
-                          {top && (
-                            <div className="w-full max-w-[520px]">
-                              <div
-                                onPointerDown={handlePointerDown}
-                                onPointerMove={handlePointerMove}
-                                onPointerUp={handlePointerUp}
-                                onPointerCancel={handlePointerCancel}
-                                className="rounded-3xl overflow-hidden"
-                                style={{
-                                  touchAction: isDesktop ? "auto" : "none",
-                                  cursor: isDesktop ? "default" : "grab",
-                                  background: "rgba(255,255,255,0.04)",
-                                  border: "1px solid rgba(255,255,255,0.12)",
-                                  transform: `translate3d(${(fly.active ? fly.x : swipe.x)}px, ${(fly.active ? fly.y : swipe.y)}px, 0) rotate(${(fly.active ? fly.rot : swipe.rot)}deg)`,
-                                  transition: swipe.dragging ? "none" : fly.active ? "transform 160ms cubic-bezier(.2,.9,.2,1)" : "transform 200ms cubic-bezier(.2,.9,.2,1)",
-                                  boxShadow: `0 18px 70px rgba(0,0,0,0.55),
-                                    0 0 55px rgba(34,197,94,${glowLike * 0.22}),
-                                    0 0 55px rgba(239,68,68,${glowNope * 0.20}),
-                                    0 0 55px rgba(234,179,8,${glowMeh * 0.16})`,
-                                }}
-                              >
-                                <div className="relative">
-                                  <Poster title={top} size="large" />
-
-                                  <div className="absolute top-3 left-3 pointer-events-none">
-                                    <span className="text-[11px] font-semibold px-2 py-1 rounded-lg" style={{ background: "rgba(0,0,0,0.32)", border: "1px solid rgba(255,255,255,0.10)", color: "rgba(255,255,255,0.75)" }}>
-                                      {hint}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div className="p-5">
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div className="min-w-0">
-                                      <h3 className="text-lg font-bold text-white truncate">{top.title}</h3>
-                                      <p className="text-sm mt-1 line-clamp-2" style={{ color: "rgba(255,255,255,0.35)", lineHeight: 1.4 }}>
-                                        {top.overview}
-                                      </p>
-                                      <p className="text-xs mt-2" style={{ color: "rgba(255,255,255,0.35)" }}>
-                                        {top.year} &middot; {getGenreName(top.genre_ids)}
-                                      </p>
-                                      {top.reason && (
-                                        <p className="text-[11px] mt-1.5 italic" style={{ color: "rgba(255,255,255,0.28)" }}>
-                                          {top.reason}
-                                        </p>
-                                      )}
-                                    </div>
-
-                                    <span className="text-[10px] px-2 py-1 rounded-lg font-semibold shrink-0" style={{ background: top.type === "movie" ? "rgba(59,130,246,0.15)" : "rgba(168,85,247,0.15)", color: top.type === "movie" ? "#60a5fa" : "#a78bfa" }}>
-                                      {top.type === "movie" ? "Film" : "Serie"}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* controls UNDER card (desktop), minimal on mobile */}
-                              <div className="mt-4 flex items-center justify-center gap-3">
-                                {isDesktop ? (
-                                  <>
-                                    <button onClick={() => top && commitChoice(top, "nope")} className="px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(239,68,68,0.12)", color: "#f87171", border: "1px solid rgba(239,68,68,0.18)", minHeight: 44 }}>
-                                      &larr; Ikke for oss
-                                    </button>
-                                    <button onClick={() => top && commitChoice(top, "meh")} className="px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(234,179,8,0.12)", color: "#fbbf24", border: "1px solid rgba(234,179,8,0.18)", minHeight: 44 }}>
-                                      &darr; Meh
-                                    </button>
-                                    <button onClick={() => top && commitChoice(top, "like")} className="px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(34,197,94,0.14)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.20)", minHeight: 44 }}>
-                                      &rarr; Se n&aring;
-                                    </button>
-                                    <button onClick={nyeForslag} className="px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.10)", minHeight: 44 }}>
-                                      R Shuffle
-                                    </button>
-                                  </>
-                                ) : (
-                                  <button onClick={nyeForslag} className="px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.10)", minHeight: 44 }}>
-                                    Shuffle
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-
-                {/* right panel (desktop only) */}
-                <div className="hidden lg:block">
-                  <div className="rounded-3xl p-5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-[11px] font-semibold tracking-widest" style={{ color: "rgba(255,255,255,0.55)" }}>
-                          DESKTOP MODE
-                        </div>
-                        <div className="text-lg font-bold text-white mt-1">Kontroller</div>
-                      </div>
-                      <div className="text-sm font-mono font-bold tabular-nums" style={{ color: timer <= 30 ? RED : "rgba(255,255,255,0.55)" }}>
-                        {mm}:{ss}
-                      </div>
-                    </div>
-
-                    <div className="mt-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
-                          Ikke for oss
-                        </span>
-                        <span className="text-xs font-mono px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.65)", border: "1px solid rgba(255,255,255,0.10)" }}>
-                          &larr;
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
-                          Meh
-                        </span>
-                        <span className="text-xs font-mono px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.65)", border: "1px solid rgba(255,255,255,0.10)" }}>
-                          &darr;
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
-                          Se n&aring; (match)
-                        </span>
-                        <span className="text-xs font-mono px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.65)", border: "1px solid rgba(255,255,255,0.10)" }}>
-                          &rarr;
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
-                          Nye forslag
-                        </span>
-                        <span className="text-xs font-mono px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.65)", border: "1px solid rgba(255,255,255,0.10)" }}>
-                          R
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-5 p-4 rounded-2xl" style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                      <div className="text-sm font-semibold text-white">Match-logikk</div>
-                      <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
-                        Du f&aring;r <span style={{ color: "rgba(255,255,255,0.75)" }}>MATCH</span> n&aring;r dere begge liker samme tittel. Da kommer fireworks og dere er ferdige.
-                      </p>
-                    </div>
-
-                    {timer === 0 && (
-                      <div className="mt-4 text-xs font-semibold" style={{ color: RED }}>
-                        Timeren er ute. Trykk Shuffle eller match.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── match overlay ── */}
-        {matchOverlay && (
-          <>
-            <Fireworks
-              color={matchOverlay.color}
-              onDone={() => {
-                /* keep overlay */
+            {/* ── Atmospheric gradient drift — absolute behind everything ── */}
+            <div
+              className="atmo-drift"
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "radial-gradient(ellipse 170% 140% at 50% 65%, rgba(168,18,18,0.05) 0%, transparent 72%)",
+                pointerEvents: "none",
+                zIndex: 0,
               }}
             />
+
+            {/* ── Logo — top center, in flow ── */}
+            <div style={{ display: "flex", justifyContent: "center", paddingTop: 28, paddingBottom: 4, flexShrink: 0, position: "relative", zIndex: 1 }}>
+              <img
+                src="/logo.png"
+                alt="Logflix"
+                style={{ height: 28, width: "auto", opacity: 0.85 }}
+              />
+            </div>
+
+            {/* ── Trending poster strip — flat horizontal scroll ── */}
             <div
-              className="fixed inset-0 z-[70] flex items-center justify-center px-6"
-              style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
-              onClick={() => setMatchOverlay(null)}
-              role="button"
-              tabIndex={0}
+              style={{
+                flexShrink: 0,
+                position: "relative",
+                zIndex: 1,
+                marginTop: 24,
+                overflow: "hidden",
+                height: 132,
+                WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
+                maskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
+                pointerEvents: "none",
+                userSelect: "none",
+              }}
             >
-              <div
-                className="w-full max-w-sm rounded-3xl p-5 text-center"
-                style={{
-                  background: "rgba(20,20,30,0.82)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  boxShadow: `0 30px 120px rgba(0,0,0,0.6), 0 0 70px ${matchOverlay.color}33`,
-                }}
-              >
-                <div className="text-[11px] font-semibold tracking-widest" style={{ color: "rgba(255,255,255,0.55)" }}>
-                  IT&apos;S A MATCH
+              {ribbonPosters.length > 0 ? (
+                <div
+                  className="ribbon-track"
+                  style={{ display: "flex", gap: 13, width: "max-content", paddingTop: 6, paddingBottom: 6, filter: "blur(1.5px)" }}
+                >
+                  {[...ribbonPosters, ...ribbonPosters].map((poster, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={i}
+                      src={`https://image.tmdb.org/t/p/w185${poster}`}
+                      alt=""
+                      style={{ height: 120, width: "auto", borderRadius: 16, opacity: 0.65, flexShrink: 0, display: "block", objectFit: "cover" }}
+                    />
+                  ))}
                 </div>
-                <div className="text-2xl font-black mt-2 text-white">{matchOverlay.title.title}</div>
-                <div className="text-xs mt-2" style={{ color: "rgba(255,255,255,0.45)" }}>
-                  {matchOverlay.title.year} &middot; {getGenreName(matchOverlay.title.genre_ids)}
+              ) : (
+                /* Loading placeholder — gradient tiles */
+                <div style={{ display: "flex", gap: 13, paddingTop: 6, paddingBottom: 6 }}>
+                  {RIBBON_COLORS.map(([from, to], i) => (
+                    <div
+                      key={i}
+                      style={{ height: 120, width: 80, borderRadius: 16, background: `linear-gradient(160deg, ${from} 0%, ${to} 100%)`, opacity: 0.18, flexShrink: 0 }}
+                    />
+                  ))}
                 </div>
-                <div className="mt-5 flex items-center justify-center gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMatchOverlay(null);
+              )}
+            </div>
+
+            {/* ── Hero block — flex-1, centered below ribbon ── */}
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px", position: "relative", zIndex: 1 }}>
+            <div style={{ width: "100%", maxWidth: 340, textAlign: "center" }}>
+
+              {/* Headline — time of day */}
+              <h1 style={{
+                fontSize: "clamp(1.7rem, 7.2vw, 2.3rem)",
+                fontWeight: 700,
+                letterSpacing: "-0.025em",
+                color: "#ffffff",
+                lineHeight: 1.1,
+                margin: "10px auto 20px",
+                maxWidth: "85%",
+              }}>
+                {(() => { const h = new Date().getHours(); return h >= 18 || h < 5 ? "What are we watching tonight?" : "What are we watching today?"; })()}
+              </h1>
+
+              {/* Subtext — 20px below headline, 40px above button */}
+              <div style={{ marginBottom: "40px" }}>
+                {returnedToday ? (
+                  <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>One more round?</p>
+                ) : (
+                  <>
+                    <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>Swipe separately.</p>
+                    <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>We decide.</p>
+                  </>
+                )}
+              </div>
+
+              {/* Primary CTA */}
+              <div style={{ marginBottom: "22px" }}>
+                <button
+                  onClick={() => {
+                    if (titlesLoading || ritualState !== "idle") return;
+                    startRitual(() => {
+                      setMode("solo");
+                      setSelectedProviders([]);
+                      setScreen("providers");
+                    });
+                  }}
+                  disabled={titlesLoading || ritualState !== "idle"}
+                  className="cta-btn"
+                  style={{
+                    width: "100%",
+                    height: 54,
+                    borderRadius: "14px",
+                    background: "linear-gradient(180deg, #ff2a2a 0%, #c91414 100%)",
+                    color: "#fff",
+                    fontSize: "0.9375rem",
+                    fontWeight: 600,
+                    border: "none",
+                    cursor: titlesLoading ? "default" : "pointer",
+                    opacity: titlesLoading ? 0.55 : 1,
+                    letterSpacing: "-0.01em",
+                    boxShadow: "0 8px 24px rgba(255,42,42,0.25), inset 0 1px 0 rgba(255,255,255,0.18)",
+                  }}
+                >
+                  {titlesLoading ? "Loading…" : "Start the 3-minute round"}
+                </button>
+              </div>
+
+              {/* Secondary options */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+                <button
+                  onClick={() => { setMode("solo"); setSelectedProviders([]); setScreen("providers"); }}
+                  disabled={titlesLoading}
+                  style={{
+                    background: "none", border: "none",
+                    color: "rgba(255,255,255,0.58)",
+                    fontSize: "0.8125rem", fontWeight: 400,
+                    cursor: "pointer", padding: "4px 0", letterSpacing: "0",
+                  }}
+                >
+                  One phone
+                </button>
+                <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.6875rem", lineHeight: 1 }}>or</span>
+                <button
+                  onClick={() => setAdvancedOpen((v) => !v)}
+                  style={{
+                    background: "none", border: "none",
+                    color: "rgba(255,255,255,0.58)",
+                    fontSize: "0.8125rem", fontWeight: 400,
+                    cursor: "pointer", padding: "4px 0",
+                    display: "inline-flex", alignItems: "center", gap: "3px",
+                  }}
+                >
+                  Two phones
+                  <svg
+                    style={{
+                      width: 9, height: 9,
+                      transition: "transform 180ms ease",
+                      transform: advancedOpen ? "rotate(180deg)" : "rotate(0deg)",
+                      opacity: 0.6,
                     }}
-                    className="px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95"
-                    style={{ background: RED, color: "white", minHeight: 44 }}
+                    fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"
                   >
-                    Lukk
-                  </button>
-                </div>
-                <div className="text-[11px] mt-3" style={{ color: "rgba(255,255,255,0.28)" }}>
-                  Dette var faktisk felles.
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
+
+                {advancedOpen && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", width: "100%", marginTop: "8px" }}>
+                    <button
+                      onClick={() => createSession()}
+                      disabled={titlesLoading}
+                      className="w-full py-3 rounded-xl text-sm font-semibold disabled:opacity-50"
+                      style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.72)", border: "1px solid rgba(255,255,255,0.09)", minHeight: 44 }}
+                    >
+                      Opprett runde
+                    </button>
+                    <button
+                      onClick={() => setScreen("join")}
+                      className="w-full py-3 rounded-xl text-sm font-semibold"
+                      style={{ background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.42)", border: "1px solid rgba(255,255,255,0.06)", minHeight: 44 }}
+                    >
+                      Bli med i runde
+                    </button>
+                  </div>
+                )}
+
+                {sessionError && <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: "0.25rem" }}>{sessionError}</p>}
+              </div>
+
+            </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── WAITING ── */}
+        {screen === "waiting" && (
+          <div className="flex-1 flex items-center justify-center px-6">
+            <div className="text-center max-w-sm w-full">
+              <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin mx-auto mb-8" style={{ borderColor: `${RED} transparent ${RED} ${RED}` }} />
+              <h2 className="text-xl font-bold text-white mb-2">Venter p&aring; partner&hellip;</h2>
+              <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>Del koden med den andre.</p>
+              <div
+                className="inline-flex items-center gap-3 px-6 py-4 rounded-2xl cursor-pointer mb-2"
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
+                onClick={() => { navigator.clipboard.writeText(sessionCode).catch(() => {}); }}
+              >
+                <span className="text-3xl font-mono font-black tracking-[0.3em] text-white">{sessionCode}</span>
+                <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="rgba(255,255,255,0.4)">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                </svg>
+              </div>
+              <p className="text-[11px] mb-8" style={{ color: "rgba(255,255,255,0.25)" }}>Trykk for &aring; kopiere</p>
+              <button
+                onClick={() => { setScreen("intro"); setMode("solo"); setSessionId(null); setSessionCode(""); }}
+                className="text-xs font-medium bg-transparent border-0 cursor-pointer"
+                style={{ color: "rgba(255,255,255,0.28)" }}
+              >
+                Avbryt
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── JOIN ── */}
+        {screen === "join" && (
+          <div className="flex-1 flex items-center justify-center px-6">
+            <div className="text-center max-w-sm w-full">
+              <h2 className="text-xl font-bold text-white mb-2">Bli med i runde</h2>
+              <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>Skriv inn koden du fikk.</p>
+              <div className="flex flex-col items-center gap-3">
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, ""))}
+                  onKeyDown={(e) => { if (e.key === "Enter") joinSession(); }}
+                  placeholder="KODE"
+                  className="w-48 text-center text-2xl font-mono font-black tracking-[0.3em] py-3 rounded-xl border-0 outline-none"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "white", caretColor: RED }}
+                  autoFocus
+                />
+                <button
+                  onClick={joinSession}
+                  disabled={joinCode.length < 4 || titlesLoading}
+                  className="w-48 py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+                  style={{ background: RED, minHeight: 44 }}
+                >
+                  {titlesLoading ? "Kobler til…" : "Bli med"}
+                </button>
+                {sessionError && <p className="text-xs mt-1" style={{ color: "#f87171" }}>{sessionError}</p>}
+              </div>
+              <button
+                onClick={() => { setScreen("intro"); setJoinCode(""); setSessionError(""); }}
+                className="text-xs font-medium bg-transparent border-0 cursor-pointer mt-8"
+                style={{ color: "rgba(255,255,255,0.28)" }}
+              >
+                Tilbake
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── PROVIDERS ── */}
+        {screen === "providers" && (
+          <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
+            <div style={{ width: "100%", maxWidth: 340 }}>
+              <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#fff", marginBottom: 6, textAlign: "center" }}>
+                Where are you watching?
+              </h2>
+              <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.42)", marginBottom: 32, textAlign: "center" }}>
+                Pick your services — or skip to see everything.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", marginBottom: 40 }}>
+                {PROVIDERS
+                  .filter((p) => p.id !== 76 || VIAPLAY_REGIONS.has(userRegion))
+                  .map((p) => {
+                    const selected = selectedProviders.includes(p.id);
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() =>
+                          setSelectedProviders((prev) =>
+                            prev.includes(p.id) ? prev.filter((x) => x !== p.id) : [...prev, p.id]
+                          )
+                        }
+                        style={{
+                          padding: "10px 20px",
+                          borderRadius: 10,
+                          border: selected ? "1.5px solid rgba(255,255,255,0.55)" : "1px solid rgba(255,255,255,0.12)",
+                          background: selected ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.04)",
+                          color: selected ? "#fff" : "rgba(255,255,255,0.58)",
+                          fontSize: "0.875rem",
+                          fontWeight: selected ? 600 : 400,
+                          cursor: "pointer",
+                          transition: "all 140ms ease",
+                          letterSpacing: "-0.01em",
+                        }}
+                      >
+                        {p.name}
+                      </button>
+                    );
+                  })}
+              </div>
+              {/* Tonight preference toggle */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 28 }}>
+                <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 10, letterSpacing: "0.02em" }}>
+                  Tonight:
+                </span>
+                <div style={{
+                  display: "inline-flex",
+                  gap: 6,
+                  padding: "4px",
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}>
+                  {(["series", "movies", "mix"] as const).map((mode) => {
+                    const labels: Record<string, string> = { series: "Series", movies: "Movies", mix: "Mix" };
+                    const active = preferenceMode === mode;
+                    return (
+                      <button
+                        key={mode}
+                        aria-pressed={active}
+                        onClick={() => {
+                          setPreferenceMode(mode);
+                          try { localStorage.setItem("ss_pref_mode", mode); } catch { /* ignore */ }
+                        }}
+                        onPointerDown={(e) => {
+                          const b = e.currentTarget as HTMLButtonElement;
+                          b.style.transition = "transform 100ms ease-out";
+                          b.style.transform = "scale(0.97)";
+                        }}
+                        onPointerUp={(e) => {
+                          const b = e.currentTarget as HTMLButtonElement;
+                          b.style.transform = "scale(1)";
+                        }}
+                        onPointerLeave={(e) => {
+                          const b = e.currentTarget as HTMLButtonElement;
+                          b.style.transform = "scale(1)";
+                        }}
+                        style={{
+                          height: 36,
+                          padding: "0 16px",
+                          borderRadius: 999,
+                          border: active ? "1px solid rgba(255,42,42,0.35)" : "1px solid transparent",
+                          background: active ? "rgba(255,42,42,0.18)" : "transparent",
+                          color: active ? "#ffffff" : "rgba(255,255,255,0.6)",
+                          fontSize: "0.8125rem",
+                          fontWeight: active ? 600 : 400,
+                          cursor: "pointer",
+                          letterSpacing: "-0.01em",
+                          boxShadow: active ? "0 6px 16px rgba(255,42,42,0.18)" : "none",
+                          transition: "background 140ms ease, color 140ms ease, border-color 140ms ease, box-shadow 140ms ease",
+                        }}
+                      >
+                        {labels[mode]}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+
+              <button
+                onClick={async () => { if (!titlesLoading) await goTogether(); }}
+                disabled={titlesLoading}
+                style={{
+                  width: "100%", height: 54, borderRadius: 12,
+                  background: "linear-gradient(180deg, #ff2a2a 0%, #c91414 100%)",
+                  color: "#fff", fontSize: "0.9375rem", fontWeight: 600,
+                  border: "none", cursor: titlesLoading ? "default" : "pointer",
+                  opacity: titlesLoading ? 0.55 : 1,
+                  boxShadow: "0 8px 24px rgba(255,42,42,0.22), inset 0 1px 0 rgba(255,255,255,0.18)",
+                  letterSpacing: "-0.01em",
+                  marginBottom: 14,
+                }}
+              >
+                {titlesLoading ? "Loading…" : selectedProviders.length > 0 ? "Continue" : "See everything"}
+              </button>
+              <button
+                onClick={() => setScreen("intro")}
+                style={{
+                  width: "100%", padding: "8px 0", background: "none", border: "none",
+                  color: "rgba(255,255,255,0.3)", fontSize: "0.8125rem", cursor: "pointer",
+                }}
+              >
+                Back
+              </button>
             </div>
+          </div>
+        )}
+
+        {/* ── TOGETHER ── */}
+        {screen === "together" && (
+          <>
+            {/* 2px matte progress bar — always at top during together */}
+            <div className="fixed top-0 left-0 right-0 z-50" style={{ height: "2px", background: "rgba(255,255,255,0.07)" }}>
+              <div style={{ height: "100%", width: `${timerPct}%`, background: "#7a1010", transition: "width 1s linear" }} />
+            </div>
+
+            {/* ── RESULT SCREENS (fullscreen overlays) ── */}
+
+            {/* Dere valgte det samme */}
+            {roundPhase === "double-super" && finalWinner && (
+              <div className="fixed inset-0 z-30 flex flex-col justify-end px-6 pb-16">
+                <div className="absolute inset-0" style={{ background: getGenreColor(finalWinner.genre_ids) }} />
+                {finalWinner.poster_path && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`https://image.tmdb.org/t/p/w780${finalWinner.poster_path}`} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                )}
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.92) 70%, rgba(0,0,0,1) 100%)" }} />
+                <div className="relative z-10 w-full max-w-sm">
+                  <div className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.45)", letterSpacing: "0.12em" }}>Dere valgte det samme.</div>
+                  <h2 className="text-3xl font-black text-white leading-tight mb-1">{finalWinner.title}</h2>
+                  <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>{finalWinner.year} &middot; {getGenreName(finalWinner.genre_ids)}</p>
+                  <button onClick={() => setRoundPhase("winner")} className="w-full py-4 rounded-xl text-sm font-bold text-white mb-2" style={{ background: RED, minHeight: 52 }}>
+                    Start watching
+                  </button>
+                  <button
+                    onClick={() => { setFinalWinner(null); setRoundPhase("swiping"); setSuperLikeUsed(false); superLikedIdRef.current = null; roundEndingRef.current = false; setTimerRunning(true); }}
+                    className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer"
+                    style={{ color: "rgba(255,255,255,0.28)" }}
+                  >
+                    Fortsett
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Results */}
+            {roundPhase === "results" && roundMatches.length > 0 && (
+              <div className="fixed inset-0 z-30 flex flex-col items-center justify-center px-6 py-10" style={{ background: "#0c0a09" }}>
+                <div className="w-full max-w-sm">
+                  <div className="text-xs mb-6 text-center" style={{ color: "rgba(255,255,255,0.28)", letterSpacing: "0.12em" }}>Dere er enige.</div>
+                  <div className="rounded-2xl overflow-hidden mb-4 mx-auto" style={{ maxWidth: 200, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                    {roundMatches[0].title.poster_path ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={`https://image.tmdb.org/t/p/w342${roundMatches[0].title.poster_path}`} alt="" className="w-full object-cover" style={{ aspectRatio: "2/3" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                    ) : (
+                      <div className="w-full flex items-center justify-center text-3xl font-black" style={{ aspectRatio: "2/3", background: getGenreColor(roundMatches[0].title.genre_ids), color: "rgba(255,255,255,0.15)" }}>{roundMatches[0].title.title.substring(0, 2)}</div>
+                    )}
+                    <div className="p-3">
+                      <div className="font-bold text-white text-sm truncate">{roundMatches[0].title.title}</div>
+                      <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{roundMatches[0].title.year} &middot; {getGenreName(roundMatches[0].title.genre_ids)}</div>
+                    </div>
+                  </div>
+                  <button onClick={() => { setFinalWinner(roundMatches[0].title); setRoundPhase("winner"); }} className="w-full py-4 rounded-xl text-sm font-bold text-white mb-3" style={{ background: RED, minHeight: 52 }}>
+                    Start watching
+                  </button>
+                  {roundMatches.length > 1 && (
+                    <div className="text-xs text-center mb-2" style={{ color: "rgba(255,255,255,0.25)" }}>
+                      Se alternativer: {roundMatches.slice(1).map((m) => m.title.title).join(" · ")}
+                    </div>
+                  )}
+                  {round === 1 && (
+                    <button onClick={startFinalRound} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.22)" }}>
+                      Fortsett og finn flere
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* No match */}
+            {roundPhase === "no-match" && (
+              <div className="fixed inset-0 z-30 flex flex-col items-center justify-center px-6 py-10" style={{ background: "#0c0a09" }}>
+                <div className="w-full max-w-sm text-center">
+                  <div className="text-sm font-semibold text-white mb-1">Ingen full match.</div>
+                  <div className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.38)" }}>Dette er det beste kompromisset.</div>
+                  {compromiseTitle && (
+                    <div className="rounded-2xl overflow-hidden mb-6 mx-auto" style={{ maxWidth: 180, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                      {compromiseTitle.poster_path ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={`https://image.tmdb.org/t/p/w342${compromiseTitle.poster_path}`} alt="" className="w-full object-cover" style={{ aspectRatio: "2/3" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      ) : (
+                        <div className="w-full flex items-center justify-center text-3xl font-black" style={{ aspectRatio: "2/3", background: getGenreColor(compromiseTitle.genre_ids), color: "rgba(255,255,255,0.15)" }}>{compromiseTitle.title.substring(0, 2)}</div>
+                      )}
+                      <div className="p-3">
+                        <div className="font-bold text-white text-sm truncate">{compromiseTitle.title}</div>
+                        <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{compromiseTitle.year} &middot; {getGenreName(compromiseTitle.genre_ids)}</div>
+                      </div>
+                    </div>
+                  )}
+                  {round === 1 ? (
+                    <button onClick={startFinalRound} className="w-full py-4 rounded-xl text-sm font-bold text-white" style={{ background: RED, minHeight: 52 }}>
+                      En siste runde
+                    </button>
+                  ) : (
+                    <button onClick={() => { setFinalWinner(compromiseTitle); setRoundPhase("winner"); }} className="w-full py-4 rounded-xl text-sm font-bold text-white" style={{ background: RED, minHeight: 52 }}>
+                      Godta dette
+                    </button>
+                  )}
+                  <button onClick={reset} className="w-full py-3 mt-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.2)" }}>Spill igjen</button>
+                </div>
+              </div>
+            )}
+
+            {/* Winner — phased match moment reveal */}
+            {roundPhase === "winner" && finalWinner && (
+              <div className="fixed inset-0 z-30 flex flex-col justify-end px-6 pb-16">
+                <div className="absolute inset-0" style={{ background: getGenreColor(finalWinner.genre_ids) }} />
+                {finalWinner.poster_path && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`https://image.tmdb.org/t/p/w780${finalWinner.poster_path}`}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{
+                      transform: matchRevealPhase >= 1 ? "scale(1.04)" : "scale(1)",
+                      transition: "transform 600ms cubic-bezier(.2,.9,.2,1), filter 600ms ease",
+                      filter: matchRevealPhase >= 1 ? "brightness(0.95)" : "brightness(1)",
+                    }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                )}
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0.88) 65%, rgba(0,0,0,1) 100%)" }} />
+                <div className="relative z-10 w-full max-w-sm">
+                  {/* Phase 1: "You both said yes." */}
+                  <div style={{
+                    fontSize: "0.75rem", letterSpacing: "0.14em", textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.55)", marginBottom: 12,
+                    opacity: matchRevealPhase >= 1 ? 1 : 0,
+                    transition: "opacity 600ms ease",
+                  }}>
+                    You both said yes.
+                  </div>
+                  {/* Phase 2: title + meta + buttons */}
+                  <div style={{
+                    opacity: matchRevealPhase >= 2 ? 1 : 0,
+                    transition: "opacity 600ms ease",
+                  }}>
+                    <h2 className="text-3xl font-black text-white leading-tight mb-1">{finalWinner.title}</h2>
+                    <p className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+                      {finalWinner.year} &middot; {getGenreName(finalWinner.genre_ids)}
+                    </p>
+                    {finalWinner.overview && (
+                      <p className="text-sm mb-8 line-clamp-2" style={{ color: "rgba(255,255,255,0.58)", lineHeight: 1.5 }}>
+                        {finalWinner.overview}
+                      </p>
+                    )}
+                    <button className="w-full py-4 rounded-xl text-sm font-bold text-white mb-3" style={{ background: RED, minHeight: 52 }}>
+                      ▶ Start watching
+                    </button>
+                    <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.25)" }}>
+                      Keep looking &rarr;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── SWIPING PHASE — centered card layout ── */}
+            {roundPhase === "swiping" && !deckExhausted && (
+              <div className="flex-1 flex flex-col" style={{ paddingTop: "2px" }}>
+
+                {/* Top row: Runde label */}
+                <div className="flex items-center justify-between px-5 pt-4 pb-2">
+                  <div style={{ width: 40 }} /> {/* spacer for balance */}
+                  <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", fontWeight: 400 }}>
+                    Runde {round}
+                  </span>
+                </div>
+
+                {/* Card area — centered */}
+                <div className="flex-1 flex items-center justify-center px-5" style={{ minHeight: 0 }}>
+                  {top && (
+                    <div
+                      onPointerDown={handlePointerDown}
+                      onPointerMove={handlePointerMove}
+                      onPointerUp={handlePointerUp}
+                      onPointerCancel={handlePointerCancel}
+                      style={{
+                        position: "relative",
+                        width: "100%",
+                        maxWidth: "320px",
+                        aspectRatio: "2/3",
+                        borderRadius: "18px",
+                        overflow: "hidden",
+                        touchAction: isDesktop ? "auto" : "none",
+                        cursor: isDesktop ? "default" : swipe.dragging ? "grabbing" : "grab",
+                        transform: `translate3d(${fly.active ? fly.x : swipe.x}px, 0px, 0) rotate(${fly.active ? fly.rot : swipe.rot}deg)`,
+                        transition: swipe.dragging ? "none" : fly.active ? "transform 200ms cubic-bezier(.2,.9,.2,1)" : "transform 220ms cubic-bezier(.2,.9,.2,1)",
+                        boxShadow: "0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)",
+                        userSelect: "none",
+                        WebkitUserSelect: "none",
+                      }}
+                    >
+                      {/* Poster background */}
+                      <div className="absolute inset-0" style={{ background: getGenreColor(top.genre_ids) }} />
+                      {top.poster_path && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={`https://image.tmdb.org/t/p/w500${top.poster_path}`}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-cover"
+                          draggable={false}
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                      )}
+
+                      {/* Bottom gradient for text */}
+                      <div
+                        className="absolute inset-0"
+                        style={{ background: "linear-gradient(to bottom, transparent 48%, rgba(0,0,0,0.65) 72%, rgba(0,0,0,0.92) 100%)" }}
+                      />
+
+                      {/* Card text */}
+                      <div className="absolute bottom-0 left-0 right-0 px-4 pb-5">
+                        <div
+                          className="font-bold text-white leading-tight"
+                          style={{ fontSize: "1.15rem" }}
+                        >
+                          {top.title}{top.year ? ` \u2022 ${top.year}` : ""}
+                        </div>
+                        {(top.reason || top.overview) && (
+                          <div
+                            className="mt-1 line-clamp-1"
+                            style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.68)", lineHeight: 1.4 }}
+                          >
+                            {top.reason || top.overview}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom action buttons */}
+                <div className="flex items-center justify-center gap-5 py-7">
+                  {/* Thumbs down */}
+                  <button
+                    onClick={() => endSwipe("nope")}
+                    style={{ ...btnBase, width: 52, height: 52, fontSize: "1.25rem" }}
+                    aria-label="Nei"
+                  >
+                    👎
+                  </button>
+
+                  {/* Star — slightly smaller */}
+                  <button
+                    onClick={handleSuperLike}
+                    disabled={superLikeUsed}
+                    style={{
+                      ...btnBase,
+                      width: 48,
+                      height: 48,
+                      fontSize: "1.15rem",
+                      opacity: superLikeUsed ? 0.22 : 1,
+                      background: superLikeUsed ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.05)",
+                      border: `1px solid ${superLikeUsed ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.12)"}`,
+                    }}
+                    aria-label="Super-like"
+                  >
+                    ⭐
+                  </button>
+
+                  {/* Thumbs up */}
+                  <button
+                    onClick={() => endSwipe("like")}
+                    style={{ ...btnBase, width: 52, height: 52, fontSize: "1.25rem" }}
+                    aria-label="Ja"
+                  >
+                    👍
+                  </button>
+                </div>
+
+                {/* Desktop arrow hint */}
+                {isDesktop && (
+                  <div className="flex justify-center pb-4">
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.22)" }}>&larr; &rarr;</span>
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {/* Deck exhausted during swiping */}
+            {roundPhase === "swiping" && deckExhausted && (
+              <div className="fixed inset-0 z-30 flex flex-col items-center justify-center" style={{ background: "#0c0a09" }}>
+                {deckExtending ? (
+                  <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: `${RED} transparent ${RED} ${RED}` }} />
+                ) : (
+                  <>
+                    <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>Ingen flere forslag.</p>
+                    <button onClick={reset} className="text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: RED }}>Pr&oslash;v igjen</button>
+                  </>
+                )}
+              </div>
+            )}
           </>
         )}
 
-        {/* ── micro toast ── */}
-        {microToast && (
+        {/* ── RITUAL START OVERLAY ── */}
+        {ritualState !== "idle" && (
           <div
-            className="fixed top-14 left-1/2 -translate-x-1/2 z-[85] px-3 py-2 rounded-xl"
-            style={{ background: "rgba(20,20,30,0.92)", border: "1px solid rgba(255,255,255,0.10)", color: "rgba(255,255,255,0.75)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 50,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              pointerEvents: "all",
+              background: "rgba(0,0,0,0.06)",
+              opacity: ritualState === "done" ? 0 : 1,
+              transition: "opacity 300ms ease-out",
+            }}
+            onTouchStart={(e) => e.preventDefault()}
+            onTouchMove={(e) => e.preventDefault()}
+            onPointerDown={(e) => e.preventDefault()}
           >
-            <span className="text-xs font-medium">{microToast}</span>
+            {/* Faint red ambient glow */}
+            <div style={{
+              position: "absolute",
+              inset: 0,
+              background: "radial-gradient(circle at center, rgba(255,42,42,0.10) 0%, transparent 60%)",
+              pointerEvents: "none",
+            }} />
+
+            {/* Countdown block */}
+            {(ritualState === "countdown" || ritualState === "done") && (
+              <div style={{
+                position: "relative",
+                textAlign: "center",
+                opacity: ritualState === "done" ? 0 : 1,
+                transition: "opacity 300ms ease-out",
+              }}>
+                {/* Large text — cross-dissolve between 3:00 / Ready? / Go. */}
+                <div style={{ position: "relative", height: 60, marginBottom: 16 }}>
+                  {(["3:00", "Ready?", "Go."] as const).map((text, idx) => (
+                    <div
+                      key={text}
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "clamp(44px, 12vw, 52px)",
+                        fontWeight: 900,
+                        color: "rgba(255,255,255,0.92)",
+                        letterSpacing: "-0.03em",
+                        opacity: ritualPhase === idx ? 1 : 0,
+                        transition: "opacity 150ms ease",
+                        userSelect: "none",
+                        WebkitUserSelect: "none",
+                      }}
+                    >
+                      {text}
+                    </div>
+                  ))}
+                </div>
+
+                <p style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.78)",
+                  margin: "0 0 6px 0",
+                  letterSpacing: "-0.01em",
+                }}>
+                  Phones apart.
+                </p>
+                <p style={{
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: "rgba(255,255,255,0.60)",
+                  margin: 0,
+                  letterSpacing: "-0.005em",
+                }}>
+                  Swipe separately. We decide.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* ── undo toast ── */}
-        {undoInfo && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: "rgba(20,20,30,0.95)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
-            <span className="text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>
-              {undoInfo.msg}
-            </span>
-            <button onClick={doUndo} className="text-sm font-semibold bg-transparent border-0 cursor-pointer" style={{ color: RED }}>
-              Angre
-            </button>
-          </div>
-        )}
+        {/* Profile link — goes to /home if logged in, /login otherwise */}
+        <button
+          onClick={async () => {
+            const { data } = await createSupabaseBrowser().auth.getSession();
+            router.push(data.session ? "/home" : "/login");
+          }}
+          className="fixed bottom-4 right-4 z-60 text-[11px] font-medium px-3 py-2 rounded-xl select-none bg-transparent cursor-pointer"
+          style={{ color: "rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}
+        >
+          Min profil
+        </button>
+
       </div>
     </div>
   );

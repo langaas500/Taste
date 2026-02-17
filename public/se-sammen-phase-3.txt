@@ -1,0 +1,64 @@
+STRICT CLAUDE CODE TASK (PHASE 3/3) — DO NOT DEVIATE
+
+HARD RULES
+- No new dependencies.
+- No login required for Se sammen.
+- Do NOT reveal scoring logic in the UI.
+- Users must NOT see each other’s picks during the round.
+- Only Super-like can instantly end a round.
+- Output FULL CONTENT of every file you modify.
+
+PHASE 3 GOAL
+Implement the round engine and end screens exactly:
+
+ROUND 1
+- Duration: 180s
+- Titles: 20–25 (use current source)
+- Each user has exactly 1 Super-like per round
+- If both users Super-like the same title:
+  - End immediately
+  - Show reveal screen:
+    Title: "DOUBLE SUPER MATCH"
+    Primary button: "Start watching"
+    Secondary small button under: "Fortsett jakten" (continues the remaining cards)
+
+END OF ROUND 1 (if no double super)
+- Determine 👍👍 matches
+- Rank matches using:
+  - Base: both liked it
+  - Secondary: faster decisions rank higher (timing is a secondary signal)
+- Show only Top 3 matches:
+  1) Best match
+  2) Strong alternative
+  3) Backup
+
+IF NO 👍👍 MATCHES
+- Auto-generate a compromise pick
+- Copy:
+  "Ingen full match denne runden."
+  "Her er et sterkt kompromiss basert på deres valg."
+- Offer button:
+  "Kjør ny runde" (Final round)
+
+FINAL ROUND (Round 2)
+- Duration: 90–120s (choose 120s unless code suggests 90s is better)
+- Titles: 12–15 refined using previous round signals
+- If still no match at end:
+  - Auto-select a single winner
+  - Copy:
+    "Kveldens valg er klart."
+
+AFTER ANY WINNER
+- Big reveal screen with the chosen title
+- Primary CTA: "Start watching"
+- Secondary subtle: "Spill igjen en annen kveld"
+
+NOTES
+- If true realtime multi-user sync already exists in this repo, use it.
+- If not, implement single-device logic cleanly now (don’t fake realtime).
+- The UX must still feel complete even if realtime is not yet wired.
+
+DELIVERABLES
+- Full updated files
+- Bullet list of logic implemented
+- Mention exactly where “decisionTime” influences ranking (without exposing it to users)

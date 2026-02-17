@@ -43,6 +43,7 @@ export async function middleware(request: NextRequest) {
 
   // Guest-accessible routes (browsing without account)
   const isGuestAllowed =
+    pathname === "/" ||
     pathname === "/search" ||
     pathname === "/wt-beta" ||
     pathname.startsWith("/api/tmdb/") ||

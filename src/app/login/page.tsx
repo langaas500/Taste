@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -33,6 +33,18 @@ function LoginContent() {
   const [signupDone, setSignupDone] = useState(false);
   const [signupEmail, setSignupEmail] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Auto-redirect if "remember me" was set and session is still active
+  useEffect(() => {
+    const saved = localStorage.getItem("logflix_remember_me") === "1";
+    if (saved) {
+      setRememberMe(true);
+      createSupabaseBrowser().auth.getSession().then(({ data }) => {
+        if (data.session) window.location.href = "/home";
+      });
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -82,12 +94,16 @@ function LoginContent() {
             .eq("user_id", signInData.user.id);
 
           if (count === 0) {
+            if (rememberMe) localStorage.setItem("logflix_remember_me", "1");
+            else localStorage.removeItem("logflix_remember_me");
             window.location.href = "/onboarding";
             setLoading(false);
             return;
           }
         }
 
+        if (rememberMe) localStorage.setItem("logflix_remember_me", "1");
+        else localStorage.removeItem("logflix_remember_me");
         window.location.href = hasGuestData ? "/home?migrated=guest" : "/home";
       }
     }
@@ -412,6 +428,18 @@ function LoginContent() {
                     <p className="text-[11px] text-[var(--text-tertiary)] mt-1.5">Minimum 6 tegn</p>
                   )}
                 </div>
+
+                {mode === "login" && (
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 rounded border-(--border) bg-(--bg-surface) accent-(--accent) cursor-pointer"
+                    />
+                    <span className="text-xs text-(--text-secondary)">Husk meg</span>
+                  </label>
+                )}
 
                 {mode === "signup" && (
                   <label className="flex items-start gap-2.5 cursor-pointer select-none">

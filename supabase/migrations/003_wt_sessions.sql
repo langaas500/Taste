@@ -34,3 +34,6 @@ CREATE POLICY "Users can update sessions they are part of"
 CREATE INDEX IF NOT EXISTS idx_wt_sessions_code ON public.wt_sessions (code);
 CREATE INDEX IF NOT EXISTS idx_wt_sessions_host ON public.wt_sessions (host_id);
 CREATE INDEX IF NOT EXISTS idx_wt_sessions_status ON public.wt_sessions (status) WHERE status IN ('waiting', 'active');
+
+-- Safe migration: add deck_seed for deterministic paired-mode deck ordering
+ALTER TABLE public.wt_sessions ADD COLUMN IF NOT EXISTS deck_seed TEXT;

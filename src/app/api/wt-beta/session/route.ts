@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer } from "@/lib/supabase-server";
-import { fetchWTTitles } from "@/lib/wt-titles";
+import { buildWtDeck } from "@/lib/wt-titles";
 import type { Mood } from "@/lib/wt-titles";
 
 const VALID_MOODS = new Set<Mood>(["light", "dark", "thriller", "action", "romance", "horror"]);
@@ -80,7 +80,18 @@ export async function POST(req: NextRequest) {
       .slice(0, 5)
       .map(([id]) => Number(id));
 
-    const titles = await fetchWTTitles({ mood, seedLiked, excludeIds, likedGenreIds });
+    // Generate deterministic deck seed for this session
+    const deck_seed = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    const { titles } = await buildWtDeck({
+      mood,
+      seedLiked,
+      excludeIds,
+      likedGenreIds,
+      limit: 60,
+      seed: deck_seed,
+    });
+
     if (titles.length === 0) {
       return NextResponse.json({ error: "Could not fetch titles" }, { status: 500 });
     }
@@ -107,6 +118,7 @@ export async function POST(req: NextRequest) {
         code,
         host_id: user.id,
         titles,
+        deck_seed,
         status: "waiting",
       })
       .select("id, code, status")
@@ -114,7 +126,7 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    return NextResponse.json({ session: { ...session, titles } });
+    return NextResponse.json({ session: { ...session, titles, deck_seed } });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
@@ -143,7 +155,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
-    // Verify user is part of session
     if (session.host_id !== user.id && session.guest_id !== user.id) {
       return NextResponse.json({ error: "Not part of this session" }, { status: 403 });
     }
