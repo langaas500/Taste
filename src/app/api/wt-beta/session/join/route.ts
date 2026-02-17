@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { getWtUserId } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
 
 // POST: Join a session with a code
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireUser();
+    const userId = await getWtUserId(req);
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const { code } = await req.json();
 
     if (!code || typeof code !== "string") {
@@ -25,11 +27,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
-    if (session.host_id === user.id) {
+    if (session.host_id === userId) {
       return NextResponse.json({ error: "Cannot join your own session" }, { status: 400 });
     }
 
-    if (session.guest_id && session.guest_id !== user.id) {
+    if (session.guest_id && session.guest_id !== userId) {
       return NextResponse.json({ error: "Session is full" }, { status: 400 });
     }
 
@@ -41,7 +43,7 @@ export async function POST(req: NextRequest) {
     const { error: updateError } = await admin
       .from("wt_sessions")
       .update({
-        guest_id: user.id,
+        guest_id: userId,
         status: "active",
         updated_at: new Date().toISOString(),
       })
@@ -61,7 +63,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
-    if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

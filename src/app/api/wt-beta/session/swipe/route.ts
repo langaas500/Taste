@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
-import { createSupabaseServer } from "@/lib/supabase-server";
+import { getWtUserId } from "@/lib/auth";
+import { createSupabaseAdmin } from "@/lib/supabase-server";
 
 // POST: Submit a swipe action (atomic — writes to wt_session_swipes)
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireUser();
+    const userId = await getWtUserId(req);
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const { session_id, tmdb_id, type, action } = await req.json();
 
     if (!session_id || !tmdb_id || !type || !action) {
@@ -16,10 +18,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
-    const supabase = await createSupabaseServer();
+    const admin = createSupabaseAdmin();
 
     // Verify user is part of this session and check current match state
-    const { data: session, error: fetchError } = await supabase
+    const { data: session, error: fetchError } = await admin
       .from("wt_sessions")
       .select("id, host_id, guest_id, status, match_tmdb_id")
       .eq("id", session_id)
@@ -29,7 +31,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
-    if (session.host_id !== user.id && session.guest_id !== user.id) {
+    if (session.host_id !== userId && session.guest_id !== userId) {
       return NextResponse.json({ error: "Not part of this session" }, { status: 403 });
     }
 
@@ -40,15 +42,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const isHost = session.host_id === user.id;
+    const isHost = session.host_id === userId;
 
     // Atomically upsert the swipe — UNIQUE constraint prevents duplicates
-    const { error: swipeError } = await supabase
+    const { error: swipeError } = await admin
       .from("wt_session_swipes")
       .upsert(
         {
           session_id,
-          user_id: user.id,
+          user_id: userId,
           tmdb_id,
           media_type: type,
           decision: action,
@@ -67,7 +69,7 @@ export async function POST(req: NextRequest) {
     if (action === "like" || action === "superlike") {
       const partnerId = isHost ? session.guest_id : session.host_id;
       if (partnerId) {
-        const { data: partnerSwipe } = await supabase
+        const { data: partnerSwipe } = await admin
           .from("wt_session_swipes")
           .select("decision")
           .eq("session_id", session_id)
@@ -90,7 +92,7 @@ export async function POST(req: NextRequest) {
 
     // Update session: set match or just bump updated_at for partner polling
     if (matchFound) {
-      await supabase
+      await admin
         .from("wt_sessions")
         .update({
           match_tmdb_id: matchFound.tmdb_id,
@@ -100,7 +102,7 @@ export async function POST(req: NextRequest) {
         })
         .eq("id", session_id);
     } else {
-      await supabase
+      await admin
         .from("wt_sessions")
         .update({ updated_at: new Date().toISOString() })
         .eq("id", session_id);
@@ -109,7 +111,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, match: matchFound, doubleSuperMatch });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
-    if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

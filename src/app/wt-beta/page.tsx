@@ -261,6 +261,7 @@ export default function WTBetaPage() {
   deckRef.current = deck;
   const extendingRef = useRef(false);
   const partnerRef = useRef<{ liked: number[] } | null>(null);
+  const guestIdRef = useRef<string>("");
 
   const [swipe, setSwipe] = useState<{ x: number; y: number; rot: number; dragging: boolean }>({ x: 0, y: 0, rot: 0, dragging: false });
   const [fly, setFly] = useState<{ active: boolean; x: number; rot: number }>({ active: false, x: 0, rot: 0 });
@@ -282,6 +283,13 @@ export default function WTBetaPage() {
       if (localStorage.getItem("ss_last_play_date") === today) {
         setReturnedToday(true);
       }
+      // Persist a stable guest ID for WT sessions across reloads
+      let gid = localStorage.getItem("wt_guest_id");
+      if (!gid) {
+        gid = crypto.randomUUID();
+        localStorage.setItem("wt_guest_id", gid);
+      }
+      guestIdRef.current = gid;
     } catch { /* ignore */ }
   }, []);
 
@@ -364,7 +372,7 @@ export default function WTBetaPage() {
       theirLikedIds = partnerRef.current?.liked ?? [];
     } else {
       try {
-        const res = await fetch(`/api/wt-beta/session?id=${sessionId}`);
+        const res = await fetch(`/api/wt-beta/session?id=${sessionId}`, { headers: { "X-WT-Guest-ID": guestIdRef.current } });
         const data = await res.json();
         if (data.session) {
           const mySw = (data.session.my_swipes ?? {}) as Record<string, string>;
@@ -576,7 +584,7 @@ export default function WTBetaPage() {
     } else {
       fetch("/api/wt-beta/session/swipe", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current },
         body: JSON.stringify({ session_id: sessionId, tmdb_id: t.tmdb_id, type: t.type, action: "superlike" }),
       })
         .then((r) => r.json())
@@ -655,7 +663,7 @@ export default function WTBetaPage() {
   async function createSession() {
     setSessionError(""); setTitlesLoading(true);
     try {
-      const res = await fetch("/api/wt-beta/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+      const res = await fetch("/api/wt-beta/session", { method: "POST", headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current }, body: JSON.stringify({}) });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setSessionId(data.session.id);
@@ -674,7 +682,7 @@ export default function WTBetaPage() {
     if (!joinCode.trim()) return;
     setSessionError(""); setTitlesLoading(true);
     try {
-      const res = await fetch("/api/wt-beta/session/join", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: joinCode.trim() }) });
+      const res = await fetch("/api/wt-beta/session/join", { method: "POST", headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current }, body: JSON.stringify({ code: joinCode.trim() }) });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setSessionId(data.session.id);
@@ -696,7 +704,7 @@ export default function WTBetaPage() {
     if (chosen || roundPhase !== "swiping") return;
     const poll = async () => {
       try {
-        const res = await fetch(`/api/wt-beta/session?id=${sessionId}`);
+        const res = await fetch(`/api/wt-beta/session?id=${sessionId}`, { headers: { "X-WT-Guest-ID": guestIdRef.current } });
         const data = await res.json();
         if (!data.session) return;
         if (!partnerJoined && data.session.partner_joined) {
@@ -734,7 +742,7 @@ export default function WTBetaPage() {
     if (!sessionId) return;
     fetch("/api/wt-beta/session/swipe", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current },
       body: JSON.stringify({ session_id: sessionId, tmdb_id: t.tmdb_id, type: t.type, action }),
     }).catch(() => {});
   }

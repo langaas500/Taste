@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
-import { createSupabaseServer } from "@/lib/supabase-server";
+import { getWtUserId } from "@/lib/auth";
+import { createSupabaseAdmin } from "@/lib/supabase-server";
 import { buildWtDeck } from "@/lib/wt-titles";
 import type { Mood } from "@/lib/wt-titles";
 
@@ -18,8 +18,10 @@ function generateCode(): string {
 // POST: Create a new WT session
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireUser();
-    const supabase = await createSupabaseServer();
+    const userId = await getWtUserId(req);
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const admin = createSupabaseAdmin();
 
     // Parse mood from body
     let mood: Mood | undefined;
@@ -32,8 +34,8 @@ export async function POST(req: NextRequest) {
 
     // Get user exclusions + liked history for title pool
     const [{ data: userTitles }, { data: exclusions }] = await Promise.all([
-      supabase.from("user_titles").select("tmdb_id, type, sentiment, favorite").eq("user_id", user.id),
-      supabase.from("user_exclusions").select("tmdb_id, type").eq("user_id", user.id),
+      admin.from("user_titles").select("tmdb_id, type, sentiment, favorite").eq("user_id", userId),
+      admin.from("user_exclusions").select("tmdb_id, type").eq("user_id", userId),
     ]);
 
     const excludeIds = new Set<string>();
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     if (likedTitles.length > 0) {
       const likedIds = likedTitles.map((t: { tmdb_id: number }) => t.tmdb_id);
-      const { data: cached } = await supabase
+      const { data: cached } = await admin
         .from("titles_cache")
         .select("tmdb_id, type, title, genres")
         .in("tmdb_id", likedIds.slice(0, 20));
@@ -100,7 +102,7 @@ export async function POST(req: NextRequest) {
     let code = generateCode();
     let attempts = 0;
     while (attempts < 5) {
-      const { data: existing } = await supabase
+      const { data: existing } = await admin
         .from("wt_sessions")
         .select("id")
         .eq("code", code)
@@ -112,11 +114,11 @@ export async function POST(req: NextRequest) {
       attempts++;
     }
 
-    const { data: session, error } = await supabase
+    const { data: session, error } = await admin
       .from("wt_sessions")
       .insert({
         code,
-        host_id: user.id,
+        host_id: userId,
         titles,
         deck_seed,
         status: "waiting",
@@ -129,7 +131,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ session: { ...session, titles, deck_seed } });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
-    if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
@@ -137,15 +138,16 @@ export async function POST(req: NextRequest) {
 // GET: Poll session state
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireUser();
-    const sessionId = req.nextUrl.searchParams.get("id");
+    const userId = await getWtUserId(req);
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const sessionId = req.nextUrl.searchParams.get("id");
     if (!sessionId) {
       return NextResponse.json({ error: "Missing session id" }, { status: 400 });
     }
 
-    const supabase = await createSupabaseServer();
-    const { data: session, error } = await supabase
+    const admin = createSupabaseAdmin();
+    const { data: session, error } = await admin
       .from("wt_sessions")
       .select("id, code, host_id, guest_id, match_tmdb_id, match_type, status, updated_at")
       .eq("id", sessionId)
@@ -155,12 +157,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
-    if (session.host_id !== user.id && session.guest_id !== user.id) {
+    if (session.host_id !== userId && session.guest_id !== userId) {
       return NextResponse.json({ error: "Not part of this session" }, { status: 403 });
     }
 
     // Read swipes from the atomic wt_session_swipes table
-    const { data: swipeRows } = await supabase
+    const { data: swipeRows } = await admin
       .from("wt_session_swipes")
       .select("user_id, tmdb_id, media_type, decision")
       .eq("session_id", sessionId);
@@ -169,7 +171,7 @@ export async function GET(req: NextRequest) {
     const partnerSwipes: Record<string, string> = {};
     for (const s of swipeRows || []) {
       const key = `${s.tmdb_id}:${s.media_type}`;
-      if (s.user_id === user.id) {
+      if (s.user_id === userId) {
         mySwipes[key] = s.decision;
       } else {
         partnerSwipes[key] = s.decision;
@@ -191,7 +193,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
-    if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
