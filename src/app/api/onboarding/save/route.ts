@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
       const now = new Date().toISOString();
       const rows = titles
         .filter(
-          (item): item is { tmdb_id: number; type: string; sentiment: string } =>
-            !!(item.tmdb_id && item.type && item.sentiment)
+          (item): item is { tmdb_id: number; type: "movie" | "tv"; sentiment: string } =>
+            !!(item.tmdb_id && (item.type === "movie" || item.type === "tv") && item.sentiment)
         )
         .map((item) => ({
           user_id: user.id,
