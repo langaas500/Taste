@@ -9,7 +9,7 @@ const VALID_MOODS = new Set<Mood>(["light", "dark", "thriller", "action", "roman
 function generateCode(): string {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   let code = "";
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 4; i++) {
     code += chars[Math.floor(Math.random() * chars.length)];
   }
   return code;
