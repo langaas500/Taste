@@ -462,11 +462,19 @@ export default function WTBetaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timer]);
 
-  /* ── deckIndex passes limit → end round ── */
+  /* ── deckIndex passes limit OR deck exhausted → end round ── */
   useEffect(() => {
     if (screen !== "together" || roundPhase !== "swiping" || !!chosen) return;
+
+    // If we run out of cards before hitting the limit, end the round anyway.
+    if (deck.length > 0 && deckIndex >= deck.length) {
+      endRound(round as 1 | 2);
+      return;
+    }
+
     if (round === 1 && deckIndex >= ROUND1_LIMIT) endRound(1);
     if (round === 2 && deckIndex >= ROUND1_LIMIT + ROUND2_LIMIT) endRound(2);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckIndex]);
 
