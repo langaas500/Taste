@@ -231,7 +231,7 @@ export default function WTBetaPage() {
   const [selectedProviders, setSelectedProviders] = useState<number[]>([]);
   const [userRegion, setUserRegion] = useState("US");
   const [matchRevealPhase, setMatchRevealPhase] = useState<0 | 1 | 2>(0);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [introChoice, setIntroChoice] = useState<"solo" | "paired">("solo");
   const [introFading, setIntroFading] = useState(false);
   const [ritualState, setRitualState] = useState<RitualState>("idle");
   const [ritualPhase, setRitualPhase] = useState<0 | 1 | 2>(0);
@@ -973,18 +973,63 @@ export default function WTBetaPage() {
                 )}
               </div>
 
+              {/* Mode selector cards */}
+              <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+                {(["solo", "paired"] as const).map((choice) => {
+                  const active = introChoice === choice;
+                  return (
+                    <button
+                      key={choice}
+                      onClick={() => setIntroChoice(choice)}
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 10,
+                        padding: "18px 12px",
+                        borderRadius: 16,
+                        border: active ? "1.5px solid rgba(255,255,255,0.28)" : "1px solid rgba(255,255,255,0.09)",
+                        background: active ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)",
+                        cursor: "pointer",
+                        transition: "all 160ms ease",
+                        transform: active ? "scale(1.03)" : "scale(1)",
+                        boxShadow: active ? "0 0 0 1px rgba(255,42,42,0.15), 0 4px 20px rgba(0,0,0,0.3)" : "none",
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={choice === "solo" ? "/one-phone.svg" : "/two-phones.svg"}
+                        alt={choice === "solo" ? "One phone" : "Two phones"}
+                        style={{ height: 30, width: "auto", opacity: active ? 1 : 0.55, transition: "opacity 160ms ease" }}
+                      />
+                      <span style={{
+                        fontSize: "0.8125rem",
+                        fontWeight: active ? 600 : 400,
+                        color: active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.42)",
+                        letterSpacing: "-0.01em",
+                        transition: "all 160ms ease",
+                      }}>
+                        {choice === "solo" ? "One phone" : "Two phones"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
               {/* Primary CTA */}
-              <div style={{ marginBottom: "22px" }}>
+              <div style={{ marginBottom: 12 }}>
                 <button
                   onClick={() => {
-                    if (titlesLoading || ritualState !== "idle") return;
-                    startRitual(() => {
-                      setMode("solo");
-                      setSelectedProviders([]);
-                      setScreen("providers");
-                    });
+                    if (introChoice === "solo") {
+                      if (titlesLoading || ritualState !== "idle") return;
+                      startRitual(() => { setMode("solo"); setSelectedProviders([]); setScreen("providers"); });
+                    } else {
+                      createSession();
+                    }
                   }}
-                  disabled={titlesLoading || ritualState !== "idle"}
+                  disabled={titlesLoading || (introChoice === "solo" && ritualState !== "idle")}
                   className="cta-btn"
                   style={{
                     width: "100%",
@@ -1001,69 +1046,25 @@ export default function WTBetaPage() {
                     boxShadow: "0 8px 24px rgba(255,42,42,0.25), inset 0 1px 0 rgba(255,255,255,0.18)",
                   }}
                 >
-                  {titlesLoading ? "Loading…" : "Start the 2-minute round"}
+                  {titlesLoading ? "Loading…" : introChoice === "solo" ? "Start the 2-minute round" : "Create shared round"}
                 </button>
               </div>
 
-              {/* Secondary options */}
+              {/* Secondary: I have a code — only when Two phones selected */}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                <button
-                  onClick={() => { setMode("solo"); setSelectedProviders([]); setScreen("providers"); }}
-                  disabled={titlesLoading}
-                  style={{
-                    background: "none", border: "none",
-                    color: "rgba(255,255,255,0.58)",
-                    fontSize: "0.8125rem", fontWeight: 400,
-                    cursor: "pointer", padding: "4px 0", letterSpacing: "0",
-                  }}
-                >
-                  One phone
-                </button>
-                <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.6875rem", lineHeight: 1 }}>or</span>
-                <button
-                  onClick={() => setAdvancedOpen((v) => !v)}
-                  style={{
-                    background: "none", border: "none",
-                    color: "rgba(255,255,255,0.58)",
-                    fontSize: "0.8125rem", fontWeight: 400,
-                    cursor: "pointer", padding: "4px 0",
-                    display: "inline-flex", alignItems: "center", gap: "3px",
-                  }}
-                >
-                  Two phones
-                  <svg
+                {introChoice === "paired" && (
+                  <button
+                    onClick={() => setScreen("join")}
                     style={{
-                      width: 9, height: 9,
-                      transition: "transform 180ms ease",
-                      transform: advancedOpen ? "rotate(180deg)" : "rotate(0deg)",
-                      opacity: 0.6,
+                      background: "none", border: "none",
+                      color: "rgba(255,255,255,0.38)",
+                      fontSize: "0.8125rem", fontWeight: 400,
+                      cursor: "pointer", padding: "4px 0",
                     }}
-                    fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </button>
-
-                {advancedOpen && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", width: "100%", marginTop: "8px" }}>
-                    <button
-                      onClick={() => createSession()}
-                      disabled={titlesLoading}
-                      className="w-full py-3 rounded-xl text-sm font-semibold disabled:opacity-50"
-                      style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.72)", border: "1px solid rgba(255,255,255,0.09)", minHeight: 44 }}
-                    >
-                      Opprett runde
-                    </button>
-                    <button
-                      onClick={() => setScreen("join")}
-                      className="w-full py-3 rounded-xl text-sm font-semibold"
-                      style={{ background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.42)", border: "1px solid rgba(255,255,255,0.06)", minHeight: 44 }}
-                    >
-                      Bli med i runde
-                    </button>
-                  </div>
+                    I have a code
+                  </button>
                 )}
-
                 {sessionError && <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: "0.25rem" }}>{sessionError}</p>}
               </div>
 
