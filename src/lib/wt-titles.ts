@@ -66,14 +66,20 @@ const MOOD_LABELS: Record<Mood, string> = {
 const MIN_YEAR = 1995;
 const DEFAULT_LIMIT = 60;
 const FALLBACK_FETCH_THRESHOLD = 40;
+const MIN_FILTERED_POOL = 30; // minimum pool size before trying the next pass
 
 const QUALITY = {
-  minVoteMovie: 400,
-  minVoteTv:    250,
-  minRating:    6.5,
+  minVoteMovie: 150,  // lowered from 400 — vote count is a proxy for obscurity, not quality
+  minVoteTv:    100,  // lowered from 250
+  minRating:    6.5,  // unchanged — rating is the real quality gate
   minPopMovie:  25,
   minPopTv:     20,
 } as const;
+
+// TMDB fetch thresholds — deliberately below PASS 2 so the pool includes items
+// that PASS 2 and PASS 3 can draw from when PASS 1 yields too few results.
+const FETCH_MIN_VOTE_MOVIE = 50;
+const FETCH_MIN_VOTE_TV   = 30;
 
 const MAINSTREAM_LANGS = new Set(["en", "no", "sv", "da"]);
 
@@ -82,6 +88,13 @@ const BLOCKED_LANGS = new Set(["hi", "ta", "te", "ml", "kn", "pa", "bn", "mr", "
 
 // Hard-blocked genres — Animation excluded entirely
 const BLOCKED_GENRES = new Set([16]);
+
+// 3-pass vote thresholds — tried in order until pool is large enough
+const VOTE_PASSES = [
+  { label: "pass1", minVoteMovie: 150, minVoteTv: 100 },
+  { label: "pass2", minVoteMovie: 80,  minVoteTv: 50  },
+  { label: "pass3", minVoteMovie: 0,   minVoteTv: 0   },
+] as const;
 
 /* ── internal scored type ───────────────────────────────── */
 
@@ -93,11 +106,11 @@ type Scored = WTTitle & {
   popularity: number;
 };
 
-/* ── strict quality filter (no tiered relaxation) ──────── */
+/* ── quality filter with configurable vote thresholds ───── */
 
-function applyFilters(pool: Scored[]): Scored[] {
+function applyFilters(pool: Scored[], minVoteMovie: number, minVoteTv: number): Scored[] {
   return pool.filter((item) => {
-    const minVotes = item.type === "movie" ? QUALITY.minVoteMovie : QUALITY.minVoteTv;
+    const minVotes = item.type === "movie" ? minVoteMovie : minVoteTv;
     if (item.voteCount < minVotes) return false;
     if ((item.vote_average || 0) < QUALITY.minRating) return false;
     if (!MAINSTREAM_LANGS.has(item.lang)) return false;
@@ -229,7 +242,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
         with_genres: genreStr,
         sort_by: "popularity.desc",
         "vote_average.gte": String(QUALITY.minRating),
-        "vote_count.gte": String(QUALITY.minVoteMovie),
+        "vote_count.gte": String(FETCH_MIN_VOTE_MOVIE),
         "primary_release_date.gte": `${MIN_YEAR}-01-01`,
         ...providerParams,
       }),
@@ -237,7 +250,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
         with_genres: genreStr,
         sort_by: "popularity.desc",
         "vote_average.gte": String(QUALITY.minRating),
-        "vote_count.gte": String(QUALITY.minVoteTv),
+        "vote_count.gte": String(FETCH_MIN_VOTE_TV),
         "first_air_date.gte": `${MIN_YEAR}-01-01`,
         ...providerParams,
       }),
@@ -263,7 +276,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
       tmdbDiscover("movie", {
         sort_by: "popularity.desc",
         "vote_average.gte": String(QUALITY.minRating),
-        "vote_count.gte": String(QUALITY.minVoteMovie),
+        "vote_count.gte": String(FETCH_MIN_VOTE_MOVIE),
         "primary_release_date.gte": `${MIN_YEAR}-01-01`,
         page: String(page),
         ...providerParams,
@@ -271,7 +284,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
       tmdbDiscover("tv", {
         sort_by: "popularity.desc",
         "vote_average.gte": String(QUALITY.minRating),
-        "vote_count.gte": String(QUALITY.minVoteTv),
+        "vote_count.gte": String(FETCH_MIN_VOTE_TV),
         "first_air_date.gte": `${MIN_YEAR}-01-01`,
         page: String(page),
         ...providerParams,
@@ -283,7 +296,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
 
   await fetchPopularDiscover(1);
 
-  // ── 5. Thin pool: fetch more pages — never relax thresholds ───────
+  // ── 5. Thin pool: fetch more pages ────────────────────────────────
   if (pool.length < FALLBACK_FETCH_THRESHOLD) {
     await fetchPopularDiscover(2);
   }
@@ -291,23 +304,24 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
     await fetchPopularDiscover(3);
   }
 
-  // ── 6. Strict quality filter ──────────────────────────────────────
-  const filtered = applyFilters(pool);
+  // ── 6. 3-pass quality filter — try successively relaxed vote thresholds ──
+  let filtered: Scored[] = [];
+  let usedPass: typeof VOTE_PASSES[number] = VOTE_PASSES[0];
+
+  for (const pass of VOTE_PASSES) {
+    filtered = applyFilters(pool, pass.minVoteMovie, pass.minVoteTv);
+    usedPass = pass;
+    if (filtered.length >= MIN_FILTERED_POOL) break;
+  }
 
   // ── DEBUG: pool diagnostics ───────────────────────────────────────
-  const dropped = pool.filter((item) => {
-    const minVotes = item.type === "movie" ? QUALITY.minVoteMovie : QUALITY.minVoteTv;
-    if (item.voteCount < minVotes) return true;
-    if ((item.vote_average || 0) < QUALITY.minRating) return true;
-    if (!MAINSTREAM_LANGS.has(item.lang)) return true;
-    return false;
-  });
-  console.log(`[buildWtDeck] pool=${pool.length} filtered=${filtered.length} dropped=${dropped.length}`, {
-    droppedByVotes: dropped.filter((i) => i.voteCount < (i.type === "movie" ? QUALITY.minVoteMovie : QUALITY.minVoteTv)).length,
-    droppedByRating: dropped.filter((i) => (i.vote_average || 0) < QUALITY.minRating).length,
-    droppedByLang: dropped.filter((i) => !MAINSTREAM_LANGS.has(i.lang)).length,
-    mood, preference,
-  });
+  const droppedByVotes = pool.filter((i) => i.voteCount < (i.type === "movie" ? usedPass.minVoteMovie : usedPass.minVoteTv)).length;
+  const droppedByRating = pool.filter((i) => (i.vote_average || 0) < QUALITY.minRating).length;
+  const droppedByLang = pool.filter((i) => !MAINSTREAM_LANGS.has(i.lang)).length;
+  console.log(
+    `[buildWtDeck] ${usedPass.label}: pool=${pool.length} filtered=${filtered.length} dropped=${pool.length - filtered.length}`,
+    { droppedByVotes, droppedByRating, droppedByLang, thresholds: `movie=${usedPass.minVoteMovie}/tv=${usedPass.minVoteTv}`, mood, preference }
+  );
 
   // ── 7. Separate TV and Movie pools, apply preference weighting ───
   const tvPool = filtered.filter((i) => i.type === "tv");
