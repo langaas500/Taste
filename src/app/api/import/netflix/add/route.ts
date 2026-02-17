@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
 
     // Filter to valid items only
     const validItems = items.filter(
-      (item): item is { tmdb_id: number; type: string } => !!(item.tmdb_id && item.type)
+      (item): item is { tmdb_id: number; type: "movie" | "tv" } =>
+        !!(item.tmdb_id && (item.type === "movie" || item.type === "tv"))
     );
     const skippedInvalid = items.length - validItems.length;
 
