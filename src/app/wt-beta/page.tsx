@@ -488,6 +488,15 @@ export default function WTBetaPage() {
     return () => clearInterval(id);
   }, [screen, iAmDone]);
 
+  /* ── reset message index on context change ── */
+  useEffect(() => {
+    if (screen === "waiting") setWaitingFactIndex(0);
+  }, [screen]);
+
+  useEffect(() => {
+    if (iAmDone) setWaitingFactIndex(0);
+  }, [iAmDone]);
+
   /* ── enter together mode ── */
   async function goTogether() {
     setTitlesLoading(true);
@@ -748,8 +757,7 @@ export default function WTBetaPage() {
 
   /* ── paired: poll ── */
   useEffect(() => {
-    if (mode !== "paired" || !sessionId) return;
-    if (chosen || roundPhase !== "swiping") return;
+    if (mode !== "paired" || !sessionId || !!chosen) return;
     const poll = async () => {
       try {
         const res = await fetch(`/api/wt-beta/session?id=${sessionId}`, { headers: { "X-WT-Guest-ID": guestIdRef.current } });
@@ -783,7 +791,7 @@ export default function WTBetaPage() {
     const interval = setInterval(poll, 2000);
     poll();
     return () => clearInterval(interval);
-  }, [mode, sessionId, partnerJoined, screen, titles, chosen, roundPhase]);
+  }, [mode, sessionId, partnerJoined, screen, titles, chosen]);
 
   /* ── paired: submit swipe ── */
   function submitPairedSwipe(t: WTTitle, action: SwipeAction) {
