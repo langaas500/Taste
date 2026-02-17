@@ -162,16 +162,18 @@ export async function GET(req: NextRequest) {
     }
 
     // Read swipes from the atomic wt_session_swipes table
+    // guest_id is set for unauthenticated players, user_id for authenticated ones
     const { data: swipeRows } = await admin
       .from("wt_session_swipes")
-      .select("user_id, tmdb_id, media_type, decision")
+      .select("user_id, guest_id, tmdb_id, media_type, decision")
       .eq("session_id", sessionId);
 
     const mySwipes: Record<string, string> = {};
     const partnerSwipes: Record<string, string> = {};
     for (const s of swipeRows || []) {
       const key = `${s.tmdb_id}:${s.media_type}`;
-      if (s.user_id === userId) {
+      const swipeOwner = s.user_id ?? s.guest_id;
+      if (swipeOwner === userId) {
         mySwipes[key] = s.decision;
       } else {
         partnerSwipes[key] = s.decision;

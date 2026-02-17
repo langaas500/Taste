@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWtUserId } from "@/lib/auth";
+import { getWtUserId, getUser } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
 
 // POST: Submit a swipe action (atomic — writes to wt_session_swipes)
@@ -7,6 +7,10 @@ export async function POST(req: NextRequest) {
   try {
     const userId = await getWtUserId(req);
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Determine if caller is an authenticated user or a guest (no auth session)
+    const authUser = await getUser();
+    const isGuest = !authUser;
 
     const { session_id, tmdb_id, type, action } = await req.json();
 
@@ -44,22 +48,33 @@ export async function POST(req: NextRequest) {
 
     const isHost = session.host_id === userId;
 
-    // Atomically upsert the swipe — UNIQUE constraint prevents duplicates
-    const { error: swipeError } = await admin
-      .from("wt_session_swipes")
-      .upsert(
-        {
-          session_id,
-          user_id: userId,
-          tmdb_id,
-          media_type: type,
-          decision: action,
-        },
-        { onConflict: "session_id,user_id,tmdb_id,media_type" }
-      );
+    // Build swipe row — write to user_id for auth users, guest_id for guests
+    const swipeRow = isGuest
+      ? { session_id, guest_id: userId, user_id: null, tmdb_id, media_type: type, decision: action }
+      : { session_id, user_id: userId, guest_id: null, tmdb_id, media_type: type, decision: action };
 
-    if (swipeError) {
-      return NextResponse.json({ error: swipeError.message }, { status: 500 });
+    // INSERT first; if duplicate (partial unique index hit = 23505) → UPDATE decision
+    // Supabase upsert cannot target partial unique indexes, so we do this manually.
+    const { error: insertError } = await admin.from("wt_session_swipes").insert(swipeRow);
+
+    if (insertError) {
+      if (insertError.code === "23505") {
+        // Swipe already exists — update the decision
+        const updateQ = admin
+          .from("wt_session_swipes")
+          .update({ decision: action })
+          .eq("session_id", session_id)
+          .eq("tmdb_id", tmdb_id)
+          .eq("media_type", type);
+
+        const { error: updErr } = isGuest
+          ? await updateQ.eq("guest_id", userId)
+          : await updateQ.eq("user_id", userId);
+
+        if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
+      } else {
+        return NextResponse.json({ error: insertError.message }, { status: 500 });
+      }
     }
 
     // Check for match: query partner's swipe for this title
@@ -73,9 +88,9 @@ export async function POST(req: NextRequest) {
           .from("wt_session_swipes")
           .select("decision")
           .eq("session_id", session_id)
-          .eq("user_id", partnerId)
           .eq("tmdb_id", tmdb_id)
           .eq("media_type", type)
+          .or(`user_id.eq.${partnerId},guest_id.eq.${partnerId}`)
           .maybeSingle();
 
         if (
