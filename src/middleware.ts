@@ -47,7 +47,7 @@ export async function middleware(request: NextRequest) {
     pathname === "/search" ||
     pathname === "/wt-beta" ||
     pathname.startsWith("/api/tmdb/") ||
-    pathname === "/api/wt-beta/posters";
+    pathname.startsWith("/api/wt-beta/");
 
   if (!user && !isPublic && !isGuestAllowed) {
     const url = request.nextUrl.clone();

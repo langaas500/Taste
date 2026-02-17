@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tmdbTrending, tmdbDiscover } from "@/lib/tmdb";
 
-/* ── quality constants (mirrors wt-titles.ts — never lowered) ── */
+/* ── quality constants (ribbon is decorative — relaxed thresholds) ── */
 
-const MIN_YEAR = 1990;
-const BLOCKED_LANGS = new Set(["hi", "ta", "te", "ml", "kn", "pa", "bn", "mr", "ja"]);
-const MAINSTREAM_LANGS = new Set(["en", "no", "sv", "da"]);
+const MIN_YEAR = 1985;
+const BLOCKED_LANGS = new Set(["hi", "ta", "te", "ml", "kn", "pa", "bn", "mr"]);
 const BLOCKED_GENRES = new Set([16]); // animation
 
 function qualityOk(item: Record<string, unknown>, type: "movie" | "tv"): boolean {
   const lang = (item.original_language as string) || "";
   if (BLOCKED_LANGS.has(lang)) return false;
-  if (!MAINSTREAM_LANGS.has(lang)) return false;
   if (item.adult === true) return false;
 
   const genreIds: number[] = Array.isArray(item.genre_ids) ? (item.genre_ids as number[]) : [];
@@ -23,9 +21,9 @@ function qualityOk(item: Record<string, unknown>, type: "movie" | "tv"): boolean
     if (!isNaN(y) && y < MIN_YEAR) return false;
   }
 
-  const minVotes = type === "movie" ? 400 : 250;
+  const minVotes = type === "movie" ? 150 : 80;
   if (((item.vote_count as number) || 0) < minVotes) return false;
-  if (((item.vote_average as number) || 0) < 6.5) return false;
+  if (((item.vote_average as number) || 0) < 6.0) return false;
   if (!item.poster_path) return false;
 
   return true;

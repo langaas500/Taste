@@ -857,9 +857,12 @@ export default function WTBetaPage() {
                   ))}
                 </div>
               ) : (
-                /* Loading placeholder — gradient tiles */
-                <div style={{ display: "flex", gap: 13, paddingTop: 6, paddingBottom: 6 }}>
-                  {RIBBON_COLORS.map(([from, to], i) => (
+                /* Loading placeholder — gradient tiles, duplicated for seamless scroll */
+                <div
+                  className="ribbon-track"
+                  style={{ display: "flex", gap: 13, width: "max-content", paddingTop: 6, paddingBottom: 6 }}
+                >
+                  {[...RIBBON_COLORS, ...RIBBON_COLORS].map(([from, to], i) => (
                     <div
                       key={i}
                       style={{ height: 120, width: 80, borderRadius: 16, background: `linear-gradient(160deg, ${from} 0%, ${to} 100%)`, opacity: 0.18, flexShrink: 0 }}
