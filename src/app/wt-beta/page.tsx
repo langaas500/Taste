@@ -378,6 +378,18 @@ export default function WTBetaPage() {
         const res = await fetch(`/api/wt-beta/session?id=${sessionId}`, { headers: { "X-WT-Guest-ID": guestIdRef.current } });
         const data = await res.json();
         if (data.session) {
+          // If the server already registered a match, show it directly —
+          // avoids the race where one device ends round before the partner's
+          // final swipe is processed.
+          if (data.session.match_tmdb_id) {
+            const mt = deckRef.current.find((t) => t.tmdb_id === data.session.match_tmdb_id);
+            if (mt) {
+              setFinalWinner(mt);
+              setRoundPhase("winner");
+              roundEndingRef.current = false;
+              return;
+            }
+          }
           const mySw = (data.session.my_swipes ?? {}) as Record<string, string>;
           const theirSw = (data.session.partner_swipes ?? {}) as Record<string, string>;
           myLikedIds = Object.entries(mySw).filter(([, a]) => a === "like" || a === "superlike").map(([k]) => Number(k.split(":")[0]));
