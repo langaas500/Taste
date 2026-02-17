@@ -283,11 +283,14 @@ export default function WTBetaPage() {
       if (localStorage.getItem("ss_last_play_date") === today) {
         setReturnedToday(true);
       }
-      // Persist a stable guest ID for WT sessions across reloads
-      let gid = localStorage.getItem("wt_guest_id");
+      // Persist a stable guest ID for WT sessions across reloads.
+      // localStorage.setItem throws in Safari incognito — keep ref assignment
+      // outside that risk so the ID is always set even if persistence fails.
+      let gid = "";
+      try { gid = localStorage.getItem("wt_guest_id") ?? ""; } catch { /* ignore */ }
       if (!gid) {
         gid = crypto.randomUUID();
-        localStorage.setItem("wt_guest_id", gid);
+        try { localStorage.setItem("wt_guest_id", gid); } catch { /* incognito/Safari — ephemeral ok */ }
       }
       guestIdRef.current = gid;
     } catch { /* ignore */ }
