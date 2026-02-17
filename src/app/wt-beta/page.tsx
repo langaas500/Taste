@@ -13,8 +13,8 @@ const TITLES_CACHE_KEY = "wt_titles_v3";
 const GUEST_PROFILE_KEY = "wt_guest_profile_v1";
 const ROUND1_LIMIT = 25;
 const ROUND2_LIMIT = 15;
-const ROUND1_DURATION = 180;
-const ROUND2_DURATION = 120;
+const ROUND1_DURATION = 120;
+const ROUND2_DURATION = 60;
 
 
 /* ── poster ribbon — static curated palette ─────────────── */
@@ -1001,7 +1001,7 @@ export default function WTBetaPage() {
                     boxShadow: "0 8px 24px rgba(255,42,42,0.25), inset 0 1px 0 rgba(255,255,255,0.18)",
                   }}
                 >
-                  {titlesLoading ? "Loading…" : "Start the 3-minute round"}
+                  {titlesLoading ? "Loading…" : "Start the 2-minute round"}
                 </button>
               </div>
 
@@ -1666,7 +1666,7 @@ export default function WTBetaPage() {
               }}>
                 {/* Large text — cross-dissolve between 3:00 / Ready? / Go. */}
                 <div style={{ position: "relative", height: 60, marginBottom: 16 }}>
-                  {(["3:00", "Ready?", "Go."] as const).map((text, idx) => (
+                  {(["2:00", "Ready?", "Go."] as const).map((text, idx) => (
                     <div
                       key={text}
                       style={{
