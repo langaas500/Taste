@@ -120,6 +120,13 @@ Ingen API-route skal krasje på JSON.parse.
 
 ---
 
+## Git
+
+Commit gjerne underveis etter logiske enheter.
+Push KUN når brukeren eksplisitt ber om det.
+
+---
+
 ## Database-migrasjoner
 
 Nye tabeller eller kolonner → lag fil `supabase/migrations/NNN_navn.sql`.
