@@ -59,10 +59,20 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Missing tmdb_id or type" }, { status: 400 });
     }
 
+    const VALID_STATUS = new Set(["watched", "watching", "watchlist"]);
+    const VALID_SENTIMENT = new Set(["liked", "neutral", "disliked"]);
+
     const allowed = ["last_season", "last_episode", "favorite", "status", "sentiment"];
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
     for (const key of allowed) {
       if (updates[key] !== undefined) patch[key] = updates[key];
+    }
+
+    if (patch.status !== undefined && !VALID_STATUS.has(patch.status as string)) {
+      return NextResponse.json({ error: "Invalid status value" }, { status: 400 });
+    }
+    if (patch.sentiment !== undefined && patch.sentiment !== null && !VALID_SENTIMENT.has(patch.sentiment as string)) {
+      return NextResponse.json({ error: "Invalid sentiment value" }, { status: 400 });
     }
 
     const supabase = await createSupabaseServer();

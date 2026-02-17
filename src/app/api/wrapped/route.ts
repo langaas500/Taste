@@ -16,8 +16,8 @@ export async function GET() {
       .select("tmdb_id, type, sentiment, favorite, watched_at, updated_at")
       .eq("user_id", user.id)
       .eq("status", "watched")
-      .gte("updated_at", oneYearAgo.toISOString())
-      .order("updated_at", { ascending: false });
+      .gte("watched_at", oneYearAgo.toISOString())
+      .order("watched_at", { ascending: false });
 
     if (!titles || titles.length < 10) {
       return NextResponse.json({ insufficient: true, count: titles?.length || 0 });
@@ -89,8 +89,8 @@ export async function GET() {
 
     // Most active month
     const monthCounts: Record<string, number> = {};
-    for (const t of titles as { updated_at: string }[]) {
-      const month = t.updated_at.substring(0, 7); // "2025-03"
+    for (const t of titles as { watched_at: string | null; updated_at: string }[]) {
+      const month = (t.watched_at || t.updated_at).substring(0, 7); // "2025-03"
       monthCounts[month] = (monthCounts[month] || 0) + 1;
     }
     const mostActiveMonth = Object.entries(monthCounts)

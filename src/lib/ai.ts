@@ -30,11 +30,11 @@ async function callAnthropic(messages: AIMessage[], temperature: number): Promis
     method: "POST",
     headers: {
       "x-api-key": key,
-      "anthropic-version": "2023-06-01",
+      "anthropic-version": "2024-06-01",
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-5-20250929",
+      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
       max_tokens: 2048,
       temperature,
       system: systemMsg,

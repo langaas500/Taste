@@ -53,7 +53,7 @@ export default function HomePage() {
       .slice(0, 12)
       .map((r) => ({
         tmdb_id: r.id as number,
-        type: (r.media_type === "tv" ? "tv" : "movie") as MediaType,
+        type: "movie" as MediaType,
         title: (r.title || r.name) as string,
         poster_path: r.poster_path as string,
         year: ((r.release_date || r.first_air_date) as string || "").slice(0, 4),

@@ -45,6 +45,15 @@ export async function GET(req: NextRequest) {
     const disliked = titles.filter((t) => t.sentiment === "disliked");
     const explorationSlider = profile?.exploration_slider ?? 50;
 
+    function shuffle<T>(arr: T[]): T[] {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
     // Get cached title info for liked titles
     const likedTmdbIds = liked.map((t) => t.tmdb_id);
     const { data: likedCache } = await admin
@@ -89,7 +98,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 2. Similar to random selection of liked titles (up to 5)
-    const shuffledLiked = [...liked].sort(() => Math.random() - 0.5).slice(0, 5);
+    const shuffledLiked = shuffle(liked).slice(0, 5);
     const similarPromises = shuffledLiked.map((t) => tmdbSimilar(t.tmdb_id, t.type).then((res) => ({ results: res.results, type: t.type })));
     const similarResults = await Promise.all(similarPromises);
     for (const { results, type } of similarResults) {
@@ -298,7 +307,9 @@ export async function GET(req: NextRequest) {
         vote_count: parsed.vote_count,
         popularity: parsed.popularity,
         updated_at: new Date().toISOString(),
-      }, { onConflict: "tmdb_id,type" }).then(() => {});
+      }, { onConflict: "tmdb_id,type" }).then(() => {}).catch((err: unknown) => {
+        console.error("titles_cache upsert failed:", err instanceof Error ? err.message : err);
+      });
     }
 
     // Generate AI explanations

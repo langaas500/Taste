@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       await admin.from("trakt_tokens").update({
         access_token: refreshed.access_token,
         refresh_token: refreshed.refresh_token,
-        expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
+        expires_at: new Date(Date.now() + (typeof refreshed.expires_in === "number" && refreshed.expires_in > 0 ? refreshed.expires_in : 7776000) * 1000).toISOString(),
         updated_at: new Date().toISOString(),
       }).eq("user_id", user.id);
     }
@@ -170,8 +170,8 @@ export async function POST(req: NextRequest) {
 
     const missing = enrichList.filter((e) => !cachedSet.has(`${e.tmdb_id}:${e.type}`));
 
-    // Fetch missing titles from TMDB with concurrency=6
-    let cached = 0;
+    // Fetch missing titles from TMDB with concurrency=6 — collect rows, no per-title DB writes
+    const cacheRowsToUpsert: Record<string, unknown>[] = [];
     await withConcurrency(missing, 6, async ({ tmdb_id, type }) => {
       try {
         const [details, externalIds] = await Promise.all([
@@ -179,32 +179,36 @@ export async function POST(req: NextRequest) {
           tmdbExternalIds(tmdb_id, type),
         ]);
         const parsed = parseTitleFromTMDB(details, type);
-
-        await admin.from("titles_cache").upsert(
-          {
-            tmdb_id: parsed.tmdb_id,
-            type: parsed.type,
-            imdb_id: externalIds?.imdb_id || null,
-            title: parsed.title,
-            original_title: parsed.original_title,
-            year: parsed.year,
-            overview: parsed.overview,
-            genres: details.genres || [],
-            poster_path: parsed.poster_path,
-            backdrop_path: parsed.backdrop_path,
-            vote_average: parsed.vote_average,
-            vote_count: parsed.vote_count,
-            popularity: parsed.popularity,
-            tmdb_payload: details,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "tmdb_id,type" }
-        );
-        cached++;
+        cacheRowsToUpsert.push({
+          tmdb_id: parsed.tmdb_id,
+          type: parsed.type,
+          imdb_id: externalIds?.imdb_id || null,
+          title: parsed.title,
+          original_title: parsed.original_title,
+          year: parsed.year,
+          overview: parsed.overview,
+          genres: details.genres || [],
+          poster_path: parsed.poster_path,
+          backdrop_path: parsed.backdrop_path,
+          vote_average: parsed.vote_average,
+          vote_count: parsed.vote_count,
+          popularity: parsed.popularity,
+          tmdb_payload: details,
+          updated_at: new Date().toISOString(),
+        });
       } catch {
         // Skip individual failures — don't abort the whole sync
       }
     });
+
+    // Bulk upsert titles_cache in chunks of 25
+    const CACHE_CHUNK = 25;
+    for (let i = 0; i < cacheRowsToUpsert.length; i += CACHE_CHUNK) {
+      await admin
+        .from("titles_cache")
+        .upsert(cacheRowsToUpsert.slice(i, i + CACHE_CHUNK), { onConflict: "tmdb_id,type" });
+    }
+    const cached = cacheRowsToUpsert.length;
 
     return NextResponse.json({
       ok: true,
