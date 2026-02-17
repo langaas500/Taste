@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { logTitle } from "@/lib/api";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
+import { waitingForPartnerMessages, waitingAfterDoneMessages } from "./messages";
 
 /* ── constants ─────────────────────────────────────────── */
 
@@ -14,110 +15,6 @@ const ROUND1_LIMIT = 25;
 const ROUND2_LIMIT = 15;
 const ROUND1_DURATION = 180;
 const ROUND2_DURATION = 120;
-
-/* ── fun facts — shown while waiting for partner to finish ── */
-const FUN_FACTS: string[] = [
-  "The original Star Wars was rejected by every major studio except 20th Century Fox.",
-  "Psycho (1960) was the first American film to show a toilet flushing on screen.",
-  "Toy Story was the first fully computer-animated feature film ever made.",
-  "The T-Rex roar in Jurassic Park is a baby elephant blended with a tiger and an alligator.",
-  "Forrest Gump's famous chocolates line wasn't in the original novel.",
-  "The entire budget of Paranormal Activity was $15,000. It made $193 million.",
-  "James Cameron drew Jack's sketch of Rose himself in Titanic.",
-  "Heath Ledger improvised the Joker's pencil trick — it wasn't in the script.",
-  "The Lion King's 'Hakuna Matata' is a real Swahili phrase meaning 'no worries.'",
-  "Breaking Bad's Walter White shares initials with Walt Whitman — a deliberate choice.",
-  "Pulp Fiction was the first independent film to gross over $100 million worldwide.",
-  "The Matrix code rain is made of mirrored katakana — reportedly the director's sushi recipe.",
-  "Sean Connery wore a toupée in every single James Bond film.",
-  "Robert De Niro gained 60 pounds and trained as a boxer for Raging Bull.",
-  "Jack Nicholson improvised 'Here's Johnny!' — it was not in The Shining's script.",
-  "Die Hard is set on Christmas Eve, making it technically a Christmas movie.",
-  "The Friends cast each earned $1 million per episode in the final two seasons.",
-  "Alfred Hitchcock appears as an extra in 39 of his own films.",
-  "Blade Runner flopped on release in 1982. It's now considered a masterpiece.",
-  "Inception's spinning top ending was deliberately left ambiguous — Nolan refuses to confirm.",
-  "The Wizard of Oz's ruby slippers were originally silver in L. Frank Baum's book.",
-  "Goodfellas was filmed in sequence so actors could naturally age into their characters.",
-  "Kevin Bacon has been in so many films that no actor is more than 6 steps from him.",
-  "The word 'ewok' is never spoken aloud in the original Star Wars trilogy.",
-  "The Monty Python and the Holy Grail script was written in just three weeks.",
-  "Gravity (2013) took four years to make and then won 7 Academy Awards.",
-  "The shower scene in Psycho took 7 days to film with 77 different camera angles.",
-  "Schindler's List was shot in black and white — except for the girl in the red coat.",
-  "The Silence of the Lambs is only the third film to win all five major Oscars.",
-  "Hugh Jackman is 30 cm taller than the comic-book version of Wolverine.",
-  "The Godfather's cat was a stray that wandered onto the set on the day of filming.",
-  "Clueless (1995) is a modern retelling of Jane Austen's Emma.",
-  "Spielberg turned down directing Star Wars to make Close Encounters of the Third Kind.",
-  "The chest-burster scene in Alien was kept secret from the other actors until filming.",
-  "The average Netflix subscriber watches over 2 hours of content every single day.",
-  "South Park was originally pitched as a simple Christmas card animation.",
-  "The Office (US) was nearly cancelled after its first six episodes.",
-  "HBO's Chernobyl became the highest-rated TV show in IMDb history when it aired.",
-  "The Simpsons has accurately predicted dozens of real-world events decades in advance.",
-  "The first TV remote control was called 'Lazy Bones' — invented in 1950.",
-  "The Central Perk coffee shop set from Friends still exists at Warner Bros. Studios.",
-  "Stranger Things was rejected 15–20 times before Netflix finally picked it up.",
-  "The Mandalorian was the first ever live-action Star Wars television series.",
-  "Shrek's donkey was written for Eddie Murphy after he improvised lines in Mulan.",
-  "The word 'friend' appears over 1,000 times across all 10 seasons of Friends.",
-  "Quentin Tarantino has a small acting role in every single film he directs.",
-  "Forrest Gump beat The Shawshank Redemption for the 1994 Best Picture Oscar.",
-  "The Shawshank Redemption flopped at the box office but tops IMDb's all-time list.",
-  "Tom Hanks has appeared in more Best Picture nominees than any other actor.",
-  "The original Home Alone script was written in just 8 days.",
-  "Every Pixar film contains the code 'A113' — a classroom number at CalArts.",
-  "Only three films have ever won more than 10 Oscars: Ben-Hur, Titanic, and Return of the King.",
-  "The Truman Show predicted social media culture almost a decade before it existed.",
-  "Christopher Nolan doesn't own a cell phone and has never had an email address.",
-  "Speed (1994) paid Keanu Reeves $1.2 million. The Matrix Revolutions paid him $35 million.",
-  "Tom Cruise does virtually all of his own stunts, including real HALO skydiving jumps.",
-  "Lord of the Rings: Return of the King had 9 different endings in its theatrical cut.",
-  "Pirates of the Caribbean was inspired by a Disneyland theme park attraction.",
-  "The entire cast of Lost didn't know the show's ending until they filmed it.",
-  "Black Mirror's creator wrote each episode to be completely standalone and self-contained.",
-  "Squid Game's creator had the idea for over 10 years before Netflix picked it up.",
-  "The bear in The Revenant was entirely CGI — no real bears were on set.",
-  "Parasite (2019) became the first non-English film to win the Academy Award for Best Picture.",
-  "Get Out was shot in just 23 days on a budget of $4.5 million.",
-  "Ryan Gosling learned piano for La La Land and practiced 2 hours every day for months.",
-  "Mad Max: Fury Road spent 120 days filming in the Namibian desert.",
-  "The original Halloween (1978) was made in just 21 days.",
-  "Meryl Streep has received more Academy Award nominations than any other actor in history.",
-  "The Beatles were approached to star in Lord of the Rings in 1968 but turned it down.",
-  "Steven Spielberg refused a salary for Schindler's List, calling any payment 'blood money.'",
-  "The Dude in The Big Lebowski is based on a real political activist named Jeff Dowd.",
-  "Avatar (2009) held the all-time worldwide box office record for 12 years straight.",
-  "Netflix was originally a DVD-by-mail service — it only launched streaming in 2007.",
-  "The Breaking Bad finale was watched by 10.3 million people, the show's all-time record.",
-  "Only 11 films in history have ever grossed over $2 billion at the worldwide box office.",
-  "The Terminator's 'I'll be back' was originally written as 'I'll come back' in the script.",
-  "The White Lotus was originally written as a one-season, self-contained limited series.",
-  "Wes Anderson has cast Bill Murray in every film he has made since Rushmore (1998).",
-  "The longest film ever made is Modern Times Forever — it runs 240 hours long.",
-  "Bohemian Rhapsody is the most-streamed song of the 20th century on Spotify.",
-  "HBO spent around $15 million per episode on the final season of Game of Thrones.",
-  "The first film to be shown in space was on the International Space Station in 2001.",
-  "Charlie Chaplin once entered a Charlie Chaplin lookalike contest — and came third.",
-  "More people have seen Titanic in cinemas than any other film in history.",
-  "The original cut of Apocalypse Now ran 5 hours and 25 minutes long.",
-  "The first words spoken in a 'talkie' film were 'Wait a minute, wait a minute, you ain't heard nothin' yet!'",
-  "Pixar's Up makes most adults cry within the first 8 minutes — a record for animated films.",
-  "The cast of Seinfeld improvised roughly 10% of every episode's dialogue.",
-  "Stanley Kubrick shot 148 takes of the same scene for The Shining — a world record.",
-  "Gladiator won Best Picture without a single technical effects Oscar nomination.",
-  "The shower scene blood in Psycho was actually Hershey's chocolate syrup.",
-  "James Earl Jones was paid $7,000 to voice Darth Vader in the original Star Wars.",
-  "Schindler's List was the first Spielberg film to win the Academy Award for Best Picture.",
-  "The sound of lightsabers in Star Wars was made by combining an old TV hum and a film projector motor.",
-  "Planet of the Apes (1968) used more make-up than any film produced at the time.",
-  "The Imperial March from Star Wars was not in the first film — it debuted in The Empire Strikes Back.",
-  "Heath Ledger directed a music video before he passed away. It was never widely released.",
-  "Indiana Jones's iconic boulder scene was shot in one take — the boulder nearly hit Harrison Ford.",
-  "The word 'dude' had never appeared in a Coen Brothers film until The Big Lebowski.",
-  "Jaws (1975) was the first film to be called a 'blockbuster' by the press.",
-];
 
 
 /* ── poster ribbon — static curated palette ─────────────── */
@@ -581,14 +478,15 @@ export default function WTBetaPage() {
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [roundPhase]);
 
-  /* ── fun fact rotation while waiting for partner ── */
+  /* ── message rotation: waiting-for-join screen + iAmDone overlay ── */
   useEffect(() => {
-    if (!iAmDone) return;
+    if (screen !== "waiting" && !iAmDone) return;
+    const pool = iAmDone ? waitingAfterDoneMessages : waitingForPartnerMessages;
     const id = setInterval(() => {
-      setWaitingFactIndex((i) => (i + 1) % FUN_FACTS.length);
-    }, 5500);
+      setWaitingFactIndex((i) => (i + 1) % pool.length);
+    }, 4000);
     return () => clearInterval(id);
-  }, [iAmDone]);
+  }, [screen, iAmDone]);
 
   /* ── enter together mode ── */
   async function goTogether() {
@@ -1175,7 +1073,18 @@ export default function WTBetaPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
                 </svg>
               </div>
-              <p className="text-[11px] mb-8" style={{ color: "rgba(255,255,255,0.25)" }}>Trykk for &aring; kopiere</p>
+              <p className="text-[11px] mb-6" style={{ color: "rgba(255,255,255,0.25)" }}>Trykk for &aring; kopiere</p>
+              <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes wf-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+                .wf-msg { animation: wf-rise 0.6s ease forwards; }
+              `}} />
+              <p
+                key={waitingFactIndex}
+                className="wf-msg text-[11px] mb-8"
+                style={{ color: "rgba(255,255,255,0.32)", lineHeight: 1.6, maxWidth: 240, margin: "0 auto 32px" }}
+              >
+                {waitingForPartnerMessages[waitingFactIndex % waitingForPartnerMessages.length]}
+              </p>
               <button
                 onClick={() => { setScreen("intro"); setMode("solo"); setSessionId(null); setSessionCode(""); }}
                 className="text-xs font-medium bg-transparent border-0 cursor-pointer"
@@ -1557,7 +1466,7 @@ export default function WTBetaPage() {
                       margin: 0,
                     }}
                   >
-                    {FUN_FACTS[waitingFactIndex % FUN_FACTS.length]}
+                    {waitingAfterDoneMessages[waitingFactIndex % waitingAfterDoneMessages.length]}
                   </p>
                 </div>
               </div>
