@@ -1388,14 +1388,14 @@ export default function WTBetaPage() {
 
             {/* Winner — phased match moment reveal */}
             {roundPhase === "winner" && finalWinner && (
-              <div className="fixed inset-0 z-30 flex flex-col justify-end px-6 pb-16">
+              <div className="fixed inset-0 z-30 flex flex-col justify-end md:items-center px-6 pb-16">
                 <div className="absolute inset-0" style={{ background: getGenreColor(finalWinner.genre_ids) }} />
                 {finalWinner.poster_path && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={`https://image.tmdb.org/t/p/w780${finalWinner.poster_path}`}
                     alt=""
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover md:object-contain"
                     style={{
                       transform: matchRevealPhase >= 1 ? "scale(1.04)" : "scale(1)",
                       transition: "transform 600ms cubic-bezier(.2,.9,.2,1), filter 600ms ease",
@@ -1405,7 +1405,7 @@ export default function WTBetaPage() {
                   />
                 )}
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0.88) 65%, rgba(0,0,0,1) 100%)" }} />
-                <div className="relative z-10 w-full max-w-sm">
+                <div className="relative z-10 w-full max-w-sm md:mx-auto">
                   {/* Phase 1: "You both said yes." */}
                   <div style={{
                     fontSize: "0.75rem", letterSpacing: "0.14em", textTransform: "uppercase",
@@ -1430,7 +1430,7 @@ export default function WTBetaPage() {
                       </p>
                     )}
                     <button className="w-full py-4 rounded-xl text-sm font-bold text-white mb-3" style={{ background: RED, minHeight: 52 }}>
-                      ▶ Start watching
+                      ▶︎ Start watching
                     </button>
                     <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.25)" }}>
                       Keep looking &rarr;
