@@ -294,6 +294,21 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
   // ── 6. Strict quality filter ──────────────────────────────────────
   const filtered = applyFilters(pool);
 
+  // ── DEBUG: pool diagnostics ───────────────────────────────────────
+  const dropped = pool.filter((item) => {
+    const minVotes = item.type === "movie" ? QUALITY.minVoteMovie : QUALITY.minVoteTv;
+    if (item.voteCount < minVotes) return true;
+    if ((item.vote_average || 0) < QUALITY.minRating) return true;
+    if (!MAINSTREAM_LANGS.has(item.lang)) return true;
+    return false;
+  });
+  console.log(`[buildWtDeck] pool=${pool.length} filtered=${filtered.length} dropped=${dropped.length}`, {
+    droppedByVotes: dropped.filter((i) => i.voteCount < (i.type === "movie" ? QUALITY.minVoteMovie : QUALITY.minVoteTv)).length,
+    droppedByRating: dropped.filter((i) => (i.vote_average || 0) < QUALITY.minRating).length,
+    droppedByLang: dropped.filter((i) => !MAINSTREAM_LANGS.has(i.lang)).length,
+    mood, preference,
+  });
+
   // ── 7. Separate TV and Movie pools, apply preference weighting ───
   const tvPool = filtered.filter((i) => i.type === "tv");
   const moviePool = filtered.filter((i) => i.type === "movie");
@@ -346,6 +361,8 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
   const titles = merged.slice(0, limit).map(
     ({ score: _s, lang: _l, countries: _c, voteCount: _v, popularity: _p, ...t }) => t
   );
+
+  console.log(`[buildWtDeck] final deck=${titles.length} (tv=${tvPool.length} movie=${moviePool.length} after filter)`);
 
   return { titles, meta: { seed, mood } };
 }
