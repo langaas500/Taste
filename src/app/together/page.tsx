@@ -1520,15 +1520,15 @@ export default function WTBetaPage() {
                   @keyframes poster-fadein { from { opacity: 0 } to { opacity: 1 } }
                   @keyframes poster-reveal {
                     0%   { transform: scale(1); }
-                    15%  { transform: scale(1.05); }
-                    40%  { transform: scale(0.98); }
+                    15%  { transform: scale(1.08); }
+                    40%  { transform: scale(0.97); }
                     60%  { transform: scale(1.02); }
                     100% { transform: scale(1); }
                   }
-                  @keyframes glow-flash {
-                    0%   { box-shadow: 0 0 0px rgba(255,42,42,0); }
-                    30%  { box-shadow: 0 0 60px rgba(255,42,42,0.5); }
-                    100% { box-shadow: 0 0 0px rgba(255,42,42,0); }
+                  @keyframes glow-overlay {
+                    0%   { opacity: 0; }
+                    20%  { opacity: 0.28; }
+                    100% { opacity: 0; }
                   }
                 `}} />
                 <div className="absolute inset-0" style={{ background: getGenreColor(finalWinner.genre_ids) }} />
@@ -1539,13 +1539,15 @@ export default function WTBetaPage() {
                     alt=""
                     className="absolute inset-0 w-full h-full object-cover md:object-contain"
                     style={{
-                      animation: "poster-fadein 600ms ease-out forwards, poster-reveal 1s ease-out 600ms forwards, glow-flash 1.2s ease-out 600ms forwards",
+                      animation: "poster-fadein 600ms ease-out forwards, poster-reveal 1s ease-out 600ms forwards",
                       filter: matchRevealPhase >= 1 ? "brightness(0.95)" : "brightness(1)",
                       transition: "filter 600ms ease",
                     }}
                     onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
                 )}
+                {/* Red glow overlay — works on all screen sizes */}
+                <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "rgba(255,42,42,1)", animation: "glow-overlay 1.2s ease-out 600ms both" }} />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0.88) 65%, rgba(0,0,0,1) 100%)" }} />
                 <div className="relative z-10 w-full max-w-sm md:mx-auto">
                   {/* Phase 1: label */}
