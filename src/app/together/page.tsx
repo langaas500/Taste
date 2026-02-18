@@ -1374,8 +1374,19 @@ export default function WTBetaPage() {
 
         {/* ── PROVIDERS ── */}
         {screen === "providers" && (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
-            <div style={{ width: "100%", maxWidth: 340 }}>
+          <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 relative overflow-hidden">
+            <style dangerouslySetInnerHTML={{ __html: `@keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }` }} />
+            {ribbonPosters.length > 0 && (
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+                <div style={{ display: "flex", gap: 8, height: "100%", width: "max-content", animation: "poster-drift 60s linear infinite" }}>
+                  {[...ribbonPosters, ...ribbonPosters].map((url, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={i} src={`https://image.tmdb.org/t/p/w185${url}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.10, filter: "blur(3px)", flexShrink: 0 }} />
+                  ))}
+                </div>
+              </div>
+            )}
+            <div style={{ width: "100%", maxWidth: 340, position: "relative", zIndex: 1 }}>
               <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#fff", marginBottom: 6, textAlign: "center" }}>
                 {t(locale, "providers", "headline")}
               </h2>
