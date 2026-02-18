@@ -1202,8 +1202,20 @@ export default function WTBetaPage() {
 
         {/* ── JOIN ── */}
         {screen === "join" && (
-          <div className="flex-1 flex items-center justify-center px-6">
-            <div className="text-center max-w-sm w-full">
+          <div className="flex-1 flex items-center justify-center px-6 relative overflow-hidden">
+            <style dangerouslySetInnerHTML={{ __html: `
+              @keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+            `}} />
+            {ribbonPosters.length > 0 && (
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+                <div style={{ display: "flex", gap: 8, height: "100%", width: "max-content", animation: "poster-drift 60s linear infinite" }}>
+                  {[...ribbonPosters, ...ribbonPosters].map((url, i) => (
+                    <img key={i} src={`https://image.tmdb.org/t/p/w185${url}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.10, filter: "blur(8px)", flexShrink: 0 }} />
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="text-center max-w-sm w-full relative z-10">
               <h2 className="text-xl font-bold text-white mb-2">{t(locale, "join", "headline")}</h2>
               <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>{t(locale, "join", "ingress")}</p>
               <div className="flex flex-col items-center gap-3">
@@ -1576,14 +1588,16 @@ export default function WTBetaPage() {
                   }}>
                     {t(locale, "iAmDone", "statusLine")}
                   </p>
-                  {/* Partner progress */}
-                  <p style={{
-                    fontSize: "0.75rem",
-                    color: "rgba(255,255,255,0.28)",
-                    margin: "0 0 32px 0",
-                  }}>
-                    {t(locale, "iAmDone", "partnerProgress").replace("{count}", String(partnerSwipeCount))}
-                  </p>
+                  {/* Partner progress — only when partner has started swiping */}
+                  {partnerSwipeCount >= 1 && (
+                    <p style={{
+                      fontSize: "0.75rem",
+                      color: "rgba(255,255,255,0.28)",
+                      margin: "0 0 32px 0",
+                    }}>
+                      {t(locale, "iAmDone", "partnerProgress").replace("{count}", String(partnerSwipeCount))}
+                    </p>
+                  )}
                   {/* Rotating fun fact — key forces remount for animation */}
                   <p
                     key={waitingFactIndex}
