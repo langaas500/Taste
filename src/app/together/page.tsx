@@ -1671,7 +1671,7 @@ export default function WTBetaPage() {
                     opacity: matchRevealPhase >= 1 ? 1 : 0,
                     transition: "opacity 600ms ease",
                   }}>
-                    {t(locale, "winner", "phase1")}
+                    {mode === "solo" ? t(locale, "winner", "soloPhase1") : t(locale, "winner", "phase1")}
                   </div>
                   {/* Phase 2: title + meta */}
                   <div style={{ opacity: matchRevealPhase >= 2 ? 1 : 0, transition: "opacity 600ms ease" }}>

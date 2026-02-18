@@ -116,6 +116,7 @@ const strings = {
   // ============================================
   winner: {
     phase1: { no: "Dere sa begge ja.", en: "You both said yes." },
+    soloPhase1: { no: "Vi bestemte.", en: "We decided." },
     startWatching: { no: "▶︎ Start å se", en: "▶︎ Start watching" },
     keepLooking: { no: "Fortsett å lete →", en: "Keep looking →" },
   },
