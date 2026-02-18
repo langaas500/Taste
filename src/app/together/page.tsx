@@ -43,13 +43,17 @@ const RIBBON_COLORS: [string, string][] = [
 const VIAPLAY_REGIONS = new Set(["NO", "SE", "DK", "FI", "IS"]);
 
 interface Provider { id: number; name: string; }
+const NORDIC_ONLY_PROVIDERS = new Set([76, 439]); // Viaplay, TV 2 Play
+
 const PROVIDERS: Provider[] = [
   { id: 8,    name: "Netflix" },
   { id: 9,    name: "Prime Video" },
   { id: 337,  name: "Disney+" },
   { id: 1899, name: "Max" },
   { id: 350,  name: "Apple TV+" },
+  { id: 531,  name: "Paramount+" },
   { id: 76,   name: "Viaplay" },
+  { id: 439,  name: "TV 2 Play" },
 ];
 
 /* ── genre map ─────────────────────────────────────────── */
@@ -1377,7 +1381,7 @@ export default function WTBetaPage() {
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", marginBottom: 40 }}>
                 {PROVIDERS
-                  .filter((p) => p.id !== 76 || VIAPLAY_REGIONS.has(userRegion))
+                  .filter((p) => !NORDIC_ONLY_PROVIDERS.has(p.id) || VIAPLAY_REGIONS.has(userRegion))
                   .map((p) => {
                     const selected = selectedProviders.includes(p.id);
                     return (
