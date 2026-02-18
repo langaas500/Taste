@@ -44,6 +44,7 @@ const VIAPLAY_REGIONS = new Set(["NO", "SE", "DK", "FI", "IS"]);
 
 interface Provider { id: number; name: string; }
 const NORDIC_ONLY_PROVIDERS = new Set([76, 439]); // Viaplay, TV 2 Play
+const US_ONLY_PROVIDERS = new Set([15, 386]);     // Hulu, Peacock
 
 const PROVIDERS: Provider[] = [
   { id: 8,    name: "Netflix" },
@@ -52,6 +53,8 @@ const PROVIDERS: Provider[] = [
   { id: 1899, name: "Max" },
   { id: 350,  name: "Apple TV+" },
   { id: 531,  name: "Paramount+" },
+  { id: 15,   name: "Hulu" },
+  { id: 386,  name: "Peacock" },
   { id: 76,   name: "Viaplay" },
   { id: 439,  name: "TV 2 Play" },
 ];
@@ -1381,7 +1384,11 @@ export default function WTBetaPage() {
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", marginBottom: 40 }}>
                 {PROVIDERS
-                  .filter((p) => !NORDIC_ONLY_PROVIDERS.has(p.id) || VIAPLAY_REGIONS.has(userRegion))
+                  .filter((p) => {
+                    if (NORDIC_ONLY_PROVIDERS.has(p.id)) return VIAPLAY_REGIONS.has(userRegion);
+                    if (US_ONLY_PROVIDERS.has(p.id)) return userRegion === "US";
+                    return true;
+                  })
                   .map((p) => {
                     const selected = selectedProviders.includes(p.id);
                     return (
