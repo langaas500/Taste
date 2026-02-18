@@ -311,6 +311,12 @@ export default function WTBetaPage() {
     createSupabaseBrowser().auth.getSession()
       .then(({ data }) => { setAuthUser(data.session?.user ?? null); })
       .catch(() => {});
+    // DEBUG: ?winner=1 → viser winner-skjermen direkte
+    if (new URLSearchParams(window.location.search).get("winner") === "1") {
+      setFinalWinner({ tmdb_id: 550, title: "Fight Club", year: 1999, type: "movie", genre_ids: [18, 53], overview: "An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into something much, much more.", poster_path: "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg", vote_average: 8.4 });
+      setScreen("together");
+      setRoundPhase("winner");
+    }
   }, []);
 
   /* ── ritual timer cleanup ── */
@@ -947,8 +953,8 @@ export default function WTBetaPage() {
                 to   { transform: translateX(-50%); }
               }
               .ribbon-track { animation: ribbon-scroll 40s linear infinite; }
-              .cta-btn { transition: filter 180ms ease, transform 140ms ease, opacity 150ms; }
-              .cta-btn:hover:not(:disabled) { filter: brightness(1.08); transform: scale(1.015); }
+              .cta-btn { transition: filter 180ms ease, transform 140ms ease, opacity 150ms, box-shadow 180ms ease; }
+              .cta-btn:hover:not(:disabled) { filter: brightness(1.08); transform: scale(1.015); box-shadow: 0 4px 30px rgba(255,42,42,0.5) !important; }
               .cta-btn:active:not(:disabled) { filter: brightness(0.96); }
             `}} />
 
@@ -1020,17 +1026,17 @@ export default function WTBetaPage() {
             </div>
 
             {/* ── Hero block — flex-1, centered below ribbon ── */}
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px", position: "relative", zIndex: 1 }}>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px 60px", position: "relative", zIndex: 1 }}>
             <div style={{ width: "100%", maxWidth: 340, textAlign: "center" }}>
 
               {/* Headline — time of day */}
               <h1 style={{
                 fontSize: "clamp(1.7rem, 7.2vw, 2.3rem)",
                 fontWeight: 700,
-                letterSpacing: "-0.025em",
+                letterSpacing: "-0.02em",
                 color: "#ffffff",
                 lineHeight: 1.1,
-                margin: "10px auto 20px",
+                margin: "10px auto 16px",
                 maxWidth: "85%",
               }}>
                 {(() => { const h = new Date().getHours(); return h >= 18 || h < 5 ? t(locale, "intro", "headlineEvening") : t(locale, "intro", "headlineDay"); })()}
@@ -1039,11 +1045,11 @@ export default function WTBetaPage() {
               {/* Subtext — 20px below headline, 24px above cards */}
               <div style={{ marginBottom: "24px" }}>
                 {returnedToday ? (
-                  <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>{t(locale, "intro", "returnedSubtitle")}</p>
+                  <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: 0 }}>{t(locale, "intro", "returnedSubtitle")}</p>
                 ) : (
                   <>
-                    <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>{t(locale, "intro", "subtitle1")}</p>
-                    <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>{t(locale, "intro", "subtitle2")}</p>
+                    <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: 0 }}>{t(locale, "intro", "subtitle1")}</p>
+                    <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: 0 }}>{t(locale, "intro", "subtitle2")}</p>
                   </>
                 )}
               </div>
@@ -1066,12 +1072,13 @@ export default function WTBetaPage() {
                         padding: "22px 12px",
                         minHeight: 140,
                         borderRadius: 16,
-                        border: active ? "1.5px solid rgba(255,255,255,0.28)" : "1px solid rgba(255,255,255,0.09)",
-                        background: active ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)",
+                        border: active ? "1.5px solid rgba(255,255,255,0.25)" : "1px solid rgba(255,255,255,0.06)",
+                        background: active ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.03)",
+                        opacity: active ? 1 : 0.6,
                         cursor: "pointer",
-                        transition: "all 160ms ease",
+                        transition: "all 0.3s ease",
                         transform: active ? "scale(1.03)" : "scale(1)",
-                        boxShadow: active ? "0 0 0 1px rgba(255,42,42,0.15), 0 4px 20px rgba(0,0,0,0.3)" : "none",
+                        boxShadow: active ? "0 0 20px rgba(255,42,42,0.12)" : "none",
                       }}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1123,7 +1130,7 @@ export default function WTBetaPage() {
                     width: "100%",
                     height: 54,
                     borderRadius: "14px",
-                    background: "linear-gradient(180deg, #ff2a2a 0%, #c91414 100%)",
+                    background: "linear-gradient(135deg, #ff2a2a, #e01e1e)",
                     color: "#fff",
                     fontSize: "0.9375rem",
                     fontWeight: 600,
@@ -1131,7 +1138,7 @@ export default function WTBetaPage() {
                     cursor: titlesLoading ? "default" : "pointer",
                     opacity: titlesLoading ? 0.55 : 1,
                     letterSpacing: "-0.01em",
-                    boxShadow: "0 8px 24px rgba(255,42,42,0.25), inset 0 1px 0 rgba(255,255,255,0.18)",
+                    boxShadow: "0 4px 20px rgba(255,42,42,0.3)",
                   }}
                 >
                   {titlesLoading ? t(locale, "intro", "loading") : introChoice === "solo" ? t(locale, "intro", "startSolo") : t(locale, "intro", "startPaired")}
@@ -1144,8 +1151,8 @@ export default function WTBetaPage() {
                   onClick={() => setScreen("join")}
                   style={{
                     background: "none", border: "none",
-                    color: "rgba(255,255,255,0.38)",
-                    fontSize: "0.8125rem", fontWeight: 400,
+                    color: "rgba(255,255,255,0.40)",
+                    fontSize: "0.85rem", fontWeight: 400,
                     cursor: "pointer", padding: "4px 0",
                   }}
                 >
@@ -1530,8 +1537,20 @@ export default function WTBetaPage() {
                     20%  { opacity: 0.28; }
                     100% { opacity: 0; }
                   }
+                  @keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
                 `}} />
                 <div className="absolute inset-0" style={{ background: getGenreColor(finalWinner.genre_ids) }} />
+                {/* Desktop-only poster mosaic background */}
+                {isDesktop && ribbonPosters.length > 0 && (
+                  <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+                    <div style={{ display: "flex", gap: 8, height: "100%", width: "max-content", animation: "poster-drift 60s linear infinite" }}>
+                      {[...ribbonPosters, ...ribbonPosters].map((url, i) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={i} src={`https://image.tmdb.org/t/p/w185${url}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.12, filter: "blur(3px)", flexShrink: 0 }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {finalWinner.poster_path && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
