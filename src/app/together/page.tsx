@@ -956,6 +956,17 @@ export default function WTBetaPage() {
               .cta-btn { transition: filter 180ms ease, transform 140ms ease, opacity 150ms, box-shadow 180ms ease; }
               .cta-btn:hover:not(:disabled) { filter: brightness(1.08); transform: scale(1.015); box-shadow: 0 4px 30px rgba(255,42,42,0.5) !important; }
               .cta-btn:active:not(:disabled) { filter: brightness(0.96); }
+              @media (min-width: 768px) {
+                .intro-ribbon { height: 180px !important; clip-path: ellipse(70% 100% at 50% 0%); }
+                .intro-ribbon img { height: 160px !important; }
+                .intro-logo { height: 34px !important; }
+                .intro-headline { font-size: 3rem !important; }
+                .intro-content { max-width: 600px !important; margin-top: -20px !important; }
+                .intro-card { min-height: 160px !important; }
+                .intro-card-icon { height: 56px !important; }
+                .intro-card-label { font-size: 1.1rem !important; }
+                .intro-cta .cta-btn { font-size: 1.1rem !important; max-width: 480px !important; margin-left: auto !important; margin-right: auto !important; display: block !important; }
+              }
             `}} />
 
             {/* ── Atmospheric gradient drift — absolute behind everything ── */}
@@ -975,12 +986,14 @@ export default function WTBetaPage() {
               <img
                 src="/logo.png"
                 alt="Logflix"
+                className="intro-logo"
                 style={{ height: 28, width: "auto", opacity: 0.85 }}
               />
             </div>
 
             {/* ── Trending poster strip — flat horizontal scroll ── */}
             <div
+              className="intro-ribbon"
               style={{
                 flexShrink: 0,
                 position: "relative",
@@ -1027,10 +1040,10 @@ export default function WTBetaPage() {
 
             {/* ── Hero block — flex-1, centered below ribbon ── */}
             <div style={{ flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "32px 24px 0", position: "relative", zIndex: 1 }}>
-            <div style={{ width: "100%", maxWidth: 340, textAlign: "center" }}>
+            <div className="intro-content" style={{ width: "100%", maxWidth: 340, textAlign: "center" }}>
 
               {/* Headline — time of day */}
-              <h1 style={{
+              <h1 className="intro-headline" style={{
                 fontSize: "clamp(1.7rem, 7.2vw, 2.3rem)",
                 fontWeight: 700,
                 letterSpacing: "-0.02em",
@@ -1061,6 +1074,7 @@ export default function WTBetaPage() {
                   return (
                     <button
                       key={choice}
+                      className="intro-card"
                       onClick={() => setIntroChoice(choice)}
                       style={{
                         flex: 1,
@@ -1085,10 +1099,11 @@ export default function WTBetaPage() {
                       <img
                         src={choice === "solo" ? "/one-phone.svg" : "/two-phones.svg"}
                         alt={choice === "solo" ? t(locale, "intro", "soloLabel") : t(locale, "intro", "pairedLabel")}
+                        className="intro-card-icon"
                         style={{ height: 48, width: "auto", opacity: active ? 1 : 0.55, transition: "opacity 160ms ease" }}
                       />
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                        <span style={{
+                        <span className="intro-card-label" style={{
                           fontSize: "0.875rem",
                           fontWeight: active ? 600 : 400,
                           color: active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.42)",
@@ -1112,7 +1127,7 @@ export default function WTBetaPage() {
                   );
                 })}
                 {/* Group teaser — not interactive */}
-                <div style={{
+                <div className="intro-card" style={{
                   flex: 1,
                   display: "flex",
                   flexDirection: "column",
@@ -1150,7 +1165,7 @@ export default function WTBetaPage() {
               </div>
 
               {/* Primary CTA */}
-              <div style={{ marginBottom: 12 }}>
+              <div className="intro-cta" style={{ marginBottom: 12 }}>
                 <button
                   onClick={() => {
                     if (introChoice === "solo") {
