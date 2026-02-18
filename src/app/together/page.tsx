@@ -813,7 +813,7 @@ export default function WTBetaPage() {
   async function createSession() {
     setSessionError(""); setTitlesLoading(true);
     try {
-      const res = await fetch("/api/together/session", { method: "POST", headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current }, body: JSON.stringify({}) });
+      const res = await fetch("/api/together/session", { method: "POST", headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current }, body: JSON.stringify({ providerIds: selectedProviders, region: userRegion, preference: preferenceMode }) });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setSessionId(data.session.id);
@@ -1188,14 +1188,14 @@ export default function WTBetaPage() {
               <div className="intro-cta" style={{ marginBottom: 12 }}>
                 <button
                   onClick={() => {
+                    if (titlesLoading || ritualState !== "idle") return;
                     if (introChoice === "solo") {
-                      if (titlesLoading || ritualState !== "idle") return;
                       startRitual(() => { setMode("solo"); setSelectedProviders([]); setScreen("providers"); });
                     } else {
-                      createSession();
+                      startRitual(() => { setMode("paired"); setSelectedProviders([]); setScreen("providers"); });
                     }
                   }}
-                  disabled={titlesLoading || (introChoice === "solo" && ritualState !== "idle")}
+                  disabled={titlesLoading || ritualState !== "idle"}
                   className="cta-btn"
                   style={{
                     width: "100%",
@@ -1466,7 +1466,11 @@ export default function WTBetaPage() {
               </div>
 
               <button
-                onClick={async () => { if (!titlesLoading) await goTogether(); }}
+                onClick={async () => {
+                  if (titlesLoading) return;
+                  if (mode === "solo") await goTogether();
+                  else await createSession();
+                }}
                 disabled={titlesLoading}
                 style={{
                   width: "100%", height: 54, borderRadius: 12,
@@ -1664,6 +1668,11 @@ export default function WTBetaPage() {
                     <p className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>
                       {finalWinner.year} &middot; {getGenreName(finalWinner.genre_ids)}
                     </p>
+                    {selectedProviders.length > 0 && (
+                      <p className="text-xs mb-2" style={{ color: "rgba(255,255,255,0.28)" }}>
+                        {PROVIDERS.filter((p) => selectedProviders.includes(p.id)).map((p) => p.name).join(" · ")}
+                      </p>
+                    )}
                     {finalWinner.overview && (
                       <p className="text-sm mb-8 line-clamp-2" style={{ color: "rgba(255,255,255,0.58)", lineHeight: 1.5 }}>
                         {finalWinner.overview}

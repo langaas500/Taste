@@ -23,13 +23,21 @@ export async function POST(req: NextRequest) {
 
     const admin = createSupabaseAdmin();
 
-    // Parse mood from body
+    // Parse mood + providerIds + region + preference from body
     let mood: Mood | undefined;
+    let providerIds: number[] = [];
+    let region = "US";
+    let preference: "series" | "movies" | "mix" = "series";
     try {
       const body = await req.json();
       if (body.mood && VALID_MOODS.has(body.mood)) mood = body.mood;
+      if (Array.isArray(body.providerIds)) {
+        providerIds = (body.providerIds as unknown[]).filter((x): x is number => typeof x === "number");
+      }
+      if (typeof body.region === "string" && body.region.length > 0) region = body.region;
+      if (body.preference === "movies" || body.preference === "mix") preference = body.preference;
     } catch {
-      /* no body or invalid JSON — mood stays undefined */
+      /* no body or invalid JSON — defaults used */
     }
 
     // Paired sessions: only apply explicit exclusions — not full rating history.
@@ -91,6 +99,9 @@ export async function POST(req: NextRequest) {
       likedGenreIds,
       limit: 60,
       seed: deck_seed,
+      providerIds,
+      region,
+      preference,
     });
 
     if (titles.length === 0) {
