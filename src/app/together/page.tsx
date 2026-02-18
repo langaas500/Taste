@@ -234,7 +234,7 @@ export default function WTBetaPage() {
   const [userRegion, setUserRegion] = useState("US");
   const [locale, setLocale] = useState<Locale>("en");
   const [matchRevealPhase, setMatchRevealPhase] = useState<0 | 1 | 2 | 3>(0);
-  const [introChoice, setIntroChoice] = useState<"solo" | "paired">("solo");
+  const [introChoice, setIntroChoice] = useState<"solo" | "paired">("paired");
   const [introFading, setIntroFading] = useState(false);
   const [ritualState, setRitualState] = useState<RitualState>("idle");
   const [ritualPhase, setRitualPhase] = useState<0 | 1 | 2>(0);
@@ -524,11 +524,26 @@ export default function WTBetaPage() {
   /* ── match moment reveal sequence ── */
   useEffect(() => {
     if (roundPhase !== "winner") { setMatchRevealPhase(0); return; }
-    navigator.vibrate?.(200);
     const t1 = window.setTimeout(() => setMatchRevealPhase(1), 400);
     const t2 = window.setTimeout(() => setMatchRevealPhase(2), 700);
     const t3 = window.setTimeout(() => setMatchRevealPhase(3), 1000);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    const t4 = window.setTimeout(() => {
+      navigator.vibrate?.([100, 50, 200]);
+      try {
+        const audioCtx = new AudioContext();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = 880;
+        osc.type = "sine";
+        gain.gain.value = 0.15;
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+      } catch { /* ignore */ }
+    }, 600);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
   }, [roundPhase]);
 
   /* ── message rotation: waiting-for-join screen + iAmDone overlay ── */
@@ -1021,8 +1036,8 @@ export default function WTBetaPage() {
                 {(() => { const h = new Date().getHours(); return h >= 18 || h < 5 ? t(locale, "intro", "headlineEvening") : t(locale, "intro", "headlineDay"); })()}
               </h1>
 
-              {/* Subtext — 20px below headline, 40px above button */}
-              <div style={{ marginBottom: "40px" }}>
+              {/* Subtext — 20px below headline, 24px above cards */}
+              <div style={{ marginBottom: "24px" }}>
                 {returnedToday ? (
                   <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>{t(locale, "intro", "returnedSubtitle")}</p>
                 ) : (
@@ -1034,7 +1049,7 @@ export default function WTBetaPage() {
               </div>
 
               {/* Mode selector cards */}
-              <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+              <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
                 {(["solo", "paired"] as const).map((choice) => {
                   const active = introChoice === choice;
                   return (
@@ -1048,7 +1063,8 @@ export default function WTBetaPage() {
                         alignItems: "center",
                         justifyContent: "center",
                         gap: 10,
-                        padding: "18px 12px",
+                        padding: "22px 12px",
+                        minHeight: 140,
                         borderRadius: 16,
                         border: active ? "1.5px solid rgba(255,255,255,0.28)" : "1px solid rgba(255,255,255,0.09)",
                         background: active ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)",
@@ -1062,17 +1078,29 @@ export default function WTBetaPage() {
                       <img
                         src={choice === "solo" ? "/one-phone.svg" : "/two-phones.svg"}
                         alt={choice === "solo" ? t(locale, "intro", "soloLabel") : t(locale, "intro", "pairedLabel")}
-                        style={{ height: 30, width: "auto", opacity: active ? 1 : 0.55, transition: "opacity 160ms ease" }}
+                        style={{ height: 48, width: "auto", opacity: active ? 1 : 0.55, transition: "opacity 160ms ease" }}
                       />
-                      <span style={{
-                        fontSize: "0.8125rem",
-                        fontWeight: active ? 600 : 400,
-                        color: active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.42)",
-                        letterSpacing: "-0.01em",
-                        transition: "all 160ms ease",
-                      }}>
-                        {choice === "solo" ? t(locale, "intro", "soloLabel") : t(locale, "intro", "pairedLabel")}
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                        <span style={{
+                          fontSize: "0.875rem",
+                          fontWeight: active ? 600 : 400,
+                          color: active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.42)",
+                          letterSpacing: "-0.01em",
+                          transition: "all 160ms ease",
+                        }}>
+                          {choice === "solo" ? t(locale, "intro", "soloLabel") : t(locale, "intro", "pairedLabel")}
+                        </span>
+                        <span style={{
+                          fontSize: "0.75rem",
+                          fontWeight: 400,
+                          color: active ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.22)",
+                          letterSpacing: "-0.005em",
+                          lineHeight: 1.3,
+                          transition: "all 160ms ease",
+                        }}>
+                          {choice === "solo" ? t(locale, "intro", "soloDesc") : t(locale, "intro", "pairedDesc")}
+                        </span>
+                      </div>
                     </button>
                   );
                 })}
@@ -1110,21 +1138,19 @@ export default function WTBetaPage() {
                 </button>
               </div>
 
-              {/* Secondary: I have a code — only when Two phones selected */}
+              {/* Secondary: I have a code — always visible */}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                {introChoice === "paired" && (
-                  <button
-                    onClick={() => setScreen("join")}
-                    style={{
-                      background: "none", border: "none",
-                      color: "rgba(255,255,255,0.38)",
-                      fontSize: "0.8125rem", fontWeight: 400,
-                      cursor: "pointer", padding: "4px 0",
-                    }}
-                  >
-                    {t(locale, "intro", "hasCode")}
-                  </button>
-                )}
+                <button
+                  onClick={() => setScreen("join")}
+                  style={{
+                    background: "none", border: "none",
+                    color: "rgba(255,255,255,0.38)",
+                    fontSize: "0.8125rem", fontWeight: 400,
+                    cursor: "pointer", padding: "4px 0",
+                  }}
+                >
+                  {t(locale, "intro", "hasCode")}
+                </button>
                 {sessionError && <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: "0.25rem" }}>{sessionError}</p>}
               </div>
 
@@ -1492,6 +1518,18 @@ export default function WTBetaPage() {
               <div className="fixed inset-0 z-30 flex flex-col justify-end md:items-center px-6 pb-16">
                 <style dangerouslySetInnerHTML={{ __html: `
                   @keyframes poster-fadein { from { opacity: 0 } to { opacity: 1 } }
+                  @keyframes poster-reveal {
+                    0%   { transform: scale(1); }
+                    15%  { transform: scale(1.05); }
+                    40%  { transform: scale(0.98); }
+                    60%  { transform: scale(1.02); }
+                    100% { transform: scale(1); }
+                  }
+                  @keyframes glow-flash {
+                    0%   { box-shadow: 0 0 0px rgba(255,42,42,0); }
+                    30%  { box-shadow: 0 0 60px rgba(255,42,42,0.5); }
+                    100% { box-shadow: 0 0 0px rgba(255,42,42,0); }
+                  }
                 `}} />
                 <div className="absolute inset-0" style={{ background: getGenreColor(finalWinner.genre_ids) }} />
                 {finalWinner.poster_path && (
@@ -1501,10 +1539,9 @@ export default function WTBetaPage() {
                     alt=""
                     className="absolute inset-0 w-full h-full object-cover md:object-contain"
                     style={{
-                      animation: "poster-fadein 600ms ease-out forwards",
-                      transform: matchRevealPhase >= 1 ? "scale(1.04)" : "scale(1)",
-                      transition: "transform 600ms cubic-bezier(.2,.9,.2,1), filter 600ms ease",
+                      animation: "poster-fadein 600ms ease-out forwards, poster-reveal 1s ease-out 600ms forwards, glow-flash 1.2s ease-out 600ms forwards",
                       filter: matchRevealPhase >= 1 ? "brightness(0.95)" : "brightness(1)",
+                      transition: "filter 600ms ease",
                     }}
                     onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
