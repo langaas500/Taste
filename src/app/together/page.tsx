@@ -1153,7 +1153,7 @@ export default function WTBetaPage() {
                   animation: "poster-drift 60s linear infinite",
                 }}>
                   {[...ribbonPosters, ...ribbonPosters].map((url, i) => (
-                    <img key={i} src={url} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.10, filter: "blur(8px)", flexShrink: 0 }} />
+                    <img key={i} src={`https://image.tmdb.org/t/p/w185${url}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.10, filter: "blur(8px)", flexShrink: 0 }} />
                   ))}
                 </div>
               </div>
@@ -1547,7 +1547,7 @@ export default function WTBetaPage() {
                       animation: "poster-drift 60s linear infinite",
                     }}>
                       {[...ribbonPosters, ...ribbonPosters].map((url, i) => (
-                        <img key={i} src={url} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.10, filter: "blur(8px)", flexShrink: 0 }} />
+                        <img key={i} src={`https://image.tmdb.org/t/p/w185${url}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.10, filter: "blur(8px)", flexShrink: 0 }} />
                       ))}
                     </div>
                   </div>
