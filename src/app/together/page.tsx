@@ -2112,7 +2112,7 @@ export default function WTBetaPage() {
 
         {/* Profile link — goes to /home if logged in, /login otherwise */}
         <button
-          onClick={() => router.push(authUser ? "/home" : "/login")}
+          onClick={() => router.push(authUser ? "/home" : "/login?from=together")}
           className="fixed bottom-4 right-4 z-60 select-none cursor-pointer"
           style={{ background: "transparent", border: "none", padding: 0 }}
           aria-label={authUser ? t(locale, "global", "myProfile") : t(locale, "global", "login")}

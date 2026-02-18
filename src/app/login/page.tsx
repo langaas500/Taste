@@ -23,6 +23,7 @@ function translateError(msg: string): string {
 
 function LoginContent() {
   const searchParams = useSearchParams();
+  const isTogether = searchParams.get("from") === "together";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"login" | "signup">(
@@ -126,7 +127,35 @@ function LoginContent() {
     setLoading(false);
   }
 
-  const features = [
+  const features = isTogether ? [
+    {
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+        </svg>
+      ),
+      title: "Lagre alle Se Sammen-matcher",
+      desc: "Husker hva dere likte — og bruker det til å finne bedre treff neste gang.",
+    },
+    {
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+      ),
+      title: "Personlige anbefalinger basert på smaken din",
+      desc: "Jo mer du sveiper, jo bedre blir forslagene.",
+    },
+    {
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
+      ),
+      title: "Bygg smaksprofilen din over tid",
+      desc: "Én profil for alle dine matcher og preferanser.",
+    },
+  ] : [
     {
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -202,14 +231,17 @@ function LoginContent() {
           />
 
           <h1 className="text-4xl xl:text-5xl font-bold text-[var(--text-primary)] leading-tight mb-4">
-            Din personlige
-            <br />
-            <span className="text-[var(--accent)]">film- og seriedagbok</span>
+            {isTogether ? (
+              <>Lagre <span className="text-[var(--accent)]">matchene dine</span></>
+            ) : (
+              <>Din personlige<br /><span className="text-[var(--accent)]">film- og seriedagbok</span></>
+            )}
           </h1>
 
           <p className="text-[var(--text-secondary)] text-lg leading-relaxed mb-10 max-w-md">
-            Logg det du ser, oppdag nye favoritter med AI-anbefalinger, og aldri
-            glem en god film igjen.
+            {isTogether
+              ? "Opprett konto for å huske hva dere likte, og få bedre treff neste gang."
+              : "Logg det du ser, oppdag nye favoritter med AI-anbefalinger, og aldri glem en god film igjen."}
           </p>
 
           <div className="space-y-5">
@@ -260,19 +292,27 @@ function LoginContent() {
             priority
           />
           <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
-            Din personlige <span className="text-[var(--accent)]">film- og seriedagbok</span>
+            {isTogether
+              ? <>Lagre <span className="text-[var(--accent)]">matchene dine</span></>
+              : <>Din personlige <span className="text-[var(--accent)]">film- og seriedagbok</span></>}
           </h1>
           <p className="text-[var(--text-tertiary)] text-sm leading-relaxed mb-4">
-            Logg det du ser, få AI-anbefalinger, og aldri glem en god film igjen.
+            {isTogether
+              ? "Opprett konto for å huske hva dere likte, og få bedre treff neste gang."
+              : "Logg det du ser, få AI-anbefalinger, og aldri glem en god film igjen."}
           </p>
 
           {/* Mobile feature list (more compelling than pills) */}
           <div className="text-left space-y-2.5 max-w-xs mx-auto">
-            {[
+            {(isTogether ? [
+              { label: "Lagre alle Se Sammen-matcher", icon: "🎯" },
+              { label: "Personlige anbefalinger basert på smaken din", icon: "✨" },
+              { label: "Bygg smaksprofilen din over tid", icon: "📈" },
+            ] : [
               { label: "Se-lister, rangeringer og dagbok", icon: "📋" },
               { label: "AI-anbefalinger tilpasset din smak", icon: "✨" },
               { label: "Finn noe å se sammen med venner", icon: "👥" },
-            ].map((item, i) => (
+            ]).map((item, i) => (
               <div key={i} className="flex items-center gap-2.5">
                 <span className="text-sm">{item.icon}</span>
                 <span className="text-xs text-[var(--text-secondary)]">{item.label}</span>
@@ -499,18 +539,20 @@ function LoginContent() {
                 <div className="mt-4 pt-4 border-t border-[var(--border)]">
                   <p className="text-[11px] text-[var(--text-tertiary)] mb-2">Konto gir deg tilgang til:</p>
                   <ul className="text-[11px] text-[var(--text-tertiary)] space-y-1">
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1 h-1 rounded-full bg-[var(--accent)] shrink-0" />
-                      Se-lister, rangeringer og personlig bibliotek
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1 h-1 rounded-full bg-[var(--accent)] shrink-0" />
-                      AI-anbefalinger basert på din smak
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1 h-1 rounded-full bg-[var(--accent)] shrink-0" />
-                      Del lister og se statistikk over det du har sett
-                    </li>
+                    {(isTogether ? [
+                      "Lagre alle Se Sammen-matcher",
+                      "Personlige anbefalinger basert på smaken din",
+                      "Bygg smaksprofilen din over tid",
+                    ] : [
+                      "Se-lister, rangeringer og personlig bibliotek",
+                      "AI-anbefalinger basert på din smak",
+                      "Del lister og se statistikk over det du har sett",
+                    ]).map((item, i) => (
+                      <li key={i} className="flex items-center gap-1.5">
+                        <span className="w-1 h-1 rounded-full bg-[var(--accent)] shrink-0" />
+                        {item}
+                      </li>
+                    ))}
                   </ul>
                 </div>
               )}
