@@ -264,6 +264,7 @@ export default function WTBetaPage() {
   const [roundMatches, setRoundMatches] = useState<RoundMatch[]>([]);
   const [compromiseTitle, setCompromiseTitle] = useState<WTTitle | null>(null);
   const [finalWinner, setFinalWinner] = useState<WTTitle | null>(null);
+  const [shareState, setShareState] = useState<"idle" | "copied">("idle");
   const [superLikesUsed, setSuperLikesUsed] = useState(0);
   const [iAmDone, setIAmDone] = useState(false);
   const [waitingFactIndex, setWaitingFactIndex] = useState(0);
@@ -683,6 +684,20 @@ export default function WTBetaPage() {
     partnerRef.current = null;
     setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
     setFly({ active: false, x: 0, rot: 0 });
+  }
+
+  async function handleShare(titleName: string) {
+    const shareUrl = "https://logflix.app/together";
+    const shareText = `${t(locale, "winner", "shareText")} ${titleName}`;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try { await navigator.share({ title: titleName, text: shareText, url: shareUrl }); } catch { /* cancelled */ }
+    } else {
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        setShareState("copied");
+        setTimeout(() => setShareState("idle"), 2000);
+      } catch { /* ignore */ }
+    }
   }
 
   /* ── ritual start sequence ── */
@@ -1547,6 +1562,13 @@ export default function WTBetaPage() {
                     {t(locale, "doubleSuper", "startWatching")}
                   </button>
                   <button
+                    onClick={() => finalWinner && handleShare(finalWinner.title)}
+                    className="w-full py-3 rounded-xl text-sm font-medium mb-2"
+                    style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.72)", cursor: "pointer" }}
+                  >
+                    {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "share")}
+                  </button>
+                  <button
                     onClick={() => { setFinalWinner(null); setRoundPhase("swiping"); setSuperLikesUsed(0); superLikedIdRef.current = null; roundEndingRef.current = false; setTimerRunning(true); }}
                     className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer"
                     style={{ color: "rgba(255,255,255,0.28)" }}
@@ -1705,6 +1727,13 @@ export default function WTBetaPage() {
                   <div style={{ opacity: matchRevealPhase >= 3 ? 1 : 0, transition: "opacity 600ms ease" }}>
                     <button className="w-full py-4 rounded-xl text-sm font-bold text-white mb-3" style={{ background: RED, minHeight: 52 }}>
                       {t(locale, "winner", "startWatching")}
+                    </button>
+                    <button
+                      onClick={() => finalWinner && handleShare(finalWinner.title)}
+                      className="w-full py-3 rounded-xl text-sm font-medium mb-3"
+                      style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.72)", cursor: "pointer" }}
+                    >
+                      {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "share")}
                     </button>
                     <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.25)" }}>
                       {t(locale, "winner", "keepLooking")}

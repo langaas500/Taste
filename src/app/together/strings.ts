@@ -119,6 +119,9 @@ const strings = {
     soloPhase1: { no: "Vi bestemte.", en: "We decided." },
     startWatching: { no: "▶︎ Start å se", en: "▶︎ Start watching" },
     keepLooking: { no: "Fortsett å lete →", en: "Keep looking →" },
+    share: { no: "Del resultatet", en: "Share result" },
+    shareText: { no: "Vi fant noe å se! 🎬", en: "We found something to watch! 🎬" },
+    copied: { no: "Kopiert!", en: "Copied!" },
   },
 
   // ============================================
