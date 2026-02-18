@@ -85,13 +85,17 @@ export async function GET(req: NextRequest) {
       if (!skipIds.has(key)) candidates.set(key, { ...item, _type: type });
     }
 
+    const MIN_YEAR = 1995;
+    const BLOCKED_LANGS = new Set(["ja", "zh", "ko", "hi", "ta", "te", "ml", "kn", "pa", "bn", "mr"]);
+    const BLOCKED_GENRES = new Set([16]); // Animation
+
     // 1. Discover by top genres — random pages for variety
     const genreStr = topGenreIds.join(",");
     if (genreStr) {
       const randomPage = String(Math.floor(Math.random() * 5) + 1);
       const [discoverMovies, discoverTv] = await Promise.all([
-        tmdbDiscover("movie", { with_genres: genreStr, "vote_count.gte": "50", page: randomPage }),
-        tmdbDiscover("tv", { with_genres: genreStr, "vote_count.gte": "50", page: randomPage }),
+        tmdbDiscover("movie", { with_genres: genreStr, "vote_count.gte": "50", page: randomPage, "primary_release_date.gte": `${MIN_YEAR}-01-01` }),
+        tmdbDiscover("tv", { with_genres: genreStr, "vote_count.gte": "50", page: randomPage, "first_air_date.gte": `${MIN_YEAR}-01-01` }),
       ]);
       for (const item of discoverMovies.results || []) addCandidate(item, "movie");
       for (const item of discoverTv.results || []) addCandidate(item, "tv");
@@ -122,12 +126,25 @@ export async function GET(req: NextRequest) {
       const extraPage = String(Math.floor(Math.random() * 3) + 6);
       const singleGenre = topGenreIds[Math.floor(Math.random() * topGenreIds.length)];
       const [extraMovies, extraTv] = await Promise.all([
-        tmdbDiscover("movie", { with_genres: String(singleGenre), "vote_count.gte": "20", page: extraPage }),
-        tmdbDiscover("tv", { with_genres: String(singleGenre), "vote_count.gte": "20", page: extraPage }),
+        tmdbDiscover("movie", { with_genres: String(singleGenre), "vote_count.gte": "20", page: extraPage, "primary_release_date.gte": `${MIN_YEAR}-01-01` }),
+        tmdbDiscover("tv", { with_genres: String(singleGenre), "vote_count.gte": "20", page: extraPage, "first_air_date.gte": `${MIN_YEAR}-01-01` }),
       ]);
       for (const item of extraMovies.results || []) addCandidate(item, "movie");
       for (const item of extraTv.results || []) addCandidate(item, "tv");
     }
+
+    // Quality + hard-block filter — before scoring
+    const beforeQualityFilter = candidates.size;
+    for (const [key, item] of candidates) {
+      const voteAvg = (item.vote_average as number) || 0;
+      const voteCount = (item.vote_count as number) || 0;
+      const lang = (item.original_language as string) || "";
+      const genreIds: number[] = Array.isArray(item.genre_ids) ? (item.genre_ids as number[]) : [];
+      if (voteAvg < 6.0 || voteCount < 50) { candidates.delete(key); continue; }
+      if (BLOCKED_LANGS.has(lang)) { candidates.delete(key); continue; }
+      if (genreIds.some((g) => BLOCKED_GENRES.has(g))) { candidates.delete(key); continue; }
+    }
+    console.log(`[recommendations] quality filter: ${beforeQualityFilter} → ${candidates.size} (removed ${beforeQualityFilter - candidates.size})`);
 
     // Score candidates
     const dislikedGenres = new Set<number>();
@@ -197,6 +214,23 @@ export async function GET(req: NextRequest) {
     // Sort candidates by score
     scored.sort((a, b) => b.score - a.score);
 
+    // 70/30 TV/movie split — pick 14 best series + 6 best movies, fill shortfall from the other pool
+    function pick7030(pool: ScoredCandidate[]): ScoredCandidate[] {
+      const tv = pool.filter((s) => s.type === "tv");
+      const movies = pool.filter((s) => s.type === "movie");
+      const tvSlice = tv.slice(0, 14);
+      const movieSlice = movies.slice(0, 6);
+      const tvShortfall = 14 - tvSlice.length;
+      const movieShortfall = 6 - movieSlice.length;
+      const result = [
+        ...tvSlice,
+        ...(movieShortfall > 0 ? tv.slice(14, 14 + movieShortfall) : []),
+        ...movieSlice,
+        ...(tvShortfall > 0 ? movies.slice(6, 6 + tvShortfall) : []),
+      ];
+      return result.slice(0, 20);
+    }
+
     // Apply availability filtering if requested (batch DB lookup, NO N+1)
     let top20: ScoredCandidate[];
 
@@ -261,12 +295,12 @@ export async function GET(req: NextRequest) {
           country: "NO",
         });
         const filtered2 = filterByAvailability(pool2, providerMap2);
-        top20 = filtered2.slice(0, 20);
+        top20 = pick7030(filtered2);
       } else {
-        top20 = filtered1.slice(0, 20);
+        top20 = pick7030(filtered1);
       }
     } else {
-      top20 = scored.slice(0, 20);
+      top20 = pick7030(scored);
     }
 
     // Cache titles and build response
