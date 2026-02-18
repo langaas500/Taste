@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import GlassCard from "@/components/GlassCard";
 import GlowButton from "@/components/GlowButton";
@@ -482,6 +483,14 @@ function SettingsContent() {
         <a href="/api/export" download>
           <GlowButton variant="ghost">Eksporter data som JSON</GlowButton>
         </a>
+      </GlassCard>
+
+      {/* Import */}
+      <GlassCard hover={false} className="p-5">
+        <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-4">Import</h3>
+        <Link href="/timemachine" className="text-sm text-[var(--accent-light)] hover:text-[var(--accent)] transition-colors font-medium">
+          Tidsmaskinen / Importer data →
+        </Link>
       </GlassCard>
 
       {/* Legal */}

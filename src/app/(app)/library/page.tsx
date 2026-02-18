@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import TitleCard from "@/components/TitleCard";
 import { SkeletonGrid } from "@/components/SkeletonCard";
 import EmptyState from "@/components/EmptyState";
@@ -17,7 +18,15 @@ type Filter = "all" | "favorites" | "liked" | "disliked" | "neutral" | "excluded
 type SortKey = "recent" | "alpha" | "year";
 type TypeFilter = "all" | "tv" | "movie";
 
+const LIBRARY_TABS = [
+  { href: "/library", label: "Sett" },
+  { href: "/watch-bank", label: "Ser nå" },
+  { href: "/watchlist", label: "Vil se" },
+  { href: "/lists", label: "Lister" },
+];
+
 export default function LibraryPage() {
+  const pathname = usePathname();
   const [titles, setTitles] = useState<(UserTitle & { cache?: TitleCache })[]>([]);
   const [exclusions, setExclusions] = useState<{ tmdb_id: number; type: string; reason: string | null; cache?: TitleCache }[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
@@ -182,6 +191,26 @@ export default function LibraryPage() {
 
   return (
     <div className="animate-fade-in-up">
+      {/* Library sub-nav */}
+      <div className="mb-6 flex border-b border-white/[0.06]">
+        {LIBRARY_TABS.map(({ href, label }) => {
+          const active = pathname === href;
+          return (
+            <Link
+              key={href}
+              href={href}
+              className="relative px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors"
+              style={{ color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)" }}
+            >
+              {label}
+              {active && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-[#ff2a2a]" />
+              )}
+            </Link>
+          );
+        })}
+      </div>
+
       {/* Hero header */}
       <div className="mb-8">
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)]">
