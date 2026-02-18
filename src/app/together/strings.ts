@@ -21,6 +21,8 @@ const strings = {
     loading: { no: "Laster…", en: "Loading…" },
     startSolo: { no: "Kjør", en: "Let's go" },
     startPaired: { no: "Start sammen", en: "Start together" },
+    groupLabel: { no: "Gruppe", en: "Group" },
+    groupDesc: { no: "Kommer snart", en: "Coming soon" },
     hasCode: { no: "Jeg har en kode", en: "I have a code" },
   },
 

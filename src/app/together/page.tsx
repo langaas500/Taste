@@ -1055,7 +1055,7 @@ export default function WTBetaPage() {
               </div>
 
               {/* Mode selector cards */}
-              <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                 {(["solo", "paired"] as const).map((choice) => {
                   const active = introChoice === choice;
                   return (
@@ -1069,8 +1069,8 @@ export default function WTBetaPage() {
                         alignItems: "center",
                         justifyContent: "center",
                         gap: 10,
-                        padding: "22px 12px",
-                        minHeight: 140,
+                        padding: "18px 8px",
+                        minHeight: 130,
                         borderRadius: 16,
                         border: active ? "1.5px solid rgba(255,255,255,0.25)" : "1px solid rgba(255,255,255,0.06)",
                         background: active ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.03)",
@@ -1111,6 +1111,42 @@ export default function WTBetaPage() {
                     </button>
                   );
                 })}
+                {/* Group teaser — not interactive */}
+                <div style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
+                  padding: "18px 8px",
+                  minHeight: 130,
+                  borderRadius: 16,
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: "rgba(255,255,255,0.03)",
+                  opacity: 0.4,
+                  cursor: "default",
+                  position: "relative",
+                }}>
+                  <div style={{
+                    position: "absolute", top: 8, right: 8,
+                    fontSize: "0.6rem", fontWeight: 600,
+                    padding: "2px 6px", borderRadius: 4,
+                    background: "rgba(255,42,42,0.2)",
+                    border: "1px solid rgba(255,42,42,0.3)",
+                    color: "rgba(255,255,255,0.7)",
+                    letterSpacing: "0.06em",
+                  }}>SOON</div>
+                  <span style={{ fontSize: 36, lineHeight: 1 }}>👥</span>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                    <span style={{ fontSize: "0.875rem", fontWeight: 400, color: "rgba(255,255,255,0.42)", letterSpacing: "-0.01em" }}>
+                      {t(locale, "intro", "groupLabel")}
+                    </span>
+                    <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "rgba(255,255,255,0.22)", letterSpacing: "-0.005em", lineHeight: 1.3 }}>
+                      {t(locale, "intro", "groupDesc")}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Primary CTA */}
