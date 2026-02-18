@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { logTitle } from "@/lib/api";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
-import { waitingForPartnerMessages, waitingAfterDoneMessages } from "./messages";
+import { getMessages } from "./messages";
+import { getLocale, t, type Locale } from "./strings";
 
 /* ── constants ─────────────────────────────────────────── */
 
@@ -231,6 +232,7 @@ export default function WTBetaPage() {
   const [preferenceMode, setPreferenceMode] = useState<"series" | "movies" | "mix">("series");
   const [selectedProviders, setSelectedProviders] = useState<number[]>([]);
   const [userRegion, setUserRegion] = useState("US");
+  const [locale, setLocale] = useState<Locale>("en");
   const [matchRevealPhase, setMatchRevealPhase] = useState<0 | 1 | 2>(0);
   const [introChoice, setIntroChoice] = useState<"solo" | "paired">("solo");
   const [introFading, setIntroFading] = useState(false);
@@ -264,15 +266,19 @@ export default function WTBetaPage() {
   const roundEndingRef = useRef(false);
   const iAmDoneRef = useRef(false);
   const timerRef = useRef(ROUND1_DURATION);
+  const roundRef = useRef<1 | 2>(1);
   const deckRef = useRef<WTTitle[]>([]);
   deckRef.current = deck;
   timerRef.current = timer;
+  roundRef.current = round;
   const extendingRef = useRef(false);
   const partnerRef = useRef<{ liked: number[] } | null>(null);
   const guestIdRef = useRef<string>("");
 
   const [swipe, setSwipe] = useState<{ x: number; y: number; rot: number; dragging: boolean }>({ x: 0, y: 0, rot: 0, dragging: false });
   const [fly, setFly] = useState<{ active: boolean; x: number; rot: number }>({ active: false, x: 0, rot: 0 });
+
+  const [authUser, setAuthUser] = useState<{ email?: string } | null>(null);
   const ptr = useRef<{ id: number | null; sx: number; sy: number; target: HTMLElement | null }>({ id: null, sx: 0, sy: 0, target: null });
 
   const { isTouch } = useInputMode();
@@ -302,6 +308,9 @@ export default function WTBetaPage() {
       }
       guestIdRef.current = gid;
     } catch { /* ignore */ }
+    createSupabaseBrowser().auth.getSession()
+      .then(({ data }) => { setAuthUser(data.session?.user ?? null); })
+      .catch(() => {});
   }, []);
 
   /* ── ritual timer cleanup ── */
@@ -315,6 +324,13 @@ export default function WTBetaPage() {
       .then((r) => r.json())
       .then((data) => {
         if (data.region) setUserRegion(data.region as string);
+        const params = new URLSearchParams(window.location.search);
+        const langParam = params.get("lang");
+        if (langParam === "no" || langParam === "en") {
+          setLocale(langParam as Locale);
+        } else if (data.region) {
+          setLocale(getLocale(data.region as string));
+        }
         if (Array.isArray(data.posters) && data.posters.length > 0) {
           setRibbonPosters(data.posters as string[]);
         }
@@ -374,6 +390,8 @@ export default function WTBetaPage() {
 
     let myLikedIds: number[] = [];
     let theirLikedIds: number[] = [];
+    // solo: always true; paired: set to confirmed value in fetch below
+    let partnerIsDone = true;
 
     if (mode === "solo") {
       setTimerRunning(false);
@@ -382,37 +400,57 @@ export default function WTBetaPage() {
         .map(([id]) => Number(id));
       theirLikedIds = partnerRef.current?.liked ?? [];
     } else {
-      try {
-        const res = await fetch(`/api/together/session?id=${sessionId}`, { headers: { "X-WT-Guest-ID": guestIdRef.current } });
-        const data = await res.json();
-        if (data.session) {
-          // Server already has a match — show it directly (avoids race condition).
-          if (data.session.match_tmdb_id) {
-            const mt = deckRef.current.find((t) => t.tmdb_id === data.session.match_tmdb_id);
-            if (mt) {
-              setTimerRunning(false);
-              setFinalWinner(mt);
-              setRoundPhase("winner");
-              roundEndingRef.current = false;
-              return;
-            }
-          }
-          const mySw = (data.session.my_swipes ?? {}) as Record<string, string>;
-          const theirSw = (data.session.partner_swipes ?? {}) as Record<string, string>;
-          myLikedIds = Object.entries(mySw).filter(([, a]) => a === "like" || a === "superlike").map(([k]) => Number(k.split(":")[0]));
-          theirLikedIds = Object.entries(theirSw).filter(([, a]) => a === "like" || a === "superlike").map(([k]) => Number(k.split(":")[0]));
+      // ── Paired mode ──────────────────────────────────────────────────────────
+      // Always mark ourselves as done first — we have no more cards to swipe.
+      if (!iAmDoneRef.current) {
+        iAmDoneRef.current = true;
+        setIAmDone(true);
+      }
 
-          // If time remains and we haven't entered the waiting state yet →
-          // partner hasn't finished. Show waiting overlay and keep polling.
-          if (timerRef.current > 0 && !iAmDoneRef.current) {
-            iAmDoneRef.current = true;
-            setIAmDone(true);
+      try {
+        const res = await fetch(`/api/together/session?id=${sessionId}`, {
+          headers: { "X-WT-Guest-ID": guestIdRef.current },
+        });
+        const data = await res.json();
+        if (!data.session) {
+          // API error — stay in waiting overlay, poll will retry.
+          roundEndingRef.current = false;
+          return;
+        }
+
+        // Server already has a match — show it directly (avoids race condition).
+        if (data.session.match_tmdb_id) {
+          const mt = deckRef.current.find((t) => t.tmdb_id === data.session.match_tmdb_id);
+          if (mt) {
+            setTimerRunning(false);
+            setFinalWinner(mt);
+            setRoundPhase("winner");
             roundEndingRef.current = false;
-            // roundPhase stays "swiping" so the poll keeps running.
             return;
           }
         }
-      } catch { /* fall through to result computation with empty data */ }
+
+        const mySw = (data.session.my_swipes ?? {}) as Record<string, string>;
+        const theirSw = (data.session.partner_swipes ?? {}) as Record<string, string>;
+        myLikedIds = Object.entries(mySw).filter(([, a]) => a === "like" || a === "superlike").map(([k]) => Number(k.split(":")[0]));
+        theirLikedIds = Object.entries(theirSw).filter(([, a]) => a === "like" || a === "superlike").map(([k]) => Number(k.split(":")[0]));
+
+        // Only compute results when partner has submitted at least as many swipes
+        // as the round limit (or the full deck, whichever is smaller).
+        const partnerSwipeTotal = Object.keys(theirSw).length;
+        const roundLimit = r === 1 ? ROUND1_LIMIT : ROUND1_LIMIT + ROUND2_LIMIT;
+        partnerIsDone = partnerSwipeTotal >= Math.min(roundLimit, deckRef.current.length);
+
+        if (!partnerIsDone) {
+          // Partner still swiping — stay in overlay. Poll loop will re-trigger endRound.
+          roundEndingRef.current = false;
+          return;
+        }
+      } catch {
+        // Network error — stay in waiting overlay, do not fall through to results.
+        roundEndingRef.current = false;
+        return;
+      }
       setTimerRunning(false);
     }
 
@@ -427,11 +465,13 @@ export default function WTBetaPage() {
           .sort((a, b) => a.decisionTime - b.decisionTime)
           .slice(0, 3);
         setRoundMatches(matches);
+        if (mode === "paired" && !partnerIsDone) return;
         setRoundPhase("results");
       } else {
         const sortedMine = [...myLikedIds].sort((a, b) => (swipeTimings.current[a] ?? Infinity) - (swipeTimings.current[b] ?? Infinity));
         const cid = sortedMine[0] ?? theirLikedIds[0] ?? null;
         setCompromiseTitle(cid != null ? d.find((t) => t.tmdb_id === cid) ?? null : null);
+        if (mode === "paired" && !partnerIsDone) return;
         setRoundPhase("no-match");
       }
     } else {
@@ -439,6 +479,7 @@ export default function WTBetaPage() {
       const sorted = [...candidates].sort((a, b) => (swipeTimings.current[a] ?? Infinity) - (swipeTimings.current[b] ?? Infinity));
       const wid = sorted[0] ?? d[0]?.tmdb_id;
       setFinalWinner(wid != null ? d.find((t) => t.tmdb_id === wid) ?? d[0] ?? null : d[0] ?? null);
+      if (mode === "paired" && !partnerIsDone) return;
       setRoundPhase("winner");
     }
   }
@@ -466,6 +507,7 @@ export default function WTBetaPage() {
   /* ── deckIndex passes limit OR deck exhausted → end round ── */
   useEffect(() => {
     if (screen !== "together" || roundPhase !== "swiping" || !!chosen) return;
+    if (iAmDoneRef.current) return; // Already in waiting state — don't re-trigger
 
     // If we run out of cards before hitting the limit, end the round anyway.
     if (deck.length > 0 && deckIndex >= deck.length) {
@@ -490,12 +532,12 @@ export default function WTBetaPage() {
   /* ── message rotation: waiting-for-join screen + iAmDone overlay ── */
   useEffect(() => {
     if (screen !== "waiting" && !iAmDone) return;
-    const pool = iAmDone ? waitingAfterDoneMessages : waitingForPartnerMessages;
+    const pool = iAmDone ? getMessages(locale, "waitingAfterDone") : getMessages(locale, "waitingForPartner");
     const id = setInterval(() => {
       setWaitingFactIndex((i) => (i + 1) % pool.length);
     }, 4000);
     return () => clearInterval(id);
-  }, [screen, iAmDone]);
+  }, [screen, iAmDone, locale]);
 
   /* ── reset message index on context change ── */
   useEffect(() => {
@@ -779,7 +821,22 @@ export default function WTBetaPage() {
             setScreen("together"); setTimer(ROUND1_DURATION); setTimerRunning(true);
           }
         }
-        setPartnerSwipeCount(Object.keys(data.session.partner_swipes || {}).length);
+        const partnerSwiped = Object.keys(data.session.partner_swipes || {}).length;
+        setPartnerSwipeCount(partnerSwiped);
+
+        // If we're in the iAmDone overlay and partner has now finished, trigger results.
+        if (iAmDoneRef.current && !roundEndingRef.current) {
+          const r = roundRef.current;
+          const threshold = Math.min(
+            r === 1 ? ROUND1_LIMIT : ROUND1_LIMIT + ROUND2_LIMIT,
+            deckRef.current.length,
+          );
+          if (partnerSwiped >= threshold) {
+            endRound(r);
+            return;
+          }
+        }
+
         if (superLikedIdRef.current) {
           const myId = superLikedIdRef.current;
           const myTitle = titles.find((t) => t.tmdb_id === myId);
@@ -959,17 +1016,17 @@ export default function WTBetaPage() {
                 margin: "10px auto 20px",
                 maxWidth: "85%",
               }}>
-                {(() => { const h = new Date().getHours(); return h >= 18 || h < 5 ? "What are we watching tonight?" : "What are we watching today?"; })()}
+                {(() => { const h = new Date().getHours(); return h >= 18 || h < 5 ? t(locale, "intro", "headlineEvening") : t(locale, "intro", "headlineDay"); })()}
               </h1>
 
               {/* Subtext — 20px below headline, 40px above button */}
               <div style={{ marginBottom: "40px" }}>
                 {returnedToday ? (
-                  <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>One more round?</p>
+                  <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>{t(locale, "intro", "returnedSubtitle")}</p>
                 ) : (
                   <>
-                    <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>Swipe separately.</p>
-                    <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>We decide.</p>
+                    <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>{t(locale, "intro", "subtitle1")}</p>
+                    <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>{t(locale, "intro", "subtitle2")}</p>
                   </>
                 )}
               </div>
@@ -1002,7 +1059,7 @@ export default function WTBetaPage() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={choice === "solo" ? "/one-phone.svg" : "/two-phones.svg"}
-                        alt={choice === "solo" ? "One phone" : "Two phones"}
+                        alt={choice === "solo" ? t(locale, "intro", "soloLabel") : t(locale, "intro", "pairedLabel")}
                         style={{ height: 30, width: "auto", opacity: active ? 1 : 0.55, transition: "opacity 160ms ease" }}
                       />
                       <span style={{
@@ -1012,7 +1069,7 @@ export default function WTBetaPage() {
                         letterSpacing: "-0.01em",
                         transition: "all 160ms ease",
                       }}>
-                        {choice === "solo" ? "One phone" : "Two phones"}
+                        {choice === "solo" ? t(locale, "intro", "soloLabel") : t(locale, "intro", "pairedLabel")}
                       </span>
                     </button>
                   );
@@ -1047,7 +1104,7 @@ export default function WTBetaPage() {
                     boxShadow: "0 8px 24px rgba(255,42,42,0.25), inset 0 1px 0 rgba(255,255,255,0.18)",
                   }}
                 >
-                  {titlesLoading ? "Loading…" : introChoice === "solo" ? "Start the 2-minute round" : "Create shared round"}
+                  {titlesLoading ? t(locale, "intro", "loading") : introChoice === "solo" ? t(locale, "intro", "startSolo") : t(locale, "intro", "startPaired")}
                 </button>
               </div>
 
@@ -1063,7 +1120,7 @@ export default function WTBetaPage() {
                       cursor: "pointer", padding: "4px 0",
                     }}
                   >
-                    I have a code
+                    {t(locale, "intro", "hasCode")}
                   </button>
                 )}
                 {sessionError && <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: "0.25rem" }}>{sessionError}</p>}
@@ -1076,14 +1133,47 @@ export default function WTBetaPage() {
 
         {/* ── WAITING ── */}
         {screen === "waiting" && (
-          <div className="flex-1 flex items-center justify-center px-6">
-            <div className="text-center max-w-sm w-full">
-              <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin mx-auto mb-8" style={{ borderColor: `${RED} transparent ${RED} ${RED}` }} />
-              <h2 className="text-xl font-bold text-white mb-2">Venter p&aring; partner&hellip;</h2>
-              <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>Del koden med den andre.</p>
+          <div className="flex-1 flex items-center justify-center px-6 relative overflow-hidden">
+            <style dangerouslySetInnerHTML={{ __html: `
+              @keyframes wf-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+              .wf-msg { animation: wf-rise 0.6s ease forwards; }
+              @keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+              @keyframes code-glow { from { box-shadow: 0 0 20px rgba(255,42,42,0.10); } to { box-shadow: 0 0 20px rgba(255,42,42,0.25); } }
+              @keyframes dot-pulse { 0%, 100% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
+            `}} />
+
+            {/* Poster mosaic background */}
+            {ribbonPosters.length > 0 && (
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+                <div style={{
+                  display: "flex",
+                  gap: 8,
+                  height: "100%",
+                  width: "max-content",
+                  animation: "poster-drift 60s linear infinite",
+                }}>
+                  {[...ribbonPosters, ...ribbonPosters].map((url, i) => (
+                    <img key={i} src={url} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.10, filter: "blur(8px)", flexShrink: 0 }} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="text-center max-w-sm w-full relative z-10">
+              {/* Pulsing red dot */}
+              <div style={{
+                width: 8, height: 8, borderRadius: "50%", background: RED,
+                margin: "0 auto 32px", animation: "dot-pulse 1.5s ease-in-out infinite",
+              }} />
+              <h2 className="text-xl font-bold text-white mb-2">{t(locale, "waiting", "headline")}</h2>
+              <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>{t(locale, "waiting", "ingress")}</p>
               <div
                 className="inline-flex items-center gap-3 px-6 py-4 rounded-2xl cursor-pointer mb-2"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  animation: "code-glow 2s ease-in-out infinite alternate",
+                }}
                 onClick={() => { navigator.clipboard.writeText(sessionCode).catch(() => {}); }}
               >
                 <span className="text-3xl font-mono font-black tracking-[0.3em] text-white">{sessionCode}</span>
@@ -1091,24 +1181,20 @@ export default function WTBetaPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
                 </svg>
               </div>
-              <p className="text-[11px] mb-6" style={{ color: "rgba(255,255,255,0.25)" }}>Trykk for &aring; kopiere</p>
-              <style dangerouslySetInnerHTML={{ __html: `
-                @keyframes wf-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-                .wf-msg { animation: wf-rise 0.6s ease forwards; }
-              `}} />
+              <p className="text-[11px] mb-6" style={{ color: "rgba(255,255,255,0.25)" }}>{t(locale, "waiting", "copyHint")}</p>
               <p
                 key={waitingFactIndex}
                 className="wf-msg text-[11px] mb-8"
                 style={{ color: "rgba(255,255,255,0.32)", lineHeight: 1.6, maxWidth: 240, margin: "0 auto 32px" }}
               >
-                {waitingForPartnerMessages[waitingFactIndex % waitingForPartnerMessages.length]}
+                {getMessages(locale, "waitingForPartner")[waitingFactIndex % getMessages(locale, "waitingForPartner").length]}
               </p>
               <button
                 onClick={() => { setScreen("intro"); setMode("solo"); setSessionId(null); setSessionCode(""); }}
                 className="text-xs font-medium bg-transparent border-0 cursor-pointer"
                 style={{ color: "rgba(255,255,255,0.28)" }}
               >
-                Avbryt
+                {t(locale, "waiting", "cancel")}
               </button>
             </div>
           </div>
@@ -1118,8 +1204,8 @@ export default function WTBetaPage() {
         {screen === "join" && (
           <div className="flex-1 flex items-center justify-center px-6">
             <div className="text-center max-w-sm w-full">
-              <h2 className="text-xl font-bold text-white mb-2">Bli med i runde</h2>
-              <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>Skriv inn koden du fikk.</p>
+              <h2 className="text-xl font-bold text-white mb-2">{t(locale, "join", "headline")}</h2>
+              <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>{t(locale, "join", "ingress")}</p>
               <div className="flex flex-col items-center gap-3">
                 <input
                   type="text"
@@ -1127,7 +1213,7 @@ export default function WTBetaPage() {
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, ""))}
                   onKeyDown={(e) => { if (e.key === "Enter") joinSession(); }}
-                  placeholder="KODE"
+                  placeholder={t(locale, "join", "placeholder")}
                   className="w-48 text-center text-2xl font-mono font-black tracking-[0.3em] py-3 rounded-xl border-0 outline-none"
                   style={{ background: "rgba(255,255,255,0.06)", color: "white", caretColor: RED }}
                   autoFocus
@@ -1138,7 +1224,7 @@ export default function WTBetaPage() {
                   className="w-48 py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
                   style={{ background: RED, minHeight: 44 }}
                 >
-                  {titlesLoading ? "Kobler til…" : "Bli med"}
+                  {titlesLoading ? t(locale, "join", "connecting") : t(locale, "join", "joinBtn")}
                 </button>
                 {sessionError && <p className="text-xs mt-1" style={{ color: "#f87171" }}>{sessionError}</p>}
               </div>
@@ -1147,7 +1233,7 @@ export default function WTBetaPage() {
                 className="text-xs font-medium bg-transparent border-0 cursor-pointer mt-8"
                 style={{ color: "rgba(255,255,255,0.28)" }}
               >
-                Tilbake
+                {t(locale, "join", "back")}
               </button>
             </div>
           </div>
@@ -1158,10 +1244,10 @@ export default function WTBetaPage() {
           <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
             <div style={{ width: "100%", maxWidth: 340 }}>
               <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#fff", marginBottom: 6, textAlign: "center" }}>
-                Where are you watching?
+                {t(locale, "providers", "headline")}
               </h2>
               <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.42)", marginBottom: 32, textAlign: "center" }}>
-                Pick your services — or skip to see everything.
+                {t(locale, "providers", "ingress")}
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", marginBottom: 40 }}>
                 {PROVIDERS
@@ -1197,7 +1283,7 @@ export default function WTBetaPage() {
               {/* Tonight preference toggle */}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 28 }}>
                 <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 10, letterSpacing: "0.02em" }}>
-                  Tonight:
+                  {t(locale, "providers", "tonightLabel")}
                 </span>
                 <div style={{
                   display: "inline-flex",
@@ -1208,7 +1294,7 @@ export default function WTBetaPage() {
                   border: "1px solid rgba(255,255,255,0.08)",
                 }}>
                   {(["series", "movies", "mix"] as const).map((mode) => {
-                    const labels: Record<string, string> = { series: "Series", movies: "Movies", mix: "Mix" };
+                    const labels: Record<string, string> = { series: t(locale, "providers", "series"), movies: t(locale, "providers", "movies"), mix: t(locale, "providers", "mix") };
                     const active = preferenceMode === mode;
                     return (
                       <button
@@ -1267,7 +1353,7 @@ export default function WTBetaPage() {
                   marginBottom: 14,
                 }}
               >
-                {titlesLoading ? "Loading…" : selectedProviders.length > 0 ? "Continue" : "See everything"}
+                {titlesLoading ? t(locale, "providers", "loading") : selectedProviders.length > 0 ? t(locale, "providers", "continueBtn") : t(locale, "providers", "seeAll")}
               </button>
               <button
                 onClick={() => setScreen("intro")}
@@ -1276,7 +1362,7 @@ export default function WTBetaPage() {
                   color: "rgba(255,255,255,0.3)", fontSize: "0.8125rem", cursor: "pointer",
                 }}
               >
-                Back
+                {t(locale, "providers", "back")}
               </button>
             </div>
           </div>
@@ -1302,18 +1388,18 @@ export default function WTBetaPage() {
                 )}
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.92) 70%, rgba(0,0,0,1) 100%)" }} />
                 <div className="relative z-10 w-full max-w-sm">
-                  <div className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.45)", letterSpacing: "0.12em" }}>Dere valgte det samme.</div>
+                  <div className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.45)", letterSpacing: "0.12em" }}>{t(locale, "doubleSuper", "label")}</div>
                   <h2 className="text-3xl font-black text-white leading-tight mb-1">{finalWinner.title}</h2>
                   <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>{finalWinner.year} &middot; {getGenreName(finalWinner.genre_ids)}</p>
                   <button onClick={() => setRoundPhase("winner")} className="w-full py-4 rounded-xl text-sm font-bold text-white mb-2" style={{ background: RED, minHeight: 52 }}>
-                    Start watching
+                    {t(locale, "doubleSuper", "startWatching")}
                   </button>
                   <button
                     onClick={() => { setFinalWinner(null); setRoundPhase("swiping"); setSuperLikesUsed(0); superLikedIdRef.current = null; roundEndingRef.current = false; setTimerRunning(true); }}
                     className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer"
                     style={{ color: "rgba(255,255,255,0.28)" }}
                   >
-                    Fortsett
+                    {t(locale, "doubleSuper", "continueBtn")}
                   </button>
                 </div>
               </div>
@@ -1323,7 +1409,7 @@ export default function WTBetaPage() {
             {roundPhase === "results" && roundMatches.length > 0 && (
               <div className="fixed inset-0 z-30 flex flex-col items-center justify-center px-6 py-10" style={{ background: "#0c0a09" }}>
                 <div className="w-full max-w-sm">
-                  <div className="text-xs mb-6 text-center" style={{ color: "rgba(255,255,255,0.28)", letterSpacing: "0.12em" }}>Dere er enige.</div>
+                  <div className="text-xs mb-6 text-center" style={{ color: "rgba(255,255,255,0.28)", letterSpacing: "0.12em" }}>{t(locale, "results", "label")}</div>
                   <div className="rounded-2xl overflow-hidden mb-4 mx-auto" style={{ maxWidth: 200, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
                     {roundMatches[0].title.poster_path ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -1337,16 +1423,16 @@ export default function WTBetaPage() {
                     </div>
                   </div>
                   <button onClick={() => { setFinalWinner(roundMatches[0].title); setRoundPhase("winner"); }} className="w-full py-4 rounded-xl text-sm font-bold text-white mb-3" style={{ background: RED, minHeight: 52 }}>
-                    Start watching
+                    {t(locale, "results", "startWatching")}
                   </button>
                   {roundMatches.length > 1 && (
                     <div className="text-xs text-center mb-2" style={{ color: "rgba(255,255,255,0.25)" }}>
-                      Se alternativer: {roundMatches.slice(1).map((m) => m.title.title).join(" · ")}
+                      {t(locale, "results", "seeAlternatives")} {roundMatches.slice(1).map((m) => m.title.title).join(" · ")}
                     </div>
                   )}
                   {round === 1 && (
                     <button onClick={startFinalRound} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.22)" }}>
-                      Fortsett og finn flere
+                      {t(locale, "results", "continueBtn")}
                     </button>
                   )}
                 </div>
@@ -1357,8 +1443,8 @@ export default function WTBetaPage() {
             {roundPhase === "no-match" && (
               <div className="fixed inset-0 z-30 flex flex-col items-center justify-center px-6 py-10" style={{ background: "#0c0a09" }}>
                 <div className="w-full max-w-sm text-center">
-                  <div className="text-sm font-semibold text-white mb-1">Ingen full match.</div>
-                  <div className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.38)" }}>Dette er det beste kompromisset.</div>
+                  <div className="text-sm font-semibold text-white mb-1">{t(locale, "noMatch", "headline")}</div>
+                  <div className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.38)" }}>{t(locale, "noMatch", "ingress")}</div>
                   {compromiseTitle && (
                     <div className="rounded-2xl overflow-hidden mb-6 mx-auto" style={{ maxWidth: 180, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
                       {compromiseTitle.poster_path ? (
@@ -1375,14 +1461,14 @@ export default function WTBetaPage() {
                   )}
                   {round === 1 ? (
                     <button onClick={startFinalRound} className="w-full py-4 rounded-xl text-sm font-bold text-white" style={{ background: RED, minHeight: 52 }}>
-                      En siste runde
+                      {t(locale, "noMatch", "lastRound")}
                     </button>
                   ) : (
                     <button onClick={() => { setFinalWinner(compromiseTitle); setRoundPhase("winner"); }} className="w-full py-4 rounded-xl text-sm font-bold text-white" style={{ background: RED, minHeight: 52 }}>
-                      Godta dette
+                      {t(locale, "noMatch", "acceptThis")}
                     </button>
                   )}
-                  <button onClick={reset} className="w-full py-3 mt-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.2)" }}>Spill igjen</button>
+                  <button onClick={reset} className="w-full py-3 mt-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.2)" }}>{t(locale, "noMatch", "playAgain")}</button>
                 </div>
               </div>
             )}
@@ -1414,7 +1500,7 @@ export default function WTBetaPage() {
                     opacity: matchRevealPhase >= 1 ? 1 : 0,
                     transition: "opacity 600ms ease",
                   }}>
-                    You both said yes.
+                    {t(locale, "winner", "phase1")}
                   </div>
                   {/* Phase 2: title + meta + buttons */}
                   <div style={{
@@ -1431,10 +1517,10 @@ export default function WTBetaPage() {
                       </p>
                     )}
                     <button className="w-full py-4 rounded-xl text-sm font-bold text-white mb-3" style={{ background: RED, minHeight: 52 }}>
-                      ▶︎ Start watching
+                      {t(locale, "winner", "startWatching")}
                     </button>
                     <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.25)" }}>
-                      Keep looking &rarr;
+                      {t(locale, "winner", "keepLooking")}
                     </button>
                   </div>
                 </div>
@@ -1443,17 +1529,36 @@ export default function WTBetaPage() {
 
             {/* ── WAITING FOR PARTNER — shown when iAmDone but timer still running ── */}
             {roundPhase === "swiping" && iAmDone && mode === "paired" && (
-              <div className="fixed inset-0 z-30 flex flex-col items-center justify-center" style={{ background: "#0a0a0f" }}>
+              <div className="fixed inset-0 z-30 flex flex-col items-center justify-center overflow-hidden" style={{ background: "#0a0a0f" }}>
                 <style dangerouslySetInnerHTML={{ __html: `
                   @keyframes wf-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
                   .wf-fact { animation: wf-rise 0.7s ease forwards; }
+                  @keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
                 `}} />
-                <div style={{ textAlign: "center", padding: "0 44px", maxWidth: 300 }}>
+
+                {/* Poster mosaic background */}
+                {ribbonPosters.length > 0 && (
+                  <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+                    <div style={{
+                      display: "flex",
+                      gap: 8,
+                      height: "100%",
+                      width: "max-content",
+                      animation: "poster-drift 60s linear infinite",
+                    }}>
+                      {[...ribbonPosters, ...ribbonPosters].map((url, i) => (
+                        <img key={i} src={url} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.10, filter: "blur(8px)", flexShrink: 0 }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ textAlign: "center", padding: "0 44px", maxWidth: 300, position: "relative", zIndex: 1 }}>
                   {/* Ghost timer — huge, faint, in background */}
                   <div style={{
                     fontSize: "clamp(4rem, 20vw, 6.5rem)",
                     fontWeight: 700,
-                    color: "rgba(255,255,255,0.06)",
+                    color: "rgba(255,255,255,0.15)",
                     letterSpacing: "-0.05em",
                     lineHeight: 1,
                     marginBottom: 32,
@@ -1467,9 +1572,17 @@ export default function WTBetaPage() {
                     fontWeight: 500,
                     color: "rgba(255,255,255,0.62)",
                     letterSpacing: "-0.015em",
+                    margin: "0 0 8px 0",
+                  }}>
+                    {t(locale, "iAmDone", "statusLine")}
+                  </p>
+                  {/* Partner progress */}
+                  <p style={{
+                    fontSize: "0.75rem",
+                    color: "rgba(255,255,255,0.28)",
                     margin: "0 0 32px 0",
                   }}>
-                    Waiting for your partner.
+                    {t(locale, "iAmDone", "partnerProgress").replace("{count}", String(partnerSwipeCount))}
                   </p>
                   {/* Rotating fun fact — key forces remount for animation */}
                   <p
@@ -1484,7 +1597,7 @@ export default function WTBetaPage() {
                       margin: 0,
                     }}
                   >
-                    {waitingAfterDoneMessages[waitingFactIndex % waitingAfterDoneMessages.length]}
+                    {getMessages(locale, "waitingAfterDone")[waitingFactIndex % getMessages(locale, "waitingAfterDone").length]}
                   </p>
                 </div>
               </div>
@@ -1498,7 +1611,7 @@ export default function WTBetaPage() {
                 <div className="flex items-center justify-between px-5 pt-4 pb-2">
                   <div style={{ width: 40 }} /> {/* spacer for balance */}
                   <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", fontWeight: 400 }}>
-                    Runde {round}
+                    {round === 1 ? t(locale, "together", "round1") : t(locale, "together", "round2")}
                   </span>
                 </div>
 
@@ -1613,7 +1726,7 @@ export default function WTBetaPage() {
                 {/* Desktop arrow hint */}
                 {isDesktop && (
                   <div className="flex justify-center pb-4">
-                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.22)" }}>&larr; &rarr;</span>
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.22)" }}>{t(locale, "together", "desktopHint")}</span>
                   </div>
                 )}
 
@@ -1627,8 +1740,8 @@ export default function WTBetaPage() {
                   <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: `${RED} transparent ${RED} ${RED}` }} />
                 ) : (
                   <>
-                    <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>Ingen flere forslag.</p>
-                    <button onClick={reset} className="text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: RED }}>Pr&oslash;v igjen</button>
+                    <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>{t(locale, "exhausted", "message")}</p>
+                    <button onClick={reset} className="text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: RED }}>{t(locale, "exhausted", "retry")}</button>
                   </>
                 )}
               </div>
@@ -1673,7 +1786,7 @@ export default function WTBetaPage() {
               }}>
                 {/* Large text — cross-dissolve between 3:00 / Ready? / Go. */}
                 <div style={{ position: "relative", height: 60, marginBottom: 16 }}>
-                  {(["2:00", "Ready?", "Go."] as const).map((text, idx) => (
+                  {([t(locale, "ritual", "timer"), t(locale, "ritual", "ready"), t(locale, "ritual", "go")] as string[]).map((text, idx) => (
                     <div
                       key={text}
                       style={{
@@ -1704,7 +1817,7 @@ export default function WTBetaPage() {
                   margin: "0 0 6px 0",
                   letterSpacing: "-0.01em",
                 }}>
-                  Phones apart.
+                  {t(locale, "ritual", "subtitle1")}
                 </p>
                 <p style={{
                   fontSize: 12,
@@ -1713,7 +1826,7 @@ export default function WTBetaPage() {
                   margin: 0,
                   letterSpacing: "-0.005em",
                 }}>
-                  Swipe separately. We decide.
+                  {t(locale, "ritual", "subtitle2")}
                 </p>
               </div>
             )}
@@ -1722,14 +1835,45 @@ export default function WTBetaPage() {
 
         {/* Profile link — goes to /home if logged in, /login otherwise */}
         <button
-          onClick={async () => {
-            const { data } = await createSupabaseBrowser().auth.getSession();
-            router.push(data.session ? "/home" : "/login");
-          }}
-          className="fixed bottom-4 right-4 z-60 text-[11px] font-medium px-3 py-2 rounded-xl select-none bg-transparent cursor-pointer"
-          style={{ color: "rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}
+          onClick={() => router.push(authUser ? "/home" : "/login")}
+          className="fixed bottom-4 right-4 z-60 select-none cursor-pointer"
+          style={{ background: "transparent", border: "none", padding: 0 }}
+          aria-label={authUser ? t(locale, "global", "myProfile") : t(locale, "global", "login")}
         >
-          Min profil
+          {authUser ? (
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 11,
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.35)",
+                letterSpacing: "0.02em",
+              }}
+            >
+              {(authUser.email ?? "?")[0].toUpperCase()}
+            </div>
+          ) : (
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                color: "rgba(255,255,255,0.15)",
+                padding: "6px 10px",
+                borderRadius: 10,
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.05)",
+              }}
+            >
+              {t(locale, "global", "login")}
+            </span>
+          )}
         </button>
 
       </div>

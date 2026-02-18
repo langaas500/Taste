@@ -155,6 +155,13 @@ BACKFILL_SECRET
 
 ---
 
+## Output-formattering
+
+**Copyable content rule:**
+Whenever you produce content that the user is meant to copy, use, or reference — including file contents, reports, lists, configurations, scripts, prompts, or any structured output — always wrap it in a fenced code block in the chat. Never use file downloads or present_files for this. The code block must contain the complete content so the user can copy it directly. Do not split content across multiple blocks unless absolutely necessary. This applies to all output types, not just code.
+
+---
+
 ## Viktig
 
 Hvis en endring:
