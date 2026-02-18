@@ -1026,8 +1026,8 @@ export default function WTBetaPage() {
             </div>
 
             {/* ── Hero block — flex-1, centered below ribbon ── */}
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px 60px", position: "relative", zIndex: 1 }}>
-            <div style={{ width: "100%", maxWidth: 340, textAlign: "center", marginTop: -40 }}>
+            <div style={{ flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "32px 24px 0", position: "relative", zIndex: 1 }}>
+            <div style={{ width: "100%", maxWidth: 340, textAlign: "center" }}>
 
               {/* Headline — time of day */}
               <h1 style={{
