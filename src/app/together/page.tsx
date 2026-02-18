@@ -15,6 +15,7 @@ const ROUND1_LIMIT = 25;
 const ROUND2_LIMIT = 15;
 const ROUND1_DURATION = 120;
 const ROUND2_DURATION = 60;
+const SUPERLIKES_PER_ROUND = 3;
 
 
 /* ── poster ribbon — static curated palette ─────────────── */
@@ -252,7 +253,7 @@ export default function WTBetaPage() {
   const [roundMatches, setRoundMatches] = useState<RoundMatch[]>([]);
   const [compromiseTitle, setCompromiseTitle] = useState<WTTitle | null>(null);
   const [finalWinner, setFinalWinner] = useState<WTTitle | null>(null);
-  const [superLikeUsed, setSuperLikeUsed] = useState(false);
+  const [superLikesUsed, setSuperLikesUsed] = useState(0);
   const [iAmDone, setIAmDone] = useState(false);
   const [waitingFactIndex, setWaitingFactIndex] = useState(0);
 
@@ -310,7 +311,7 @@ export default function WTBetaPage() {
 
   /* ── ribbon: fetch trending posters (TV 70 % / Movie 30 %) + capture region ── */
   useEffect(() => {
-    fetch("/api/wt-beta/ribbon")
+    fetch("/api/together/ribbon")
       .then((r) => r.json())
       .then((data) => {
         if (data.region) setUserRegion(data.region as string);
@@ -347,7 +348,7 @@ export default function WTBetaPage() {
     const seenIds = new Set(deckRef.current.map((t) => t.tmdb_id));
     const extendParams = new URLSearchParams(buildGuestParams() || "");
     extendParams.set("preference", preferenceMode);
-    fetch(`/api/wt-beta/titles?${extendParams}`)
+    fetch(`/api/together/titles?${extendParams}`)
       .then((r) => r.json())
       .then((data) => {
         const fresh: WTTitle[] = (Array.isArray(data.titles) ? data.titles : []).filter((t: WTTitle) => !seenIds.has(t.tmdb_id));
@@ -382,7 +383,7 @@ export default function WTBetaPage() {
       theirLikedIds = partnerRef.current?.liked ?? [];
     } else {
       try {
-        const res = await fetch(`/api/wt-beta/session?id=${sessionId}`, { headers: { "X-WT-Guest-ID": guestIdRef.current } });
+        const res = await fetch(`/api/together/session?id=${sessionId}`, { headers: { "X-WT-Guest-ID": guestIdRef.current } });
         const data = await res.json();
         if (data.session) {
           // Server already has a match — show it directly (avoids race condition).
@@ -451,7 +452,7 @@ export default function WTBetaPage() {
     setRoundPhase("swiping");
     setTimer(ROUND2_DURATION);
     setTimerRunning(true);
-    setSuperLikeUsed(false);
+    setSuperLikesUsed(0);
     superLikedIdRef.current = null;
   }
 
@@ -520,7 +521,7 @@ export default function WTBetaPage() {
         params.set("region", userRegion);
       }
       params.set("preference", preferenceMode);
-      const url = `/api/wt-beta/titles?${params}`;
+      const url = `/api/together/titles?${params}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
@@ -542,7 +543,7 @@ export default function WTBetaPage() {
     setTimer(ROUND1_DURATION);
     setTimerRunning(true);
     setChosen(null);
-    setSuperLikeUsed(false);
+    setSuperLikesUsed(0);
     superLikedIdRef.current = null;
     swipeTimings.current = {};
     sessionSwipes.current = {};
@@ -567,7 +568,7 @@ export default function WTBetaPage() {
     setChosen(null);
     setTimer(ROUND1_DURATION);
     setTimerRunning(false);
-    setSuperLikeUsed(false);
+    setSuperLikesUsed(0);
     superLikedIdRef.current = null;
     swipeTimings.current = {};
     sessionSwipes.current = {};
@@ -631,12 +632,12 @@ export default function WTBetaPage() {
     setDeckIndex((i) => i + 1);
   }
 
-  /* ── super-like (1 per round) ── */
+  /* ── super-like (3 per round) ── */
   function handleSuperLike() {
-    if (superLikeUsed) return;
+    if (superLikesUsed >= SUPERLIKES_PER_ROUND) return;
     const t = deck[deckIndex];
     if (!t) return;
-    setSuperLikeUsed(true);
+    setSuperLikesUsed((n) => n + 1);
     superLikedIdRef.current = t.tmdb_id;
     swipeTimings.current[t.tmdb_id] = Date.now() - cardStartTime.current;
     sessionSwipes.current[t.tmdb_id] = "like";
@@ -647,7 +648,7 @@ export default function WTBetaPage() {
       setRoundPhase("winner");
       logTitle({ tmdb_id: t.tmdb_id, type: t.type, status: "watchlist" }).catch(() => {});
     } else {
-      fetch("/api/wt-beta/session/swipe", {
+      fetch("/api/together/session/swipe", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current },
         body: JSON.stringify({ session_id: sessionId, tmdb_id: t.tmdb_id, type: t.type, action: "superlike" }),
@@ -728,7 +729,7 @@ export default function WTBetaPage() {
   async function createSession() {
     setSessionError(""); setTitlesLoading(true);
     try {
-      const res = await fetch("/api/wt-beta/session", { method: "POST", headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current }, body: JSON.stringify({}) });
+      const res = await fetch("/api/together/session", { method: "POST", headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current }, body: JSON.stringify({}) });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setSessionId(data.session.id);
@@ -747,7 +748,7 @@ export default function WTBetaPage() {
     if (!joinCode.trim()) return;
     setSessionError(""); setTitlesLoading(true);
     try {
-      const res = await fetch("/api/wt-beta/session/join", { method: "POST", headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current }, body: JSON.stringify({ code: joinCode.trim() }) });
+      const res = await fetch("/api/together/session/join", { method: "POST", headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current }, body: JSON.stringify({ code: joinCode.trim() }) });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setSessionId(data.session.id);
@@ -768,7 +769,7 @@ export default function WTBetaPage() {
     if (mode !== "paired" || !sessionId || !!chosen) return;
     const poll = async () => {
       try {
-        const res = await fetch(`/api/wt-beta/session?id=${sessionId}`, { headers: { "X-WT-Guest-ID": guestIdRef.current } });
+        const res = await fetch(`/api/together/session?id=${sessionId}`, { headers: { "X-WT-Guest-ID": guestIdRef.current } });
         const data = await res.json();
         if (!data.session) return;
         if (!partnerJoined && data.session.partner_joined) {
@@ -804,7 +805,7 @@ export default function WTBetaPage() {
   /* ── paired: submit swipe ── */
   function submitPairedSwipe(t: WTTitle, action: SwipeAction) {
     if (!sessionId) return;
-    fetch("/api/wt-beta/session/swipe", {
+    fetch("/api/together/session/swipe", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current },
       body: JSON.stringify({ session_id: sessionId, tmdb_id: t.tmdb_id, type: t.type, action }),
@@ -1308,7 +1309,7 @@ export default function WTBetaPage() {
                     Start watching
                   </button>
                   <button
-                    onClick={() => { setFinalWinner(null); setRoundPhase("swiping"); setSuperLikeUsed(false); superLikedIdRef.current = null; roundEndingRef.current = false; setTimerRunning(true); }}
+                    onClick={() => { setFinalWinner(null); setRoundPhase("swiping"); setSuperLikesUsed(0); superLikedIdRef.current = null; roundEndingRef.current = false; setTimerRunning(true); }}
                     className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer"
                     style={{ color: "rgba(255,255,255,0.28)" }}
                   >
@@ -1577,22 +1578,27 @@ export default function WTBetaPage() {
                   </button>
 
                   {/* Star — slightly smaller */}
-                  <button
-                    onClick={handleSuperLike}
-                    disabled={superLikeUsed}
-                    style={{
-                      ...btnBase,
-                      width: 48,
-                      height: 48,
-                      fontSize: "1.15rem",
-                      opacity: superLikeUsed ? 0.22 : 1,
-                      background: superLikeUsed ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.05)",
-                      border: `1px solid ${superLikeUsed ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.12)"}`,
-                    }}
-                    aria-label="Super-like"
-                  >
-                    ⭐
-                  </button>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                    <button
+                      onClick={handleSuperLike}
+                      disabled={superLikesUsed >= SUPERLIKES_PER_ROUND}
+                      style={{
+                        ...btnBase,
+                        width: 48,
+                        height: 48,
+                        fontSize: "1.15rem",
+                        opacity: superLikesUsed >= SUPERLIKES_PER_ROUND ? 0.22 : 1,
+                        background: superLikesUsed >= SUPERLIKES_PER_ROUND ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.05)",
+                        border: `1px solid ${superLikesUsed >= SUPERLIKES_PER_ROUND ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.12)"}`,
+                      }}
+                      aria-label="Super-like"
+                    >
+                      ⭐
+                    </button>
+                    <span style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", lineHeight: 1 }}>
+                      {SUPERLIKES_PER_ROUND - superLikesUsed}
+                    </span>
+                  </div>
 
                   {/* Thumbs up */}
                   <button

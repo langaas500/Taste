@@ -24,7 +24,7 @@ src/
   app/
     (app)/        # Auth-beskyttede sider
     api/          # API-routes (kritisk kode)
-    wt-beta/      # Se Sammen (auth-only per Feb 2026)
+    together/     # Se Sammen (auth-only per Feb 2026)
     page.tsx
   lib/            # tmdb.ts, ai.ts, auth.ts, supabase-server/browser
   components/

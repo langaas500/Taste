@@ -44,9 +44,9 @@ export async function middleware(request: NextRequest) {
   const isGuestAllowed =
     pathname === "/" ||
     pathname === "/search" ||
-    pathname === "/wt-beta" ||
+    pathname === "/together" ||
     pathname.startsWith("/api/tmdb/") ||
-    pathname.startsWith("/api/wt-beta/");
+    pathname.startsWith("/api/together/");
 
   if (!user && !isPublic && !isGuestAllowed) {
     const url = request.nextUrl.clone();
