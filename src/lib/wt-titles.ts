@@ -81,7 +81,7 @@ const QUALITY = {
 const FETCH_MIN_VOTE_MOVIE = 50;
 const FETCH_MIN_VOTE_TV   = 30;
 
-const MAINSTREAM_LANGS = new Set(["en", "no", "sv", "da"]);
+const MAINSTREAM_LANGS = new Set(["en", "no", "sv", "da", "ko", "es", "fr"]);
 
 // Hard-blocked languages — never allowed regardless of quality
 const BLOCKED_LANGS = new Set(["hi", "ta", "te", "ml", "kn", "pa", "bn", "mr", "ja"]);
@@ -225,8 +225,8 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
     }
   };
 
-  // ── 1. Seed-based recommendations — score +4 (skipped when provider filter active) ──
-  if (seedLiked.length > 0 && providerIds.length === 0) {
+  // ── 1. Seed-based recommendations — score +4 ──
+  if (seedLiked.length > 0) {
     const seeds = seedLiked.slice(0, 5);
     const recResults = await Promise.all(
       seeds.map(async (s) => {
@@ -275,15 +275,13 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
   const discover_count = pool.length - similar_count;
   console.log(`[buildWtDeck] step2_mood_discover=${discover_count} (pool=${pool.length})`);
 
-  // ── 3. Trending this week — score +2 (skipped when provider filter active) ──
-  if (providerIds.length === 0) {
-    const [trendingMovies, trendingTv] = await Promise.all([
-      tmdbTrending("movie", "week"),
-      tmdbTrending("tv", "week"),
-    ]);
-    addItems(trendingMovies.results, "movie", "Populær akkurat nå", 2);
-    addItems(trendingTv.results, "tv", "Populær akkurat nå", 2);
-  }
+  // ── 3. Trending this week — score +2 ──
+  const [trendingMovies, trendingTv] = await Promise.all([
+    tmdbTrending("movie", "week"),
+    tmdbTrending("tv", "week"),
+  ]);
+  addItems(trendingMovies.results, "movie", "Populær akkurat nå", 2);
+  addItems(trendingTv.results, "tv", "Populær akkurat nå", 2);
   const trending_count = pool.length - similar_count - discover_count;
   console.log(`[buildWtDeck] step3_trending=${trending_count} (pool=${pool.length})`);
 
@@ -317,11 +315,10 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
 
   // ── 5. Thin pool: fetch more pages ────────────────────────────────
   const poolBeforeFallback = pool.length;
-  if (pool.length < FALLBACK_FETCH_THRESHOLD) {
-    await fetchPopularDiscover(2);
-  }
-  if (pool.length < FALLBACK_FETCH_THRESHOLD) {
-    await fetchPopularDiscover(3);
+  // Provider-filtered catalogs are smaller — fetch up to 5 extra pages
+  const maxFallbackPage = providerIds.length > 0 ? 6 : 3;
+  for (let p = 2; p <= maxFallbackPage && pool.length < FALLBACK_FETCH_THRESHOLD; p++) {
+    await fetchPopularDiscover(p);
   }
   const fallback_count = pool.length - poolBeforeFallback;
   if (fallback_count > 0) {
