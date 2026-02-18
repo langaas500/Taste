@@ -233,7 +233,7 @@ export default function WTBetaPage() {
   const [selectedProviders, setSelectedProviders] = useState<number[]>([]);
   const [userRegion, setUserRegion] = useState("US");
   const [locale, setLocale] = useState<Locale>("en");
-  const [matchRevealPhase, setMatchRevealPhase] = useState<0 | 1 | 2>(0);
+  const [matchRevealPhase, setMatchRevealPhase] = useState<0 | 1 | 2 | 3>(0);
   const [introChoice, setIntroChoice] = useState<"solo" | "paired">("solo");
   const [introFading, setIntroFading] = useState(false);
   const [ritualState, setRitualState] = useState<RitualState>("idle");
@@ -524,9 +524,11 @@ export default function WTBetaPage() {
   /* ── match moment reveal sequence ── */
   useEffect(() => {
     if (roundPhase !== "winner") { setMatchRevealPhase(0); return; }
+    navigator.vibrate?.(200);
     const t1 = window.setTimeout(() => setMatchRevealPhase(1), 400);
-    const t2 = window.setTimeout(() => setMatchRevealPhase(2), 1200);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    const t2 = window.setTimeout(() => setMatchRevealPhase(2), 700);
+    const t3 = window.setTimeout(() => setMatchRevealPhase(3), 1000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [roundPhase]);
 
   /* ── message rotation: waiting-for-join screen + iAmDone overlay ── */
@@ -1488,6 +1490,9 @@ export default function WTBetaPage() {
             {/* Winner — phased match moment reveal */}
             {roundPhase === "winner" && finalWinner && (
               <div className="fixed inset-0 z-30 flex flex-col justify-end md:items-center px-6 pb-16">
+                <style dangerouslySetInnerHTML={{ __html: `
+                  @keyframes poster-fadein { from { opacity: 0 } to { opacity: 1 } }
+                `}} />
                 <div className="absolute inset-0" style={{ background: getGenreColor(finalWinner.genre_ids) }} />
                 {finalWinner.poster_path && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -1496,6 +1501,7 @@ export default function WTBetaPage() {
                     alt=""
                     className="absolute inset-0 w-full h-full object-cover md:object-contain"
                     style={{
+                      animation: "poster-fadein 600ms ease-out forwards",
                       transform: matchRevealPhase >= 1 ? "scale(1.04)" : "scale(1)",
                       transition: "transform 600ms cubic-bezier(.2,.9,.2,1), filter 600ms ease",
                       filter: matchRevealPhase >= 1 ? "brightness(0.95)" : "brightness(1)",
@@ -1505,20 +1511,18 @@ export default function WTBetaPage() {
                 )}
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0.88) 65%, rgba(0,0,0,1) 100%)" }} />
                 <div className="relative z-10 w-full max-w-sm md:mx-auto">
-                  {/* Phase 1: "You both said yes." */}
+                  {/* Phase 1: label */}
                   <div style={{
-                    fontSize: "0.75rem", letterSpacing: "0.14em", textTransform: "uppercase",
-                    color: "rgba(255,255,255,0.55)", marginBottom: 12,
+                    fontSize: "1rem", letterSpacing: "0.04em",
+                    color: "rgba(255,255,255,0.72)", marginBottom: 12,
+                    textShadow: "0 0 20px rgba(255,42,42,0.55)",
                     opacity: matchRevealPhase >= 1 ? 1 : 0,
                     transition: "opacity 600ms ease",
                   }}>
                     {t(locale, "winner", "phase1")}
                   </div>
-                  {/* Phase 2: title + meta + buttons */}
-                  <div style={{
-                    opacity: matchRevealPhase >= 2 ? 1 : 0,
-                    transition: "opacity 600ms ease",
-                  }}>
+                  {/* Phase 2: title + meta */}
+                  <div style={{ opacity: matchRevealPhase >= 2 ? 1 : 0, transition: "opacity 600ms ease" }}>
                     <h2 className="text-3xl font-black text-white leading-tight mb-1">{finalWinner.title}</h2>
                     <p className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>
                       {finalWinner.year} &middot; {getGenreName(finalWinner.genre_ids)}
@@ -1528,6 +1532,9 @@ export default function WTBetaPage() {
                         {finalWinner.overview}
                       </p>
                     )}
+                  </div>
+                  {/* Phase 3: buttons */}
+                  <div style={{ opacity: matchRevealPhase >= 3 ? 1 : 0, transition: "opacity 600ms ease" }}>
                     <button className="w-full py-4 rounded-xl text-sm font-bold text-white mb-3" style={{ background: RED, minHeight: 52 }}>
                       {t(locale, "winner", "startWatching")}
                     </button>
