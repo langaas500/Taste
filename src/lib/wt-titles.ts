@@ -65,7 +65,6 @@ const MOOD_LABELS: Record<Mood, string> = {
 
 const MIN_YEAR = 1995;
 const DEFAULT_LIMIT = 60;
-const FALLBACK_FETCH_THRESHOLD = 40;
 const MIN_FILTERED_POOL = 30; // minimum pool size before trying the next pass
 
 const QUALITY = {
@@ -309,21 +308,34 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
     addItems(popTv.results, "tv", "Populær akkurat nå", 1);
   };
 
-  await fetchPopularDiscover(1);
+  // Randomized start page — vary results across sessions even with large excludeIds
+  const startPage = Math.floor(Math.random() * 10) + 1;
+  await fetchPopularDiscover(startPage);
   const popular_count = pool.length - similar_count - discover_count - trending_count;
-  console.log(`[buildWtDeck] step4_popular_p1=${popular_count} (pool=${pool.length})`);
+  console.log(`[buildWtDeck] step4_popular_p1=${popular_count} (pool=${pool.length}, startPage=${startPage})`);
 
-  // ── 5. Thin pool: fetch more pages ────────────────────────────────
+  // ── 5. Deep pagination — parallel batches of 3 pages until pool >= limit ──
   const poolBeforeFallback = pool.length;
-  // Provider-filtered catalogs are smaller — fetch up to 5 extra pages
-  const maxFallbackPage = providerIds.length > 0 ? 6 : 3;
-  for (let p = 2; p <= maxFallbackPage && pool.length < FALLBACK_FETCH_THRESHOLD; p++) {
-    await fetchPopularDiscover(p);
+  const BATCH_SIZE = 3;
+  const MAX_EXTRA_PAGES = 30; // absolute cap against runaway fetching
+  let nextPage = startPage + 1;
+  let totalExtraFetched = 0;
+  let emptyPageCount = 0; // consecutive pages yielding 0 new pool items
+
+  while (pool.length < limit && totalExtraFetched < MAX_EXTRA_PAGES && emptyPageCount < 10) {
+    const pages = Array.from({ length: BATCH_SIZE }, (_, i) => nextPage + i);
+    const poolBefore = pool.length;
+    await Promise.all(pages.map((p) => fetchPopularDiscover(p)));
+    const added = pool.length - poolBefore;
+    nextPage += BATCH_SIZE;
+    totalExtraFetched += BATCH_SIZE;
+    if (added === 0) emptyPageCount += BATCH_SIZE;
+    else emptyPageCount = 0;
   }
+
   const fallback_count = pool.length - poolBeforeFallback;
-  if (fallback_count > 0) {
-    console.log(`[buildWtDeck] step5_fallback_pages=${fallback_count} (pool=${pool.length})`);
-  }
+  console.log(`[buildWtDeck] step5_deep_pagination: pages=${startPage + 1}-${nextPage - 1} added=${fallback_count} (pool=${pool.length})`);
+
 
   const total_raw = pool.length;
   console.log(`[buildWtDeck] total_raw(=after_dedup)=${total_raw}`);
