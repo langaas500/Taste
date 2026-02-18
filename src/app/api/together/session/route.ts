@@ -32,16 +32,15 @@ export async function POST(req: NextRequest) {
       /* no body or invalid JSON — mood stays undefined */
     }
 
-    // Get user exclusions + liked history for title pool
+    // Paired sessions: only apply explicit exclusions — not full rating history.
+    // Both users discover together, so previously rated titles are fair game.
     const [{ data: userTitles }, { data: exclusions }] = await Promise.all([
       admin.from("user_titles").select("tmdb_id, type, sentiment, favorite").eq("user_id", userId),
       admin.from("user_exclusions").select("tmdb_id, type").eq("user_id", userId),
     ]);
 
     const excludeIds = new Set<string>();
-    userTitles?.forEach((t: { tmdb_id: number; type: string }) =>
-      excludeIds.add(`${t.tmdb_id}:${t.type}`)
-    );
+    // Only exclude explicit user_exclusions (not general rating history)
     exclusions?.forEach((t: { tmdb_id: number; type: string }) =>
       excludeIds.add(`${t.tmdb_id}:${t.type}`)
     );
