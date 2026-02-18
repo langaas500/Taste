@@ -59,6 +59,30 @@ const PROVIDERS: Provider[] = [
   { id: 439,  name: "TV 2 Play" },
 ];
 
+const PROVIDER_URLS: Record<number, (title: string) => string> = {
+  8:    (t) => `https://www.netflix.com/search?q=${encodeURIComponent(t)}`,
+  9:    (t) => `https://www.primevideo.com/search?phrase=${encodeURIComponent(t)}`,
+  337:  (t) => `https://www.disneyplus.com/search?q=${encodeURIComponent(t)}`,
+  1899: (t) => `https://www.max.com/search?q=${encodeURIComponent(t)}`,
+  350:  (t) => `https://tv.apple.com/search?term=${encodeURIComponent(t)}`,
+  76:   (t) => `https://viaplay.no/search?query=${encodeURIComponent(t)}`,
+  439:  () => `https://play.tv2.no`,
+  531:  (t) => `https://www.paramountplus.com/search?q=${encodeURIComponent(t)}`,
+  15:   (t) => `https://www.hulu.com/search?q=${encodeURIComponent(t)}`,
+  386:  (t) => `https://www.peacocktv.com/search?q=${encodeURIComponent(t)}`,
+};
+
+function getWatchInfo(title: string, tmdbId: number, type: "movie" | "tv", selectedProviders: number[]): { url: string; providerName: string | null } {
+  for (const id of selectedProviders) {
+    const urlFn = PROVIDER_URLS[id];
+    if (urlFn) {
+      const provider = PROVIDERS.find((p) => p.id === id);
+      return { url: urlFn(title), providerName: provider?.name ?? null };
+    }
+  }
+  return { url: `https://www.themoviedb.org/${type}/${tmdbId}/watch`, providerName: null };
+}
+
 /* ── genre map ─────────────────────────────────────────── */
 
 const GENRE_MAP: Record<number, { name: string; color: string }> = {
@@ -1558,9 +1582,17 @@ export default function WTBetaPage() {
                   <div className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.45)", letterSpacing: "0.12em" }}>{t(locale, "doubleSuper", "label")}</div>
                   <h2 className="text-3xl font-black text-white leading-tight mb-1">{finalWinner.title}</h2>
                   <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>{finalWinner.year} &middot; {getGenreName(finalWinner.genre_ids)}</p>
-                  <button onClick={() => setRoundPhase("winner")} className="w-full py-4 rounded-xl text-sm font-bold text-white mb-2" style={{ background: RED, minHeight: 52 }}>
-                    {t(locale, "doubleSuper", "startWatching")}
-                  </button>
+                  {finalWinner && (() => {
+                    const wi = getWatchInfo(finalWinner.title, finalWinner.tmdb_id, finalWinner.type, selectedProviders);
+                    const label = wi.providerName
+                      ? t(locale, "winner", "watchOn").replace("{provider}", wi.providerName)
+                      : t(locale, "doubleSuper", "startWatching");
+                    return (
+                      <button onClick={() => { setRoundPhase("winner"); window.open(wi.url, "_blank"); }} className="w-full py-4 rounded-xl text-sm font-bold text-white mb-2" style={{ background: RED, minHeight: 52 }}>
+                        {label}
+                      </button>
+                    );
+                  })()}
                   <button
                     onClick={() => finalWinner && handleShare(finalWinner.title)}
                     className="w-full py-3 rounded-xl text-sm font-medium mb-2"
@@ -1596,9 +1628,18 @@ export default function WTBetaPage() {
                       <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{roundMatches[0].title.year} &middot; {getGenreName(roundMatches[0].title.genre_ids)}</div>
                     </div>
                   </div>
-                  <button onClick={() => { setFinalWinner(roundMatches[0].title); setRoundPhase("winner"); }} className="w-full py-4 rounded-xl text-sm font-bold text-white mb-3" style={{ background: RED, minHeight: 52 }}>
-                    {t(locale, "results", "startWatching")}
-                  </button>
+                  {(() => {
+                    const m = roundMatches[0].title;
+                    const wi = getWatchInfo(m.title, m.tmdb_id, m.type, selectedProviders);
+                    const label = wi.providerName
+                      ? t(locale, "winner", "watchOn").replace("{provider}", wi.providerName)
+                      : t(locale, "results", "startWatching");
+                    return (
+                      <button onClick={() => { setFinalWinner(m); setRoundPhase("winner"); window.open(wi.url, "_blank"); }} className="w-full py-4 rounded-xl text-sm font-bold text-white mb-3" style={{ background: RED, minHeight: 52 }}>
+                        {label}
+                      </button>
+                    );
+                  })()}
                   {roundMatches.length > 1 && (
                     <div className="text-xs text-center mb-2" style={{ color: "rgba(255,255,255,0.25)" }}>
                       {t(locale, "results", "seeAlternatives")} {roundMatches.slice(1).map((m) => m.title.title).join(" · ")}
@@ -1725,9 +1766,17 @@ export default function WTBetaPage() {
                   </div>
                   {/* Phase 3: buttons */}
                   <div style={{ opacity: matchRevealPhase >= 3 ? 1 : 0, transition: "opacity 600ms ease" }}>
-                    <button className="w-full py-4 rounded-xl text-sm font-bold text-white mb-3" style={{ background: RED, minHeight: 52 }}>
-                      {t(locale, "winner", "startWatching")}
-                    </button>
+                    {finalWinner && (() => {
+                      const wi = getWatchInfo(finalWinner.title, finalWinner.tmdb_id, finalWinner.type, selectedProviders);
+                      const label = wi.providerName
+                        ? t(locale, "winner", "watchOn").replace("{provider}", wi.providerName)
+                        : t(locale, "winner", "startWatching");
+                      return (
+                        <button onClick={() => window.open(wi.url, "_blank")} className="w-full py-4 rounded-xl text-sm font-bold text-white mb-3" style={{ background: RED, minHeight: 52 }}>
+                          {label}
+                        </button>
+                      );
+                    })()}
                     <button
                       onClick={() => finalWinner && handleShare(finalWinner.title)}
                       className="w-full py-3 rounded-xl text-sm font-medium mb-3"

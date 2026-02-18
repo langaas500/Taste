@@ -118,6 +118,7 @@ const strings = {
     phase1: { no: "Dere sa begge ja.", en: "You both said yes." },
     soloPhase1: { no: "Vi bestemte.", en: "We decided." },
     startWatching: { no: "▶︎ Start å se", en: "▶︎ Start watching" },
+    watchOn: { no: "▶︎ Se på {provider}", en: "▶︎ Watch on {provider}" },
     keepLooking: { no: "Fortsett å lete →", en: "Keep looking →" },
     share: { no: "Del resultatet", en: "Share result" },
     shareText: { no: "Vi fant noe å se! 🎬", en: "We found something to watch! 🎬" },
