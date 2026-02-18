@@ -49,6 +49,7 @@ const strings = {
     headline: { no: "Venter på partner…", en: "Waiting for partner…" },
     ingress: { no: "Del koden med den andre.", en: "Share the code with your partner." },
     copyHint: { no: "Trykk for å kopiere", en: "Tap to copy" },
+    scanOrShare: { no: "Skann eller del koden", en: "Scan or share the code" },
     cancel: { no: "Avbryt", en: "Cancel" },
   },
 

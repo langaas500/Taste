@@ -6,6 +6,7 @@ import { logTitle } from "@/lib/api";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { getMessages } from "./messages";
 import { getLocale, t, type Locale } from "./strings";
+import QRCode from "qrcode";
 
 /* ── constants ─────────────────────────────────────────── */
 
@@ -244,6 +245,7 @@ export default function WTBetaPage() {
   const [mode, setMode] = useState<Mode>("solo");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionCode, setSessionCode] = useState("");
+  const [qrDataUrl, setQrDataUrl] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [partnerJoined, setPartnerJoined] = useState(false);
   const [partnerSwipeCount, setPartnerSwipeCount] = useState(0);
@@ -311,8 +313,16 @@ export default function WTBetaPage() {
     createSupabaseBrowser().auth.getSession()
       .then(({ data }) => { setAuthUser(data.session?.user ?? null); })
       .catch(() => {});
+    // ?code= → auto-join
+    const urlParams = new URLSearchParams(window.location.search);
+    const codeParam = urlParams.get("code");
+    if (codeParam) {
+      setJoinCode(codeParam.toUpperCase());
+      setScreen("join");
+      window.setTimeout(() => joinSession(codeParam.toUpperCase()), 50);
+    }
     // DEBUG: ?winner=1 → viser winner-skjermen direkte
-    if (new URLSearchParams(window.location.search).get("winner") === "1") {
+    if (urlParams.get("winner") === "1") {
       setFinalWinner({ tmdb_id: 550, title: "Fight Club", year: 1999, type: "movie", genre_ids: [18, 53], overview: "An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into something much, much more.", poster_path: "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg", vote_average: 8.4 });
       setScreen("together");
       setRoundPhase("winner");
@@ -571,6 +581,15 @@ export default function WTBetaPage() {
     if (iAmDone) setWaitingFactIndex(0);
   }, [iAmDone]);
 
+  /* ── QR-kode for waiting-skjerm ── */
+  useEffect(() => {
+    if (!sessionCode) { setQrDataUrl(""); return; }
+    const url = `${window.location.origin}/together?code=${sessionCode}`;
+    QRCode.toDataURL(url, { width: 180, margin: 1, color: { dark: "#ffffff", light: "#00000000" } })
+      .then(setQrDataUrl)
+      .catch(() => {});
+  }, [sessionCode]);
+
   /* ── enter together mode ── */
   async function goTogether() {
     setTitlesLoading(true);
@@ -809,11 +828,12 @@ export default function WTBetaPage() {
   }
 
   /* ── paired: join session ── */
-  async function joinSession() {
-    if (!joinCode.trim()) return;
+  async function joinSession(codeOverride?: string) {
+    const code = (codeOverride ?? joinCode).trim();
+    if (!code) return;
     setSessionError(""); setTitlesLoading(true);
     try {
-      const res = await fetch("/api/together/session/join", { method: "POST", headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current }, body: JSON.stringify({ code: joinCode.trim() }) });
+      const res = await fetch("/api/together/session/join", { method: "POST", headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current }, body: JSON.stringify({ code }) });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setSessionId(data.session.id);
@@ -1253,6 +1273,14 @@ export default function WTBetaPage() {
               }} />
               <h2 className="text-xl font-bold text-white mb-2">{t(locale, "waiting", "headline")}</h2>
               <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>{t(locale, "waiting", "ingress")}</p>
+              {qrDataUrl && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 12 }}>
+                  <img src={qrDataUrl} alt="QR-kode" style={{ width: 180, height: 180 }} />
+                  <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.3)", marginTop: 6 }}>
+                    {t(locale, "waiting", "scanOrShare")}
+                  </p>
+                </div>
+              )}
               <div
                 className="inline-flex items-center gap-3 px-6 py-4 rounded-2xl cursor-pointer mb-2"
                 style={{
@@ -1317,7 +1345,7 @@ export default function WTBetaPage() {
                   autoFocus
                 />
                 <button
-                  onClick={joinSession}
+                  onClick={() => joinSession()}
                   disabled={joinCode.length < 4 || titlesLoading}
                   className="w-48 py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
                   style={{ background: RED, minHeight: 44 }}
