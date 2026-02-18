@@ -1794,7 +1794,17 @@ export default function WTBetaPage() {
 
             {/* ── SWIPING PHASE — centered card layout ── */}
             {roundPhase === "swiping" && !deckExhausted && !iAmDone && (
-              <div className="flex-1 flex flex-col" style={{ paddingTop: "2px" }}>
+              <div className="flex-1 flex flex-col relative overflow-hidden" style={{ paddingTop: "2px" }}>
+                {ribbonPosters.length > 0 && (
+                  <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+                    <div style={{ display: "flex", gap: 8, height: "100%", width: "max-content", animation: "poster-drift 60s linear infinite" }}>
+                      {[...ribbonPosters, ...ribbonPosters].map((url, i) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={i} src={`https://image.tmdb.org/t/p/w185${url}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.07, filter: "blur(3px)", flexShrink: 0 }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Top row: Runde label */}
                 <div className="flex items-center justify-between px-5 pt-4 pb-2">
