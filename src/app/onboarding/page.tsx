@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { getLocale, type Locale } from "../together/strings";
 
 type MediaType = "movie" | "tv";
 
@@ -20,15 +21,86 @@ interface Selection {
   sentiment: "liked" | "disliked";
 }
 
-const STREAMING_SERVICES = [
-  { id: 8, name: "Netflix", color: "#e50914" },
-  { id: 384, name: "Max", color: "#002be7" },
-  { id: 337, name: "Disney+", color: "#113ccf" },
-  { id: 76, name: "Viaplay", color: "#f12b24" },
-  { id: 383, name: "TV 2 Play", color: "#e4002b" },
-  { id: 350, name: "Apple TV+", color: "#555555" },
-  { id: 119, name: "Prime Video", color: "#00a8e1" },
-  { id: 531, name: "Paramount+", color: "#0064ff" },
+/* ── locale strings ──────────────────────────────────────── */
+const strings = {
+  no: {
+    headline: "La oss bygge din",
+    headlineGradient: "filmprofil",
+    subtitle: "Velg titler du har sett, så vi kan lære hva du liker og gi deg personlige anbefalinger.",
+    cta: "La oss starte",
+    timeHint: "Tar bare 2 minutter",
+    step2Title: "Hva har du sett?",
+    step2Hint: "Trykk = likte, hold inne = mislikte",
+    searchPlaceholder: "Finner du ikke noe? Søk her...",
+    liked: "likte",
+    disliked: "mislikte",
+    minSelected: "av minimum 5 valgt",
+    back: "Tilbake",
+    continue: "Fortsett",
+    step3Title: "Hvilke tjenester bruker du?",
+    step3Subtitle: "Vi filtrerer anbefalinger til tjenester du har",
+    finish: "Fullfør",
+    skip: "Hopp over",
+    saving: "Lagrer...",
+    doneTitle: "Profilen din er klar!",
+    doneSubtitle: (n: number) =>
+      `Vi logget ${n} titler og bygget smaksprofilen din. Nå kan vi gi deg personlige anbefalinger.`,
+    tasteTitle: "Din smaksprofil",
+    youLike: "Du liker",
+    youAvoid: "Du unngår",
+    pacing: "Tempo",
+    exploreRec: "Utforsk anbefalinger",
+    goLibrary: "Gå til biblioteket",
+  },
+  en: {
+    headline: "Let's build your",
+    headlineGradient: "movie profile",
+    subtitle: "Pick titles you've seen so we can learn your taste and give you personal recommendations.",
+    cta: "Let's go",
+    timeHint: "Takes just 2 minutes",
+    step2Title: "What have you seen?",
+    step2Hint: "Tap = liked, hold = disliked",
+    searchPlaceholder: "Can't find something? Search here...",
+    liked: "liked",
+    disliked: "disliked",
+    minSelected: "of minimum 5 selected",
+    back: "Back",
+    continue: "Continue",
+    step3Title: "Which services do you use?",
+    step3Subtitle: "We'll filter recommendations to services you have",
+    finish: "Finish",
+    skip: "Skip",
+    saving: "Saving...",
+    doneTitle: "Your profile is ready!",
+    doneSubtitle: (n: number) =>
+      `We logged ${n} titles and built your taste profile. Now we can give you personal recommendations.`,
+    tasteTitle: "Your taste profile",
+    youLike: "You like",
+    youAvoid: "You avoid",
+    pacing: "Pacing",
+    exploreRec: "Explore recommendations",
+    goLibrary: "Go to library",
+  },
+} as const;
+
+/* ── streaming providers ─────────────────────────────────── */
+const VIAPLAY_REGIONS = new Set(["NO", "SE", "DK", "FI", "IS"]);
+const NORDIC_ONLY_IDS = new Set([76, 439]);  // Viaplay, TV 2 Play
+const US_ONLY_IDS = new Set([15, 386]);      // Hulu, Peacock
+
+interface StreamingService { id: number; name: string; color: string; }
+
+const STREAMING_SERVICES: StreamingService[] = [
+  { id: 8,    name: "Netflix",     color: "#e50914" },
+  { id: 9,    name: "Prime Video", color: "#00a8e1" },
+  { id: 337,  name: "Disney+",     color: "#113ccf" },
+  { id: 1899, name: "Max",         color: "#002be7" },
+  { id: 350,  name: "Apple TV+",   color: "#555555" },
+  { id: 531,  name: "Paramount+",  color: "#0064ff" },
+  { id: 15,   name: "Hulu",        color: "#1ce783" },
+  { id: 386,  name: "Peacock",     color: "#E4551B" },
+  { id: 76,   name: "Viaplay",     color: "#f12b24" },
+  { id: 439,  name: "TV 2 Play",   color: "#e4002b" },
 ];
 
 export default function OnboardingPage() {
@@ -43,9 +115,30 @@ export default function OnboardingPage() {
   const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [tasteSummary, setTasteSummary] = useState<{ youLike: string; avoid: string; pacing: string } | null>(null);
+  const [userRegion, setUserRegion] = useState("US");
+  const [locale, setLocale] = useState<Locale>("en");
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Detect region + locale via the ribbon endpoint (same as Se Sammen)
+  useEffect(() => {
+    fetch("/api/together/ribbon")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.region) {
+          setUserRegion(data.region as string);
+          const params = new URLSearchParams(window.location.search);
+          const langParam = params.get("lang");
+          if (langParam === "no" || langParam === "en") {
+            setLocale(langParam as Locale);
+          } else {
+            setLocale(getLocale(data.region as string));
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Load curated titles when entering step 2
   useEffect(() => {
@@ -179,10 +272,16 @@ export default function OnboardingPage() {
     setSaving(false);
   }
 
+  const s = strings[locale];
   const selectionCount = selections.size;
   const displayTitles = searchQuery.trim() ? searchResults : titles;
-  const likedCount = Array.from(selections.values()).filter((s) => s.sentiment === "liked").length;
-  const dislikedCount = Array.from(selections.values()).filter((s) => s.sentiment === "disliked").length;
+  const likedCount = Array.from(selections.values()).filter((v) => v.sentiment === "liked").length;
+  const dislikedCount = Array.from(selections.values()).filter((v) => v.sentiment === "disliked").length;
+  const visibleServices = STREAMING_SERVICES.filter((service) => {
+    if (NORDIC_ONLY_IDS.has(service.id)) return VIAPLAY_REGIONS.has(userRegion);
+    if (US_ONLY_IDS.has(service.id)) return userRegion === "US";
+    return true;
+  });
 
   return (
     <div className="min-h-dvh relative" style={{ background: "var(--bg-base)" }}>
@@ -220,20 +319,20 @@ export default function OnboardingPage() {
             />
 
             <h1 className="text-3xl sm:text-4xl font-bold text-[var(--text-primary)] mb-3">
-              La oss bygge din <span className="gradient-text">filmprofil</span>
+              {s.headline} <span className="gradient-text">{s.headlineGradient}</span>
             </h1>
             <p className="text-[var(--text-secondary)] text-sm sm:text-base max-w-md leading-relaxed mb-10">
-              Velg titler du har sett, så vi kan lære hva du liker og gi deg personlige anbefalinger.
+              {s.subtitle}
             </p>
 
             <button
               onClick={() => setStep(2)}
               className="btn-press px-8 py-3.5 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_30px_var(--accent-glow-strong)] text-white rounded-[var(--radius-lg)] font-semibold text-sm transition-all duration-200"
             >
-              La oss starte
+              {s.cta}
             </button>
 
-            <p className="text-xs text-[var(--text-tertiary)] mt-6">Tar bare 2 minutter</p>
+            <p className="text-xs text-[var(--text-tertiary)] mt-6">{s.timeHint}</p>
           </div>
         )}
 
@@ -242,10 +341,10 @@ export default function OnboardingPage() {
           <div className="py-6 pb-28 animate-fade-in-up">
             <div className="text-center mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-1">
-                Hva har du sett?
+                {s.step2Title}
               </h2>
               <p className="text-sm text-[var(--text-tertiary)]">
-                Trykk = likte, hold inne = mislikte
+                {s.step2Hint}
               </p>
             </div>
 
@@ -259,7 +358,7 @@ export default function OnboardingPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
-                  placeholder="Finner du ikke noe? Søk her..."
+                  placeholder={s.searchPlaceholder}
                   className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[var(--radius-md)] text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] input-glow focus:outline-none transition-all"
                 />
                 {searching && (
@@ -273,17 +372,17 @@ export default function OnboardingPage() {
               <div className="flex items-center gap-3 text-xs">
                 {likedCount > 0 && (
                   <span className="text-[var(--green)]">
-                    {likedCount} likte
+                    {likedCount} {s.liked}
                   </span>
                 )}
                 {dislikedCount > 0 && (
                   <span className="text-[var(--red)]">
-                    {dislikedCount} mislikte
+                    {dislikedCount} {s.disliked}
                   </span>
                 )}
               </div>
               <span className="text-xs text-[var(--text-tertiary)]">
-                {selectionCount} av minimum 5 valgt
+                {selectionCount} {s.minSelected}
               </span>
             </div>
 
@@ -387,14 +486,14 @@ export default function OnboardingPage() {
                   onClick={() => setStep(1)}
                   className="px-4 py-2.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
                 >
-                  Tilbake
+                  {s.back}
                 </button>
                 <button
                   onClick={() => setStep(3)}
                   disabled={selectionCount < 5}
                   className="btn-press flex-1 py-3 bg-[var(--accent)] hover:brightness-110 text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all disabled:opacity-30 disabled:pointer-events-none"
                 >
-                  Fortsett ({selectionCount}/5)
+                  {s.continue} ({selectionCount}/5)
                 </button>
               </div>
             </div>
@@ -405,14 +504,14 @@ export default function OnboardingPage() {
         {step === 3 && (
           <div className="flex flex-col items-center justify-center min-h-dvh py-10 animate-fade-in-up">
             <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-2 text-center">
-              Hvilke tjenester bruker du?
+              {s.step3Title}
             </h2>
             <p className="text-sm text-[var(--text-tertiary)] mb-8 text-center">
-              Vi filtrerer anbefalinger til tjenester du har
+              {s.step3Subtitle}
             </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-lg mb-10">
-              {STREAMING_SERVICES.map((service) => {
+              {visibleServices.map((service) => {
                 const selected = selectedServices.has(service.id);
                 return (
                   <button
@@ -451,7 +550,7 @@ export default function OnboardingPage() {
                 onClick={() => setStep(2)}
                 className="px-4 py-2.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
               >
-                Tilbake
+                {s.back}
               </button>
               <button
                 onClick={handleSave}
@@ -461,10 +560,10 @@ export default function OnboardingPage() {
                 {saving ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Lagrer...
+                    {s.saving}
                   </span>
                 ) : (
-                  "Fullfør"
+                  s.finish
                 )}
               </button>
               {selectedServices.size === 0 && (
@@ -473,7 +572,7 @@ export default function OnboardingPage() {
                   disabled={saving}
                   className="px-4 py-2.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
                 >
-                  Hopp over
+                  {s.skip}
                 </button>
               )}
             </div>
@@ -500,32 +599,32 @@ export default function OnboardingPage() {
             </div>
 
             <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
-              Profilen din er klar!
+              {s.doneTitle}
             </h2>
             <p className="text-sm text-[var(--text-secondary)] mb-8 max-w-sm">
-              Vi logget {selectionCount} titler og bygget smaksprofilen din. Nå kan vi gi deg personlige anbefalinger.
+              {s.doneSubtitle(selectionCount)}
             </p>
 
             {/* Taste summary preview */}
             {tasteSummary && (
               <div className="glass rounded-[var(--radius-lg)] p-5 mb-8 text-left w-full max-w-md">
-                <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Din smaksprofil</h3>
+                <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">{s.tasteTitle}</h3>
                 <div className="space-y-2.5">
                   {tasteSummary.youLike && (
                     <div>
-                      <span className="text-[10px] uppercase tracking-wide text-[var(--green)] font-bold">Du liker</span>
+                      <span className="text-[10px] uppercase tracking-wide text-[var(--green)] font-bold">{s.youLike}</span>
                       <p className="text-xs text-[var(--text-secondary)] mt-0.5">{tasteSummary.youLike}</p>
                     </div>
                   )}
                   {tasteSummary.avoid && (
                     <div>
-                      <span className="text-[10px] uppercase tracking-wide text-[var(--red)] font-bold">Du unngår</span>
+                      <span className="text-[10px] uppercase tracking-wide text-[var(--red)] font-bold">{s.youAvoid}</span>
                       <p className="text-xs text-[var(--text-secondary)] mt-0.5">{tasteSummary.avoid}</p>
                     </div>
                   )}
                   {tasteSummary.pacing && (
                     <div>
-                      <span className="text-[10px] uppercase tracking-wide text-[var(--yellow)] font-bold">Tempo</span>
+                      <span className="text-[10px] uppercase tracking-wide text-[var(--yellow)] font-bold">{s.pacing}</span>
                       <p className="text-xs text-[var(--text-secondary)] mt-0.5">{tasteSummary.pacing}</p>
                     </div>
                   )}
@@ -538,13 +637,13 @@ export default function OnboardingPage() {
                 onClick={() => router.push("/recommendations")}
                 className="btn-press flex-1 py-3 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_24px_var(--accent-glow-strong)] text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all"
               >
-                Utforsk anbefalinger
+                {s.exploreRec}
               </button>
               <button
                 onClick={() => router.push("/library")}
                 className="btn-press flex-1 py-3 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-md)] font-medium text-sm transition-all"
               >
-                Gå til biblioteket
+                {s.goLibrary}
               </button>
             </div>
           </div>
