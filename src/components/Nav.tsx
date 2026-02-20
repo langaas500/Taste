@@ -250,19 +250,25 @@ export default function Nav() {
         <div
           className="flex flex-col h-[calc(100vh-24px)] m-3 rounded-2xl overflow-hidden relative"
           style={{
-            background: "linear-gradient(180deg, rgba(13,13,13,0.75) 0%, rgba(10,10,14,0.8) 100%)",
-            backdropFilter: "blur(6px) saturate(1.1)",
-            WebkitBackdropFilter: "blur(6px) saturate(1.1)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+            background: "linear-gradient(180deg, rgba(15,15,18,0.88) 0%, rgba(10,10,12,0.92) 100%)",
+            backdropFilter: "blur(20px) saturate(1.15)",
+            WebkitBackdropFilter: "blur(20px) saturate(1.15)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
           }}
         >
+          {/* Subtle right edge highlight */}
+          <div
+            className="absolute top-0 bottom-0 right-0 w-px pointer-events-none"
+            style={{
+              background: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.06) 100%)",
+            }}
+          />
+
           {/* ── Brand + Profile ── */}
           <div className={`px-3 pt-4 pb-3 ${collapsed ? "px-2" : ""}`}>
             {/* Logo */}
-            <div
-              className="flex items-center justify-center mb-3"
-            >
+            <div className="flex items-center justify-center mb-3">
               {collapsed ? (
                 <div
                   className="w-[34px] h-[34px] rounded-lg flex items-center justify-center flex-shrink-0"
@@ -289,7 +295,7 @@ export default function Nav() {
             {/* Profile row */}
             <Link
               href="/profile"
-              className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"} rounded-lg px-2 py-1.5 -mx-2 -my-1.5 transition-all duration-150 hover:bg-white/[0.03] cursor-pointer`}
+              className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"} rounded-lg px-2 py-1.5 -mx-2 -my-1.5 transition-all duration-200 hover:bg-white/[0.04] cursor-pointer`}
             >
               {/* Avatar */}
               <div
@@ -308,14 +314,14 @@ export default function Nav() {
                   className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full"
                   style={{
                     background: "#22c55e",
-                    border: "2px solid #0d0d0d",
+                    border: "2px solid rgba(10,10,12,0.95)",
                   }}
                 />
               </div>
 
               {!collapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold truncate" style={{ color: "rgba(255,255,255,0.85)" }}>
+                  <p className="text-[12px] font-semibold truncate" style={{ color: "rgba(255,255,255,0.9)" }}>
                     {userName}
                   </p>
                   <p className="text-[10px]" style={{ color: "rgba(255,42,42,0.4)" }}>
@@ -357,20 +363,20 @@ export default function Nav() {
           <div className="mx-3" style={{ height: "1px", background: "rgba(255,255,255,0.06)" }} />
 
           {/* ── Nav sections ── */}
-          <nav className="flex-1 px-2 pt-2 overflow-y-auto" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <nav className="flex-1 px-2 pt-3 pb-2 overflow-y-auto" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {sidebarLinks.map(({ section, links }, sectionIdx) => (
               <div key={sectionIdx}>
                 {section && !collapsed && (
                   <p
-                    className="px-2 mb-1 mt-2.5 text-[10px] font-bold tracking-[0.14em]"
-                    style={{ color: "rgba(255,42,42,0.35)" }}
+                    className="px-2 mb-1.5 mt-3.5 text-[10px] font-bold tracking-[0.14em]"
+                    style={{ color: "rgba(255,255,255,0.25)" }}
                   >
                     {section}
                   </p>
                 )}
 
                 {section && collapsed && sectionIdx > 0 && (
-                  <div className="my-1.5 mx-2" style={{ height: "1px", background: "rgba(255,255,255,0.04)" }} />
+                  <div className="my-2 mx-2" style={{ height: "1px", background: "rgba(255,255,255,0.04)" }} />
                 )}
 
                 <div className="flex flex-col" style={{ gap: 1 }}>
@@ -381,43 +387,47 @@ export default function Nav() {
                       <Link
                         key={href}
                         href={href}
-                        className={`group flex items-center gap-2.5 py-[7px] rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-150 ${
+                        className={`group flex items-center gap-2.5 py-2 rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-200 ease-out ${
                           collapsed ? "justify-center px-2.5" : "px-2.5"
                         }`}
                         title={collapsed ? label : undefined}
                         style={{
-                          background: active ? "rgba(255,42,42,0.08)" : "transparent",
+                          background: active ? "rgba(255,42,42,0.05)" : "transparent",
+                          transform: "translateX(0)",
                         }}
                       >
-                        {/* Hover bg */}
+                        {/* Hover bg with micro translateX */}
                         {!active && (
                           <div
-                            className="absolute inset-0 rounded-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                            style={{ background: "rgba(255,255,255,0.04)" }}
+                            className="absolute inset-0 rounded-[10px] opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out"
+                            style={{
+                              background: "rgba(255,255,255,0.06)",
+                              transform: "translateX(0)",
+                            }}
                           />
                         )}
 
-                        {/* Active left accent */}
+                        {/* Active left indicator (thin 2px bar) */}
                         {active && (
                           <div
-                            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r-full transition-all duration-200"
                             style={{
-                              height: "55%",
+                              height: "60%",
                               background: RED,
+                              boxShadow: "0 0 8px rgba(255,42,42,0.4)",
                             }}
                           />
                         )}
 
                         {/* Icon */}
                         <svg
-                          className="w-[18px] h-[18px] flex-shrink-0 relative"
+                          className="w-[18px] h-[18px] flex-shrink-0 relative transition-all duration-200 ease-out"
                           fill="none"
                           viewBox="0 0 24 24"
                           strokeWidth={active ? 2 : 1.5}
                           stroke="currentColor"
                           style={{
-                            color: active ? RED : "rgba(255,255,255,0.4)",
-                            transition: "color 0.15s",
+                            color: active ? "rgba(255,42,42,0.95)" : "rgba(255,255,255,0.45)",
                           }}
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
@@ -426,24 +436,24 @@ export default function Nav() {
                         {/* Label */}
                         {!collapsed && (
                           <span
-                            className="relative transition-colors duration-150"
+                            className="relative transition-all duration-200 ease-out group-hover:translate-x-[1px]"
                             style={{
-                              color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)",
+                              color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.55)",
                             }}
                           >
                             {label}
                           </span>
                         )}
 
-                        {/* Badge */}
+                        {/* Badge (reduced size & opacity) */}
                         {badge && !collapsed && (
                           <span
-                            className="relative ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-[5px]"
+                            className="relative ml-auto text-[8px] font-semibold px-1.5 py-[3px] rounded-full"
                             style={{
-                              background: "rgba(255,42,42,0.1)",
-                              color: RED,
-                              border: "1px solid rgba(255,42,42,0.15)",
-                              letterSpacing: "0.05em",
+                              background: "rgba(255,42,42,0.08)",
+                              color: "rgba(255,42,42,0.75)",
+                              border: "1px solid rgba(255,42,42,0.12)",
+                              letterSpacing: "0.04em",
                             }}
                           >
                             {badge}
@@ -457,28 +467,44 @@ export default function Nav() {
             ))}
 
             {/* Profil */}
-            <div className="mt-1.5">
+            <div className="mt-2">
               <Link
                 href="/profile"
-                className={`group flex items-center gap-2.5 py-[7px] rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-150 ${
+                className={`group flex items-center gap-2.5 py-2 rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-200 ease-out ${
                   collapsed ? "justify-center px-2.5" : "px-2.5"
                 }`}
                 title={collapsed ? s.profile : undefined}
                 style={{
-                  background: pathname === "/profile" ? "rgba(255,42,42,0.08)" : "transparent",
+                  background: pathname === "/profile" ? "rgba(255,42,42,0.05)" : "transparent",
                 }}
               >
                 {pathname !== "/profile" && (
-                  <div className="absolute inset-0 rounded-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-150" style={{ background: "rgba(255,255,255,0.04)" }} />
+                  <div
+                    className="absolute inset-0 rounded-[10px] opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out"
+                    style={{ background: "rgba(255,255,255,0.06)" }}
+                  />
                 )}
                 {pathname === "/profile" && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full" style={{ height: "55%", background: RED }} />
+                  <div
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r-full transition-all duration-200"
+                    style={{ height: "60%", background: RED, boxShadow: "0 0 8px rgba(255,42,42,0.4)" }}
+                  />
                 )}
-                <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={pathname === "/profile" ? 2 : 1.5} stroke="currentColor" style={{ color: pathname === "/profile" ? RED : "rgba(255,255,255,0.4)", transition: "color 0.15s" }}>
+                <svg
+                  className="w-[18px] h-[18px] flex-shrink-0 transition-all duration-200 ease-out"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={pathname === "/profile" ? 2 : 1.5}
+                  stroke="currentColor"
+                  style={{ color: pathname === "/profile" ? "rgba(255,42,42,0.95)" : "rgba(255,255,255,0.45)" }}
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                 </svg>
                 {!collapsed && (
-                  <span className="relative transition-colors duration-150" style={{ color: pathname === "/profile" ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)" }}>
+                  <span
+                    className="relative transition-all duration-200 ease-out group-hover:translate-x-[1px]"
+                    style={{ color: pathname === "/profile" ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.55)" }}
+                  >
                     {s.profile}
                   </span>
                 )}
@@ -486,29 +512,45 @@ export default function Nav() {
             </div>
 
             {/* Settings - separated */}
-            <div className="mt-1.5">
+            <div className="mt-1">
               <Link
                 href="/settings"
-                className={`group flex items-center gap-2.5 py-[7px] rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-150 ${
+                className={`group flex items-center gap-2.5 py-2 rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-200 ease-out ${
                   collapsed ? "justify-center px-2.5" : "px-2.5"
                 }`}
                 title={collapsed ? s.settings : undefined}
                 style={{
-                  background: pathname === "/settings" ? "rgba(255,42,42,0.08)" : "transparent",
+                  background: pathname === "/settings" ? "rgba(255,42,42,0.05)" : "transparent",
                 }}
               >
                 {pathname !== "/settings" && (
-                  <div className="absolute inset-0 rounded-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-150" style={{ background: "rgba(255,255,255,0.04)" }} />
+                  <div
+                    className="absolute inset-0 rounded-[10px] opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out"
+                    style={{ background: "rgba(255,255,255,0.06)" }}
+                  />
                 )}
                 {pathname === "/settings" && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full" style={{ height: "55%", background: RED }} />
+                  <div
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r-full transition-all duration-200"
+                    style={{ height: "60%", background: RED, boxShadow: "0 0 8px rgba(255,42,42,0.4)" }}
+                  />
                 )}
-                <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={pathname === "/settings" ? 2 : 1.5} stroke="currentColor" style={{ color: pathname === "/settings" ? RED : "rgba(255,255,255,0.4)", transition: "color 0.15s" }}>
+                <svg
+                  className="w-[18px] h-[18px] flex-shrink-0 transition-all duration-200 ease-out"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={pathname === "/settings" ? 2 : 1.5}
+                  stroke="currentColor"
+                  style={{ color: pathname === "/settings" ? "rgba(255,42,42,0.95)" : "rgba(255,255,255,0.45)" }}
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 {!collapsed && (
-                  <span className="relative transition-colors duration-150" style={{ color: pathname === "/settings" ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)" }}>
+                  <span
+                    className="relative transition-all duration-200 ease-out group-hover:translate-x-[1px]"
+                    style={{ color: pathname === "/settings" ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.55)" }}
+                  >
                     {s.settings}
                   </span>
                 )}
@@ -520,22 +562,24 @@ export default function Nav() {
           {!collapsed && (
             <div className="px-2.5 pb-2.5 mt-auto">
               <div
-                className="rounded-[10px] p-3 relative overflow-hidden"
+                className="rounded-[12px] p-3 relative overflow-hidden"
                 style={{
                   background: "rgba(255,255,255,0.02)",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
                 }}
               >
                 <p className="text-[12px] font-bold mb-1" style={{ color: RED }}>
                   {s.togetherTagline}
                 </p>
-                <p className="text-[11px] leading-relaxed mb-2.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+                <p className="text-[11px] leading-relaxed mb-2.5" style={{ color: "rgba(255,255,255,0.4)" }}>
                   {s.togetherSub}
                 </p>
 
                 <Link
                   href="/together"
-                  className="flex items-center justify-center gap-1.5 w-full py-[7px] rounded-lg text-[11px] font-semibold transition-opacity duration-150 hover:opacity-90"
+                  className="flex items-center justify-center gap-1.5 w-full py-[7px] rounded-lg text-[11px] font-semibold transition-all duration-200 ease-out hover:opacity-90 hover:scale-[1.01]"
                   style={{
                     background: RED,
                     color: "white",
@@ -547,7 +591,7 @@ export default function Nav() {
                   {s.togetherCta}
                 </Link>
 
-                <div className="flex items-center justify-center gap-1.5 mt-2.5" style={{ fontSize: 9, color: "rgba(255,255,255,0.18)" }}>
+                <div className="flex items-center justify-center gap-1.5 mt-2.5" style={{ fontSize: 9, color: "rgba(255,255,255,0.2)" }}>
                   <span>Logflix v0.1</span>
                   <span className="w-1 h-1 rounded-full inline-block" style={{ background: "#22c55e" }} />
                   <span>{s.connected}</span>
@@ -562,7 +606,7 @@ export default function Nav() {
                     await supabase.auth.signOut();
                     window.location.href = "/login";
                   }}
-                  className="group flex items-center gap-2 w-full mt-2 px-3 py-[7px] rounded-[10px] text-[12px] font-medium transition-all duration-150 bg-transparent border-0 cursor-pointer"
+                  className="group flex items-center gap-2 w-full mt-2 px-3 py-[7px] rounded-[10px] text-[12px] font-medium transition-all duration-200 ease-out bg-transparent border-0 cursor-pointer hover:bg-white/[0.02]"
                   style={{ color: "rgba(255,255,255,0.3)" }}
                 >
                   <svg className="w-[16px] h-[16px] flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -579,7 +623,7 @@ export default function Nav() {
             <div className="pb-3 mt-auto flex flex-col items-center gap-2">
               <Link
                 href="/search"
-                className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center"
+                className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center transition-all duration-200 hover:scale-105"
                 style={{ background: RED }}
               >
                 <svg className="w-[15px] h-[15px] text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -594,8 +638,8 @@ export default function Nav() {
                     window.location.href = "/login";
                   }}
                   title={s.logout}
-                  className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center bg-transparent border-0 cursor-pointer transition-opacity hover:opacity-80"
-                  style={{ color: "rgba(255,255,255,0.25)" }}
+                  className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center bg-transparent border-0 cursor-pointer transition-all duration-200 hover:bg-white/[0.04]"
+                  style={{ color: "rgba(255,255,255,0.3)" }}
                 >
                   <svg className="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
