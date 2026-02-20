@@ -199,7 +199,7 @@ export default function HomePage() {
       {/* Se Sammen */}
       <div className="relative flex items-center gap-4">
         {/* Logo - absolute positioned overlay */}
-        <div className="flex-shrink-0 w-64 h-64 sm:w-72 sm:h-72 relative" style={{ filter: "drop-shadow(0 0 24px rgba(255,42,42,0.16))" }}>
+        <div className="flex-shrink-0 w-64 h-64 sm:w-72 sm:h-72 relative" style={{ filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.6))" }}>
           <Image
             src="/se-sammen-logo.png"
             alt={s.togetherLabel}
@@ -215,7 +215,7 @@ export default function HomePage() {
           style={{ boxShadow: "0 0 24px rgba(255,42,42,0.08)" }}
         >
           <div className="flex items-center justify-between gap-4 py-2 sm:py-2.5 px-4 sm:px-5">
-            <div>
+            <div className="flex-1">
               <p className="font-bold text-sm text-[var(--accent-light)] mb-0.5">{s.togetherLabel}</p>
               <h2 className="font-extrabold text-lg sm:text-xl text-white mb-0.5">{s.togetherHeadline}</h2>
               <p className="text-xs text-[var(--text-tertiary)]">{s.togetherSub}</p>
@@ -224,7 +224,7 @@ export default function HomePage() {
                 <span className="text-[10px] text-white/40 bg-white/[0.06] px-2 py-0.5 rounded-full">{s.togetherTime}</span>
               </div>
             </div>
-            <div className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold px-8 py-4 rounded-xl transition-all text-base flex-shrink-0">
+            <div className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold px-8 py-4 rounded-xl transition-all text-base flex-shrink-0 self-center">
               {s.togetherCta}
             </div>
           </div>
