@@ -390,7 +390,8 @@ function LoginContent() {
                 ))}
               </div>
 
-              {/* Social login buttons */}
+              {/* Social login buttons — TEMPORARILY HIDDEN */}
+              {/*
               <div className="space-y-2.5 mb-5">
                 <button
                   type="button"
@@ -430,12 +431,12 @@ function LoginContent() {
                 </button>
               </div>
 
-              {/* Divider */}
               <div className="flex items-center gap-3 mb-5">
                 <div className="flex-1 h-px bg-[var(--border)]" />
                 <span className="text-xs text-[var(--text-tertiary)]">eller med e-post</span>
                 <div className="flex-1 h-px bg-[var(--border)]" />
               </div>
+              */}
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>

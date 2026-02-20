@@ -295,7 +295,8 @@ function SettingsContent() {
         )}
       </GlassCard>
 
-      {/* OAuth Identities */}
+      {/* OAuth Identities — TEMPORARILY HIDDEN */}
+      {/*
       <GlassCard hover={false} className="p-5">
         <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">Koblede kontoer</h3>
         <p className="text-xs text-[var(--text-tertiary)] mb-4 leading-relaxed">
@@ -303,7 +304,6 @@ function SettingsContent() {
         </p>
 
         <div className="space-y-3">
-          {/* Facebook */}
           <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
             <div className="flex items-center gap-3">
               <svg className="w-5 h-5 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
@@ -326,7 +326,6 @@ function SettingsContent() {
             )}
           </div>
 
-          {/* Google */}
           <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
             <div className="flex items-center gap-3">
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -359,6 +358,7 @@ function SettingsContent() {
           </p>
         )}
       </GlassCard>
+      */}
 
       {/* Account Linking */}
       <GlassCard hover={false} className="p-5">
