@@ -225,12 +225,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="button flex-shrink-0 self-center">
-              <span>{s.togetherCta}</span>
-              <svg viewBox="0 0 6 9">
-                <polygon points="0,0 1,0 6,4.5 1,9 0,9 5,4.5"></polygon>
-                <polygon points="0,0 1,0 6,4.5 1,9 0,9 5,4.5"></polygon>
-                <polygon points="0,0 1,0 6,4.5 1,9 0,9 5,4.5"></polygon>
-              </svg>
+              {s.togetherCta}
             </div>
           </div>
         </Link>
