@@ -201,7 +201,7 @@ export default function HomePage() {
         {/* Logo - absolute positioned overlay */}
         <div className="flex-shrink-0 w-64 h-64 sm:w-72 sm:h-72 relative" style={{ filter: "drop-shadow(0 0 24px rgba(255,42,42,0.16))" }}>
           <Image
-            src="/se sammen logo.png"
+            src="/se-sammen-logo.png"
             alt={s.togetherLabel}
             fill
             className="object-contain"
