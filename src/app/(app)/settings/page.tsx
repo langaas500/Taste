@@ -213,6 +213,7 @@ function SettingsContent() {
         provider,
         options: {
           redirectTo: `${window.location.origin}/api/auth/callback?next=/settings`,
+          scopes: provider === 'facebook' ? 'public_profile' : undefined
         },
       });
       if (error) throw error;
