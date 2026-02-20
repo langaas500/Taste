@@ -197,9 +197,9 @@ export default function HomePage() {
       </div>
 
       {/* Se Sammen */}
-      <div className="relative flex items-center gap-4">
-        {/* Logo - absolute positioned overlay */}
-        <div className="flex-shrink-0 w-64 h-64 sm:w-72 sm:h-72 relative" style={{ filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.6))" }}>
+      <div className="relative flex flex-col md:flex-row md:items-center gap-6 md:gap-3">
+        {/* Logo */}
+        <div className="flex-shrink-0 w-56 h-56 sm:w-64 sm:h-64 relative mx-auto md:mx-0" style={{ filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.6))" }}>
           <Image
             src="/se-sammen-logo.png"
             alt={s.togetherLabel}
@@ -208,23 +208,23 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Glassboks - ved siden av logoen */}
+        {/* Glassboks */}
         <Link
           href="/together"
           className="flex-1 glass rounded-[var(--radius-lg)] border border-[var(--accent)]/30 bg-[var(--accent)]/5 hover:border-[var(--accent)]/40 transition-all"
           style={{ boxShadow: "0 0 24px rgba(255,42,42,0.08)" }}
         >
-          <div className="flex items-center justify-between gap-4 py-2 sm:py-2.5 px-4 sm:px-5">
-            <div className="flex-1">
-              <p className="font-bold text-sm text-[var(--accent-light)] mb-0.5">{s.togetherLabel}</p>
-              <h2 className="font-extrabold text-lg sm:text-xl text-white mb-0.5">{s.togetherHeadline}</h2>
-              <p className="text-xs text-[var(--text-tertiary)]">{s.togetherSub}</p>
-              <div className="flex gap-2 mt-2">
-                <span className="text-[10px] text-white/40 bg-white/[0.06] px-2 py-0.5 rounded-full">{s.togetherFree}</span>
-                <span className="text-[10px] text-white/40 bg-white/[0.06] px-2 py-0.5 rounded-full">{s.togetherTime}</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6 p-5 sm:p-6">
+            <div className="flex-1 space-y-3">
+              <p className="font-bold text-xs sm:text-sm text-[var(--accent-light)] uppercase tracking-wide">{s.togetherLabel}</p>
+              <h2 className="font-extrabold text-xl sm:text-2xl text-white leading-tight">{s.togetherHeadline}</h2>
+              <p className="text-sm text-[var(--text-tertiary)] leading-relaxed">{s.togetherSub}</p>
+              <div className="flex gap-2.5">
+                <span className="text-[11px] text-white/40 bg-white/[0.06] px-2.5 py-1 rounded-full">{s.togetherFree}</span>
+                <span className="text-[11px] text-white/40 bg-white/[0.06] px-2.5 py-1 rounded-full">{s.togetherTime}</span>
               </div>
             </div>
-            <div className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold px-8 py-4 rounded-xl transition-all text-base flex-shrink-0 self-center">
+            <div className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] hover:scale-[1.02] active:scale-[0.98] text-white font-bold px-10 py-5 rounded-xl transition-all duration-200 text-lg flex-shrink-0 self-center shadow-[0_0_32px_rgba(255,42,42,0.3)] hover:shadow-[0_0_48px_rgba(255,42,42,0.5)]">
               {s.togetherCta}
             </div>
           </div>
