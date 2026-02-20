@@ -13,6 +13,25 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Logflix",
   },
+  openGraph: {
+    title: "Logflix",
+    description: "What should we watch tonight?",
+    url: "https://logflix.app",
+    siteName: "Logflix",
+    images: [{
+      url: "https://logflix.app/og-image.png",
+      width: 1200,
+      height: 630,
+      alt: "Logflix"
+    }],
+    type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Logflix",
+    description: "What should we watch tonight?",
+    images: ["https://logflix.app/og-image.png"]
+  }
 };
 
 export const viewport: Viewport = {
