@@ -70,6 +70,7 @@ export default function Nav() {
   const [collapsed, setCollapsed] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
   const [locale, setLocale] = useState<Locale>("no");
 
@@ -79,6 +80,7 @@ export default function Nav() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserEmail(user.email ?? null);
+        setAvatarUrl(user.user_metadata?.avatar_url || null);
         const { data } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
         setDisplayName(data?.display_name || null);
       } else {
@@ -285,16 +287,23 @@ export default function Nav() {
             </div>
 
             {/* Profile row */}
-            <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
+            <Link
+              href="/profile"
+              className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"} rounded-lg px-2 py-1.5 -mx-2 -my-1.5 transition-all duration-150 hover:bg-white/[0.03] cursor-pointer`}
+            >
               {/* Avatar */}
               <div
-                className="w-[34px] h-[34px] rounded-full flex items-center justify-center flex-shrink-0 relative"
+                className="w-[34px] h-[34px] rounded-full flex items-center justify-center flex-shrink-0 relative overflow-hidden"
                 style={{
                   background: "rgba(255,42,42,0.1)",
                   border: "1.5px solid rgba(255,42,42,0.2)",
                 }}
               >
-                <span style={{ fontSize: 11, fontWeight: 700, color: RED }}>{initials}</span>
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
+                ) : (
+                  <span style={{ fontSize: 11, fontWeight: 700, color: RED }}>{initials}</span>
+                )}
                 <div
                   className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full"
                   style={{
@@ -310,31 +319,27 @@ export default function Nav() {
                     {userName}
                   </p>
                   <p className="text-[10px]" style={{ color: "rgba(255,42,42,0.4)" }}>
-                    {isGuest ? (
-                      <Link href="/login" style={{ color: "rgba(255,42,42,0.6)" }}>
-                        {s.login}
-                      </Link>
-                    ) : userEmail === "martinlangaas@live.no" ? s.admin : s.filmelsker}
+                    {isGuest ? s.login : userEmail === "martinlangaas@live.no" ? s.admin : s.filmelsker}
                   </p>
                 </div>
               )}
+            </Link>
 
-              {/* Collapse toggle */}
-              {!collapsed && (
-                <button
-                  onClick={() => setCollapsed(true)}
-                  className="flex-shrink-0 w-[26px] h-[26px] rounded-lg flex items-center justify-center transition-all duration-200"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                  }}
-                >
-                  <svg className="w-[13px] h-[13px]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="rgba(255,255,255,0.35)">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                  </svg>
-                </button>
-              )}
-            </div>
+            {/* Collapse toggle */}
+            {!collapsed && (
+              <button
+                onClick={() => setCollapsed(true)}
+                className="flex-shrink-0 w-[26px] h-[26px] rounded-lg flex items-center justify-center transition-all duration-200"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                }}
+              >
+                <svg className="w-[13px] h-[13px]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="rgba(255,255,255,0.35)">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+              </button>
+            )}
 
             {collapsed && (
               <button
