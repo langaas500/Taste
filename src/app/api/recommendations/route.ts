@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase-server";
 import { tmdbDiscover, tmdbTrending, tmdbSimilar, parseTitleFromTMDB } from "@/lib/tmdb";
-import { explainRecommendations, type TasteInput } from "@/lib/ai";
 import type { UserTitle, TitleCache, Recommendation, ContentFilters } from "@/lib/types";
 import { getWatchProvidersCachedBatch } from "@/lib/watch-providers-cache";
 
@@ -303,6 +302,16 @@ export async function GET(req: NextRequest) {
       top20 = pick7030(scored);
     }
 
+    // TMDB genre ID -> name mapping
+    const GENRE_MAP: Record<number, string> = {
+      28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy", 80: "Crime",
+      99: "Documentary", 18: "Drama", 10751: "Family", 14: "Fantasy", 36: "History",
+      27: "Horror", 10402: "Music", 9648: "Mystery", 10749: "Romance", 878: "Sci-Fi",
+      10770: "TV Movie", 53: "Thriller", 10752: "War", 37: "Western",
+      10759: "Action & Adventure", 10762: "Kids", 10763: "News", 10764: "Reality",
+      10765: "Sci-Fi & Fantasy", 10766: "Soap", 10767: "Talk", 10768: "War & Politics"
+    };
+
     // Cache titles and build response
     const results: {
       tmdb_id: number;
@@ -310,8 +319,9 @@ export async function GET(req: NextRequest) {
       title: string;
       year: number | null;
       poster_path: string | null;
-      overview: string;
-      genres: string[];
+      backdrop_path: string | null;
+      vote_average: number;
+      genreIds: number[];
     }[] = [];
 
     for (const { item, type } of top20) {
@@ -322,8 +332,9 @@ export async function GET(req: NextRequest) {
         title: parsed.title,
         year: parsed.year,
         poster_path: parsed.poster_path,
-        overview: parsed.overview || "",
-        genres: ((item.genre_ids as number[]) || []).map(String),
+        backdrop_path: parsed.backdrop_path,
+        vote_average: parsed.vote_average || 0,
+        genreIds: (item.genre_ids as number[]) || [],
       });
 
       // Cache
@@ -346,50 +357,36 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Generate AI explanations
-    let recommendations: Recommendation[];
-    try {
-      const tasteSummary = profile?.taste_summary || {
-        youLike: liked.length > 0
-          ? `User likes: ${likedCached.map((t) => t.title).join(", ")}`
-          : "Exploring new content",
-        avoid: disliked.length > 0
-          ? `User dislikes some titles`
-          : "No specific avoidances",
+    // Generate deterministic "why" explanations
+    const recommendations: Recommendation[] = results.map((r) => {
+      // Find best liked title match by genre overlap
+      let bestMatch: { title: string; overlap: number } | null = null;
+
+      for (const likedTitle of likedCached) {
+        const likedGenres = (likedTitle.genres as { id: number; name: string }[]) || [];
+        const likedGenreIds = new Set(likedGenres.map((g) => g.id));
+        const overlap = r.genreIds.filter((gid) => likedGenreIds.has(gid)).length;
+
+        if (overlap > 0 && (!bestMatch || overlap > bestMatch.overlap)) {
+          bestMatch = { title: likedTitle.title, overlap };
+        }
+      }
+
+      const why = bestMatch ? `Fordi du likte ${bestMatch.title}` : "";
+      const tags = r.genreIds.slice(0, 3).map((gid) => GENRE_MAP[gid] || "").filter(Boolean);
+
+      return {
+        tmdb_id: r.tmdb_id,
+        type: r.type,
+        title: r.title,
+        year: r.year,
+        poster_path: r.poster_path,
+        backdrop_path: r.backdrop_path,
+        vote_average: r.vote_average,
+        why,
+        tags,
       };
-
-      const explained = await explainRecommendations(
-        { youLike: tasteSummary.youLike, avoid: tasteSummary.avoid },
-        results.map((r) => ({
-          title: r.title,
-          type: r.type,
-          year: r.year,
-          overview: r.overview,
-          genres: r.genres,
-        }))
-      );
-
-      recommendations = results.map((r, i) => ({
-        tmdb_id: r.tmdb_id,
-        type: r.type,
-        title: r.title,
-        year: r.year,
-        poster_path: r.poster_path,
-        why: explained[i]?.why || "Based on your viewing history",
-        tags: explained[i]?.tags || [],
-      }));
-    } catch {
-      // Fallback without AI explanations
-      recommendations = results.map((r) => ({
-        tmdb_id: r.tmdb_id,
-        type: r.type,
-        title: r.title,
-        year: r.year,
-        poster_path: r.poster_path,
-        why: "Based on your viewing history and preferences",
-        tags: [],
-      }));
-    }
+    });
 
     return NextResponse.json({ recommendations });
   } catch (e: unknown) {

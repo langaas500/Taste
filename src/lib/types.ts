@@ -194,6 +194,8 @@ export interface Recommendation {
   title: string;
   year: number | null;
   poster_path: string | null;
+  backdrop_path: string | null;
+  vote_average: number;
   why: string;
   tags: string[];
 }

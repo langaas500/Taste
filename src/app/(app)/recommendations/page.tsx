@@ -40,6 +40,7 @@ const strings = {
     actionExclude: "Ikke anbefal igjen",
     typeTv: "Serie",
     typeMovie: "Film",
+    typeLabel: "Type",
   },
   en: {
     title: "For You",
@@ -65,6 +66,7 @@ const strings = {
     actionExclude: "Won't recommend again",
     typeTv: "Series",
     typeMovie: "Movie",
+    typeLabel: "Type",
   },
 } as const;
 
@@ -255,7 +257,7 @@ export default function RecommendationsPage() {
       {/* ── Type filter ── */}
       {loaded && recs.length > 0 && (
         <div className="flex items-center gap-2 mb-5 flex-wrap">
-          <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">Type</span>
+          <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">{s.typeLabel}</span>
           {([["all", s.all], ["tv", s.series], ["movie", s.movies]] as [TypeFilter, string][]).map(([key, label]) => (
             <button
               key={key}
@@ -305,112 +307,115 @@ export default function RecommendationsPage() {
         const isDone = !!(actionDone || feedbackDone);
 
         return (
-          <div className="relative rounded-[var(--radius-lg)] overflow-hidden mb-6">
-            {/* Blurred poster as cinematic backdrop */}
+          <div className="relative overflow-hidden rounded-[var(--radius-lg)] mb-6" style={{ height: "400px", backgroundColor: "#0a0a0f" }}>
+            {/* Backdrop image */}
             {imgSrc && (
-              <div className="absolute inset-0 overflow-hidden">
-                <Image
-                  src={`https://image.tmdb.org/t/p/w500${hero.poster_path}`}
-                  alt=""
-                  fill
-                  className="object-cover scale-110"
-                  style={{ filter: "blur(28px)", opacity: 0.22 }}
-                />
-              </div>
+              <Image
+                src={hero.backdrop_path
+                  ? `https://image.tmdb.org/t/p/w1280${hero.backdrop_path}`
+                  : `https://image.tmdb.org/t/p/w500${hero.poster_path}`}
+                alt=""
+                fill
+                className="object-cover"
+              />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30" />
 
-            <div className="relative flex gap-4 sm:gap-6 p-4 sm:p-6">
-              {/* Poster */}
-              <div
-                className="shrink-0 w-28 sm:w-36 rounded-[var(--radius-md)] overflow-hidden shadow-2xl ring-1 ring-white/10 cursor-pointer self-start"
-                style={{ aspectRatio: "2/3" }}
-                onClick={() => setSelectedItem({ id: hero.tmdb_id, type: hero.type, title: hero.title, poster_path: hero.poster_path || null })}
-              >
-                {imgSrc ? (
-                  <Image src={imgSrc} alt={hero.title} fill className="object-cover" sizes="(max-width: 640px) 112px, 144px" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-[var(--bg-surface)] text-white/20 text-xs">—</div>
+            {/* Gradient overlay */}
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, black 0%, transparent 60%)", zIndex: 1 }} />
+
+            {/* Info container */}
+            <div className="absolute bottom-0 left-0 right-0 flex flex-col gap-3" style={{ zIndex: 2, padding: "24px" }}>
+              {/* Type badge + year + rating */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/60">
+                  {typeBadge(hero.type)}
+                </span>
+                {hero.year && (
+                  <span className="text-xs text-white/60">{hero.year}</span>
+                )}
+                {hero.vote_average > 0 && (
+                  <span className="text-xs text-white/60 flex items-center gap-1">
+                    <span className="text-yellow-400">⭐</span>
+                    {hero.vote_average.toFixed(1)}
+                  </span>
                 )}
               </div>
 
-              {/* Info */}
-              <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
-                <div>
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/50">
-                      {typeBadge(hero.type)}
+              {/* Title */}
+              <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight line-clamp-2">
+                {hero.title}
+              </h2>
+
+              {/* Why text */}
+              {hero.why && (
+                <p className="text-sm text-white/55 leading-relaxed line-clamp-2">
+                  {hero.why}
+                </p>
+              )}
+
+              {/* Tags */}
+              {hero.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {hero.tags.map((tag) => (
+                    <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-glow)] text-[var(--accent-light)] font-medium">
+                      {tag}
                     </span>
-                    {hero.year && (
-                      <span className="text-xs text-white/40">{hero.year}</span>
-                    )}
-                  </div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white leading-tight mb-2 line-clamp-2">{hero.title}</h2>
-                  <p className="text-sm text-white/55 leading-relaxed line-clamp-3 mb-3">{hero.why}</p>
-                  {hero.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {hero.tags.map((tag) => (
-                        <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-glow)] text-[var(--accent-light)] font-medium">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  ))}
                 </div>
+              )}
 
-                {/* Actions */}
-                {isDone ? (
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
-                      <span className="text-xs font-semibold text-emerald-400">
-                        {actionLabel(actionDone || feedbackDone)}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleUndo(hero)}
-                      className="text-xs text-white/40 hover:text-white/70 transition-colors"
-                    >
-                      {s.undo}
-                    </button>
+              {/* Action buttons */}
+              {isDone ? (
+                <div className="flex items-center gap-3 mt-1">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <span className="text-xs font-semibold text-emerald-400">
+                      {actionLabel(actionDone || feedbackDone)}
+                    </span>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-2 relative">
-                    {/* Sett (liked) */}
-                    <button
-                      onClick={() => handleTitleAction(hero, "liked")}
-                      className="btn-press flex items-center gap-1.5 px-3 py-2 rounded-[var(--radius-md)] text-xs font-semibold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
-                      {s.watched}
-                    </button>
-                    {/* Ikke for meg */}
-                    <button
-                      onClick={() => handleFeedback(hero, "not_for_me")}
-                      className="btn-press flex items-center gap-1.5 px-3 py-2 rounded-[var(--radius-md)] text-xs font-semibold text-white/40 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      {s.notForMe}
-                    </button>
-                    {/* ••• */}
-                    <button
-                      onClick={() => setOpenMenu(openMenu === key ? null : key)}
-                      className="btn-press p-2 rounded-[var(--radius-md)] text-white/40 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
-                    >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
-                      </svg>
-                    </button>
-                    <MoreMenu rec={hero} />
-                  </div>
-                )}
-              </div>
+                  <button
+                    onClick={() => handleUndo(hero)}
+                    className="text-xs text-white/40 hover:text-white/70 transition-colors"
+                  >
+                    {s.undo}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 relative mt-1">
+                  {/* Watched */}
+                  <button
+                    onClick={() => handleTitleAction(hero, "liked")}
+                    className="btn-press flex items-center gap-1.5 px-3 py-2 rounded-[var(--radius-md)] text-xs font-semibold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    {s.watched}
+                  </button>
+                  {/* Not for me */}
+                  <button
+                    onClick={() => handleFeedback(hero, "not_for_me")}
+                    className="btn-press flex items-center gap-1.5 px-3 py-2 rounded-[var(--radius-md)] text-xs font-semibold text-white/40 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    {s.notForMe}
+                  </button>
+                  {/* ••• */}
+                  <button
+                    onClick={() => setOpenMenu(openMenu === key ? null : key)}
+                    className="btn-press p-2 rounded-[var(--radius-md)] text-white/40 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
+                    </svg>
+                  </button>
+                  <MoreMenu rec={hero} />
+                </div>
+              )}
             </div>
           </div>
         );
@@ -429,10 +434,7 @@ export default function RecommendationsPage() {
             return (
               <div
                 key={key}
-                className="group relative flex flex-col rounded-[var(--radius-lg)] overflow-hidden border border-white/[0.05] bg-white/[0.02] hover:border-white/[0.1] transition-all duration-200"
-                style={{ boxShadow: "0 0 0 0 transparent" }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 20px rgba(255,42,42,0.06)"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 0 transparent"; }}
+                className="group relative flex flex-col rounded-[var(--radius-lg)] overflow-hidden border border-white/[0.05] bg-white/[0.02] hover:border-white/[0.1] transition-all duration-200 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_2px_8px_rgba(0,0,0,0.4)]"
               >
                 {/* Poster */}
                 <div
@@ -473,12 +475,18 @@ export default function RecommendationsPage() {
 
                 {/* Info below poster */}
                 <div className="flex flex-col flex-1 p-2.5">
-                  <div className="flex items-center gap-1.5 mb-1">
+                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                     <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-white/[0.07] text-white/40">
                       {typeBadge(rec.type)}
                     </span>
                     {rec.year && (
                       <span className="text-[10px] text-white/30">{rec.year}</span>
+                    )}
+                    {rec.vote_average > 0 && (
+                      <span className="text-[10px] text-white/30 flex items-center gap-0.5">
+                        <span className="text-yellow-400">⭐</span>
+                        {rec.vote_average.toFixed(1)}
+                      </span>
                     )}
                   </div>
                   <h3 className="text-xs font-semibold text-white/90 line-clamp-2 leading-tight mb-1.5">{rec.title}</h3>
