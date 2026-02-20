@@ -9,6 +9,65 @@ import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-brows
 import { prefetchNetflixIds } from "@/lib/prefetch-netflix-ids";
 import type { UserTitle, TitleCache, MediaType, Recommendation } from "@/lib/types";
 
+/* ── locale strings ─────────────────────────────────────── */
+
+const strings = {
+  no: {
+    title: "Hjem",
+    titlesInCollection: "titler i samlingen din",
+    titleSingular: "tittel",
+    togetherLabel: "Se Sammen",
+    togetherHeadline: "Finn noe å se i kveld",
+    togetherSub: "Match med en venn på under 3 minutter",
+    togetherFree: "✓ Gratis",
+    togetherTime: "✓ Under 3 min",
+    togetherCta: "Start",
+    importTitle: "Importer seerhistorikk",
+    importSub: "Hent inn det du allerede har sett fra Netflix og andre tjenester",
+    continueWatching: "Fortsett å se",
+    forDeg: "For deg",
+    recentlyLogged: "Nylig logget",
+    trending: "Populært nå",
+    seeAll: "Se alle",
+    watched: "Sett og likte",
+    watchlist: "Legg i se-liste",
+    liked: "Sett",
+    disliked: "Mislikte",
+    watchlistAction: "Se-liste",
+  },
+  en: {
+    title: "Home",
+    titlesInCollection: "titles in your collection",
+    titleSingular: "title",
+    togetherLabel: "Watch Together",
+    togetherHeadline: "Find something to watch tonight",
+    togetherSub: "Match with a friend in under 3 minutes",
+    togetherFree: "✓ Free",
+    togetherTime: "✓ Under 3 min",
+    togetherCta: "Start",
+    importTitle: "Import watch history",
+    importSub: "Import what you've already watched from Netflix and other services",
+    continueWatching: "Continue watching",
+    forDeg: "For You",
+    recentlyLogged: "Recently logged",
+    trending: "Trending now",
+    seeAll: "See all",
+    watched: "Watched & liked",
+    watchlist: "Add to watchlist",
+    liked: "Watched",
+    disliked: "Disliked",
+    watchlistAction: "Watchlist",
+  },
+} as const;
+
+type Locale = "no" | "en";
+
+function getLocale(region: string): Locale {
+  return region === "NO" ? "no" : "en";
+}
+
+/* ── types ─────────────────────────────────────────────── */
+
 interface DashboardData {
   watching: (UserTitle & { cache?: TitleCache })[];
   recentlyLogged: (UserTitle & { cache?: TitleCache })[];
@@ -21,10 +80,22 @@ export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
+  const [locale, setLocale] = useState<Locale>("no");
 
   useEffect(() => {
     loadDashboard();
   }, []);
+
+  useEffect(() => {
+    fetch("/api/together/ribbon")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.region) setLocale(getLocale(data.region));
+      })
+      .catch(() => {});
+  }, []);
+
+  const s = strings[locale];
 
   async function loadDashboard() {
     const supabase = createSupabaseBrowser();
@@ -118,11 +189,46 @@ export default function HomePage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">
-          Hjem
+          {s.title}
         </h1>
         <p className="text-sm text-[var(--text-tertiary)] mt-0.5">
-          {data.totalTitles} titler i samlingen din
+          {data.totalTitles} {data.totalTitles === 1 ? s.titleSingular : s.titlesInCollection}
         </p>
+      </div>
+
+      {/* Se Sammen */}
+      <div className="relative flex items-center gap-4">
+        {/* Logo - absolute positioned overlay */}
+        <div className="flex-shrink-0 w-64 h-64 sm:w-72 sm:h-72 relative" style={{ filter: "drop-shadow(0 0 24px rgba(255,42,42,0.16))" }}>
+          <Image
+            src="/se sammen logo.png"
+            alt={s.togetherLabel}
+            fill
+            className="object-contain"
+          />
+        </div>
+
+        {/* Glassboks - ved siden av logoen */}
+        <Link
+          href="/together"
+          className="flex-1 glass rounded-[var(--radius-lg)] border border-[var(--accent)]/30 bg-[var(--accent)]/5 hover:border-[var(--accent)]/40 transition-all"
+          style={{ boxShadow: "0 0 24px rgba(255,42,42,0.08)" }}
+        >
+          <div className="flex items-center justify-between gap-4 py-2 sm:py-2.5 px-4 sm:px-5">
+            <div>
+              <p className="font-bold text-sm text-[var(--accent-light)] mb-0.5">{s.togetherLabel}</p>
+              <h2 className="font-extrabold text-lg sm:text-xl text-white mb-0.5">{s.togetherHeadline}</h2>
+              <p className="text-xs text-[var(--text-tertiary)]">{s.togetherSub}</p>
+              <div className="flex gap-2 mt-2">
+                <span className="text-[10px] text-white/40 bg-white/[0.06] px-2 py-0.5 rounded-full">{s.togetherFree}</span>
+                <span className="text-[10px] text-white/40 bg-white/[0.06] px-2 py-0.5 rounded-full">{s.togetherTime}</span>
+              </div>
+            </div>
+            <div className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold px-8 py-4 rounded-xl transition-all text-base flex-shrink-0">
+              {s.togetherCta}
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Import banner for new users */}
@@ -138,8 +244,8 @@ export default function HomePage() {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-[var(--text-primary)]">Importer seerhistorikk</p>
-              <p className="text-xs text-[var(--text-tertiary)]">Hent inn det du allerede har sett fra Netflix og andre tjenester</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">{s.importTitle}</p>
+              <p className="text-xs text-[var(--text-tertiary)]">{s.importSub}</p>
             </div>
             <svg className="w-5 h-5 text-[var(--text-tertiary)] flex-shrink-0 ml-auto" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -150,7 +256,7 @@ export default function HomePage() {
 
       {/* Section: Fortsett å se (Watch Bank) */}
       {data.watching.length > 0 && (
-        <DashboardSection title="Fortsett å se" href="/watch-bank">
+        <DashboardSection title={s.continueWatching} href="/watch-bank" seeAll={s.seeAll}>
           <HorizontalScroll>
             {data.watching.map((t) => (
               <PosterCard
@@ -172,7 +278,7 @@ export default function HomePage() {
 
       {/* Section: For deg (Recommendations) */}
       {data.recommendations.length > 0 && (
-        <DashboardSection title="For deg" href="/recommendations">
+        <DashboardSection title={s.forDeg} href="/recommendations" seeAll={s.seeAll}>
           <HorizontalScroll>
             {data.recommendations.map((rec) => (
               <PosterCard
@@ -187,8 +293,8 @@ export default function HomePage() {
                   poster_path: rec.poster_path || null,
                 })}
                 quickActions={[
-                  { label: "+", action: "liked", title: "Sett og likte" },
-                  { label: "Se", action: "watchlist", title: "Legg i se-liste" },
+                  { label: "+", action: "liked", title: s.watched },
+                  { label: "Se", action: "watchlist", title: s.watchlist },
                 ]}
                 onQuickAction={(action) => handleQuickAction(rec.tmdb_id, rec.type, action)}
               />
@@ -199,7 +305,7 @@ export default function HomePage() {
 
       {/* Section: Nylig logget */}
       {data.recentlyLogged.length > 0 && (
-        <DashboardSection title="Nylig logget" href="/library">
+        <DashboardSection title={s.recentlyLogged} href="/library" seeAll={s.seeAll}>
           <HorizontalScroll>
             {data.recentlyLogged.map((t) => (
               <PosterCard
@@ -221,7 +327,7 @@ export default function HomePage() {
 
       {/* Section: Populært nå (Trending — always visible) */}
       {data.trending.length > 0 && (
-        <DashboardSection title="Populært nå" href="/search">
+        <DashboardSection title={s.trending} href="/search" seeAll={s.seeAll}>
           <HorizontalScroll>
             {data.trending.map((t) => (
               <PosterCard
@@ -236,8 +342,8 @@ export default function HomePage() {
                   poster_path: t.poster_path,
                 })}
                 quickActions={[
-                  { label: "+", action: "liked", title: "Sett og likte" },
-                  { label: "Se", action: "watchlist", title: "Legg i se-liste" },
+                  { label: "+", action: "liked", title: s.watched },
+                  { label: "Se", action: "watchlist", title: s.watchlist },
                 ]}
                 onQuickAction={(action) => handleQuickAction(t.tmdb_id, t.type, action)}
               />
@@ -255,9 +361,9 @@ export default function HomePage() {
           posterPath={selectedItem.poster_path}
           onClose={() => setSelectedItem(null)}
           actions={[
-            { label: "Sett", action: "liked", variant: "green" },
-            { label: "Mislikte", action: "disliked", variant: "red" },
-            { label: "Se-liste", action: "watchlist", variant: "default" },
+            { label: s.liked, action: "liked", variant: "green" },
+            { label: s.disliked, action: "disliked", variant: "red" },
+            { label: s.watchlistAction, action: "watchlist", variant: "default" },
           ]}
           onAction={(action) => handleQuickAction(selectedItem.id, selectedItem.type, action)}
         />
@@ -268,7 +374,7 @@ export default function HomePage() {
 
 /* ── Subcomponents ── */
 
-function DashboardSection({ title, href, children }: { title: string; href: string; children: React.ReactNode }) {
+function DashboardSection({ title, href, seeAll, children }: { title: string; href: string; seeAll: string; children: React.ReactNode }) {
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
@@ -277,7 +383,7 @@ function DashboardSection({ title, href, children }: { title: string; href: stri
           href={href}
           className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] font-medium transition-colors"
         >
-          Se alle
+          {seeAll}
         </Link>
       </div>
       {children}

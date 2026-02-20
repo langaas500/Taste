@@ -104,11 +104,14 @@ const strings = {
   // NO-MATCH
   // ============================================
   noMatch: {
-    headline: { no: "Ingen full match.", en: "No full match." },
-    ingress: { no: "Dette er det beste kompromisset.", en: "This is the best compromise." },
-    lastRound: { no: "En siste runde", en: "One last round" },
-    acceptThis: { no: "Godta dette", en: "Accept this" },
+    headline: { no: "Kvelden trenger et valg.", en: "The evening needs a choice." },
+    ingress: { no: "Basert på valgene deres, er dette kveldens sterkeste kandidat.", en: "Based on your choices, this is tonight's strongest candidate." },
+    lastRound: { no: "Gi oss én runde til", en: "Give us one more round" },
+    acceptThis: { no: "La oss se denne", en: "Let's watch this" },
     playAgain: { no: "Spill igjen", en: "Play again" },
+    fallbackHeadline: { no: "Utfordring akseptert.", en: "Challenge accepted." },
+    fallbackIngress: { no: "Her er noe dere kanskje ikke forventet.", en: "Here's something you might not expect." },
+    fallbackCta: { no: "La oss teste denne", en: "Let's try this one" },
   },
 
   // ============================================

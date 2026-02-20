@@ -10,52 +10,58 @@ import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
 const RED = "#ff2a2a";
 
-/* ── route config ───────────────────────────────────────── */
+/* ── locale strings ─────────────────────────────────────── */
 
-const mobileBottomLinks = [
-  { href: "/home", label: "Hjem", icon: "M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" },
-  { href: "/search", label: "Søk", icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" },
-  { href: "/together", label: "Se sammen", icon: "M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" },
-  { href: "/scout", label: "Scout", icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" },
-  { href: "/recommendations", label: "For deg", icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" },
-];
-
-const mobileTopLinks = [
-  { href: "/library", label: "Bibliotek", icon: "M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" },
-  { href: "/profile", label: "Profil", icon: "M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" },
-  { href: "/settings", label: "Innstillinger", icon: "M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" },
-];
-
-interface SidebarLink {
-  href: string;
-  label: string;
-  icon: string;
-  badge?: string | null;
-}
-
-interface SidebarSection {
-  section: string | null;
-  links: SidebarLink[];
-}
-
-const sidebarLinks: SidebarSection[] = [
-  {
-    section: null,
-    links: [
-      { href: "/home", label: "Hjem", icon: "M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" },
-      { href: "/together", label: "Se sammen", icon: "M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" },
-      { href: "/search", label: "Søk", icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" },
-      { href: "/scout", label: "Scout", icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6", badge: "NY" },
-      { href: "/recommendations", label: "For deg", icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z", badge: "AI" },
-    ],
+const strings = {
+  no: {
+    home: "Hjem",
+    together: "Se sammen",
+    search: "Søk",
+    scout: "Scout",
+    forDeg: "For deg",
+    collection: "SAMLING",
+    library: "Bibliotek",
+    profile: "Profil",
+    settings: "Innstillinger",
+    guest: "Gjest",
+    user: "Bruker",
+    login: "Logg inn",
+    admin: "ADMIN",
+    filmelsker: "Filmelsker",
+    togetherTagline: "Hva skal dere se?",
+    togetherSub: "Finn noe å se sammen — på under 3 minutter",
+    togetherCta: "Se sammen",
+    logout: "Logg ut",
+    connected: "Koblet til",
   },
-  {
-    section: "SAMLING",
-    links: [
-      { href: "/library", label: "Bibliotek", icon: "M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" },
-    ],
+  en: {
+    home: "Home",
+    together: "Watch Together",
+    search: "Search",
+    scout: "Scout",
+    forDeg: "For You",
+    collection: "COLLECTION",
+    library: "Library",
+    profile: "Profile",
+    settings: "Settings",
+    guest: "Guest",
+    user: "User",
+    login: "Log in",
+    admin: "ADMIN",
+    filmelsker: "Film lover",
+    togetherTagline: "What should you watch?",
+    togetherSub: "Find something to watch together — in under 3 minutes",
+    togetherCta: "Watch Together",
+    logout: "Log out",
+    connected: "Connected",
   },
-];
+} as const;
+
+type Locale = "no" | "en";
+
+function getLocale(region: string): Locale {
+  return region === "NO" ? "no" : "en";
+}
 
 /* ── component ──────────────────────────────────────────── */
 
@@ -65,6 +71,7 @@ export default function Nav() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [locale, setLocale] = useState<Locale>("no");
 
   useEffect(() => {
     (async () => {
@@ -80,6 +87,62 @@ export default function Nav() {
     })();
   }, []);
 
+  useEffect(() => {
+    fetch("/api/together/ribbon")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.region) setLocale(getLocale(data.region));
+      })
+      .catch(() => {});
+  }, []);
+
+  const s = strings[locale];
+
+  const mobileBottomLinks = [
+    { href: "/home", label: s.home, icon: "M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" },
+    { href: "/search", label: s.search, icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" },
+    { href: "/together", label: s.together, icon: "M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" },
+    { href: "/scout", label: s.scout, icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" },
+    { href: "/recommendations", label: s.forDeg, icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" },
+  ];
+
+  const mobileTopLinks = [
+    { href: "/library", label: s.library, icon: "M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" },
+    { href: "/profile", label: s.profile, icon: "M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" },
+    { href: "/settings", label: s.settings, icon: "M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" },
+  ];
+
+  interface SidebarLink {
+    href: string;
+    label: string;
+    icon: string;
+    badge?: string | null;
+  }
+
+  interface SidebarSection {
+    section: string | null;
+    links: SidebarLink[];
+  }
+
+  const sidebarLinks: SidebarSection[] = [
+    {
+      section: null,
+      links: [
+        { href: "/home", label: s.home, icon: "M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" },
+        { href: "/together", label: s.together, icon: "M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" },
+        { href: "/search", label: s.search, icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" },
+        { href: "/scout", label: s.scout, icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6", badge: "NY" },
+        { href: "/recommendations", label: s.forDeg, icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z", badge: "AI" },
+      ],
+    },
+    {
+      section: s.collection,
+      links: [
+        { href: "/library", label: s.library, icon: "M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" },
+      ],
+    },
+  ];
+
   const initials = isGuest
     ? "G"
     : displayName
@@ -88,7 +151,7 @@ export default function Nav() {
         ? userEmail[0].toUpperCase()
         : "?";
 
-  const userName = isGuest ? "Gjest" : displayName || userEmail?.split("@")[0] || "Bruker";
+  const userName = isGuest ? s.guest : displayName || userEmail?.split("@")[0] || s.user;
 
   return (
     <>
@@ -249,9 +312,9 @@ export default function Nav() {
                   <p className="text-[10px]" style={{ color: "rgba(255,42,42,0.4)" }}>
                     {isGuest ? (
                       <Link href="/login" style={{ color: "rgba(255,42,42,0.6)" }}>
-                        Logg inn
+                        {s.login}
                       </Link>
-                    ) : userEmail === "martinlangaas@live.no" ? "ADMIN" : "Filmelsker"}
+                    ) : userEmail === "martinlangaas@live.no" ? s.admin : s.filmelsker}
                   </p>
                 </div>
               )}
@@ -395,7 +458,7 @@ export default function Nav() {
                 className={`group flex items-center gap-2.5 py-[7px] rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-150 ${
                   collapsed ? "justify-center px-2.5" : "px-2.5"
                 }`}
-                title={collapsed ? "Profil" : undefined}
+                title={collapsed ? s.profile : undefined}
                 style={{
                   background: pathname === "/profile" ? "rgba(255,42,42,0.08)" : "transparent",
                 }}
@@ -411,7 +474,7 @@ export default function Nav() {
                 </svg>
                 {!collapsed && (
                   <span className="relative transition-colors duration-150" style={{ color: pathname === "/profile" ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)" }}>
-                    Profil
+                    {s.profile}
                   </span>
                 )}
               </Link>
@@ -424,7 +487,7 @@ export default function Nav() {
                 className={`group flex items-center gap-2.5 py-[7px] rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-150 ${
                   collapsed ? "justify-center px-2.5" : "px-2.5"
                 }`}
-                title={collapsed ? "Innstillinger" : undefined}
+                title={collapsed ? s.settings : undefined}
                 style={{
                   background: pathname === "/settings" ? "rgba(255,42,42,0.08)" : "transparent",
                 }}
@@ -441,7 +504,7 @@ export default function Nav() {
                 </svg>
                 {!collapsed && (
                   <span className="relative transition-colors duration-150" style={{ color: pathname === "/settings" ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)" }}>
-                    Innstillinger
+                    {s.settings}
                   </span>
                 )}
               </Link>
@@ -459,10 +522,10 @@ export default function Nav() {
                 }}
               >
                 <p className="text-[12px] font-bold mb-1" style={{ color: RED }}>
-                  Hva skal dere se?
+                  {s.togetherTagline}
                 </p>
                 <p className="text-[11px] leading-relaxed mb-2.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-                  Finn noe å se sammen — på under 3 minutter
+                  {s.togetherSub}
                 </p>
 
                 <Link
@@ -476,13 +539,13 @@ export default function Nav() {
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
                   </svg>
-                  Se sammen
+                  {s.togetherCta}
                 </Link>
 
                 <div className="flex items-center justify-center gap-1.5 mt-2.5" style={{ fontSize: 9, color: "rgba(255,255,255,0.18)" }}>
                   <span>Logflix v0.1</span>
                   <span className="w-1 h-1 rounded-full inline-block" style={{ background: "#22c55e" }} />
-                  <span>Koblet til</span>
+                  <span>{s.connected}</span>
                 </div>
               </div>
 
@@ -500,7 +563,7 @@ export default function Nav() {
                   <svg className="w-[16px] h-[16px] flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
                   </svg>
-                  Logg ut
+                  {s.logout}
                 </button>
               )}
             </div>
@@ -525,7 +588,7 @@ export default function Nav() {
                     await supabase.auth.signOut();
                     window.location.href = "/login";
                   }}
-                  title="Logg ut"
+                  title={s.logout}
                   className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center bg-transparent border-0 cursor-pointer transition-opacity hover:opacity-80"
                   style={{ color: "rgba(255,255,255,0.25)" }}
                 >

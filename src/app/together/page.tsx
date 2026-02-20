@@ -287,6 +287,7 @@ export default function WTBetaPage() {
   const [round, setRound] = useState<1 | 2>(1);
   const [roundMatches, setRoundMatches] = useState<RoundMatch[]>([]);
   const [compromiseTitle, setCompromiseTitle] = useState<WTTitle | null>(null);
+  const [isFallbackCompromise, setIsFallbackCompromise] = useState(false);
   const [finalWinner, setFinalWinner] = useState<WTTitle | null>(null);
   const [shareState, setShareState] = useState<"idle" | "copied">("idle");
   const [superLikesUsed, setSuperLikesUsed] = useState(0);
@@ -516,9 +517,45 @@ export default function WTBetaPage() {
         if (mode === "paired" && !partnerIsDone) return;
         setRoundPhase("results");
       } else {
-        const sortedMine = [...myLikedIds].sort((a, b) => (swipeTimings.current[a] ?? Infinity) - (swipeTimings.current[b] ?? Infinity));
-        const cid = sortedMine[0] ?? theirLikedIds[0] ?? null;
-        setCompromiseTitle(cid != null ? d.find((t) => t.tmdb_id === cid) ?? null : null);
+        // Smart compromise algorithm
+        const allLikedIds = new Set([...myLikedIds, ...theirLikedIds]);
+        let compromiseCandidate: WTTitle | null = null;
+
+        if (allLikedIds.size > 0) {
+          // Score each liked title
+          const candidates = Array.from(allLikedIds)
+            .map(id => {
+              const title = d.find(t => t.tmdb_id === id);
+              if (!title) return null;
+
+              // Find position in deck (earlier = higher score)
+              const deckIndex = d.findIndex(t => t.tmdb_id === id);
+              const normalizedEarlyIndex = deckIndex >= 0 ? 1 - (deckIndex / d.length) : 0;
+
+              // Normalize TMDB rating
+              const tmdbRatingNormalized = (title.vote_average ?? 5) / 10;
+
+              // Calculate weighted score
+              const score = (normalizedEarlyIndex * 0.6) + (tmdbRatingNormalized * 0.4);
+
+              return { title, score };
+            })
+            .filter((x): x is { title: WTTitle; score: number } => x !== null);
+
+          // Select highest scoring title
+          candidates.sort((a, b) => b.score - a.score);
+          compromiseCandidate = candidates[0]?.title ?? null;
+          setIsFallbackCompromise(false);
+        }
+
+        // Fallback: both swiped left on everything
+        if (!compromiseCandidate) {
+          const fallback = [...d].sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0));
+          compromiseCandidate = fallback[0] ?? null;
+          setIsFallbackCompromise(true);
+        }
+
+        setCompromiseTitle(compromiseCandidate);
         if (mode === "paired" && !partnerIsDone) return;
         setRoundPhase("no-match");
       }
@@ -668,6 +705,7 @@ export default function WTBetaPage() {
     setRoundPhase("swiping");
     setRoundMatches([]);
     setCompromiseTitle(null);
+    setIsFallbackCompromise(false);
     setFinalWinner(null);
     setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
     setFly({ active: false, x: 0, rot: 0 });
@@ -696,6 +734,7 @@ export default function WTBetaPage() {
     setRoundPhase("swiping");
     setRoundMatches([]);
     setCompromiseTitle(null);
+    setIsFallbackCompromise(false);
     setFinalWinner(null);
     setMatchRevealPhase(0);
     setMode("solo");
@@ -1019,8 +1058,12 @@ export default function WTBetaPage() {
                 to   { transform: translateX(-50%); }
               }
               .ribbon-track { animation: ribbon-scroll 40s linear infinite; }
-              .cta-btn { transition: filter 180ms ease, transform 140ms ease, opacity 150ms, box-shadow 180ms ease; }
-              .cta-btn:hover:not(:disabled) { filter: brightness(1.08); transform: scale(1.015); box-shadow: 0 4px 30px rgba(255,42,42,0.5) !important; }
+              @keyframes pulse-glow {
+                0%, 100% { box-shadow: 0 0 16px rgba(255,42,42,0.4); }
+                50% { box-shadow: 0 0 32px rgba(255,42,42,0.7); }
+              }
+              .cta-btn { transition: filter 180ms ease, transform 140ms ease, opacity 150ms, box-shadow 180ms ease; animation: pulse-glow 2s ease-in-out infinite; }
+              .cta-btn:hover:not(:disabled) { filter: brightness(1.08); transform: scale(1.03); box-shadow: 0 4px 30px rgba(255,42,42,0.5) !important; }
               .cta-btn:active:not(:disabled) { filter: brightness(0.96); }
               @media (min-width: 768px) {
                 .intro-ribbon { height: 180px !important; clip-path: ellipse(70% 100% at 50% 0%); }
@@ -1108,7 +1151,7 @@ export default function WTBetaPage() {
             <div style={{ flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "32px 24px 0", position: "relative", zIndex: 1 }}>
             <div className="intro-content" style={{ width: "100%", maxWidth: 340, textAlign: "center" }}>
 
-              {/* Headline — time of day */}
+              {/* Headline */}
               <h1 className="intro-headline" style={{
                 fontSize: "clamp(1.7rem, 7.2vw, 2.3rem)",
                 fontWeight: 700,
@@ -1118,25 +1161,21 @@ export default function WTBetaPage() {
                 margin: "10px auto 16px",
                 maxWidth: "85%",
               }}>
-                {(() => { const h = new Date().getHours(); return h >= 18 || h < 5 ? t(locale, "intro", "headlineEvening") : t(locale, "intro", "headlineDay"); })()}
+                Ingen diskusjon. Bare match.
               </h1>
 
-              {/* Subtext — 20px below headline, 24px above cards */}
+              {/* Subtext */}
               <div style={{ marginBottom: "24px" }}>
-                {returnedToday ? (
-                  <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: 0 }}>{t(locale, "intro", "returnedSubtitle")}</p>
-                ) : (
-                  <>
-                    <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: 0 }}>{t(locale, "intro", "subtitle1")}</p>
-                    <p style={{ fontSize: "0.9375rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: 0 }}>{t(locale, "intro", "subtitle2")}</p>
-                  </>
-                )}
+                <p style={{ fontSize: "0.875rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: "0 auto", maxWidth: "20rem", textAlign: "center" }}>
+                  Swipe hver for dere. Vi finner matchen.
+                </p>
               </div>
 
               {/* Mode selector cards */}
               <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                 {(["solo", "paired"] as const).map((choice) => {
                   const active = introChoice === choice;
+                  const isPaired = choice === "paired";
                   return (
                     <button
                       key={choice}
@@ -1144,23 +1183,47 @@ export default function WTBetaPage() {
                       onClick={() => setIntroChoice(choice)}
                       style={{
                         flex: 1,
+                        position: "relative",
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
                         gap: 10,
-                        padding: "18px 8px",
+                        padding: isPaired ? "20px 10px" : "18px 8px",
                         minHeight: 130,
                         borderRadius: 16,
-                        border: active ? "1.5px solid rgba(255,255,255,0.25)" : "1px solid rgba(255,255,255,0.06)",
+                        border: isPaired
+                          ? (active ? "1.5px solid rgba(255,42,42,0.5)" : "1px solid rgba(255,42,42,0.3)")
+                          : (active ? "1.5px solid rgba(255,255,255,0.25)" : "1px solid rgba(255,255,255,0.06)"),
                         background: active ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.03)",
                         opacity: active ? 1 : 0.6,
                         cursor: "pointer",
                         transition: "all 0.3s ease",
-                        transform: active ? "scale(1.03)" : "scale(1)",
-                        boxShadow: active ? "0 0 20px rgba(255,42,42,0.12)" : "none",
+                        transform: isPaired
+                          ? (active ? "scale(1.06)" : "scale(1.04)")
+                          : (active ? "scale(1.03)" : "scale(1)"),
+                        boxShadow: isPaired
+                          ? "0 0 24px rgba(255,42,42,0.2)"
+                          : (active ? "0 0 20px rgba(255,42,42,0.12)" : "none"),
                       }}
                     >
+                      {isPaired && (
+                        <span style={{
+                          position: "absolute",
+                          top: 6,
+                          right: 6,
+                          fontSize: "0.625rem",
+                          fontWeight: 600,
+                          color: "rgba(255,255,255,0.9)",
+                          backgroundColor: "rgba(255,42,42,0.8)",
+                          padding: "2px 6px",
+                          borderRadius: 6,
+                          letterSpacing: "0.02em",
+                          textTransform: "uppercase",
+                        }}>
+                          Anbefalt
+                        </span>
+                      )}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={choice === "solo" ? "/one-phone.svg" : "/two-phones.svg"}
@@ -1188,6 +1251,18 @@ export default function WTBetaPage() {
                         }}>
                           {choice === "solo" ? t(locale, "intro", "soloDesc") : t(locale, "intro", "pairedDesc")}
                         </span>
+                        {isPaired && (
+                          <span style={{
+                            fontSize: "12px",
+                            fontWeight: 400,
+                            color: "rgba(255,255,255,0.6)",
+                            textAlign: "center",
+                            marginTop: "8px",
+                            lineHeight: 1.3,
+                          }}>
+                            Begge swiper. Kun felles liker gir match.
+                          </span>
+                        )}
                       </div>
                     </button>
                   );
@@ -1658,8 +1733,12 @@ export default function WTBetaPage() {
             {roundPhase === "no-match" && (
               <div className="fixed inset-0 z-30 flex flex-col items-center justify-center px-6 py-10" style={{ background: "#0c0a09" }}>
                 <div className="w-full max-w-sm text-center">
-                  <div className="text-sm font-semibold text-white mb-1">{t(locale, "noMatch", "headline")}</div>
-                  <div className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.38)" }}>{t(locale, "noMatch", "ingress")}</div>
+                  <div className="text-sm font-semibold text-white mb-1">
+                    {isFallbackCompromise ? t(locale, "noMatch", "fallbackHeadline") : t(locale, "noMatch", "headline")}
+                  </div>
+                  <div className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.38)" }}>
+                    {isFallbackCompromise ? t(locale, "noMatch", "fallbackIngress") : t(locale, "noMatch", "ingress")}
+                  </div>
                   {compromiseTitle && (
                     <div className="rounded-2xl overflow-hidden mb-6 mx-auto" style={{ maxWidth: 180, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
                       {compromiseTitle.poster_path ? (
@@ -1680,7 +1759,7 @@ export default function WTBetaPage() {
                     </button>
                   ) : (
                     <button onClick={() => { setFinalWinner(compromiseTitle); setRoundPhase("winner"); }} className="w-full py-4 rounded-xl text-sm font-bold text-white" style={{ background: RED, minHeight: 52 }}>
-                      {t(locale, "noMatch", "acceptThis")}
+                      {isFallbackCompromise ? t(locale, "noMatch", "fallbackCta") : t(locale, "noMatch", "acceptThis")}
                     </button>
                   )}
                   <button onClick={reset} className="w-full py-3 mt-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.2)" }}>{t(locale, "noMatch", "playAgain")}</button>
