@@ -224,7 +224,7 @@ export default function HomePage() {
                 <span className="text-[11px] text-white/40 bg-white/[0.06] px-2.5 py-1 rounded-full">{s.togetherTime}</span>
               </div>
             </div>
-            <div className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] hover:scale-[1.02] active:scale-[0.98] text-white font-bold px-10 py-5 rounded-xl transition-all duration-200 text-lg flex-shrink-0 self-center shadow-[0_0_32px_rgba(255,42,42,0.3)] hover:shadow-[0_0_48px_rgba(255,42,42,0.5)]">
+            <div className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] hover:brightness-110 hover:scale-[1.04] active:scale-[0.98] text-white font-extrabold px-10 py-5 rounded-xl transition-all duration-200 text-xl tracking-wide flex-shrink-0 self-center shadow-[0_0_32px_rgba(255,42,42,0.4)] hover:shadow-[0_0_56px_rgba(255,42,42,0.7)] animate-pulse-subtle">
               {s.togetherCta}
             </div>
           </div>

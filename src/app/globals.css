@@ -163,6 +163,18 @@ body::after {
   animation: fade-in-up var(--transition-slow) forwards;
 }
 
+@keyframes pulse-subtle {
+  0%, 100% {
+    box-shadow: 0 0 32px rgba(255, 42, 42, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 48px rgba(255, 42, 42, 0.6);
+  }
+}
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s ease-in-out infinite;
+}
+
 .stagger > * {
   opacity: 0;
   animation: fade-in-up 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
