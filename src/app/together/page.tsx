@@ -1317,20 +1317,11 @@ export default function WTBetaPage() {
                     }
                   }}
                   disabled={titlesLoading || ritualState !== "idle"}
-                  className="cta-btn"
+                  className="button"
                   style={{
                     width: "100%",
-                    height: 54,
-                    borderRadius: "14px",
-                    background: "linear-gradient(135deg, #ff2a2a, #e01e1e)",
-                    color: "#fff",
-                    fontSize: "0.9375rem",
-                    fontWeight: 600,
-                    border: "none",
                     cursor: titlesLoading ? "default" : "pointer",
                     opacity: titlesLoading ? 0.55 : 1,
-                    letterSpacing: "-0.01em",
-                    boxShadow: "0 4px 20px rgba(255,42,42,0.3)",
                   }}
                 >
                   {titlesLoading ? t(locale, "intro", "loading") : introChoice === "solo" ? t(locale, "intro", "startSolo") : t(locale, "intro", "startPaired")}
@@ -1608,14 +1599,11 @@ export default function WTBetaPage() {
                   else await createSession();
                 }}
                 disabled={titlesLoading}
+                className="button"
                 style={{
-                  width: "100%", height: 54, borderRadius: 12,
-                  background: "linear-gradient(180deg, #ff2a2a 0%, #c91414 100%)",
-                  color: "#fff", fontSize: "0.9375rem", fontWeight: 600,
-                  border: "none", cursor: titlesLoading ? "default" : "pointer",
+                  width: "100%",
                   opacity: titlesLoading ? 0.55 : 1,
-                  boxShadow: "0 8px 24px rgba(255,42,42,0.22), inset 0 1px 0 rgba(255,255,255,0.18)",
-                  letterSpacing: "-0.01em",
+                  cursor: titlesLoading ? "default" : "pointer",
                   marginBottom: 14,
                 }}
               >

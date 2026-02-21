@@ -177,34 +177,46 @@ body::after {
 
 /* Animated CTA Button */
 .button {
-  --main-size: 2em;
-  --color-text: #ffffff;
-  --color-background: #ff2a2a;
-  --color-background-hover: #ff4444;
+  --red: #ff2a2a;
+  font-size: 18px;
+  padding: 0.8em 3em;
+  letter-spacing: 0.08em;
+  position: relative;
+  font-family: inherit;
+  border-radius: 0.6em;
+  overflow: hidden;
+  transition: all 0.3s;
+  line-height: 1.4em;
+  border: 2px solid var(--red);
+  background: linear-gradient(to right, rgba(255, 42, 42, 0.1) 1%, transparent 40%, transparent 60%, rgba(255, 42, 42, 0.1) 100%);
+  color: var(--red);
+  box-shadow: inset 0 0 10px rgba(255, 42, 42, 0.4), 0 0 9px 3px rgba(255, 42, 42, 0.1);
   cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   text-decoration: none;
-  border: none;
-  border-radius: calc(var(--main-size) * 100);
-  padding: 0.33em 0.66em;
-  font-family: "Poppins", sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 600;
-  font-size: var(--main-size);
-  color: var(--color-text);
-  background: var(--color-background);
-  box-shadow: 0 0 0.15em 0 var(--color-background);
-  transition: 200ms;
-}
-
-.button:active {
-  transform: scale(0.95);
 }
 
 .button:hover {
-  background: var(--color-background-hover);
-  box-shadow: 0 0 0.15em 0 var(--color-background-hover);
+  color: #ff6666;
+  box-shadow: inset 0 0 10px rgba(255, 42, 42, 0.6), 0 0 9px 3px rgba(255, 42, 42, 0.2);
+}
+
+.button:before {
+  content: "";
+  position: absolute;
+  left: -4em;
+  width: 4em;
+  height: 100%;
+  top: 0;
+  transition: transform .4s ease-in-out;
+  background: linear-gradient(to right, transparent 1%, rgba(255, 42, 42, 0.1) 40%, rgba(255, 42, 42, 0.1) 60%, transparent 100%);
+}
+
+.button:hover:before {
+  transform: translateX(15em);
 }
 
 .stagger > * {
