@@ -2059,12 +2059,15 @@ export default function WTBetaPage() {
                   {/* Bottom action buttons */}
                   <style dangerouslySetInnerHTML={{ __html: `
                     .wt-action-btn {
-                      display: inline-block;
-                      padding: 0.9rem 1.8rem;
-                      font-size: 16px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      width: 90px;
+                      height: 42px;
+                      font-size: 13px;
                       font-weight: 700;
                       color: white;
-                      border: 3px solid rgb(252, 70, 100);
+                      border: 2px solid rgb(252, 70, 100);
                       cursor: pointer;
                       position: relative;
                       background-color: transparent;
@@ -2073,6 +2076,15 @@ export default function WTBetaPage() {
                       z-index: 1;
                       font-family: inherit;
                       border-radius: 8px;
+                      padding: 0;
+                    }
+                    @media (min-width: 640px) {
+                      .wt-action-btn {
+                        width: 120px;
+                        height: 48px;
+                        font-size: 16px;
+                        border-width: 3px;
+                      }
                     }
                     .wt-action-btn::before {
                       content: "";
@@ -2089,8 +2101,73 @@ export default function WTBetaPage() {
                     .wt-action-btn:hover::before {
                       transform: translateX(0);
                     }
+                    .wt-superlike-btn {
+                      position: relative;
+                      width: 90px;
+                      height: 42px;
+                      background-color: #000;
+                      display: flex;
+                      align-items: center;
+                      color: white;
+                      justify-content: center;
+                      border: none;
+                      padding: 0;
+                      border-radius: 8px;
+                      cursor: pointer;
+                      font-family: inherit;
+                      font-size: 13px;
+                      font-weight: 700;
+                    }
+                    @media (min-width: 640px) {
+                      .wt-superlike-btn {
+                        width: 120px;
+                        height: 48px;
+                        font-size: 14px;
+                      }
+                    }
+                    .wt-superlike-btn::before {
+                      content: '';
+                      position: absolute;
+                      inset: 0;
+                      left: -4px;
+                      top: -1px;
+                      margin: auto;
+                      width: calc(100% + 8px);
+                      height: calc(100% + 8px);
+                      border-radius: 10px;
+                      background: linear-gradient(-45deg, rgba(255,255,255,0.9) 0%, rgba(200,200,210,0.6) 50%, rgba(255,255,255,0.9) 100%);
+                      z-index: -10;
+                      pointer-events: none;
+                      transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    }
+                    .wt-superlike-btn::after {
+                      content: "";
+                      z-index: -1;
+                      position: absolute;
+                      inset: 0;
+                      background: rgba(252, 70, 100, 0.6);
+                      transform: translate3d(0, 0, 0) scale(0.95);
+                      filter: blur(20px);
+                    }
+                    .wt-superlike-btn:hover::after {
+                      filter: blur(30px);
+                    }
+                    .wt-superlike-btn:hover::before {
+                      transform: rotate(-180deg);
+                    }
+                    .wt-superlike-btn:active::before {
+                      scale: 0.7;
+                    }
+                    .wt-superlike-btn:disabled {
+                      opacity: 0.22;
+                      cursor: default;
+                    }
+                    .wt-superlike-btn:disabled::before,
+                    .wt-superlike-btn:disabled::after {
+                      opacity: 0.3;
+                    }
                   `}} />
-                  <div className="flex items-center justify-center gap-5" style={{ paddingBottom: "12px" }}>
+                  <div className="flex items-center justify-center gap-3 sm:gap-5" style={{ paddingBottom: "12px" }}>
                   {/* Dislike */}
                   <button
                     onClick={() => endSwipe("nope")}
@@ -2100,28 +2177,15 @@ export default function WTBetaPage() {
                     Dislike
                   </button>
 
-                  {/* Star — slightly smaller */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                    <button
-                      onClick={handleSuperLike}
-                      disabled={superLikesUsed >= SUPERLIKES_PER_ROUND}
-                      style={{
-                        ...btnBase,
-                        width: 48,
-                        height: 48,
-                        fontSize: "1.15rem",
-                        opacity: superLikesUsed >= SUPERLIKES_PER_ROUND ? 0.22 : 1,
-                        background: superLikesUsed >= SUPERLIKES_PER_ROUND ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.05)",
-                        border: `1px solid ${superLikesUsed >= SUPERLIKES_PER_ROUND ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.12)"}`,
-                      }}
-                      aria-label="Super-like"
-                    >
-                      ⭐
-                    </button>
-                    <span style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", lineHeight: 1 }}>
-                      {SUPERLIKES_PER_ROUND - superLikesUsed}
-                    </span>
-                  </div>
+                  {/* Super-like */}
+                  <button
+                    onClick={handleSuperLike}
+                    disabled={superLikesUsed >= SUPERLIKES_PER_ROUND}
+                    className="wt-superlike-btn"
+                    aria-label="Super-like"
+                  >
+                    Superlike
+                  </button>
 
                   {/* Like */}
                   <button
