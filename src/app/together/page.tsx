@@ -72,7 +72,25 @@ const PROVIDER_URLS: Record<number, (title: string) => string> = {
   386:  (t) => `https://www.peacocktv.com/search?q=${encodeURIComponent(t)}`,
 };
 
-function getWatchInfo(title: string, tmdbId: number, type: "movie" | "tv", selectedProviders: number[]): { url: string; providerName: string | null } {
+function getWatchInfo(title: string, tmdbId: number, type: "movie" | "tv", selectedProviders: number[], actualProviderIds?: number[]): { url: string; providerName: string | null } {
+  // If we have actual provider data from TMDB, use that to find the right service
+  if (actualProviderIds && actualProviderIds.length > 0) {
+    // Prefer a provider the user selected AND is actually available
+    for (const id of selectedProviders) {
+      if (actualProviderIds.includes(id) && PROVIDER_URLS[id]) {
+        const provider = PROVIDERS.find((p) => p.id === id);
+        return { url: PROVIDER_URLS[id](title), providerName: provider?.name ?? null };
+      }
+    }
+    // Fallback: first actual provider we have a URL for
+    for (const id of actualProviderIds) {
+      if (PROVIDER_URLS[id]) {
+        const provider = PROVIDERS.find((p) => p.id === id);
+        return { url: PROVIDER_URLS[id](title), providerName: provider?.name ?? null };
+      }
+    }
+  }
+  // Fallback: first selected provider (old behaviour)
   for (const id of selectedProviders) {
     const urlFn = PROVIDER_URLS[id];
     if (urlFn) {
@@ -81,6 +99,21 @@ function getWatchInfo(title: string, tmdbId: number, type: "movie" | "tv", selec
     }
   }
   return { url: `https://www.themoviedb.org/${type}/${tmdbId}/watch`, providerName: null };
+}
+
+async function fetchActualProviders(tmdbId: number, type: "movie" | "tv"): Promise<number[]> {
+  try {
+    const res = await fetch(`/api/tmdb/providers?tmdb_id=${tmdbId}&type=${type}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const providers = data.providers;
+    if (!providers) return [];
+    // flatrate = streaming, rent/buy are not what we want
+    const flatrate = (providers.flatrate || []) as { provider_id: number }[];
+    return flatrate.map((p) => p.provider_id);
+  } catch {
+    return [];
+  }
 }
 
 /* ── genre map ─────────────────────────────────────────── */
@@ -289,6 +322,7 @@ export default function WTBetaPage() {
   const [compromiseTitle, setCompromiseTitle] = useState<WTTitle | null>(null);
   const [isFallbackCompromise, setIsFallbackCompromise] = useState(false);
   const [finalWinner, setFinalWinner] = useState<WTTitle | null>(null);
+  const [winnerProviderIds, setWinnerProviderIds] = useState<number[]>([]);
   const [shareState, setShareState] = useState<"idle" | "copied">("idle");
   const [superLikesUsed, setSuperLikesUsed] = useState(0);
   const [iAmDone, setIAmDone] = useState(false);
@@ -408,6 +442,13 @@ export default function WTBetaPage() {
       cardStartTime.current = Date.now();
     }
   }, [deckIndex, screen, roundPhase]);
+
+  /* ── fetch actual providers for match title ── */
+  useEffect(() => {
+    if (!finalWinner) { setWinnerProviderIds([]); return; }
+    fetchActualProviders(finalWinner.tmdb_id, finalWinner.type)
+      .then(setWinnerProviderIds);
+  }, [finalWinner]);
 
   /* ── hide swipe hint after first swipe ── */
   useEffect(() => {
@@ -1350,8 +1391,8 @@ export default function WTBetaPage() {
                   onClick={() => setScreen("join")}
                   style={{
                     background: "none", border: "none",
-                    color: "rgba(255,255,255,0.40)",
-                    fontSize: "0.85rem", fontWeight: 400,
+                    color: "rgba(255,255,255,0.28)",
+                    fontSize: "0.75rem", fontWeight: 500,
                     cursor: "pointer", padding: "4px 0",
                   }}
                 >
@@ -1475,8 +1516,8 @@ export default function WTBetaPage() {
                 <button
                   onClick={() => joinSession()}
                   disabled={joinCode.length < 4 || titlesLoading}
-                  className="w-48 py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-                  style={{ background: RED, minHeight: 44 }}
+                  className="button"
+                  style={{ width: "100%", maxWidth: 320, opacity: (joinCode.length < 4 || titlesLoading) ? 0.4 : 1 }}
                 >
                   {titlesLoading ? t(locale, "join", "connecting") : t(locale, "join", "joinBtn")}
                 </button>
@@ -1629,7 +1670,7 @@ export default function WTBetaPage() {
                 onClick={() => setScreen("intro")}
                 style={{
                   width: "100%", padding: "8px 0", background: "none", border: "none",
-                  color: "rgba(255,255,255,0.3)", fontSize: "0.8125rem", cursor: "pointer",
+                  color: "rgba(255,255,255,0.28)", fontSize: "0.75rem", fontWeight: 500, cursor: "pointer",
                 }}
               >
                 {t(locale, "providers", "back")}
@@ -1662,12 +1703,12 @@ export default function WTBetaPage() {
                   <h2 className="text-3xl font-black text-white leading-tight mb-1">{finalWinner.title}</h2>
                   <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>{finalWinner.year} &middot; {getGenreName(finalWinner.genre_ids)}</p>
                   {finalWinner && (() => {
-                    const wi = getWatchInfo(finalWinner.title, finalWinner.tmdb_id, finalWinner.type, selectedProviders);
+                    const wi = getWatchInfo(finalWinner.title, finalWinner.tmdb_id, finalWinner.type, selectedProviders, winnerProviderIds);
                     const label = wi.providerName
                       ? t(locale, "winner", "watchOn").replace("{provider}", wi.providerName)
                       : t(locale, "doubleSuper", "startWatching");
                     return (
-                      <button onClick={() => { setRoundPhase("winner"); window.open(wi.url, "_blank"); }} className="w-full py-4 rounded-xl text-sm font-bold text-white mb-2" style={{ background: RED, minHeight: 52 }}>
+                      <button onClick={() => { setRoundPhase("winner"); window.open(wi.url, "_blank"); }} className="button" style={{ width: "100%", marginBottom: 8 }}>
                         {label}
                       </button>
                     );
@@ -1714,7 +1755,7 @@ export default function WTBetaPage() {
                       ? t(locale, "winner", "watchOn").replace("{provider}", wi.providerName)
                       : t(locale, "results", "startWatching");
                     return (
-                      <button onClick={() => { setFinalWinner(m); setRoundPhase("winner"); window.open(wi.url, "_blank"); }} className="w-full py-4 rounded-xl text-sm font-bold text-white mb-3" style={{ background: RED, minHeight: 52 }}>
+                      <button onClick={() => { setFinalWinner(m); setRoundPhase("winner"); window.open(wi.url, "_blank"); }} className="button" style={{ width: "100%", marginBottom: 12 }}>
                         {label}
                       </button>
                     );
@@ -1725,7 +1766,7 @@ export default function WTBetaPage() {
                     </div>
                   )}
                   {round === 1 && (
-                    <button onClick={startFinalRound} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.22)" }}>
+                    <button onClick={startFinalRound} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>
                       {t(locale, "results", "continueBtn")}
                     </button>
                   )}
@@ -1757,16 +1798,23 @@ export default function WTBetaPage() {
                       </div>
                     </div>
                   )}
-                  {round === 1 ? (
-                    <button onClick={startFinalRound} className="w-full py-4 rounded-xl text-sm font-bold text-white" style={{ background: RED, minHeight: 52 }}>
+                  {compromiseTitle && (() => {
+                    const wi = getWatchInfo(compromiseTitle.title, compromiseTitle.tmdb_id, compromiseTitle.type, selectedProviders);
+                    const label = wi.providerName
+                      ? t(locale, "winner", "watchOn").replace("{provider}", wi.providerName)
+                      : t(locale, "winner", "startWatching");
+                    return (
+                      <button onClick={() => { setFinalWinner(compromiseTitle); setRoundPhase("winner"); window.open(wi.url, "_blank"); }} className="button" style={{ width: "100%", marginBottom: 8 }}>
+                        {label}
+                      </button>
+                    );
+                  })()}
+                  {round === 1 && (
+                    <button onClick={startFinalRound} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>
                       {t(locale, "noMatch", "lastRound")}
                     </button>
-                  ) : (
-                    <button onClick={() => { setFinalWinner(compromiseTitle); setRoundPhase("winner"); }} className="w-full py-4 rounded-xl text-sm font-bold text-white" style={{ background: RED, minHeight: 52 }}>
-                      {isFallbackCompromise ? t(locale, "noMatch", "fallbackCta") : t(locale, "noMatch", "acceptThis")}
-                    </button>
                   )}
-                  <button onClick={reset} className="w-full py-3 mt-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.2)" }}>{t(locale, "noMatch", "playAgain")}</button>
+                  <button onClick={reset} className="w-full py-2 mt-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>{t(locale, "noMatch", "playAgain")}</button>
                 </div>
               </div>
             )}
@@ -1850,12 +1898,12 @@ export default function WTBetaPage() {
                   {/* Phase 3: buttons */}
                   <div style={{ opacity: matchRevealPhase >= 3 ? 1 : 0, transition: "opacity 600ms ease" }}>
                     {finalWinner && (() => {
-                      const wi = getWatchInfo(finalWinner.title, finalWinner.tmdb_id, finalWinner.type, selectedProviders);
+                      const wi = getWatchInfo(finalWinner.title, finalWinner.tmdb_id, finalWinner.type, selectedProviders, winnerProviderIds);
                       const label = wi.providerName
                         ? t(locale, "winner", "watchOn").replace("{provider}", wi.providerName)
                         : t(locale, "winner", "startWatching");
                       return (
-                        <button onClick={() => window.open(wi.url, "_blank")} className="w-full py-4 rounded-xl text-sm font-bold text-white mb-3" style={{ background: RED, minHeight: 52 }}>
+                        <button onClick={() => window.open(wi.url, "_blank")} className="button" style={{ width: "100%", marginBottom: 12 }}>
                           {label}
                         </button>
                       );
@@ -1867,7 +1915,7 @@ export default function WTBetaPage() {
                     >
                       {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "share")}
                     </button>
-                    <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.25)" }}>
+                    <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>
                       {t(locale, "winner", "keepLooking")}
                     </button>
                   </div>
@@ -2067,7 +2115,7 @@ export default function WTBetaPage() {
                       font-size: 13px;
                       font-weight: 700;
                       color: white;
-                      border: 2px solid rgb(252, 70, 100);
+                      border: 2px solid #ff2a2a;
                       cursor: pointer;
                       position: relative;
                       background-color: transparent;
@@ -2093,13 +2141,17 @@ export default function WTBetaPage() {
                       top: 0;
                       width: 100%;
                       height: 100%;
-                      background-color: rgb(252, 70, 100);
+                      background-color: #ff2a2a;
                       transform: translateX(-100%);
                       transition: all .3s;
                       z-index: -1;
                     }
                     .wt-action-btn:hover::before {
                       transform: translateX(0);
+                    }
+                    @keyframes gold-shimmer {
+                      0%, 100% { color: #d4af37; text-shadow: 0 0 6px rgba(212,175,55,0.3); }
+                      50% { color: #f5e6a3; text-shadow: 0 0 12px rgba(245,230,163,0.5), 0 0 4px rgba(255,255,255,0.2); }
                     }
                     .wt-superlike-btn {
                       position: relative;
@@ -2108,7 +2160,7 @@ export default function WTBetaPage() {
                       background-color: #000;
                       display: flex;
                       align-items: center;
-                      color: white;
+                      color: #d4af37;
                       justify-content: center;
                       border: none;
                       padding: 0;
@@ -2117,6 +2169,7 @@ export default function WTBetaPage() {
                       font-family: inherit;
                       font-size: 13px;
                       font-weight: 700;
+                      animation: gold-shimmer 3s ease-in-out infinite;
                     }
                     @media (min-width: 640px) {
                       .wt-superlike-btn {
@@ -2338,12 +2391,12 @@ export default function WTBetaPage() {
             <span
               style={{
                 fontSize: 11,
-                fontWeight: 500,
-                color: "rgba(255,255,255,0.15)",
+                fontWeight: 600,
+                color: "#ffffff",
                 padding: "6px 10px",
                 borderRadius: 10,
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.05)",
+                background: "transparent",
+                border: "1px solid #ff2a2a",
               }}
             >
               {t(locale, "global", "login")}

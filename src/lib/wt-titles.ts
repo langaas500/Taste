@@ -275,12 +275,35 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
   console.log(`[buildWtDeck] step2_mood_discover=${discover_count} (pool=${pool.length})`);
 
   // ── 3. Trending this week — score +2 ──
-  const [trendingMovies, trendingTv] = await Promise.all([
-    tmdbTrending("movie", "week"),
-    tmdbTrending("tv", "week"),
-  ]);
-  addItems(trendingMovies.results, "movie", "Populær akkurat nå", 2);
-  addItems(trendingTv.results, "tv", "Populær akkurat nå", 2);
+  // When providers are selected, use discover(popularity.desc) with provider filter
+  // instead of trending (which has no provider/region filtering).
+  if (providerIds.length > 0) {
+    const [trendingMovies, trendingTv] = await Promise.all([
+      tmdbDiscover("movie", {
+        sort_by: "popularity.desc",
+        "vote_average.gte": String(QUALITY.minRating),
+        "vote_count.gte": String(FETCH_MIN_VOTE_MOVIE),
+        "primary_release_date.gte": `${MIN_YEAR}-01-01`,
+        ...providerParams,
+      }),
+      tmdbDiscover("tv", {
+        sort_by: "popularity.desc",
+        "vote_average.gte": String(QUALITY.minRating),
+        "vote_count.gte": String(FETCH_MIN_VOTE_TV),
+        "first_air_date.gte": `${MIN_YEAR}-01-01`,
+        ...providerParams,
+      }),
+    ]);
+    addItems(trendingMovies.results, "movie", "Populær akkurat nå", 2);
+    addItems(trendingTv.results, "tv", "Populær akkurat nå", 2);
+  } else {
+    const [trendingMovies, trendingTv] = await Promise.all([
+      tmdbTrending("movie", "week"),
+      tmdbTrending("tv", "week"),
+    ]);
+    addItems(trendingMovies.results, "movie", "Populær akkurat nå", 2);
+    addItems(trendingTv.results, "tv", "Populær akkurat nå", 2);
+  }
   const trending_count = pool.length - similar_count - discover_count;
   console.log(`[buildWtDeck] step3_trending=${trending_count} (pool=${pool.length})`);
 
