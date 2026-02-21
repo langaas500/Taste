@@ -117,11 +117,11 @@ export default function HomePage() {
     }));
 
     const watching = allTitles.filter((t) => t.status === "watching");
-    const recentlyLogged = allTitles.filter((t) => t.status === "watched").slice(0, 10);
+    const recentlyLogged = allTitles.filter((t) => t.status === "watched").slice(0, 7);
 
     const trendingItems = ((trendingRes.results || []) as Record<string, unknown>[])
       .filter((r) => r.poster_path)
-      .slice(0, 12)
+      .slice(0, 7)
       .map((r) => ({
         tmdb_id: r.id as number,
         type: "movie" as MediaType,
@@ -394,32 +394,8 @@ function DashboardSection({ title, href, seeAll, children }: { title: string; hr
 function HorizontalScroll({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  function scroll(dir: "left" | "right") {
-    if (!ref.current) return;
-    const amount = ref.current.clientWidth * 0.7;
-    ref.current.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
-  }
-
   return (
-    <div className="relative group/scroll">
-      {/* Arrow buttons (desktop only) */}
-      <button
-        onClick={() => scroll("left")}
-        className="hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 z-20 w-8 h-8 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm border border-white/[0.08] text-white/60 hover:text-white transition-all opacity-0 group-hover/scroll:opacity-100"
-      >
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-        </svg>
-      </button>
-      <button
-        onClick={() => scroll("right")}
-        className="hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 z-20 w-8 h-8 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm border border-white/[0.08] text-white/60 hover:text-white transition-all opacity-0 group-hover/scroll:opacity-100"
-      >
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-        </svg>
-      </button>
-
+    <div className="relative">
       <div
         ref={ref}
         className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth -mx-4 px-4 pb-1"

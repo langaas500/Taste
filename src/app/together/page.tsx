@@ -293,6 +293,7 @@ export default function WTBetaPage() {
   const [superLikesUsed, setSuperLikesUsed] = useState(0);
   const [iAmDone, setIAmDone] = useState(false);
   const [waitingFactIndex, setWaitingFactIndex] = useState(0);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
 
   const superLikedIdRef = useRef<number | null>(null);
   const cardStartTime = useRef<number>(0);
@@ -342,6 +343,11 @@ export default function WTBetaPage() {
         try { localStorage.setItem("wt_guest_id", gid); } catch { /* incognito/Safari — ephemeral ok */ }
       }
       guestIdRef.current = gid;
+      // Check if user has seen swipe hint this session
+      const hasSeenHint = sessionStorage.getItem("wt_seen_swipe_hint");
+      if (!hasSeenHint) {
+        setShowSwipeHint(true);
+      }
     } catch { /* ignore */ }
     createSupabaseBrowser().auth.getSession()
       .then(({ data }) => { setAuthUser(data.session?.user ?? null); })
@@ -402,6 +408,16 @@ export default function WTBetaPage() {
       cardStartTime.current = Date.now();
     }
   }, [deckIndex, screen, roundPhase]);
+
+  /* ── hide swipe hint after first swipe ── */
+  useEffect(() => {
+    if (showSwipeHint && deckIndex > 0) {
+      try {
+        sessionStorage.setItem("wt_seen_swipe_hint", "1");
+      } catch { /* ignore */ }
+      setShowSwipeHint(false);
+    }
+  }, [deckIndex, showSwipeHint]);
 
   /* ── auto-extend deck (solo) ── */
   useEffect(() => {
@@ -1960,7 +1976,7 @@ export default function WTBetaPage() {
                 </div>
 
                 {/* Card area — centered */}
-                <div className="flex-1 flex items-center justify-center px-5" style={{ minHeight: 0 }}>
+                <div className="flex-1 flex flex-col items-center justify-center px-5" style={{ minHeight: 0 }}>
                   {top && (
                     <div
                       onPointerDown={handlePointerDown}
@@ -1981,6 +1997,7 @@ export default function WTBetaPage() {
                         boxShadow: "0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)",
                         userSelect: "none",
                         WebkitUserSelect: "none",
+                        marginBottom: "8px",
                       }}
                     >
                       {/* Poster background */}
@@ -2021,17 +2038,66 @@ export default function WTBetaPage() {
                       </div>
                     </div>
                   )}
-                </div>
 
-                {/* Bottom action buttons */}
-                <div className="flex items-center justify-center gap-5 py-7">
-                  {/* Thumbs down */}
+                  {/* Mobile swipe hint — first session only, fades after first swipe */}
+                  {showSwipeHint && !isDesktop && (
+                    <div
+                      className="text-center"
+                      style={{
+                        fontSize: "0.75rem",
+                        color: RED,
+                        fontWeight: 500,
+                        opacity: showSwipeHint ? 1 : 0,
+                        transition: "opacity 400ms ease-out",
+                        marginBottom: "2px",
+                      }}
+                    >
+                      ← Dislike   Like →
+                    </div>
+                  )}
+
+                  {/* Bottom action buttons */}
+                  <style dangerouslySetInnerHTML={{ __html: `
+                    .wt-action-btn {
+                      display: inline-block;
+                      padding: 0.9rem 1.8rem;
+                      font-size: 16px;
+                      font-weight: 700;
+                      color: white;
+                      border: 3px solid rgb(252, 70, 100);
+                      cursor: pointer;
+                      position: relative;
+                      background-color: transparent;
+                      text-decoration: none;
+                      overflow: hidden;
+                      z-index: 1;
+                      font-family: inherit;
+                      border-radius: 8px;
+                    }
+                    .wt-action-btn::before {
+                      content: "";
+                      position: absolute;
+                      left: 0;
+                      top: 0;
+                      width: 100%;
+                      height: 100%;
+                      background-color: rgb(252, 70, 100);
+                      transform: translateX(-100%);
+                      transition: all .3s;
+                      z-index: -1;
+                    }
+                    .wt-action-btn:hover::before {
+                      transform: translateX(0);
+                    }
+                  `}} />
+                  <div className="flex items-center justify-center gap-5" style={{ paddingBottom: "12px" }}>
+                  {/* Dislike */}
                   <button
                     onClick={() => endSwipe("nope")}
-                    style={{ ...btnBase, width: 52, height: 52, fontSize: "1.25rem" }}
-                    aria-label="Nei"
+                    className="wt-action-btn"
+                    aria-label="Dislike"
                   >
-                    👎
+                    Dislike
                   </button>
 
                   {/* Star — slightly smaller */}
@@ -2057,23 +2123,24 @@ export default function WTBetaPage() {
                     </span>
                   </div>
 
-                  {/* Thumbs up */}
+                  {/* Like */}
                   <button
                     onClick={() => endSwipe("like")}
-                    style={{ ...btnBase, width: 52, height: 52, fontSize: "1.25rem" }}
-                    aria-label="Ja"
+                    className="wt-action-btn"
+                    aria-label="Like"
                   >
-                    👍
+                    Like
                   </button>
-                </div>
-
-                {/* Desktop arrow hint */}
-                {isDesktop && (
-                  <div className="flex justify-center pb-4">
-                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.22)" }}>{t(locale, "together", "desktopHint")}</span>
                   </div>
-                )}
 
+                  {/* Desktop arrow hint */}
+                  {isDesktop && (
+                    <div className="flex justify-center">
+                      <span style={{ fontSize: 11, color: "rgba(255,255,255,0.22)" }}>{t(locale, "together", "desktopHint")}</span>
+                    </div>
+                  )}
+
+                </div>
               </div>
             )}
 
