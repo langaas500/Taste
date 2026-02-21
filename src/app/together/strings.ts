@@ -24,6 +24,9 @@ const strings = {
     groupLabel: { no: "Gruppe", en: "Group" },
     groupDesc: { no: "Kommer snart", en: "Coming soon" },
     hasCode: { no: "Jeg har en kode", en: "I have a code" },
+    headline: { no: "Ingen diskusjon. Bare match.", en: "No debate. Just match." },
+    subtext: { no: "Swipe hver for dere. Vi finner matchen.", en: "Swipe separately. We find the match." },
+    pairedExplainer: { no: "Begge swiper. Kun felles liker gir match.", en: "Both swipe. Only mutual likes become a match." },
   },
 
   // ============================================

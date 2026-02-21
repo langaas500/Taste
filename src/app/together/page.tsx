@@ -1177,13 +1177,13 @@ export default function WTBetaPage() {
                 margin: "10px auto 16px",
                 maxWidth: "85%",
               }}>
-                Ingen diskusjon. Bare match.
+                {t(locale, "intro", "headline")}
               </h1>
 
               {/* Subtext */}
               <div style={{ marginBottom: "24px" }}>
                 <p style={{ fontSize: "0.875rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: "0 auto", maxWidth: "20rem", textAlign: "center" }}>
-                  Swipe hver for dere. Vi finner matchen.
+                  {t(locale, "intro", "subtext")}
                 </p>
               </div>
 
@@ -1276,7 +1276,7 @@ export default function WTBetaPage() {
                             marginTop: "8px",
                             lineHeight: 1.3,
                           }}>
-                            Begge swiper. Kun felles liker gir match.
+                            {t(locale, "intro", "pairedExplainer")}
                           </span>
                         )}
                       </div>
