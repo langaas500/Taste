@@ -213,11 +213,13 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         }
 
         .landing-mobile-demo {
+          width: 100%;
           max-width: 320px;
           margin: 0 auto;
-          margin-bottom: -120px;
-          transform: scale(0.55);
+          transform: scale(0.62);
           transform-origin: top center;
+          height: 280px;
+          overflow: hidden;
           pointer-events: none;
         }
 
@@ -226,7 +228,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             margin-top: -30px !important;
           }
           .landing-logo-img {
-            height: 48px !important;
+            height: 44px !important;
           }
           .landing-ribbon {
             height: 80px !important;
@@ -253,6 +255,8 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             height: 52px !important;
             font-size: 18px !important;
             padding: 0 24px !important;
+            position: relative;
+            z-index: 10;
           }
           .landing-trust-text {
             font-size: 0.75rem !important;
