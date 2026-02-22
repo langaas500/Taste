@@ -324,6 +324,14 @@ export async function GET(req: NextRequest) {
       genreIds: number[];
     }[] = [];
 
+    const cacheRows: {
+      tmdb_id: number; type: string; title: string; original_title: string | null;
+      year: number | null; overview: string | null; genres: unknown;
+      poster_path: string | null; backdrop_path: string | null;
+      vote_average: number | null; vote_count: number | null; popularity: number | null;
+      updated_at: string;
+    }[] = [];
+
     for (const { item, type } of top20) {
       const parsed = parseTitleFromTMDB(item, type);
       results.push({
@@ -337,8 +345,7 @@ export async function GET(req: NextRequest) {
         genreIds: (item.genre_ids as number[]) || [],
       });
 
-      // Cache
-      admin.from("titles_cache").upsert({
+      cacheRows.push({
         tmdb_id: parsed.tmdb_id,
         type: parsed.type,
         title: parsed.title,
@@ -352,9 +359,16 @@ export async function GET(req: NextRequest) {
         vote_count: parsed.vote_count,
         popularity: parsed.popularity,
         updated_at: new Date().toISOString(),
-      }, { onConflict: "tmdb_id,type" }).then(() => {}).catch((err: unknown) => {
-        console.error("titles_cache upsert failed:", err instanceof Error ? err.message : err);
       });
+    }
+
+    // Bulk cache upsert (single DB call instead of N fire-and-forget)
+    if (cacheRows.length > 0) {
+      admin.from("titles_cache").upsert(cacheRows, { onConflict: "tmdb_id,type" })
+        .then(() => {})
+        .catch((err: unknown) => {
+          console.error("titles_cache bulk upsert failed:", err instanceof Error ? err.message : err);
+        });
     }
 
     // Generate deterministic "why" explanations

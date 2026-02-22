@@ -191,11 +191,11 @@ function getGenreColor(genre_ids: number[]): string {
   return "#2d2d5a";
 }
 
-function getGenreName(genre_ids: number[]): string {
+function getGenreName(genre_ids: number[], locale: Locale = "no"): string {
   for (const id of genre_ids) {
     if (GENRE_MAP[id]) return GENRE_MAP[id].name;
   }
-  return "Film/Serie";
+  return locale === "no" ? "Film/Serie" : "Movie/Series";
 }
 
 function generateMockPartner(titles: WTTitle[]): { liked: number[] } {
@@ -303,7 +303,6 @@ export default function WTBetaPage() {
   const [introFading, setIntroFading] = useState(false);
   const [ritualState, setRitualState] = useState<RitualState>("idle");
   const [ritualPhase, setRitualPhase] = useState<0 | 1 | 2>(0);
-  const [returnedToday, setReturnedToday] = useState(false);
   const ritualTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const [mode, setMode] = useState<Mode>("solo");
@@ -344,6 +343,7 @@ export default function WTBetaPage() {
   const extendingRef = useRef(false);
   const partnerRef = useRef<{ liked: number[] } | null>(null);
   const guestIdRef = useRef<string>("");
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   const [swipe, setSwipe] = useState<{ x: number; y: number; rot: number; dragging: boolean }>({ x: 0, y: 0, rot: 0, dragging: false });
   const [fly, setFly] = useState<{ active: boolean; x: number; rot: number }>({ active: false, x: 0, rot: 0 });
@@ -362,10 +362,6 @@ export default function WTBetaPage() {
       const saved = localStorage.getItem("ss_pref_mode");
       if (saved === "series" || saved === "movies" || saved === "mix") {
         setPreferenceMode(saved as "series" | "movies" | "mix");
-      }
-      const today = new Date().toISOString().slice(0, 10);
-      if (localStorage.getItem("ss_last_play_date") === today) {
-        setReturnedToday(true);
       }
       // Persist a stable guest ID for WT sessions across reloads.
       // localStorage.setItem throws in Safari incognito — keep ref assignment
@@ -672,17 +668,19 @@ export default function WTBetaPage() {
     const t4 = window.setTimeout(() => {
       navigator.vibrate?.([100, 50, 200]);
       try {
-        const audioCtx = new AudioContext();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        const ctx = audioCtxRef.current ?? new AudioContext();
+        if (ctx.state === "suspended") ctx.resume();
+        audioCtxRef.current = ctx;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(ctx.destination);
         osc.frequency.value = 880;
         osc.type = "sine";
         gain.gain.value = 0.15;
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.5);
+        osc.stop(ctx.currentTime + 0.5);
       } catch { /* ignore */ }
     }, 600);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
@@ -841,6 +839,10 @@ export default function WTBetaPage() {
 
   /* ── commit choice ── */
   function commitChoice(t: WTTitle, action: SwipeAction) {
+    // Warm up AudioContext on first user gesture (Safari requires this)
+    if (!audioCtxRef.current) {
+      try { audioCtxRef.current = new AudioContext(); } catch { /* ignore */ }
+    }
     if (!(t.tmdb_id in swipeTimings.current)) {
       swipeTimings.current[t.tmdb_id] = Date.now() - cardStartTime.current;
     }
@@ -900,6 +902,7 @@ export default function WTBetaPage() {
       if (!top) return;
       if (e.key === "ArrowLeft") { e.preventDefault(); commitChoice(top, "nope"); }
       else if (e.key === "ArrowRight") { e.preventDefault(); commitChoice(top, "like"); }
+      else if (e.key === " ") { e.preventDefault(); handleSuperLike(); }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -1278,7 +1281,7 @@ export default function WTBetaPage() {
                           letterSpacing: "0.02em",
                           textTransform: "uppercase",
                         }}>
-                          Anbefalt
+                          {t(locale, "intro", "recommended")}
                         </span>
                       )}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1349,7 +1352,7 @@ export default function WTBetaPage() {
                     border: "1px solid rgba(255,42,42,0.3)",
                     color: "rgba(255,255,255,0.7)",
                     letterSpacing: "0.06em",
-                  }}>SOON</div>
+                  }}>{t(locale, "intro", "soon")}</div>
                   <span style={{ fontSize: 36, lineHeight: 1 }}>👥</span>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
                     <span style={{ fontSize: "0.875rem", fontWeight: 400, color: "rgba(255,255,255,0.42)", letterSpacing: "-0.01em" }}>
@@ -1701,7 +1704,7 @@ export default function WTBetaPage() {
                 <div className="relative z-10 w-full max-w-sm">
                   <div className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.45)", letterSpacing: "0.12em" }}>{t(locale, "doubleSuper", "label")}</div>
                   <h2 className="text-3xl font-black text-white leading-tight mb-1">{finalWinner.title}</h2>
-                  <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>{finalWinner.year} &middot; {getGenreName(finalWinner.genre_ids)}</p>
+                  <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>{finalWinner.year} &middot; {getGenreName(finalWinner.genre_ids, locale)}</p>
                   {finalWinner && (() => {
                     const wi = getWatchInfo(finalWinner.title, finalWinner.tmdb_id, finalWinner.type, selectedProviders, winnerProviderIds);
                     const label = wi.providerName
@@ -1745,7 +1748,7 @@ export default function WTBetaPage() {
                     )}
                     <div className="p-3">
                       <div className="font-bold text-white text-sm truncate">{roundMatches[0].title.title}</div>
-                      <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{roundMatches[0].title.year} &middot; {getGenreName(roundMatches[0].title.genre_ids)}</div>
+                      <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{roundMatches[0].title.year} &middot; {getGenreName(roundMatches[0].title.genre_ids, locale)}</div>
                     </div>
                   </div>
                   {(() => {
@@ -1794,7 +1797,7 @@ export default function WTBetaPage() {
                       )}
                       <div className="p-3">
                         <div className="font-bold text-white text-sm truncate">{compromiseTitle.title}</div>
-                        <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{compromiseTitle.year} &middot; {getGenreName(compromiseTitle.genre_ids)}</div>
+                        <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{compromiseTitle.year} &middot; {getGenreName(compromiseTitle.genre_ids, locale)}</div>
                       </div>
                     </div>
                   )}
@@ -1882,7 +1885,7 @@ export default function WTBetaPage() {
                   <div style={{ opacity: matchRevealPhase >= 2 ? 1 : 0, transition: "opacity 600ms ease" }}>
                     <h2 className="text-3xl font-black text-white leading-tight mb-1">{finalWinner.title}</h2>
                     <p className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-                      {finalWinner.year} &middot; {getGenreName(finalWinner.genre_ids)}
+                      {finalWinner.year} &middot; {getGenreName(finalWinner.genre_ids, locale)}
                     </p>
                     {selectedProviders.length > 0 && (
                       <p className="text-xs mb-2" style={{ color: "rgba(255,255,255,0.28)" }}>
@@ -1916,8 +1919,25 @@ export default function WTBetaPage() {
                       {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "share")}
                     </button>
                     <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>
-                      {t(locale, "winner", "keepLooking")}
+                      {t(locale, "winner", "playAgain")}
                     </button>
+                    {mode === "solo" && (
+                      <button
+                        onClick={() => {
+                          const text = t(locale, "winner", "soloInviteCta");
+                          const url = `${window.location.origin}/together`;
+                          if (navigator.share) {
+                            navigator.share({ title: "Logflix — Se Sammen", text, url }).catch(() => {});
+                          } else {
+                            navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
+                          }
+                        }}
+                        className="w-full py-3 mt-2 rounded-xl text-sm font-medium"
+                        style={{ background: "rgba(255,42,42,0.12)", border: "1px solid rgba(255,42,42,0.25)", color: "rgba(255,255,255,0.85)", cursor: "pointer" }}
+                      >
+                        {t(locale, "winner", "soloInviteCta")}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -2100,7 +2120,7 @@ export default function WTBetaPage() {
                         marginBottom: "2px",
                       }}
                     >
-                      ← Dislike   Like →
+                      {t(locale, "together", "mobileSwipeHint")}
                     </div>
                   )}
 
@@ -2237,7 +2257,7 @@ export default function WTBetaPage() {
                     className="wt-superlike-btn"
                     aria-label="Super-like"
                   >
-                    Superlike
+                    ★ {SUPERLIKES_PER_ROUND - superLikesUsed}
                   </button>
 
                   {/* Like */}

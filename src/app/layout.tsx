@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { headers } from "next/headers";
 import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
 
@@ -41,13 +42,17 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const h = await headers();
+  const country = h.get("x-vercel-ip-country") ?? "";
+  const lang = country === "NO" ? "nb" : "en";
+
   return (
-    <html lang="en" className={inter.className}>
+    <html lang={lang} className={inter.className}>
       <body className="min-h-dvh antialiased">
         <ToastProvider>
           <div className="relative z-10">{children}</div>

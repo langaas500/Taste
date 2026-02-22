@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  title: "Se Sammen — Finn noe å se sammen | Logflix",
+  description: "Swipe hver for dere. Match kun når begge liker. Gratis, ingen konto nødvendig.",
   openGraph: {
-    title: "Se Sammen — Logflix",
-    description: "What should we watch tonight?",
+    title: "Se Sammen — Finn noe å se sammen | Logflix",
+    description: "Swipe hver for dere. Match kun når begge liker. Gratis, ingen konto nødvendig.",
     url: "https://logflix.app/together",
-    images: [{ url: "https://logflix.app/og-image.png", width: 1200, height: 630 }]
+    siteName: "Logflix",
+    type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Se Sammen — Logflix",
-    description: "What should we watch tonight?",
-    images: ["https://logflix.app/og-image.png"]
-  }
+    title: "Se Sammen — Finn noe å se sammen | Logflix",
+    description: "Swipe hver for dere. Match kun når begge liker. Gratis, ingen konto nødvendig.",
+  },
 };
 
 export default function TogetherLayout({

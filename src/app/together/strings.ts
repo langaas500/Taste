@@ -15,7 +15,7 @@ const strings = {
     subtitle1: { no: "Sveip hver for dere.", en: "Swipe separately." },
     subtitle2: { no: "Vi bestemmer.", en: "We decide." },
     soloLabel: { no: "Solo", en: "Solo" },
-    soloDesc: { no: "Kan ikke bestemme deg?", en: "Can't decide?" },
+    soloDesc: { no: "Øv deg alene", en: "Practice alone" },
     pairedLabel: { no: "Duo", en: "Duo" },
     pairedDesc: { no: "Sveip sammen", en: "Swipe together" },
     loading: { no: "Laster…", en: "Loading…" },
@@ -27,6 +27,8 @@ const strings = {
     headline: { no: "Ingen diskusjon. Bare match.", en: "No debate. Just match." },
     subtext: { no: "Swipe hver for dere. Vi finner matchen.", en: "Swipe separately. We find the match." },
     pairedExplainer: { no: "Begge swiper. Kun felles liker gir match.", en: "Both swipe. Only mutual likes become a match." },
+    recommended: { no: "Anbefalt", en: "Recommended" },
+    soon: { no: "SNART", en: "SOON" },
   },
 
   // ============================================
@@ -74,7 +76,9 @@ const strings = {
   together: {
     round1: { no: "Runde 1", en: "Round 1" },
     round2: { no: "Runde 2", en: "Round 2" },
-    desktopHint: { no: "← →", en: "← →" },
+    desktopHint: { no: "← → Space", en: "← → Space" },
+    mobileSwipeHint: { no: "← Dislike   Like →", en: "← Dislike   Like →" },
+    genreFallback: { no: "Film/Serie", en: "Movie/Series" },
   },
 
   // ============================================
@@ -126,9 +130,11 @@ const strings = {
     startWatching: { no: "▶︎ Start å se", en: "▶︎ Start watching" },
     watchOn: { no: "▶︎ Se på {provider}", en: "▶︎ Watch on {provider}" },
     keepLooking: { no: "Fortsett å lete →", en: "Keep looking →" },
+    playAgain: { no: "Spill en runde til", en: "Play another round" },
     share: { no: "Del resultatet", en: "Share result" },
     shareText: { no: "Vi fant noe å se! 🎬", en: "We found something to watch! 🎬" },
     copied: { no: "Kopiert!", en: "Copied!" },
+    soloInviteCta: { no: "Matchen er bedre med noen! Inviter en venn →", en: "Matches are better together! Invite a friend →" },
   },
 
   // ============================================
