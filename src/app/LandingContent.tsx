@@ -214,9 +214,58 @@ export default function LandingContent({ locale }: { locale: Locale }) {
 
         .landing-mobile-demo {
           max-width: 320px;
-          margin: 0 auto 24px;
-          transform: scale(0.75);
+          margin: 0 auto;
+          margin-bottom: -120px;
+          transform: scale(0.55);
           transform-origin: top center;
+          pointer-events: none;
+        }
+
+        @media (max-width: 1023px) {
+          .landing-logo-wrap {
+            margin-top: -30px !important;
+          }
+          .landing-logo-img {
+            height: 48px !important;
+          }
+          .landing-ribbon {
+            height: 80px !important;
+          }
+          .landing-ribbon img {
+            height: 70px !important;
+          }
+          .landing-main {
+            padding: 0 16px !important;
+          }
+          .landing-grid {
+            gap: 12px !important;
+          }
+          .landing-hero-title {
+            font-size: clamp(1.4rem, 5vw, 1.8rem) !important;
+            margin-bottom: 8px !important;
+          }
+          .landing-hero-sub {
+            font-size: 0.8rem !important;
+            margin-bottom: 12px !important;
+          }
+          .landing-cta-v2 {
+            width: 100% !important;
+            height: 52px !important;
+            font-size: 18px !important;
+            padding: 0 24px !important;
+          }
+          .landing-trust-text {
+            font-size: 0.75rem !important;
+            margin-top: 8px !important;
+          }
+          .landing-login-link {
+            font-size: 0.75rem !important;
+            margin-top: 6px !important;
+            padding: 2px 0 !important;
+          }
+          .landing-floor-divider {
+            display: none !important;
+          }
         }
 
         @media (min-width: 1024px) {
@@ -338,7 +387,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
 
       {/* Logo — overlaps ribbon */}
       <div
-        className="landing-fade-1"
+        className="landing-fade-1 landing-logo-wrap"
         style={{
           display: "flex",
           flexDirection: "column",
@@ -354,9 +403,10 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         <img
           src="/logo.png"
           alt="Logflix"
+          className="landing-logo-img"
           style={{ height: 128, width: "auto", opacity: 0.9, position: "relative", zIndex: 1, filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.6))" }}
         />
-        <p style={{
+        <p className="hidden lg:block" style={{
           fontSize: 11,
           fontWeight: 400,
           color: "rgba(255,255,255,0.22)",
@@ -367,7 +417,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         }}>
           {s.streaming}
         </p>
-        <p style={{
+        <p className="hidden lg:block" style={{
           fontSize: 13,
           fontWeight: 400,
           color: "rgba(255,255,255,0.40)",
@@ -399,9 +449,8 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           >
             {/* Two-device signal */}
             <div
-              className="landing-fade-2"
+              className="landing-fade-2 hidden lg:flex"
               style={{
-                display: "flex",
                 alignItems: "center",
                 gap: 6,
                 marginBottom: 14,
@@ -498,7 +547,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             </div>
 
             <p
-              className="landing-fade-4"
+              className="landing-fade-4 landing-trust-text"
               style={{
                 fontSize: 12,
                 fontWeight: 400,
@@ -510,7 +559,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             </p>
 
             <p
-              className="landing-fade-4"
+              className="landing-fade-4 hidden lg:block"
               style={{
                 fontSize: 13,
                 fontWeight: 500,
@@ -523,7 +572,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             </p>
 
             <p
-              className="landing-fade-4"
+              className="landing-fade-4 hidden lg:block"
               style={{
                 fontSize: 13,
                 fontWeight: 400,
@@ -537,7 +586,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             </p>
 
             <p
-              className="landing-fade-5"
+              className="landing-fade-5 hidden lg:block"
               style={{
                 fontSize: 12,
                 fontWeight: 500,
@@ -574,6 +623,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
 
         {/* Visual floor — grounding divider */}
         <div
+          className="landing-floor-divider"
           style={{
             width: "100%",
             height: 1,
