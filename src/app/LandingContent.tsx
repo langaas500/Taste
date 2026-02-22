@@ -324,6 +324,10 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             min-width: 280px;
           }
 
+          .landing-cta-row {
+            justify-content: flex-start !important;
+          }
+
           .landing-divider {
             display: none !important;
           }
@@ -669,7 +673,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           </div>
 
           {/* ── SWIPE DEMO (desktop only) ── */}
-          <div className="hidden lg:flex landing-fade-6" style={{ alignSelf: "center", justifyContent: "center" }}>
+          <div className="hidden lg:flex landing-fade-6" style={{ alignSelf: "center", justifyContent: "center", transform: "scale(1.15)", transformOrigin: "center center" }}>
             <SwipeMatchDemo locale={locale} />
           </div>
         </div>
