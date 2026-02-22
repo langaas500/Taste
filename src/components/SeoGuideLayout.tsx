@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface SeoGuideLayoutProps {
   h1: string;
@@ -20,6 +21,23 @@ export default function SeoGuideLayout({
 }: SeoGuideLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      {/* Header with logo */}
+      <header className="border-b border-gray-200 bg-white">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <Link href="/">
+            <Image
+              src="/logo.png"
+              alt="Logflix"
+              width={110}
+              height={35}
+              className="object-contain"
+              style={{ height: "auto" }}
+              priority
+            />
+          </Link>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section className="border-b border-gray-200 bg-white">
         <div className="max-w-4xl mx-auto px-6 py-16 sm:py-24">

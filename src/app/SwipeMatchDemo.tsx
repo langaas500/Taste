@@ -602,7 +602,7 @@ export default function SwipeMatchDemo({
           style={{
             borderRadius: 26,
             willChange: match ? "transform" : "auto",
-            boxShadow: "none",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
             animation: match
               ? "phone-jitter 0.18s ease forwards, phone-settle 0.12s ease-out 0.18s forwards"
               : "none",
@@ -686,7 +686,7 @@ export default function SwipeMatchDemo({
           style={{
             borderRadius: 26,
             willChange: match ? "transform" : "auto",
-            boxShadow: "none",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
             animation: match
               ? "phone-jitter 0.18s ease forwards, phone-settle 0.12s ease-out 0.18s forwards"
               : "none",

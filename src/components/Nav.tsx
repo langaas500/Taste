@@ -283,8 +283,8 @@ export default function Nav() {
                 <Image
                   src="/logo.png"
                   alt="Logflix"
-                  width={120}
-                  height={40}
+                  width={130}
+                  height={41}
                   className="object-contain"
                   style={{ height: "auto" }}
                   priority

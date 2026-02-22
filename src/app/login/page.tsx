@@ -224,7 +224,7 @@ function LoginContent() {
             src="/logo.png"
             alt="Logflix"
             width={140}
-            height={47}
+            height={44}
             className="object-contain mb-8"
             style={{ height: "auto" }}
             priority
@@ -286,7 +286,7 @@ function LoginContent() {
             src="/logo.png"
             alt="Logflix"
             width={130}
-            height={43}
+            height={41}
             className="object-contain mx-auto mb-5"
             style={{ height: "auto" }}
             priority

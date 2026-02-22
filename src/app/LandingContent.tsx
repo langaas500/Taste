@@ -76,7 +76,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
   return (
     <div
       style={{
-        minHeight: "100dvh",
+        height: "100dvh",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -194,10 +194,10 @@ export default function LandingContent({ locale }: { locale: Locale }) {
 
         .landing-main {
           width: 100%;
-          max-width: 1024px;
+          max-width: 1200px;
           margin-left: auto;
           margin-right: auto;
-          padding: 0 24px;
+          padding: 0 32px;
         }
         .landing-grid {
           display: flex;
@@ -208,30 +208,43 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         @media (min-width: 768px) {
           .landing-ribbon { height: 150px !important; }
           .landing-ribbon img { height: 130px !important; }
-          .landing-hero-title { font-size: 2.6rem !important; }
+          .landing-hero-title { font-size: 2.4rem !important; }
+          .landing-hero-sub { font-size: 17px !important; }
+        }
+
+        .landing-mobile-demo {
+          max-width: 320px;
+          margin: 0 auto 24px;
+          transform: scale(0.75);
+          transform-origin: top center;
         }
 
         @media (min-width: 1024px) {
           .landing-grid {
             display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
-            gap: 48px;
-            align-items: start;
-            padding-top: 10px !important;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+            flex: 1;
+            padding-top: 0 !important;
           }
 
           .landing-hero-wrap {
-            max-width: 520px !important;
+            max-width: 560px !important;
             align-items: flex-start !important;
             text-align: left !important;
             padding-left: 0 !important;
             padding-right: 0 !important;
           }
 
+          .landing-hero-title {
+            font-size: 3rem !important;
+          }
+
           .landing-cta-v2 {
             width: auto !important;
             max-width: none !important;
-            min-width: 260px;
+            min-width: 280px;
           }
 
           .landing-divider {
@@ -251,7 +264,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           flexShrink: 0,
           position: "relative",
           zIndex: 1,
-          marginTop: 20,
+          marginTop: 10,
           overflow: "hidden",
           height: 105,
           width: "100%",
@@ -323,32 +336,54 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         )}
       </div>
 
-      {/* Logo */}
+      {/* Logo — overlaps ribbon */}
       <div
         className="landing-fade-1"
         style={{
           display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
           justifyContent: "center",
-          paddingTop: 18,
+          marginTop: -100,
           flexShrink: 0,
           position: "relative",
-          zIndex: 1,
+          zIndex: 2,
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo.png"
           alt="Logflix"
-          style={{ height: 32, width: "auto", opacity: 0.85 }}
+          style={{ height: 128, width: "auto", opacity: 0.9, position: "relative", zIndex: 1, filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.6))" }}
         />
+        <p style={{
+          fontSize: 11,
+          fontWeight: 400,
+          color: "rgba(255,255,255,0.22)",
+          letterSpacing: "0.10em",
+          textTransform: "uppercase",
+          marginTop: 8,
+          marginBottom: 0,
+        }}>
+          {s.streaming}
+        </p>
+        <p style={{
+          fontSize: 13,
+          fontWeight: 400,
+          color: "rgba(255,255,255,0.40)",
+          letterSpacing: "0.02em",
+          margin: "4px 0 0",
+        }}>
+          {SERVICES.join(" · ")}
+        </p>
       </div>
 
       {/* Main max-width container */}
-      <div className="landing-main" style={{ position: "relative", zIndex: 1 }}>
+      <div className="landing-main" style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column" }}>
         {/* Warm spotlight */}
         <div className="landing-warm-spot" />
         {/* Desktop grid: hero left, benefits right */}
-        <div className="landing-grid" style={{ paddingTop: 18 }}>
+        <div className="landing-grid" style={{ paddingTop: 6, flex: 1 }}>
           {/* Hero content */}
           <div
             className="landing-hero-wrap"
@@ -356,9 +391,9 @@ export default function LandingContent({ locale }: { locale: Locale }) {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              padding: "10px 0 0",
+              padding: "0",
               width: "100%",
-              maxWidth: 420,
+              maxWidth: 480,
               textAlign: "center",
             }}
           >
@@ -421,18 +456,23 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             </h1>
 
             <p
-              className="landing-fade-3"
+              className="landing-fade-3 landing-hero-sub"
               style={{
                 fontSize: 15,
                 fontWeight: 400,
                 color: "rgba(255,255,255,0.68)",
                 lineHeight: 1.55,
-                margin: "0 0 18px",
+                margin: "0 0 22px",
                 maxWidth: 560,
               }}
             >
               {s.sub}
             </p>
+
+            {/* ── SWIPE DEMO (mobile only) ── */}
+            <div className="lg:hidden landing-mobile-demo landing-fade-3">
+              <SwipeMatchDemo locale={locale} />
+            </div>
 
             <div className="landing-cta-row landing-fade-3">
               <Link
@@ -538,44 +578,10 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             width: "100%",
             height: 1,
             background: "rgba(255,255,255,0.08)",
-            marginTop: 32,
+            marginTop: 12,
           }}
         />
 
-        {/* ── SECTION 3: STREAMING COMPATIBILITY ── */}
-        <div
-          className="landing-fade-6"
-          style={{
-            width: "100%",
-            padding: "28px 0 56px",
-            textAlign: "center",
-          }}
-        >
-          <p
-            style={{
-              fontSize: 11,
-              fontWeight: 400,
-              color: "rgba(255,255,255,0.22)",
-              letterSpacing: "0.10em",
-              textTransform: "uppercase",
-              marginBottom: 10,
-            }}
-          >
-            {s.streaming}
-          </p>
-          <p
-            style={{
-              fontSize: 14,
-              fontWeight: 400,
-              color: "rgba(255,255,255,0.44)",
-              letterSpacing: "0.02em",
-              lineHeight: 1.8,
-              margin: 0,
-            }}
-          >
-            {SERVICES.join(" · ")}
-          </p>
-        </div>
       </div>
     </div>
   );

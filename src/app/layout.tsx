@@ -7,32 +7,27 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Logflix",
-  description: "Track what you watch. Get smart, AI-powered recommendations.",
+  metadataBase: new URL("https://logflix.app"),
+  title: "Logflix — Agree on what to watch. Instantly.",
+  description: "Swipe separately. Match when you both like it. Free, no account needed.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Logflix",
   },
   openGraph: {
-    title: "Logflix",
-    description: "What should we watch tonight?",
+    title: "Logflix — Agree on what to watch. Instantly.",
+    description: "Swipe separately. Match when you both like it. Free, no account needed.",
     url: "https://logflix.app",
     siteName: "Logflix",
-    images: [{
-      url: "https://logflix.app/og-image.png",
-      width: 1200,
-      height: 630,
-      alt: "Logflix"
-    }],
-    type: "website"
+    locale: "en_US",
+    type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Logflix",
-    description: "What should we watch tonight?",
-    images: ["https://logflix.app/og-image.png"]
-  }
+    title: "Logflix — Agree on what to watch. Instantly.",
+    description: "Swipe separately. Match when you both like it.",
+  },
 };
 
 export const viewport: Viewport = {

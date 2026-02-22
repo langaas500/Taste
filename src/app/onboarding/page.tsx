@@ -312,7 +312,7 @@ export default function OnboardingPage() {
               src="/logo.png"
               alt="Logflix"
               width={140}
-              height={47}
+              height={44}
               className="object-contain mb-8"
               style={{ height: "auto" }}
               priority
