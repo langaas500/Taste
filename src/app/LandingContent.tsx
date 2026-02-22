@@ -215,7 +215,6 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         .landing-mobile-demo-clip {
           width: 100%;
           overflow: hidden;
-          display: flex;
           justify-content: center;
           pointer-events: none;
         }
@@ -223,6 +222,11 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           width: 420px;
           flex-shrink: 0;
           transform-origin: top center;
+        }
+        @media (max-width: 1023px) {
+          .landing-mobile-demo-clip {
+            display: flex;
+          }
         }
         @media (max-width: 460px) {
           .demo-scaler {
