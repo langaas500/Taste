@@ -212,18 +212,35 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           .landing-hero-sub { font-size: 17px !important; }
         }
 
-        .landing-mobile-demo-outer {
+        .landing-mobile-demo-clip {
           width: 100%;
+          overflow: hidden;
           display: flex;
           justify-content: center;
           pointer-events: none;
         }
-        .landing-mobile-demo {
-          width: 360px;
-          transform: scale(0.62);
+        .demo-scaler {
+          width: 420px;
+          flex-shrink: 0;
           transform-origin: top center;
-          height: 280px;
-          overflow: hidden;
+        }
+        @media (max-width: 460px) {
+          .demo-scaler {
+            transform: scale(0.85);
+            margin-bottom: -50px;
+          }
+        }
+        @media (max-width: 400px) {
+          .demo-scaler {
+            transform: scale(0.75);
+            margin-bottom: -80px;
+          }
+        }
+        @media (max-width: 360px) {
+          .demo-scaler {
+            transform: scale(0.68);
+            margin-bottom: -100px;
+          }
         }
 
         @media (max-width: 1023px) {
@@ -526,8 +543,8 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             </p>
 
             {/* ── SWIPE DEMO (mobile only) ── */}
-            <div className="lg:hidden landing-mobile-demo-outer landing-fade-3">
-              <div className="landing-mobile-demo">
+            <div className="lg:hidden landing-mobile-demo-clip landing-fade-3">
+              <div className="demo-scaler">
                 <SwipeMatchDemo locale={locale} />
               </div>
             </div>
@@ -622,6 +639,29 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             >
               {s.login}
             </Link>
+
+            {/* Streaming list — mobile only (under login) */}
+            <div className="lg:hidden landing-fade-5" style={{ textAlign: "center", marginTop: 14 }}>
+              <p style={{
+                fontSize: 10,
+                fontWeight: 400,
+                color: "rgba(255,255,255,0.22)",
+                letterSpacing: "0.10em",
+                textTransform: "uppercase",
+                marginBottom: 4,
+              }}>
+                {s.streaming}
+              </p>
+              <p style={{
+                fontSize: 12,
+                fontWeight: 400,
+                color: "rgba(255,255,255,0.36)",
+                letterSpacing: "0.02em",
+                margin: 0,
+              }}>
+                {SERVICES.join(" · ")}
+              </p>
+            </div>
           </div>
 
           {/* ── SWIPE DEMO (desktop only) ── */}
