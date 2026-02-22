@@ -212,15 +212,18 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           .landing-hero-sub { font-size: 17px !important; }
         }
 
-        .landing-mobile-demo {
+        .landing-mobile-demo-outer {
           width: 100%;
-          max-width: 320px;
-          margin: 0 auto;
+          display: flex;
+          justify-content: center;
+          pointer-events: none;
+        }
+        .landing-mobile-demo {
+          width: 360px;
           transform: scale(0.62);
           transform-origin: top center;
           height: 280px;
           overflow: hidden;
-          pointer-events: none;
         }
 
         @media (max-width: 1023px) {
@@ -523,8 +526,10 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             </p>
 
             {/* ── SWIPE DEMO (mobile only) ── */}
-            <div className="lg:hidden landing-mobile-demo landing-fade-3">
-              <SwipeMatchDemo locale={locale} />
+            <div className="lg:hidden landing-mobile-demo-outer landing-fade-3">
+              <div className="landing-mobile-demo">
+                <SwipeMatchDemo locale={locale} />
+              </div>
             </div>
 
             <div className="landing-cta-row landing-fade-3">
