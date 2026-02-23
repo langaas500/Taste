@@ -29,6 +29,15 @@ export async function POST(req: NextRequest) {
 
     const admin = createSupabaseAdmin();
 
+    // Cleanup: delete group sessions older than 4 hours (fire-and-forget)
+    const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+    admin
+      .from("group_sessions")
+      .delete()
+      .lt("created_at", fourHoursAgo)
+      .then(() => {})
+      .catch(() => {});
+
     // Generate unique 5-char code (retry on collision)
     let code = generateGroupCode();
     let attempts = 0;

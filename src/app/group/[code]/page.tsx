@@ -12,6 +12,17 @@ const RED = "#ff2a2a";
 const TMDB_IMG = "https://image.tmdb.org/t/p/w342";
 const STORAGE_KEY = "logflix_group_session";
 
+const WAITING_FACTS = [
+  "Den lengste filmen noensinne er over 35 timer lang.",
+  "Netflix bruker over 100 forskjellige forsidebilder per tittel.",
+  "Gjennomsnittlig nordmann ser 2 timer TV om dagen.",
+  "Popcorn ble populært på kino under den store depresjonen.",
+  "Den første filmen med lyd kom i 1927.",
+  "Stranger Things var avvist av 15 studioer før Netflix sa ja.",
+  "En gjennomsnittlig TV-serie koster $3–5 millioner per episode.",
+  "Wilhelm-skriket har vært brukt i over 400 filmer.",
+];
+
 function clamp(v: number, min: number, max: number) { return Math.min(Math.max(v, min), max); }
 
 function readStoredSession(): { sessionId: string; guestId: string; code: string } | null {
@@ -49,6 +60,9 @@ export default function GroupSessionPage() {
 
   // Final vote state
   const [selectedFinalist, setSelectedFinalist] = useState<number | null>(null);
+
+  // Waiting overlay state
+  const [waitingFactIndex, setWaitingFactIndex] = useState(0);
 
   const guestIdRef = useRef("");
 
@@ -134,6 +148,14 @@ export default function GroupSessionPage() {
     }
     if (!allParticipantsDone) autoTriggeredRef.current = false;
   }, [isHost, allParticipantsDone, actionLoading]);
+
+  // Rotate waiting facts every 6 seconds
+  const doneSwiping = sessionStatus === "swiping" && deckIndex >= pool.length;
+  useEffect(() => {
+    if (!doneSwiping) return;
+    const id = setInterval(() => setWaitingFactIndex((i) => (i + 1) % WAITING_FACTS.length), 6000);
+    return () => clearInterval(id);
+  }, [doneSwiping]);
 
   /* ── actions ── */
 
@@ -340,21 +362,38 @@ export default function GroupSessionPage() {
 
   /* ── SWIPING ── */
   if (sessionStatus === "swiping") {
-    const doneSwiping = deckIndex >= pool.length;
     const currentItem = pool[deckIndex];
     const myVoteCount = state?.my_vote_count || 0;
+    const doneCount = participants.filter((p) => {
+      const count = state?.votes_per_participant?.[p.user_id] || 0;
+      return count >= pool.length;
+    }).length;
 
     if (doneSwiping) {
       return (
-        <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 24 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 700 }}>Ferdig!</h2>
-          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 15 }}>
-            Du har sveipet alle {pool.length} titler.
+        <div style={{ minHeight: "100dvh", background: "#0a0a0f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 28 }}>
+          <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes group-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.3); } }
+            @keyframes group-fade { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: translateY(0); } }
+          `}} />
+
+          {/* Pulsing dot */}
+          <div style={{ width: 12, height: 12, borderRadius: "50%", background: RED, animation: "group-pulse 2s ease-in-out infinite" }} />
+
+          <h2 style={{ fontSize: 22, fontWeight: 700, textAlign: "center" }}>
+            Du er ferdig!
+          </h2>
+          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 15, textAlign: "center" }}>
+            Venter på de andre...
+          </p>
+
+          {/* X av Y */}
+          <p style={{ fontSize: 17, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>
+            {doneCount} av {participants.length} har sveipet ferdig
           </p>
 
           {/* Progress per participant */}
           <div style={{ ...glass, padding: 20, width: "100%", maxWidth: 400 }}>
-            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 12, textTransform: "uppercase", letterSpacing: 1 }}>Fremgang</p>
             {participants.map((p) => {
               const count = state?.votes_per_participant?.[p.user_id] || 0;
               const pct = pool.length > 0 ? Math.round((count / pool.length) * 100) : 0;
@@ -372,18 +411,16 @@ export default function GroupSessionPage() {
             })}
           </div>
 
+          {/* Fun fact */}
+          <p key={waitingFactIndex} style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textAlign: "center", maxWidth: 320, lineHeight: 1.5, animation: "group-fade 0.4s ease-out" }}>
+            {WAITING_FACTS[waitingFactIndex]}
+          </p>
+
+          {/* Host: manual trigger */}
           {isHost && (
             <button onClick={computeFinalists} disabled={actionLoading} style={{ ...btnPrimary, maxWidth: 400 }}>
               {actionLoading ? "Beregner..." : allParticipantsDone ? "Vis finalister" : "Avslutt sveipingen"}
             </button>
-          )}
-
-          {isHost && !allParticipantsDone && (
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>Noen sveiper fortsatt — du kan avslutte når som helst</p>
-          )}
-
-          {!isHost && (
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>Venter på at verten avslutter runden...</p>
           )}
         </div>
       );
