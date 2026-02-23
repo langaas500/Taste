@@ -45,8 +45,11 @@ export async function middleware(request: NextRequest) {
     pathname === "/" ||
     pathname === "/search" ||
     pathname === "/together" ||
+    pathname === "/group" ||
+    pathname.startsWith("/group/") ||
     pathname.startsWith("/api/tmdb/") ||
-    pathname.startsWith("/api/together/");
+    pathname.startsWith("/api/together/") ||
+    pathname.startsWith("/api/group/");
 
   if (!user && !isPublic && !isGuestAllowed) {
     const url = request.nextUrl.clone();
