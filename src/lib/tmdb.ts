@@ -2,6 +2,23 @@
 
 const BASE = "https://api.themoviedb.org/3";
 
+/* ── In-memory cache (20 min TTL) ─────────────────────── */
+const _tmdbCache = new Map<string, { data: unknown; ts: number }>();
+const TMDB_CACHE_TTL = 20 * 60 * 1000;
+
+const CACHEABLE_PATTERNS = [
+  "/trending/",
+  "/discover/",
+  "/search/",
+  "/watch/providers",
+  "/similar",
+  "/recommendations",
+];
+
+function isCacheable(url: string): boolean {
+  return CACHEABLE_PATTERNS.some((p) => url.includes(p));
+}
+
 function headers() {
   return {
     Authorization: `Bearer ${process.env.TMDB_API_KEY}`,
@@ -13,15 +30,36 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Fetch wrapper with TMDB_API_KEY validation and 429 retry/backoff. */
+/** Fetch wrapper with TMDB_API_KEY validation, 20-min cache, and 429 retry/backoff. */
 async function tmdbFetch(url: string): Promise<Response> {
   if (!process.env.TMDB_API_KEY) {
     throw new Error("TMDB_API_KEY is not set");
   }
+
+  // Return cached response for cacheable endpoints
+  if (isCacheable(url)) {
+    const cached = _tmdbCache.get(url);
+    if (cached && Date.now() - cached.ts < TMDB_CACHE_TTL) {
+      return new Response(JSON.stringify(cached.data), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
   const opts = { headers: headers() };
   for (let attempt = 0; attempt < 3; attempt++) {
     const res = await fetch(url, opts);
-    if (res.status !== 429) return res;
+    if (res.status !== 429) {
+      // Cache successful responses for cacheable endpoints
+      if (res.ok && isCacheable(url)) {
+        const clone = res.clone();
+        clone.json().then((data) => {
+          _tmdbCache.set(url, { data, ts: Date.now() });
+        }).catch(() => {});
+      }
+      return res;
+    }
     const retryAfter = parseInt(res.headers.get("Retry-After") || "1", 10);
     await sleep(Math.max(retryAfter, 1) * 1000);
   }

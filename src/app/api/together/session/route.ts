@@ -138,6 +138,19 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+    // Fire-and-forget: clean up sessions older than 24 hours
+    admin
+      .from("wt_session_swipes")
+      .delete()
+      .lt("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .then(() =>
+        admin
+          .from("wt_sessions")
+          .delete()
+          .lt("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      )
+      .catch(() => {});
+
     return NextResponse.json({ session: { ...session, titles, deck_seed } });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
