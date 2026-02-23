@@ -16,9 +16,10 @@ export async function POST(req: NextRequest) {
 
     const admin = createSupabaseAdmin();
 
+    // Read session (for host check + votes)
     const { data: session, error } = await admin
       .from("group_sessions")
-      .select("id, host_user_id, status, votes, pool")
+      .select("id, host_user_id, status, votes")
       .eq("id", session_id)
       .single();
 
@@ -27,7 +28,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Only the host can compute finalists" }, { status: 403 });
     }
     if (session.status !== "swiping") {
-      return NextResponse.json({ error: "Session is not in swiping phase" }, { status: 400 });
+      // Already computed — return idempotent success
+      return NextResponse.json({ ok: true, status: "already_computed" });
     }
 
     // Count "liked" votes per item across all participants
@@ -69,17 +71,19 @@ export async function POST(req: NextRequest) {
 
     const finalistTmdbIds = sorted.map(([key]) => Number(key.split(":")[0]));
 
-    // Update session
-    const { error: updateError } = await admin
-      .from("group_sessions")
-      .update({
-        finalist_tmdb_ids: finalistTmdbIds,
-        status: "final_voting",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", session_id);
+    // Atomic CAS: swiping → final_voting
+    // If another request already transitioned, this returns 0 rows (no-op).
+    const { data: updated, error: rpcError } = await admin.rpc("group_set_finalists", {
+      p_session_id: session_id,
+      p_finalist_ids: finalistTmdbIds,
+    });
 
-    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+    if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 500 });
+
+    if (!updated || updated.length === 0) {
+      // CAS failed — another request already computed finalists
+      return NextResponse.json({ ok: true, status: "already_computed" });
+    }
 
     return NextResponse.json({ ok: true, finalist_tmdb_ids: finalistTmdbIds });
   } catch (e: unknown) {

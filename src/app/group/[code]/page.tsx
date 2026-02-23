@@ -58,6 +58,9 @@ const gs = {
   newRound:       { no: "Ny runde",           en: "New round" },
   loading:        { no: "Laster…",            en: "Loading…" },
   unknownStatus:  { no: "Ukjent status",      en: "Unknown status" },
+  expired:        { no: "Sesjonen er utløpt", en: "This session has expired" },
+  expiredSub:     { no: "Opprett en ny gruppe for å spille igjen.", en: "Create a new group to play again." },
+  backToStart:    { no: "Tilbake til start",  en: "Back to start" },
 } as const;
 
 function gt(locale: Locale, key: keyof typeof gs): string {
@@ -196,12 +199,20 @@ export default function GroupSessionPage() {
     return count >= pool.length;
   });
 
-  // Clear stored session when completed or cancelled
+  // Derived: session expired (4 hours)
+  const SESSION_TTL_MS = 4 * 60 * 60 * 1000;
+  const isExpired = (() => {
+    if (!state?.session?.created_at) return false;
+    const created = new Date(state.session.created_at).getTime();
+    return Date.now() - created > SESSION_TTL_MS;
+  })();
+
+  // Clear stored session when completed, cancelled, or expired
   useEffect(() => {
-    if (sessionStatus === "completed") {
+    if (sessionStatus === "completed" || isExpired) {
       clearStoredSession();
     }
-  }, [sessionStatus]);
+  }, [sessionStatus, isExpired]);
 
   // Auto-trigger finalist computation when host and all done
   const autoTriggeredRef = useRef(false);
@@ -357,6 +368,19 @@ export default function GroupSessionPage() {
       <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
         <p style={{ color: RED }}>{actionError}</p>
         <button onClick={() => router.push("/group")} style={{ ...btnPrimary, maxWidth: 300 }}>{gt(locale, "back")}</button>
+      </div>
+    );
+  }
+
+  /* ── EXPIRED ── */
+  if (isExpired && sessionStatus !== "completed") {
+    return (
+      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 700 }}>{gt(locale, "expired")}</h2>
+        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 15, textAlign: "center" }}>{gt(locale, "expiredSub")}</p>
+        <button onClick={() => { clearStoredSession(); router.push("/group"); }} style={{ ...btnPrimary, maxWidth: 300 }}>
+          {gt(locale, "backToStart")}
+        </button>
       </div>
     );
   }
@@ -774,7 +798,7 @@ export default function GroupSessionPage() {
             ))}
           </div>
 
-          {isHost && allVoted && (
+          {allVoted && (
             <button onClick={finalize} disabled={actionLoading} style={btnPrimary}>
               {actionLoading ? gt(locale, "finishing") : gt(locale, "showWinner")}
             </button>

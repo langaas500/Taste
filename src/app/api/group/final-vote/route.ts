@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getWtUserId } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
 
-// POST: Submit one final vote (pick one finalist)
+// POST: Submit one final vote (pick one finalist) — atomic via RPC
 export async function POST(req: NextRequest) {
   try {
     const userId = await getWtUserId(req);
@@ -15,23 +15,6 @@ export async function POST(req: NextRequest) {
 
     const admin = createSupabaseAdmin();
 
-    const { data: session, error } = await admin
-      .from("group_sessions")
-      .select("id, status, finalist_tmdb_ids, final_votes")
-      .eq("id", session_id)
-      .single();
-
-    if (error || !session) return NextResponse.json({ error: "Session not found" }, { status: 404 });
-    if (session.status !== "final_voting") {
-      return NextResponse.json({ error: "Session is not in final voting phase" }, { status: 400 });
-    }
-
-    // Verify tmdb_id is a finalist
-    const finalists = session.finalist_tmdb_ids as number[];
-    if (!finalists.includes(tmdb_id)) {
-      return NextResponse.json({ error: "Not a finalist" }, { status: 400 });
-    }
-
     // Verify user is a participant
     const { data: participant } = await admin
       .from("group_session_participants")
@@ -42,17 +25,16 @@ export async function POST(req: NextRequest) {
 
     if (!participant) return NextResponse.json({ error: "Not a participant" }, { status: 403 });
 
-    // Set final_votes[userId] = tmdb_id string
-    // Each user sets only their own key, so read-modify-write is safe here.
-    const fv = (session.final_votes || {}) as Record<string, string>;
-    fv[userId] = String(tmdb_id);
+    // Atomic: set final_votes[userId] = tmdb_id
+    // Only succeeds if status = 'final_voting' AND tmdb_id is in finalist_tmdb_ids
+    const { data: applied, error: rpcError } = await admin.rpc("group_apply_final_vote", {
+      p_session_id: session_id,
+      p_user_id: userId,
+      p_tmdb_id: tmdb_id,
+    });
 
-    const { error: updateError } = await admin
-      .from("group_sessions")
-      .update({ final_votes: fv, updated_at: new Date().toISOString() })
-      .eq("id", session_id);
-
-    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+    if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 500 });
+    if (!applied) return NextResponse.json({ error: "Vote not applied (session not in final_voting or invalid finalist)" }, { status: 400 });
 
     return NextResponse.json({ ok: true });
   } catch (e: unknown) {
