@@ -1156,6 +1156,14 @@ export default function WTBetaPage() {
               transition: introFading ? "opacity 220ms ease-out" : ritualState !== "idle" ? "filter 250ms ease-out" : "opacity 0ms",
             }}
           >
+            {/* Back to home */}
+            <button
+              onClick={() => router.push("/home")}
+              style={{ position: "absolute", top: 20, left: 20, background: "none", border: "none", color: "rgba(255,255,255,0.45)", fontSize: 22, cursor: "pointer", zIndex: 10, lineHeight: 1 }}
+              aria-label="Back"
+            >
+              ←
+            </button>
 
             {/* ── Keyframes ── */}
             <style dangerouslySetInnerHTML={{ __html: `
@@ -1392,27 +1400,37 @@ export default function WTBetaPage() {
                   padding: "18px 8px",
                   minHeight: 130,
                   borderRadius: 16,
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.08)",
                   background: "rgba(255,255,255,0.03)",
-                  opacity: 0.4,
-                  cursor: "default",
+                  cursor: "pointer",
                   position: "relative",
-                }}>
-                  <div style={{
-                    position: "absolute", top: 8, right: 8,
-                    fontSize: "0.6rem", fontWeight: 600,
-                    padding: "2px 6px", borderRadius: 4,
-                    background: "rgba(255,42,42,0.2)",
-                    border: "1px solid rgba(255,42,42,0.3)",
-                    color: "rgba(255,255,255,0.7)",
-                    letterSpacing: "0.06em",
-                  }}>{t(locale, "intro", "soon")}</div>
+                }}
+                onClick={() => router.push("/group")}
+                >
+                  <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 4 }}>
+                    <div style={{
+                      fontSize: "0.6rem", fontWeight: 600,
+                      padding: "2px 6px", borderRadius: 4,
+                      background: "rgba(255,42,42,0.2)",
+                      border: "1px solid rgba(255,42,42,0.3)",
+                      color: "rgba(255,255,255,0.8)",
+                      letterSpacing: "0.06em",
+                    }}>NEW</div>
+                    <div style={{
+                      fontSize: "0.6rem", fontWeight: 600,
+                      padding: "2px 6px", borderRadius: 4,
+                      background: "rgba(74,222,128,0.15)",
+                      border: "1px solid rgba(74,222,128,0.3)",
+                      color: "#4ade80",
+                      letterSpacing: "0.06em",
+                    }}>{t(locale, "intro", "soon")}</div>
+                  </div>
                   <span style={{ fontSize: 36, lineHeight: 1 }}>👥</span>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                    <span style={{ fontSize: "0.875rem", fontWeight: 400, color: "rgba(255,255,255,0.42)", letterSpacing: "-0.01em" }}>
+                    <span style={{ fontSize: "0.875rem", fontWeight: 500, color: "rgba(255,255,255,0.65)", letterSpacing: "-0.01em" }}>
                       {t(locale, "intro", "groupLabel")}
                     </span>
-                    <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "rgba(255,255,255,0.22)", letterSpacing: "-0.005em", lineHeight: 1.3 }}>
+                    <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "rgba(255,255,255,0.30)", letterSpacing: "-0.005em", lineHeight: 1.3 }}>
                       {t(locale, "intro", "groupDesc")}
                     </span>
                   </div>
@@ -2089,9 +2107,17 @@ export default function WTBetaPage() {
                   </div>
                 )}
 
+                {/* Back to intro */}
+                <button
+                  onClick={reset}
+                  style={{ position: "absolute", top: 20, left: 20, background: "none", border: "none", color: "rgba(255,255,255,0.45)", fontSize: 22, cursor: "pointer", zIndex: 10, lineHeight: 1 }}
+                  aria-label="Back"
+                >
+                  ←
+                </button>
+
                 {/* Top row: Runde label */}
-                <div className="flex items-center justify-between px-5 pt-4 pb-2">
-                  <div style={{ width: 40 }} /> {/* spacer for balance */}
+                <div className="flex items-center justify-center px-5 pt-4 pb-2">
                   <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", fontWeight: 400 }}>
                     {round === 1 ? t(locale, "together", "round1") : t(locale, "together", "round2")}
                   </span>

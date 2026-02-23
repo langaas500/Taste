@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useGroupSession } from "@/hooks/useGroupSession";
 import type { GroupPoolItem, GroupStateResponse } from "@/types/group";
+import { getLocale, type Locale } from "@/app/together/strings";
+import { getMessages } from "@/app/together/messages";
 
 /* ── constants ──────────────────────────────────────────── */
 
@@ -12,16 +14,55 @@ const RED = "#ff2a2a";
 const TMDB_IMG = "https://image.tmdb.org/t/p/w342";
 const STORAGE_KEY = "logflix_group_session";
 
-const WAITING_FACTS = [
-  "Den lengste filmen noensinne er over 35 timer lang.",
-  "Netflix bruker over 100 forskjellige forsidebilder per tittel.",
-  "Gjennomsnittlig nordmann ser 2 timer TV om dagen.",
-  "Popcorn ble populært på kino under den store depresjonen.",
-  "Den første filmen med lyd kom i 1927.",
-  "Stranger Things var avvist av 15 studioer før Netflix sa ja.",
-  "En gjennomsnittlig TV-serie koster $3–5 millioner per episode.",
-  "Wilhelm-skriket har vært brukt i over 400 filmer.",
-];
+const TMDB_IMG_SM = "https://image.tmdb.org/t/p/w185";
+
+/* ── i18n strings for group page ───────────────────────── */
+const gs = {
+  connecting:     { no: "Kobler til…",       en: "Connecting…" },
+  somethingWrong: { no: "Noe gikk galt",     en: "Something went wrong" },
+  couldNotConnect:{ no: "Kunne ikke koble til", en: "Could not connect" },
+  back:           { no: "Tilbake",            en: "Back" },
+  group:          { no: "Gruppe",             en: "Group" },
+  code:           { no: "Kode",               en: "Code" },
+  shareCode:      { no: "Del koden med vennene dine", en: "Share the code with your friends" },
+  participants:   { no: "Deltakere",          en: "Participants" },
+  anonymous:      { no: "Anonym",             en: "Anonymous" },
+  host:           { no: "Vert",               en: "Host" },
+  building:       { no: "Bygger…",            en: "Building…" },
+  starting:       { no: "Starter…",           en: "Starting…" },
+  startSwiping:   { no: "Start sveipingen",   en: "Start swiping" },
+  waitMinPart:    { no: "Venter på minst {n} deltakere", en: "Waiting for at least {n} participants" },
+  waitForHost:    { no: "Venter på at verten starter…",  en: "Waiting for the host to start…" },
+  movie:          { no: "Film",               en: "Movie" },
+  series:         { no: "Serie",              en: "Series" },
+  like:           { no: "LIKER",              en: "LIKE" },
+  nope:           { no: "NEI",                en: "NOPE" },
+  youAreDone:     { no: "Du er ferdig!",      en: "You're done!" },
+  waitingOthers:  { no: "Venter på de andre…", en: "Waiting for the others…" },
+  doneCount:      { no: "{x} av {y} har sveipet ferdig", en: "{x} of {y} have finished swiping" },
+  computing:      { no: "Beregner…",          en: "Computing…" },
+  showFinalists:  { no: "Vis finalister",     en: "Show finalists" },
+  endSwiping:     { no: "Avslutt sveipingen", en: "End swiping" },
+  pickFavorite:   { no: "Velg favoritt",      en: "Pick your favorite" },
+  voteForWhat:    { no: "Stem på den dere vil se", en: "Vote for what you want to watch" },
+  vote1:          { no: "stemme",             en: "vote" },
+  voteN:          { no: "stemmer",            en: "votes" },
+  voting:         { no: "Stemmer…",           en: "Voting…" },
+  voteBtn:        { no: "Stem",               en: "Vote" },
+  youVoted:       { no: "Du har stemt! Venter på de andre…", en: "You voted! Waiting for the others…" },
+  votes:          { no: "Stemmer",            en: "Votes" },
+  finishing:      { no: "Avslutter…",         en: "Finishing…" },
+  showWinner:     { no: "Vis vinneren",       en: "Show the winner" },
+  youreWatching:  { no: "Dere skal se",       en: "You're watching" },
+  noWinner:       { no: "Ingen vinner funnet", en: "No winner found" },
+  newRound:       { no: "Ny runde",           en: "New round" },
+  loading:        { no: "Laster…",            en: "Loading…" },
+  unknownStatus:  { no: "Ukjent status",      en: "Unknown status" },
+} as const;
+
+function gt(locale: Locale, key: keyof typeof gs): string {
+  return gs[key][locale];
+}
 
 function clamp(v: number, min: number, max: number) { return Math.min(Math.max(v, min), max); }
 
@@ -63,6 +104,10 @@ export default function GroupSessionPage() {
 
   // Waiting overlay state
   const [waitingFactIndex, setWaitingFactIndex] = useState(0);
+
+  // Locale + poster-drift state
+  const [locale, setLocale] = useState<Locale>("en");
+  const [ribbonPosters, setRibbonPosters] = useState<string[]>([]);
 
   const guestIdRef = useRef("");
 
@@ -113,11 +158,30 @@ export default function GroupSessionPage() {
           router.replace("/group");
         }
       } catch {
-        setActionError("Kunne ikke koble til");
+        setActionError(gt(locale, "couldNotConnect"));
       }
     };
     resolve();
   }, [code, sessionId, router]);
+
+  // Fetch trending posters + detect region/locale
+  useEffect(() => {
+    fetch("/api/together/ribbon")
+      .then((r) => r.json())
+      .then((data) => {
+        const params = new URLSearchParams(window.location.search);
+        const langParam = params.get("lang");
+        if (langParam === "no" || langParam === "en") {
+          setLocale(langParam as Locale);
+        } else if (data.region) {
+          setLocale(getLocale(data.region as string));
+        }
+        if (Array.isArray(data.posters) && data.posters.length > 0) {
+          setRibbonPosters(data.posters as string[]);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const { state, loading, error: pollError } = useGroupSession(sessionId, guestIdRef.current);
 
@@ -151,11 +215,12 @@ export default function GroupSessionPage() {
 
   // Rotate waiting facts every 6 seconds
   const doneSwiping = sessionStatus === "swiping" && deckIndex >= pool.length;
+  const waitingFacts = getMessages(locale, "waitingAfterDone");
   useEffect(() => {
     if (!doneSwiping) return;
-    const id = setInterval(() => setWaitingFactIndex((i) => (i + 1) % WAITING_FACTS.length), 6000);
+    const id = setInterval(() => setWaitingFactIndex((i) => (i + 1) % waitingFacts.length), 6000);
     return () => clearInterval(id);
-  }, [doneSwiping]);
+  }, [doneSwiping, waitingFacts.length]);
 
   /* ── actions ── */
 
@@ -171,7 +236,7 @@ export default function GroupSessionPage() {
       if (data.error) throw new Error(data.error);
       return data;
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Noe gikk galt";
+      const msg = e instanceof Error ? e.message : gt(locale, "somethingWrong");
       setActionError(msg);
       return null;
     } finally {
@@ -282,7 +347,7 @@ export default function GroupSessionPage() {
   if (!sessionId && !actionError) {
     return (
       <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "rgba(255,255,255,0.5)" }}>Kobler til...</p>
+        <p style={{ color: "rgba(255,255,255,0.5)" }}>{gt(locale, "connecting")}</p>
       </div>
     );
   }
@@ -291,7 +356,7 @@ export default function GroupSessionPage() {
     return (
       <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
         <p style={{ color: RED }}>{actionError}</p>
-        <button onClick={() => router.push("/group")} style={{ ...btnPrimary, maxWidth: 300 }}>Tilbake</button>
+        <button onClick={() => router.push("/group")} style={{ ...btnPrimary, maxWidth: 300 }}>{gt(locale, "back")}</button>
       </div>
     );
   }
@@ -299,63 +364,102 @@ export default function GroupSessionPage() {
   /* ── LOBBY ── */
   if (sessionStatus === "lobby" || sessionStatus === "pool_ready") {
     return (
-      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 24 }}>
-        <Image src="/logo.png" alt="Logflix" width={110} height={35} style={{ height: "auto" }} priority />
+      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 24, position: "relative", overflow: "hidden" }}>
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+          @keyframes code-glow { 0% { box-shadow: 0 0 20px rgba(255,42,42,0.08); } 100% { box-shadow: 0 0 30px rgba(255,42,42,0.25); } }
+          @keyframes dot-pulse { 0%, 100% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
+        `}} />
 
-        <h1 style={{ fontSize: 24, fontWeight: 800 }}>Gruppe</h1>
+        {/* Back to group landing */}
+        <button
+          onClick={() => router.push("/group")}
+          style={{ position: "absolute", top: 20, left: 20, background: "none", border: "none", color: "rgba(255,255,255,0.45)", fontSize: 22, cursor: "pointer", zIndex: 10, lineHeight: 1 }}
+          aria-label={gt(locale, "back")}
+        >
+          ←
+        </button>
 
-        {/* Code display */}
-        <div style={{ ...glass, padding: "20px 32px", textAlign: "center" }}>
-          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 2 }}>Kode</p>
-          <p style={{ fontSize: 40, fontWeight: 800, letterSpacing: 8, color: RED }}>{code}</p>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginTop: 8 }}>Del koden med vennene dine</p>
-        </div>
-
-        {/* Participants */}
-        <div style={{ ...glass, padding: 20, width: "100%", maxWidth: 400 }}>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 12, textTransform: "uppercase", letterSpacing: 1 }}>
-            Deltakere ({participants.length})
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {participants.map((p) => (
-              <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>
-                  {(p.display_name || "?")[0].toUpperCase()}
-                </div>
-                <span style={{ fontSize: 15, fontWeight: 500 }}>
-                  {p.display_name || "Anonym"}
-                  {p.user_id === state?.session?.host_user_id && (
-                    <span style={{ color: RED, fontSize: 12, marginLeft: 6 }}>Vert</span>
-                  )}
-                </span>
-              </div>
-            ))}
+        {/* Poster-drift background */}
+        {ribbonPosters.length > 0 && (
+          <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+            <div style={{ display: "flex", gap: 8, height: "100%", width: "max-content", animation: "poster-drift 60s linear infinite" }}>
+              {[...ribbonPosters, ...ribbonPosters].map((url, i) => (
+                <img key={i} src={`${TMDB_IMG_SM}${url}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.07, filter: "blur(3px)", flexShrink: 0 }} />
+              ))}
+            </div>
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, #06080f 0%, transparent 10%, transparent 90%, #06080f 100%)" }} />
           </div>
-        </div>
-
-        {actionError && <p style={{ color: RED, fontSize: 14 }}>{actionError}</p>}
-
-        {isHost ? (
-          <div style={{ width: "100%", maxWidth: 400 }}>
-            <button
-              onClick={startPoolBuild}
-              disabled={actionLoading || participants.length < (state?.session?.min_participants || 2)}
-              style={{
-                ...btnPrimary,
-                opacity: actionLoading || participants.length < (state?.session?.min_participants || 2) ? 0.5 : 1,
-              }}
-            >
-              {sessionStatus === "pool_ready" ? "Bygger..." : actionLoading ? "Starter..." : "Start sveipingen"}
-            </button>
-            {participants.length < (state?.session?.min_participants || 2) && (
-              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, textAlign: "center", marginTop: 8 }}>
-                Venter på minst {state?.session?.min_participants || 2} deltakere
-              </p>
-            )}
-          </div>
-        ) : (
-          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 15 }}>Venter på at verten starter...</p>
         )}
+
+        <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 24, width: "100%", maxWidth: 400 }}>
+          <Image src="/logo.png" alt="Logflix" width={110} height={35} style={{ height: "auto" }} priority />
+
+          {/* Pulsing red dot — live indicator */}
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: RED, animation: "dot-pulse 1.5s ease-in-out infinite" }} />
+
+          {/* Code display with glow */}
+          <div
+            style={{ ...glass, padding: "20px 32px", textAlign: "center", animation: "code-glow 2s ease-in-out infinite alternate" }}
+            onClick={() => { navigator.clipboard.writeText(code).catch(() => {}); }}
+          >
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 2 }}>{gt(locale, "code")}</p>
+            <p style={{ fontSize: 40, fontWeight: 800, letterSpacing: 8, color: RED, fontFamily: "monospace" }}>{code}</p>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>{gt(locale, "shareCode")}</p>
+          </div>
+
+          {/* Participants as avatar row */}
+          <div style={{ ...glass, padding: 20, width: "100%" }}>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 12, textTransform: "uppercase", letterSpacing: 2 }}>
+              {gt(locale, "participants")} ({participants.length})
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {participants.map((p) => (
+                <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: "50%",
+                    background: p.user_id === state?.session?.host_user_id ? `${RED}33` : "rgba(255,255,255,0.08)",
+                    border: p.user_id === state?.session?.host_user_id ? `1px solid ${RED}55` : "1px solid rgba(255,255,255,0.06)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 15, fontWeight: 700, color: p.user_id === state?.session?.host_user_id ? RED : "#fff",
+                  }}>
+                    {(p.display_name || "?")[0].toUpperCase()}
+                  </div>
+                  <span style={{ fontSize: 15, fontWeight: 500 }}>
+                    {p.display_name || gt(locale, "anonymous")}
+                    {p.user_id === state?.session?.host_user_id && (
+                      <span style={{ color: RED, fontSize: 11, marginLeft: 8, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>{gt(locale, "host")}</span>
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {actionError && <p style={{ color: RED, fontSize: 14 }}>{actionError}</p>}
+
+          {isHost ? (
+            <div style={{ width: "100%" }}>
+              <button
+                onClick={startPoolBuild}
+                disabled={actionLoading || participants.length < (state?.session?.min_participants || 2)}
+                style={{
+                  ...btnPrimary,
+                  opacity: actionLoading || participants.length < (state?.session?.min_participants || 2) ? 0.5 : 1,
+                }}
+              >
+                {sessionStatus === "pool_ready" ? gt(locale, "building") : actionLoading ? gt(locale, "starting") : gt(locale, "startSwiping")}
+              </button>
+              {participants.length < (state?.session?.min_participants || 2) && (
+                <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 13, textAlign: "center", marginTop: 8 }}>
+                  {gt(locale, "waitMinPart").replace("{n}", String(state?.session?.min_participants || 2))}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 15 }}>{gt(locale, "waitForHost")}</p>
+          )}
+        </div>
       </div>
     );
   }
@@ -371,64 +475,87 @@ export default function GroupSessionPage() {
 
     if (doneSwiping) {
       return (
-        <div style={{ minHeight: "100dvh", background: "#0a0a0f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 28 }}>
+        <div style={{ minHeight: "100dvh", background: "#0a0a0f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 28, position: "relative", overflow: "hidden" }}>
           <style dangerouslySetInnerHTML={{ __html: `
             @keyframes group-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.3); } }
             @keyframes group-fade { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: translateY(0); } }
+            @keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
           `}} />
 
-          {/* Pulsing dot */}
-          <div style={{ width: 12, height: 12, borderRadius: "50%", background: RED, animation: "group-pulse 2s ease-in-out infinite" }} />
-
-          <h2 style={{ fontSize: 22, fontWeight: 700, textAlign: "center" }}>
-            Du er ferdig!
-          </h2>
-          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 15, textAlign: "center" }}>
-            Venter på de andre...
-          </p>
-
-          {/* X av Y */}
-          <p style={{ fontSize: 17, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>
-            {doneCount} av {participants.length} har sveipet ferdig
-          </p>
-
-          {/* Progress per participant */}
-          <div style={{ ...glass, padding: 20, width: "100%", maxWidth: 400 }}>
-            {participants.map((p) => {
-              const count = state?.votes_per_participant?.[p.user_id] || 0;
-              const pct = pool.length > 0 ? Math.round((count / pool.length) * 100) : 0;
-              return (
-                <div key={p.id} style={{ marginBottom: 10 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                    <span>{p.display_name || "Anonym"}</span>
-                    <span style={{ color: pct >= 100 ? "#4ade80" : "rgba(255,255,255,0.4)" }}>{pct}%</span>
-                  </div>
-                  <div style={{ height: 4, background: "rgba(255,255,255,0.08)", borderRadius: 2 }}>
-                    <div style={{ height: "100%", width: `${Math.min(pct, 100)}%`, background: pct >= 100 ? "#4ade80" : RED, borderRadius: 2, transition: "width 0.3s" }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Fun fact */}
-          <p key={waitingFactIndex} style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textAlign: "center", maxWidth: 320, lineHeight: 1.5, animation: "group-fade 0.4s ease-out" }}>
-            {WAITING_FACTS[waitingFactIndex]}
-          </p>
-
-          {/* Host: manual trigger */}
-          {isHost && (
-            <button onClick={computeFinalists} disabled={actionLoading} style={{ ...btnPrimary, maxWidth: 400 }}>
-              {actionLoading ? "Beregner..." : allParticipantsDone ? "Vis finalister" : "Avslutt sveipingen"}
-            </button>
+          {/* Poster-drift background */}
+          {ribbonPosters.length > 0 && (
+            <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+              <div style={{ display: "flex", gap: 8, height: "100%", width: "max-content", animation: "poster-drift 60s linear infinite" }}>
+                {[...ribbonPosters, ...ribbonPosters].map((url, i) => (
+                  <img key={i} src={`${TMDB_IMG_SM}${url}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.10, filter: "blur(3px)", flexShrink: 0 }} />
+                ))}
+              </div>
+            </div>
           )}
+
+          {/* Content (above poster-drift) */}
+          <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 28, width: "100%" }}>
+            {/* Pulsing dot */}
+            <div style={{ width: 12, height: 12, borderRadius: "50%", background: RED, animation: "group-pulse 2s ease-in-out infinite" }} />
+
+            <h2 style={{ fontSize: 22, fontWeight: 700, textAlign: "center" }}>
+              {gt(locale, "youAreDone")}
+            </h2>
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 15, textAlign: "center" }}>
+              {gt(locale, "waitingOthers")}
+            </p>
+
+            {/* X av Y */}
+            <p style={{ fontSize: 17, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>
+              {gt(locale, "doneCount").replace("{x}", String(doneCount)).replace("{y}", String(participants.length))}
+            </p>
+
+            {/* Progress per participant */}
+            <div style={{ ...glass, padding: 20, width: "100%", maxWidth: 400 }}>
+              {participants.map((p) => {
+                const count = state?.votes_per_participant?.[p.user_id] || 0;
+                const pct = pool.length > 0 ? Math.round((count / pool.length) * 100) : 0;
+                return (
+                  <div key={p.id} style={{ marginBottom: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
+                      <span>{p.display_name || gt(locale, "anonymous")}</span>
+                      <span style={{ color: pct >= 100 ? "#4ade80" : "rgba(255,255,255,0.4)" }}>{pct}%</span>
+                    </div>
+                    <div style={{ height: 4, background: "rgba(255,255,255,0.08)", borderRadius: 2 }}>
+                      <div style={{ height: "100%", width: `${Math.min(pct, 100)}%`, background: pct >= 100 ? "#4ade80" : RED, borderRadius: 2, transition: "width 0.3s" }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Fun fact */}
+            <p key={waitingFactIndex} style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textAlign: "center", maxWidth: 320, lineHeight: 1.5, animation: "group-fade 0.4s ease-out" }}>
+              {waitingFacts[waitingFactIndex % waitingFacts.length]}
+            </p>
+
+            {/* Host: manual trigger */}
+            {isHost && (
+              <button onClick={computeFinalists} disabled={actionLoading} style={{ ...btnPrimary, maxWidth: 400 }}>
+                {actionLoading ? gt(locale, "computing") : allParticipantsDone ? gt(locale, "showFinalists") : gt(locale, "endSwiping")}
+              </button>
+            )}
+          </div>
         </div>
       );
     }
 
     // Card stack
     return (
-      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", padding: "16px 16px 24px" }}>
+      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", padding: "16px 16px 24px", position: "relative" }}>
+        {/* Back to group landing */}
+        <button
+          onClick={() => router.push("/group")}
+          style={{ position: "absolute", top: 20, left: 20, background: "none", border: "none", color: "rgba(255,255,255,0.45)", fontSize: 22, cursor: "pointer", zIndex: 10, lineHeight: 1 }}
+          aria-label={gt(locale, "back")}
+        >
+          ←
+        </button>
         {/* Progress bar */}
         <div style={{ width: "100%", maxWidth: 400, marginBottom: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>
@@ -484,19 +611,19 @@ export default function GroupSessionPage() {
               <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{currentItem.title}</h3>
               <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>
                 {currentItem.year}{currentItem.vote_average ? ` · ★ ${currentItem.vote_average.toFixed(1)}` : ""}
-                {" · "}{currentItem.media_type === "movie" ? "Film" : "Serie"}
+                {" · "}{currentItem.media_type === "movie" ? gt(locale, "movie") : gt(locale, "series")}
               </p>
             </div>
 
             {/* Swipe indicators */}
             {swipe.x > 40 && (
               <div style={{ position: "absolute", top: 24, left: 24, background: "#4ade80", color: "#000", padding: "6px 16px", borderRadius: 8, fontWeight: 700, fontSize: 16, transform: `rotate(-12deg)` }}>
-                LIKER
+                {gt(locale, "like")}
               </div>
             )}
             {swipe.x < -40 && (
               <div style={{ position: "absolute", top: 24, right: 24, background: RED, color: "#fff", padding: "6px 16px", borderRadius: 8, fontWeight: 700, fontSize: 16, transform: `rotate(12deg)` }}>
-                NEI
+                {gt(locale, "nope")}
               </div>
             )}
           </div>
@@ -535,93 +662,124 @@ export default function GroupSessionPage() {
     const allVoted = participants.every((p) => finalVotes?.[p.user_id]);
 
     return (
-      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 16px", gap: 24 }}>
-        <h2 style={{ fontSize: 24, fontWeight: 700 }}>Velg favoritt</h2>
-        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 15, textAlign: "center" }}>
-          Stem på den dere vil se
-        </p>
+      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 16px", gap: 20, position: "relative", overflow: "hidden" }}>
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+          @keyframes card-glow { 0% { box-shadow: 0 0 12px rgba(255,42,42,0.15); } 100% { box-shadow: 0 0 24px rgba(255,42,42,0.35); } }
+        `}} />
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%", maxWidth: 400 }}>
-          {finalists.map((item) => {
-            const isSelected = selectedFinalist === item.tmdb_id || myFinalVote === String(item.tmdb_id);
-            const voteCount = finalVotes
-              ? Object.values(finalVotes).filter((v) => v === String(item.tmdb_id)).length
-              : 0;
-
-            return (
-              <button
-                key={item.tmdb_id}
-                onClick={() => !myFinalVote && setSelectedFinalist(item.tmdb_id)}
-                disabled={!!myFinalVote}
-                style={{
-                  ...glass,
-                  padding: 0,
-                  overflow: "hidden",
-                  display: "flex",
-                  alignItems: "stretch",
-                  cursor: myFinalVote ? "default" : "pointer",
-                  border: isSelected ? `2px solid ${RED}` : "1px solid rgba(255,255,255,0.08)",
-                  textAlign: "left" as const,
-                }}
-              >
-                {item.poster_path && (
-                  <img
-                    src={`${TMDB_IMG}${item.poster_path}`}
-                    alt={item.title}
-                    style={{ width: 80, minHeight: 120, objectFit: "cover" }}
-                  />
-                )}
-                <div style={{ padding: "12px 16px", flex: 1 }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4, color: "#fff" }}>{item.title}</h3>
-                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
-                    {item.year}{item.vote_average ? ` · ★ ${item.vote_average.toFixed(1)}` : ""}
-                  </p>
-                  {myFinalVote && voteCount > 0 && (
-                    <p style={{ fontSize: 12, color: RED, marginTop: 6 }}>
-                      {voteCount} {voteCount === 1 ? "stemme" : "stemmer"}
-                    </p>
-                  )}
-                </div>
-                {isSelected && (
-                  <div style={{ display: "flex", alignItems: "center", paddingRight: 16 }}>
-                    <div style={{ width: 24, height: 24, borderRadius: "50%", background: RED, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "#fff" }}>✓</div>
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {actionError && <p style={{ color: RED, fontSize: 14 }}>{actionError}</p>}
-
-        {!myFinalVote && selectedFinalist != null && (
-          <button onClick={submitFinalVote} disabled={actionLoading} style={{ ...btnPrimary, maxWidth: 400 }}>
-            {actionLoading ? "Stemmer..." : "Stem"}
-          </button>
-        )}
-
-        {myFinalVote && !allVoted && (
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>
-            Du har stemt! Venter på de andre...
-          </p>
-        )}
-
-        {/* Participant vote status */}
-        <div style={{ ...glass, padding: 16, width: "100%", maxWidth: 400 }}>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>Stemmer</p>
-          {participants.map((p) => (
-            <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: finalVotes?.[p.user_id] ? "#4ade80" : "rgba(255,255,255,0.15)" }} />
-              <span style={{ fontSize: 14 }}>{p.display_name || "Anonym"}</span>
+        {/* Poster-drift background */}
+        {ribbonPosters.length > 0 && (
+          <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+            <div style={{ display: "flex", gap: 8, height: "100%", width: "max-content", animation: "poster-drift 60s linear infinite" }}>
+              {[...ribbonPosters, ...ribbonPosters].map((url, i) => (
+                <img key={i} src={`${TMDB_IMG_SM}${url}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.06, filter: "blur(3px)", flexShrink: 0 }} />
+              ))}
             </div>
-          ))}
-        </div>
-
-        {isHost && allVoted && (
-          <button onClick={finalize} disabled={actionLoading} style={{ ...btnPrimary, maxWidth: 400 }}>
-            {actionLoading ? "Avslutter..." : "Vis vinneren"}
-          </button>
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, #06080f 0%, transparent 10%, transparent 90%, #06080f 100%)" }} />
+          </div>
         )}
+
+        <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 20, width: "100%", maxWidth: 420 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 700 }}>{gt(locale, "pickFavorite")}</h2>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 15, textAlign: "center" }}>
+            {gt(locale, "voteForWhat")}
+          </p>
+
+          {/* Poster card grid */}
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(finalists.length, 3)}, 1fr)`, gap: 12, width: "100%" }}>
+            {finalists.map((item) => {
+              const isSelected = selectedFinalist === item.tmdb_id || myFinalVote === String(item.tmdb_id);
+              const voteCount = finalVotes
+                ? Object.values(finalVotes).filter((v) => v === String(item.tmdb_id)).length
+                : 0;
+
+              return (
+                <button
+                  key={item.tmdb_id}
+                  onClick={() => !myFinalVote && setSelectedFinalist(item.tmdb_id)}
+                  disabled={!!myFinalVote}
+                  style={{
+                    position: "relative",
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    borderRadius: 14,
+                    overflow: "hidden",
+                    cursor: myFinalVote ? "default" : "pointer",
+                    aspectRatio: "2/3",
+                    ...(isSelected ? { animation: "card-glow 1.5s ease-in-out infinite alternate", outline: `2px solid ${RED}`, outlineOffset: 2 } : {}),
+                  }}
+                >
+                  {/* Poster image */}
+                  {item.poster_path ? (
+                    <img
+                      src={`${TMDB_IMG}${item.poster_path}`}
+                      alt={item.title}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                    />
+                  ) : (
+                    <div style={{ width: "100%", height: "100%", background: "#1a1a2e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, padding: 8, textAlign: "center" }}>{item.title}</span>
+                    </div>
+                  )}
+
+                  {/* Gradient overlay */}
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 40%, transparent 60%)" }} />
+
+                  {/* Title & meta at bottom */}
+                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 8px" }}>
+                    <h3 style={{ fontSize: 13, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 2 }}>{item.title}</h3>
+                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>
+                      {item.year}{item.vote_average ? ` · ★ ${item.vote_average.toFixed(1)}` : ""}
+                    </p>
+                    {myFinalVote && voteCount > 0 && (
+                      <p style={{ fontSize: 11, color: RED, marginTop: 4, fontWeight: 600 }}>
+                        {voteCount} {voteCount === 1 ? gt(locale, "vote1") : gt(locale, "voteN")}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Selected checkmark */}
+                  {isSelected && (
+                    <div style={{ position: "absolute", top: 8, right: 8, width: 26, height: 26, borderRadius: "50%", background: RED, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "#fff", fontWeight: 700 }}>✓</div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {actionError && <p style={{ color: RED, fontSize: 14 }}>{actionError}</p>}
+
+          {!myFinalVote && selectedFinalist != null && (
+            <button onClick={submitFinalVote} disabled={actionLoading} style={{ ...btnPrimary }}>
+              {actionLoading ? gt(locale, "voting") : gt(locale, "voteBtn")}
+            </button>
+          )}
+
+          {myFinalVote && !allVoted && (
+            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>
+              {gt(locale, "youVoted")}
+            </p>
+          )}
+
+          {/* Participant vote status */}
+          <div style={{ ...glass, padding: 16, width: "100%" }}>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>{gt(locale, "votes")}</p>
+            {participants.map((p) => (
+              <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: finalVotes?.[p.user_id] ? "#4ade80" : "rgba(255,255,255,0.15)" }} />
+                <span style={{ fontSize: 14, color: finalVotes?.[p.user_id] ? "#fff" : "rgba(255,255,255,0.5)" }}>{p.display_name || gt(locale, "anonymous")}</span>
+              </div>
+            ))}
+          </div>
+
+          {isHost && allVoted && (
+            <button onClick={finalize} disabled={actionLoading} style={btnPrimary}>
+              {actionLoading ? gt(locale, "finishing") : gt(locale, "showWinner")}
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -629,39 +787,63 @@ export default function GroupSessionPage() {
   /* ── COMPLETED ── */
   if (sessionStatus === "completed") {
     const pick = state?.final_pick;
-    return (
-      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 24 }}>
-        <h2 style={{ fontSize: 28, fontWeight: 800 }}>Dere skal se</h2>
+    const posterUrl = pick?.poster_path ? `https://image.tmdb.org/t/p/w780${pick.poster_path}` : null;
 
-        {pick ? (
-          <div style={{ ...glass, overflow: "hidden", maxWidth: 340, width: "100%", textAlign: "center" as const }}>
-            {pick.poster_path && (
-              <img
-                src={`${TMDB_IMG}${pick.poster_path}`}
-                alt={pick.title}
-                style={{ width: "100%", aspectRatio: "2/3", objectFit: "cover" }}
-              />
-            )}
-            <div style={{ padding: "20px 16px" }}>
-              <h3 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>{pick.title}</h3>
-              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>
-                {pick.year}{pick.vote_average ? ` · ★ ${pick.vote_average.toFixed(1)}` : ""}
-                {" · "}{pick.media_type === "movie" ? "Film" : "Serie"}
-              </p>
-              {pick.overview && (
-                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginTop: 12, lineHeight: 1.5 }}>
-                  {pick.overview.slice(0, 200)}{pick.overview.length > 200 ? "..." : ""}
-                </p>
-              )}
-            </div>
+    return (
+      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 0, position: "relative", overflow: "hidden" }}>
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes winner-flash { 0% { opacity: 0.6; } 100% { opacity: 0; } }
+        `}} />
+
+        {/* Full-bleed poster background */}
+        {posterUrl && (
+          <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+            <img src={posterUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.18, filter: "blur(20px) saturate(1.2)" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #06080f 10%, rgba(6,8,15,0.7) 50%, #06080f 100%)" }} />
           </div>
-        ) : (
-          <p style={{ color: "rgba(255,255,255,0.5)" }}>Ingen vinner funnet</p>
         )}
 
-        <button onClick={() => { clearStoredSession(); router.push("/group"); }} style={{ ...btnPrimary, maxWidth: 340 }}>
-          Ny runde
-        </button>
+        {/* Red glow flash on reveal */}
+        <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at center, ${RED}30 0%, transparent 70%)`, animation: "winner-flash 1.5s ease-out forwards", pointerEvents: "none" }} />
+
+        <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 24, width: "100%", maxWidth: 360 }}>
+          <h2 style={{ fontSize: 28, fontWeight: 800, textAlign: "center" }}>{gt(locale, "youreWatching")}</h2>
+
+          {pick ? (
+            <>
+              {/* Winner poster card */}
+              <div style={{ borderRadius: 18, overflow: "hidden", boxShadow: `0 12px 48px rgba(0,0,0,0.5), 0 0 40px ${RED}15`, width: "100%" }}>
+                {pick.poster_path && (
+                  <img
+                    src={`${TMDB_IMG}${pick.poster_path}`}
+                    alt={pick.title}
+                    style={{ width: "100%", aspectRatio: "2/3", objectFit: "cover", display: "block" }}
+                  />
+                )}
+              </div>
+
+              {/* Title & meta */}
+              <div style={{ textAlign: "center" }}>
+                <h3 style={{ fontSize: 24, fontWeight: 700, marginBottom: 6 }}>{pick.title}</h3>
+                <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>
+                  {pick.year}{pick.vote_average ? ` · ★ ${pick.vote_average.toFixed(1)}` : ""}
+                  {" · "}{pick.media_type === "movie" ? gt(locale, "movie") : gt(locale, "series")}
+                </p>
+                {pick.overview && (
+                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 12, lineHeight: 1.5 }}>
+                    {pick.overview.slice(0, 200)}{pick.overview.length > 200 ? "…" : ""}
+                  </p>
+                )}
+              </div>
+            </>
+          ) : (
+            <p style={{ color: "rgba(255,255,255,0.5)" }}>{gt(locale, "noWinner")}</p>
+          )}
+
+          <button onClick={() => { clearStoredSession(); router.push("/group"); }} style={btnPrimary}>
+            {gt(locale, "newRound")}
+          </button>
+        </div>
       </div>
     );
   }
@@ -669,7 +851,7 @@ export default function GroupSessionPage() {
   /* ── fallback ── */
   return (
     <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ color: "rgba(255,255,255,0.5)" }}>{loading ? "Laster..." : pollError || "Ukjent status"}</p>
+      <p style={{ color: "rgba(255,255,255,0.5)" }}>{loading ? gt(locale, "loading") : pollError || gt(locale, "unknownStatus")}</p>
     </div>
   );
 }

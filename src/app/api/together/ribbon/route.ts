@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tmdbTrending, tmdbDiscover } from "@/lib/tmdb";
 
+/* ── in-memory cache (1 hour TTL) ── */
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+let cachedPosters: string[] | null = null;
+let cachedAt = 0;
+
 /* ── quality constants (ribbon is decorative — relaxed thresholds) ── */
 
 const MIN_YEAR = 1985;
@@ -33,6 +38,11 @@ export async function GET(req: NextRequest) {
   try {
     const region = (req.headers.get("x-vercel-ip-country") || "US").toUpperCase();
 
+    // Return cached posters if fresh
+    if (cachedPosters && Date.now() - cachedAt < CACHE_TTL) {
+      return NextResponse.json({ posters: cachedPosters, region });
+    }
+
     // Fetch TV + Movie trending separately (not a single mixed call)
     const [tvTrend, movieTrend] = await Promise.all([
       tmdbTrending("tv", "week"),
@@ -48,7 +58,7 @@ export async function GET(req: NextRequest) {
 
     // If trending pool is too thin after filtering, supplement with popular discover
     // (thresholds NOT lowered — same quality gates)
-    if (tvItems.length < 10) {
+    if (tvItems.length < 20) {
       const extra = await tmdbDiscover("tv", {
         sort_by: "popularity.desc",
         "vote_average.gte": "6.5",
@@ -58,10 +68,12 @@ export async function GET(req: NextRequest) {
       const extraOk = ((extra.results || []) as Record<string, unknown>[]).filter((i) =>
         qualityOk(i, "tv")
       );
-      tvItems = [...tvItems, ...extraOk].slice(0, 12);
+      // Dedupe by poster_path
+      const seen = new Set(tvItems.map((i) => i.poster_path));
+      tvItems = [...tvItems, ...extraOk.filter((i) => !seen.has(i.poster_path as string))].slice(0, 24);
     }
 
-    if (movieItems.length < 5) {
+    if (movieItems.length < 8) {
       const extra = await tmdbDiscover("movie", {
         sort_by: "popularity.desc",
         "vote_average.gte": "6.5",
@@ -71,12 +83,13 @@ export async function GET(req: NextRequest) {
       const extraOk = ((extra.results || []) as Record<string, unknown>[]).filter((i) =>
         qualityOk(i, "movie")
       );
-      movieItems = [...movieItems, ...extraOk].slice(0, 6);
+      const seen = new Set(movieItems.map((i) => i.poster_path));
+      movieItems = [...movieItems, ...extraOk.filter((i) => !seen.has(i.poster_path as string))].slice(0, 10);
     }
 
-    // 70 % TV / 30 % Movie — target 14 posters (10 TV + 4 Movie)
-    const TV_TARGET = 10;
-    const MOVIE_TARGET = 4;
+    // ~70 % TV / ~30 % Movie — target 28 posters (20 TV + 8 Movie)
+    const TV_TARGET = 20;
+    const MOVIE_TARGET = 8;
 
     const tvPosters = tvItems.slice(0, TV_TARGET).map((i) => i.poster_path as string);
     const moviePosters = movieItems.slice(0, MOVIE_TARGET).map((i) => i.poster_path as string);
@@ -89,6 +102,10 @@ export async function GET(req: NextRequest) {
       if ((i + 1) % 3 === 0 && mq.length > 0) posters.push(mq.shift()!);
     }
     posters.push(...mq);
+
+    // Cache for next requests
+    cachedPosters = posters;
+    cachedAt = Date.now();
 
     return NextResponse.json({ posters, region });
   } catch {
