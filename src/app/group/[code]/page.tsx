@@ -112,12 +112,28 @@ export default function GroupSessionPage() {
   const participants = state?.participants || [];
   const sessionStatus = state?.session?.status;
 
+  // Derived: all participants have voted on every pool item
+  const allParticipantsDone = sessionStatus === "swiping" && pool.length > 0 && participants.every((p) => {
+    const count = state?.votes_per_participant?.[p.user_id] || 0;
+    return count >= pool.length;
+  });
+
   // Clear stored session when completed or cancelled
   useEffect(() => {
     if (sessionStatus === "completed") {
       clearStoredSession();
     }
   }, [sessionStatus]);
+
+  // Auto-trigger finalist computation when host and all done
+  const autoTriggeredRef = useRef(false);
+  useEffect(() => {
+    if (isHost && allParticipantsDone && !actionLoading && !autoTriggeredRef.current) {
+      autoTriggeredRef.current = true;
+      computeFinalists();
+    }
+    if (!allParticipantsDone) autoTriggeredRef.current = false;
+  }, [isHost, allParticipantsDone, actionLoading]);
 
   /* ── actions ── */
 
@@ -148,13 +164,13 @@ export default function GroupSessionPage() {
 
   async function submitVote(item: GroupPoolItem, vote: "liked" | "neutral" | "disliked") {
     if (!sessionId) return;
-    await apiCall("/api/group/vote", {
+    const result = await apiCall("/api/group/vote", {
       session_id: sessionId,
       tmdb_id: item.tmdb_id,
       media_type: item.media_type,
       vote,
     });
-    setDeckIndex((i) => i + 1);
+    if (result) setDeckIndex((i) => i + 1);
   }
 
   async function computeFinalists() {
@@ -327,10 +343,6 @@ export default function GroupSessionPage() {
     const doneSwiping = deckIndex >= pool.length;
     const currentItem = pool[deckIndex];
     const myVoteCount = state?.my_vote_count || 0;
-    const allParticipantsDone = participants.every((p) => {
-      const count = state?.votes_per_participant?.[p.user_id] || 0;
-      return count >= pool.length;
-    });
 
     if (doneSwiping) {
       return (
@@ -360,14 +372,14 @@ export default function GroupSessionPage() {
             })}
           </div>
 
-          {isHost && allParticipantsDone && (
+          {isHost && (
             <button onClick={computeFinalists} disabled={actionLoading} style={{ ...btnPrimary, maxWidth: 400 }}>
-              {actionLoading ? "Beregner..." : "Vis finalister"}
+              {actionLoading ? "Beregner..." : allParticipantsDone ? "Vis finalister" : "Avslutt sveipingen"}
             </button>
           )}
 
           {isHost && !allParticipantsDone && (
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>Venter på at alle er ferdige...</p>
+            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>Noen sveiper fortsatt — du kan avslutte når som helst</p>
           )}
 
           {!isHost && (
