@@ -70,6 +70,9 @@ export async function GET(
       final_pick = poolItems.find((p) => p.tmdb_id === session.final_pick_tmdb_id) || null;
     }
 
+    // 9. Determine if caller is host
+    const is_host = session.host_user_id === userId;
+
     return NextResponse.json({
       session: {
         id: session.id,
@@ -93,6 +96,7 @@ export async function GET(
       pool,
       finalists,
       final_pick,
+      is_host,
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";

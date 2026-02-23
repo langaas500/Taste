@@ -97,4 +97,5 @@ export interface GroupStateResponse {
   pool: GroupPoolItem[] | null;
   finalists: GroupPoolItem[] | null;
   final_pick: GroupPoolItem | null;
+  is_host: boolean;
 }

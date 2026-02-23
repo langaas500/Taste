@@ -382,19 +382,68 @@ export default function WTBetaPage() {
     createSupabaseBrowser().auth.getSession()
       .then(({ data }) => { setAuthUser(data.session?.user ?? null); })
       .catch(() => {});
-    // ?code= → auto-join
-    const urlParams = new URLSearchParams(window.location.search);
-    const codeParam = urlParams.get("code");
-    if (codeParam) {
-      setJoinCode(codeParam.toUpperCase());
-      setScreen("join");
-      window.setTimeout(() => joinSession(codeParam.toUpperCase()), 50);
-    }
-    // DEBUG: ?winner=1 → viser winner-skjermen direkte
-    if (urlParams.get("winner") === "1") {
-      setFinalWinner({ tmdb_id: 550, title: "Fight Club", year: 1999, type: "movie", genre_ids: [18, 53], overview: "An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into something much, much more.", poster_path: "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg", vote_average: 8.4 });
-      setScreen("together");
-      setRoundPhase("winner");
+
+    // Resume saved duo session (if any)
+    let resuming = false;
+    try {
+      const resumeRaw = localStorage.getItem("wt_session_resume");
+      if (resumeRaw) {
+        const resume = JSON.parse(resumeRaw);
+        const TWO_HOURS = 2 * 60 * 60 * 1000;
+        if (resume.sessionId && resume.ts && Date.now() - resume.ts < TWO_HOURS) {
+          const cachedTitles = readTitlesCache();
+          if (cachedTitles.length > 0) {
+            resuming = true;
+            fetch(`/api/together/session?id=${resume.sessionId}`, {
+              headers: { "X-WT-Guest-ID": guestIdRef.current },
+            })
+              .then((r) => r.ok ? r.json() : null)
+              .then((data) => {
+                if (!data?.session) { localStorage.removeItem("wt_session_resume"); return; }
+                const s = data.session;
+                if (s.status === "completed" || s.status === "cancelled") {
+                  localStorage.removeItem("wt_session_resume");
+                  return;
+                }
+                setSessionId(resume.sessionId);
+                setMode("paired");
+                setTitles(cachedTitles);
+                setDeck([...cachedTitles]);
+                setDeckIndex(0);
+                if (s.partner_joined) {
+                  setScreen("together");
+                  setTimer(ROUND1_DURATION);
+                  setTimerRunning(true);
+                } else {
+                  setSessionCode(s.code);
+                  setScreen("waiting");
+                }
+              })
+              .catch(() => { localStorage.removeItem("wt_session_resume"); });
+          } else {
+            localStorage.removeItem("wt_session_resume");
+          }
+        } else {
+          localStorage.removeItem("wt_session_resume");
+        }
+      }
+    } catch { /* ignore */ }
+
+    if (!resuming) {
+      // ?code= → auto-join
+      const urlParams = new URLSearchParams(window.location.search);
+      const codeParam = urlParams.get("code");
+      if (codeParam) {
+        setJoinCode(codeParam.toUpperCase());
+        setScreen("join");
+        window.setTimeout(() => joinSession(codeParam.toUpperCase()), 50);
+      }
+      // DEBUG: ?winner=1 → viser winner-skjermen direkte
+      if (urlParams.get("winner") === "1") {
+        setFinalWinner({ tmdb_id: 550, title: "Fight Club", year: 1999, type: "movie", genre_ids: [18, 53], overview: "An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into something much, much more.", poster_path: "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg", vote_average: 8.4 });
+        setScreen("together");
+        setRoundPhase("winner");
+      }
     }
   }, []);
 
@@ -662,6 +711,7 @@ export default function WTBetaPage() {
   /* ── match moment reveal sequence ── */
   useEffect(() => {
     if (roundPhase !== "winner") { setMatchRevealPhase(0); return; }
+    try { localStorage.removeItem("wt_session_resume"); } catch {}
     const t1 = window.setTimeout(() => setMatchRevealPhase(1), 400);
     const t2 = window.setTimeout(() => setMatchRevealPhase(2), 700);
     const t3 = window.setTimeout(() => setMatchRevealPhase(3), 1000);
@@ -802,6 +852,7 @@ export default function WTBetaPage() {
     partnerRef.current = null;
     setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
     setFly({ active: false, x: 0, rot: 0 });
+    try { localStorage.removeItem("wt_session_resume"); } catch {}
   }
 
   async function handleShare(titleName: string) {
@@ -965,6 +1016,7 @@ export default function WTBetaPage() {
       setSessionCode(data.session.code);
       setTitles(data.session.titles);
       try { localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify({ titles: data.session.titles, mood: "", ts: Date.now() })); } catch { /* ignore */ }
+      try { localStorage.setItem("wt_session_resume", JSON.stringify({ sessionId: data.session.id, sessionCode: data.session.code, ts: Date.now() })); } catch {}
       setMode("paired"); setScreen("waiting");
     } catch (e: unknown) {
       setSessionError(e instanceof Error ? e.message : "Kunne ikke opprette runde");
@@ -985,6 +1037,8 @@ export default function WTBetaPage() {
       setTitles(data.session.titles);
       setDeck([...data.session.titles]);
       setDeckIndex(0);
+      try { localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify({ titles: data.session.titles, mood: "", ts: Date.now() })); } catch {}
+      try { localStorage.setItem("wt_session_resume", JSON.stringify({ sessionId: data.session.id, ts: Date.now() })); } catch {}
       setMode("paired"); setScreen("together");
       setTimer(ROUND1_DURATION); setTimerRunning(true);
       setChosen(null);

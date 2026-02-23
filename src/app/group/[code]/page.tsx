@@ -107,7 +107,7 @@ export default function GroupSessionPage() {
 
   const { state, loading, error: pollError } = useGroupSession(sessionId, guestIdRef.current);
 
-  const isHost = state?.session?.host_user_id === guestIdRef.current;
+  const isHost = state?.is_host === true;
   const pool = state?.pool || [];
   const participants = state?.participants || [];
   const sessionStatus = state?.session?.status;
