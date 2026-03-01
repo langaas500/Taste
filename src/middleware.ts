@@ -46,7 +46,9 @@ export async function middleware(request: NextRequest) {
     pathname === "/contact" ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/_next") ||
-    pathname === "/favicon.ico";
+    pathname === "/favicon.ico" ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml";
 
   // SEO guide pages — public, no auth required
   const isSeoPage =
