@@ -2,6 +2,14 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  // Bypass all auth for crawlable endpoints
+  if (
+    request.nextUrl.pathname === "/robots.txt" ||
+    request.nextUrl.pathname === "/sitemap.xml"
+  ) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -46,9 +54,7 @@ export async function middleware(request: NextRequest) {
     pathname === "/contact" ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/_next") ||
-    pathname === "/favicon.ico" ||
-    pathname === "/robots.txt" ||
-    pathname === "/sitemap.xml";
+    pathname === "/favicon.ico";
 
   // SEO guide pages — public, no auth required
   const isSeoPage =
