@@ -77,7 +77,7 @@ const HINTS = [
   "",
 ];
 
-function useAutoStep() {
+function useAutoStep(speedMultiplier = 1) {
   const [step, setStep] = useState(0);
   const [filmIdx, setFilmIdx] = useState(0);
 
@@ -85,12 +85,12 @@ function useAutoStep() {
     // Freeze at MATCH_STEP — hold indefinitely
     if (step >= MATCH_STEP) return;
 
-    const delay = STEP_TIMINGS[step] ?? 1000;
+    const delay = Math.round((STEP_TIMINGS[step] ?? 1000) * speedMultiplier);
     const timer = setTimeout(() => {
       setStep((s) => s + 1);
     }, delay);
     return () => clearTimeout(timer);
-  }, [step, filmIdx]);
+  }, [step, filmIdx, speedMultiplier]);
 
   return { step, filmIdx, setStep };
 }
@@ -438,10 +438,12 @@ function MatchOverlay({ film }: { film: Film }) {
 
 export default function SwipeMatchDemo({
   locale: _locale,
+  speedMultiplier = 1,
 }: {
   locale: Locale;
+  speedMultiplier?: number;
 }) {
-  const { step, filmIdx, setStep } = useAutoStep();
+  const { step, filmIdx, setStep } = useAutoStep(speedMultiplier);
   const [hasAutoReplayed, setHasAutoReplayed] = useState(false);
   const [fadingOut, setFadingOut] = useState(false);
 

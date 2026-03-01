@@ -29,8 +29,16 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect all routes except login, api/auth, and static files
+  // Block /dev/* in production
   const { pathname } = request.nextUrl;
+  if (pathname.startsWith("/dev")) {
+    if (process.env.NODE_ENV === "production") {
+      return new NextResponse(null, { status: 404 });
+    }
+    return supabaseResponse; // Skip auth locally
+  }
+
+  // Protect all routes except login, api/auth, and static files
   const isPublic =
     pathname === "/login" ||
     pathname === "/privacy" ||
@@ -39,6 +47,11 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico";
+
+  // SEO guide pages — public, no auth required
+  const isSeoPage =
+    pathname.startsWith("/no/") ||
+    pathname.startsWith("/en/");
 
   // Guest-accessible routes (browsing without account)
   const isGuestAllowed =
@@ -49,7 +62,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/group/") ||
     pathname.startsWith("/api/tmdb/") ||
     pathname.startsWith("/api/together/") ||
-    pathname.startsWith("/api/group/");
+    pathname.startsWith("/api/group/") ||
+    isSeoPage;
 
   if (!user && !isPublic && !isGuestAllowed) {
     const url = request.nextUrl.clone();
