@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import SeoGuideLayout, { FaqSection } from "@/components/SeoGuideLayout";
 
 export const metadata: Metadata = {
-  title: "Romantiske filmer på Netflix Norge 2026 | Beste romcom — Logflix",
+  title: "Romantiske filmer Netflix Norge – Slipp bomvalg",
   description:
-    "De beste romantiske filmene på Netflix Norge akkurat nå. Fra lett rom-com til gripende kjærlighetsdrama — finn noe dere begge vil se.",
+    "Finn romantiske filmer som passer for dere begge. Unngå bomvalg og bruk mindre tid på å lete.",
   alternates: {
     canonical: "https://logflix.app/no/romantiske-filmer-netflix-norge",
     languages: {

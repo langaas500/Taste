@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import SeoGuideLayout, { FaqSection } from "@/components/SeoGuideLayout";
 
 export const metadata: Metadata = {
-  title: "Movies to Watch with Friends | Best Group Movies 2026 — Logflix",
+  title: "Movies to Watch With Friends — Find One Everyone Agrees On",
   description:
-    "Planning a movie night with friends? Find a movie everyone actually wants to watch — without the endless debate.",
+    "Group movie night shouldn't feel like a negotiation. Quickly find a film your whole group agrees on — without endless scrolling.",
   alternates: {
     canonical: "https://logflix.app/en/movies-to-watch-with-friends",
     languages: {

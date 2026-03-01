@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import SeoGuideLayout, { FaqSection } from "@/components/SeoGuideLayout";
 
 export const metadata: Metadata = {
-  title: "Film for filmkveld med venner | Beste gruppefilmer 2026 — Logflix",
+  title: "Film for filmkveld med venner (som alle gidder å se)",
   description:
-    "Planlegger filmkveld med venner? Finn filmer hele gjengen liker — uten diskusjon og uten å kaste bort kvelden på å velge.",
+    "Gjør filmkvelden enklere. Finn en film hele gjengen faktisk har lyst til å se – uten endeløs scrolling.",
   alternates: {
     canonical: "https://logflix.app/no/film-for-filmkveld-med-venner",
     languages: {

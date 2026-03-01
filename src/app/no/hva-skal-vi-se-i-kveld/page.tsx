@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import SeoGuideLayout, { FaqSection } from "@/components/SeoGuideLayout";
 
 export const metadata: Metadata = {
-  title: "Hva skal vi se i kveld? | Finn noe dere begge liker — Logflix",
+  title: "Hva skal vi se i kveld? Finn noe dere begge liker",
   description:
-    "Lei av å bruke kvelden på å velge? Sveip gjennom filmer og serier og finn noe dere begge vil se — på under 3 minutter.",
+    "Lei av å scrolle i evigheter? Sveip hver for dere og se kun det dere faktisk matcher på. Bestem dere på under 3 minutter.",
   alternates: {
     canonical: "https://logflix.app/no/hva-skal-vi-se-i-kveld",
     languages: {

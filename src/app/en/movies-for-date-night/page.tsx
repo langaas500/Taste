@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import SeoGuideLayout, { FaqSection } from "@/components/SeoGuideLayout";
 
 export const metadata: Metadata = {
-  title: "Movies for Date Night | Find One You Both Want to Watch — Logflix",
+  title: "Movies for Date Night — No More \"You Pick\" Arguments",
   description:
-    "Planning a date night? Stop debating and start watching. Swipe through movies together and find your match in under 3 minutes.",
+    "Stop wasting date night debating what to watch. Find a movie you both actually want to see in minutes. Romantic, fun, or safe picks — without the pressure.",
   alternates: {
     canonical: "https://logflix.app/en/movies-for-date-night",
     languages: {

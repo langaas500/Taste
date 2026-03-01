@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import SeoGuideLayout, { FaqSection } from "@/components/SeoGuideLayout";
 
 export const metadata: Metadata = {
-  title: "TV Shows to Watch Together 2026 | Best Series for Couples & Friends — Logflix",
+  title: "TV Shows to Watch Together (No More Arguing)",
   description:
-    "Find your next binge-worthy series together — without spending the whole evening deciding what to start.",
+    "Looking for a series to binge together? Swipe separately and instantly match on shows you both want to watch.",
   alternates: {
     canonical: "https://logflix.app/en/tv-shows-to-watch-together",
     languages: {

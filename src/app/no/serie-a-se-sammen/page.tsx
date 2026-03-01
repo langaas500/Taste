@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import SeoGuideLayout, { FaqSection } from "@/components/SeoGuideLayout";
 
 export const metadata: Metadata = {
-  title: "Serie å se sammen 2026 | Beste serier for par og venner — Logflix",
+  title: "Serie å se sammen – Slipp å krangle",
   description:
-    "Finn serier dere begge vil binge — uten å bruke kvelden på å diskutere hva dere skal starte på. Perfekt for par og venner.",
+    "Finn en serie dere begge gleder dere til å se. Sveip separat og få kun treff dere er enige om.",
   alternates: {
     canonical: "https://logflix.app/no/serie-a-se-sammen",
     languages: {
