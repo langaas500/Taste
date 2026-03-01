@@ -28,6 +28,9 @@ export const metadata: Metadata = {
     title: "Logflix — Agree on what to watch. Instantly.",
     description: "Swipe separately. Match when you both like it.",
   },
+  verification: {
+    google: "google3a70000c026a667b",
+  },
 };
 
 export const viewport: Viewport = {
