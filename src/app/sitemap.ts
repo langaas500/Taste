@@ -13,26 +13,32 @@ const pairs: [string, string][] = [
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date("2026-03-01");
 
-  return pairs.flatMap(([no, en]) => [
-    {
-      url: `${base}${no}`,
-      lastModified,
-      alternates: {
-        languages: {
-          no: `${base}${no}`,
-          en: `${base}${en}`,
+  return [
+    ...pairs.flatMap(([no, en]) => [
+      {
+        url: `${base}${no}`,
+        lastModified,
+        alternates: {
+          languages: {
+            no: `${base}${no}`,
+            en: `${base}${en}`,
+          },
         },
       },
-    },
-    {
-      url: `${base}${en}`,
-      lastModified,
-      alternates: {
-        languages: {
-          no: `${base}${no}`,
-          en: `${base}${en}`,
+      {
+        url: `${base}${en}`,
+        lastModified,
+        alternates: {
+          languages: {
+            no: `${base}${no}`,
+            en: `${base}${en}`,
+          },
         },
       },
-    },
-  ]);
+    ]),
+    { url: `${base}/`, lastModified },
+    { url: `${base}/privacy`, lastModified },
+    { url: `${base}/contact`, lastModified },
+    { url: `${base}/terms`, lastModified },
+  ];
 }
