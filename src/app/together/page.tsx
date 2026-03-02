@@ -332,7 +332,10 @@ export default function WTBetaPage() {
   const cardStartTime = useRef<number>(0);
   const swipeTimings = useRef<Record<number, number>>({});
   const sessionSwipes = useRef<Record<number, SwipeAction>>({});
-  const roundEndingRef = useRef(false);
+  const endingRoundRef = useRef(false);  // prevents concurrent endRound execution
+  // Monotonic guard: once a round's results are committed, no re-entry.
+  // Reset to 0 in reset() and startFinalRound().
+  const endedRoundRef = useRef(0);
   const iAmDoneRef = useRef(false);
   const timerRef = useRef(ROUND1_DURATION);
   const roundRef = useRef<1 | 2>(1);
@@ -406,6 +409,7 @@ export default function WTBetaPage() {
                   return;
                 }
                 setSessionId(resume.sessionId);
+                endedRoundRef.current = 0; endingRoundRef.current = false;
                 setMode("paired");
                 setTitles(cachedTitles);
                 setDeck([...cachedTitles]);
@@ -536,8 +540,9 @@ export default function WTBetaPage() {
   /* ── round engine ─────────────────────────────────────── */
 
   async function endRound(r: 1 | 2) {
-    if (roundEndingRef.current) return;
-    roundEndingRef.current = true;
+    if (endedRoundRef.current >= r) return;  // round already finished
+    if (endingRoundRef.current) return;      // another call is in-flight
+    endingRoundRef.current = true;
 
     let myLikedIds: number[] = [];
     let theirLikedIds: number[] = [];
@@ -565,7 +570,7 @@ export default function WTBetaPage() {
         const data = await res.json();
         if (!data.session) {
           // API error — stay in waiting overlay, poll will retry.
-          roundEndingRef.current = false;
+          endingRoundRef.current = false;
           return;
         }
 
@@ -576,7 +581,8 @@ export default function WTBetaPage() {
             setTimerRunning(false);
             setFinalWinner(mt);
             setRoundPhase("winner");
-            roundEndingRef.current = false;
+            endedRoundRef.current = r;
+            endingRoundRef.current = false;
             return;
           }
         }
@@ -594,12 +600,12 @@ export default function WTBetaPage() {
 
         if (!partnerIsDone) {
           // Partner still swiping — stay in overlay. Poll loop will re-trigger endRound.
-          roundEndingRef.current = false;
+          endingRoundRef.current = false;
           return;
         }
       } catch {
         // Network error — stay in waiting overlay, do not fall through to results.
-        roundEndingRef.current = false;
+        endingRoundRef.current = false;
         return;
       }
       setTimerRunning(false);
@@ -617,6 +623,8 @@ export default function WTBetaPage() {
           .slice(0, 3);
         setRoundMatches(matches);
         if (mode === "paired" && !partnerIsDone) return;
+        endedRoundRef.current = r;
+        endingRoundRef.current = false;
         setRoundPhase("results");
       } else {
         // Smart compromise algorithm
@@ -659,6 +667,8 @@ export default function WTBetaPage() {
 
         setCompromiseTitle(compromiseCandidate);
         if (mode === "paired" && !partnerIsDone) return;
+        endedRoundRef.current = r;
+        endingRoundRef.current = false;
         setRoundPhase("no-match");
       }
     } else {
@@ -667,12 +677,15 @@ export default function WTBetaPage() {
       const wid = sorted[0] ?? d[0]?.tmdb_id;
       setFinalWinner(wid != null ? d.find((t) => t.tmdb_id === wid) ?? d[0] ?? null : d[0] ?? null);
       if (mode === "paired" && !partnerIsDone) return;
+      endedRoundRef.current = r;
+      endingRoundRef.current = false;
       setRoundPhase("winner");
     }
   }
 
   function startFinalRound() {
-    roundEndingRef.current = false;
+    endedRoundRef.current = 0;
+    endingRoundRef.current = false;
     iAmDoneRef.current = false;
     setIAmDone(false);
     setWaitingFactIndex(0);
@@ -687,7 +700,7 @@ export default function WTBetaPage() {
   /* ── timer = 0 → end round ── */
   useEffect(() => {
     if (timer !== 0 || screen !== "together" || roundPhase !== "swiping" || !!chosen) return;
-    endRound(round as 1 | 2);
+    endRound(roundRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timer]);
 
@@ -698,12 +711,13 @@ export default function WTBetaPage() {
 
     // If we run out of cards before hitting the limit, end the round anyway.
     if (deck.length > 0 && deckIndex >= deck.length) {
-      endRound(round as 1 | 2);
+      endRound(roundRef.current);
       return;
     }
 
-    if (round === 1 && deckIndex >= ROUND1_LIMIT) endRound(1);
-    if (round === 2 && deckIndex >= ROUND1_LIMIT + ROUND2_LIMIT) endRound(2);
+    const r = roundRef.current;
+    if (r === 1 && deckIndex >= ROUND1_LIMIT) endRound(1);
+    if (r === 2 && deckIndex >= ROUND1_LIMIT + ROUND2_LIMIT) endRound(2);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckIndex]);
@@ -805,7 +819,8 @@ export default function WTBetaPage() {
     superLikedIdRef.current = null;
     swipeTimings.current = {};
     sessionSwipes.current = {};
-    roundEndingRef.current = false;
+    endedRoundRef.current = 0;
+    endingRoundRef.current = false;
     setRound(1);
     setRoundPhase("swiping");
     setRoundMatches([]);
@@ -831,7 +846,8 @@ export default function WTBetaPage() {
     superLikedIdRef.current = null;
     swipeTimings.current = {};
     sessionSwipes.current = {};
-    roundEndingRef.current = false;
+    endedRoundRef.current = 0;
+    endingRoundRef.current = false;
     iAmDoneRef.current = false;
     setIAmDone(false);
     setWaitingFactIndex(0);
@@ -1017,6 +1033,7 @@ export default function WTBetaPage() {
       setTitles(data.session.titles);
       try { localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify({ titles: data.session.titles, mood: "", ts: Date.now() })); } catch { /* ignore */ }
       try { localStorage.setItem("wt_session_resume", JSON.stringify({ sessionId: data.session.id, sessionCode: data.session.code, ts: Date.now() })); } catch {}
+      endedRoundRef.current = 0; endingRoundRef.current = false;
       setMode("paired"); setScreen("waiting");
     } catch (e: unknown) {
       setSessionError(e instanceof Error ? e.message : "Kunne ikke opprette runde");
@@ -1039,6 +1056,7 @@ export default function WTBetaPage() {
       setDeckIndex(0);
       try { localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify({ titles: data.session.titles, mood: "", ts: Date.now() })); } catch {}
       try { localStorage.setItem("wt_session_resume", JSON.stringify({ sessionId: data.session.id, ts: Date.now() })); } catch {}
+      endedRoundRef.current = 0; endingRoundRef.current = false;
       setMode("paired"); setScreen("together");
       setTimer(ROUND1_DURATION); setTimerRunning(true);
       setChosen(null);
@@ -1067,7 +1085,7 @@ export default function WTBetaPage() {
         setPartnerSwipeCount(partnerSwiped);
 
         // If we're in the iAmDone overlay and partner has now finished, trigger results.
-        if (iAmDoneRef.current && !roundEndingRef.current) {
+        if (iAmDoneRef.current && !endingRoundRef.current) {
           const r = roundRef.current;
           const threshold = Math.min(
             r === 1 ? ROUND1_LIMIT : ROUND1_LIMIT + ROUND2_LIMIT,
@@ -1101,14 +1119,19 @@ export default function WTBetaPage() {
     return () => clearInterval(interval);
   }, [mode, sessionId, partnerJoined, screen, titles, chosen]);
 
-  /* ── paired: submit swipe ── */
+  /* ── paired: submit swipe (fire-and-forget with 1 retry) ── */
   function submitPairedSwipe(t: WTTitle, action: SwipeAction) {
     if (!sessionId) return;
-    fetch("/api/together/session/swipe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current },
-      body: JSON.stringify({ session_id: sessionId, tmdb_id: t.tmdb_id, type: t.type, action }),
-    }).catch(() => {});
+    const body = JSON.stringify({ session_id: sessionId, tmdb_id: t.tmdb_id, type: t.type, action });
+    const headers = { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current };
+    fetch("/api/together/session/swipe", { method: "POST", headers, body })
+      .then((r) => { if (!r.ok) throw new Error(); })
+      .catch(() => {
+        // Retry once after 1s — server is idempotent (upsert)
+        setTimeout(() => {
+          fetch("/api/together/session/swipe", { method: "POST", headers, body }).catch(() => {});
+        }, 1000);
+      });
   }
 
   /* ── hydration guard ── */
@@ -1796,7 +1819,7 @@ export default function WTBetaPage() {
                     {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "share")}
                   </button>
                   <button
-                    onClick={() => { setFinalWinner(null); setRoundPhase("swiping"); setSuperLikesUsed(0); superLikedIdRef.current = null; roundEndingRef.current = false; setTimerRunning(true); }}
+                    onClick={() => { setFinalWinner(null); setRoundPhase("swiping"); setSuperLikesUsed(0); superLikedIdRef.current = null; endedRoundRef.current = 0; endingRoundRef.current = false; setTimerRunning(true); }}
                     className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer"
                     style={{ color: "rgba(255,255,255,0.28)" }}
                   >

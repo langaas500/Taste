@@ -31,26 +31,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Cannot join your own session" }, { status: 400 });
     }
 
-    if (session.guest_id && session.guest_id !== userId) {
-      return NextResponse.json({ error: "Session is full" }, { status: 400 });
-    }
-
     if (session.status !== "waiting" && session.status !== "active") {
       return NextResponse.json({ error: "Session is no longer active" }, { status: 400 });
     }
 
-    // Join the session
-    const { error: updateError } = await admin
+    // Already the guest → allow rejoin without re-updating
+    if (session.guest_id === userId) {
+      return NextResponse.json({
+        session: {
+          id: session.id,
+          titles: session.titles,
+          deck_seed: session.deck_seed ?? null,
+          status: session.status,
+        },
+      });
+    }
+
+    if (session.guest_id) {
+      return NextResponse.json({ error: "Session full" }, { status: 409 });
+    }
+
+    // Join the session — atomic: only succeeds if guest_id is still null
+    const { data: updated, error: updateError } = await admin
       .from("wt_sessions")
       .update({
         guest_id: userId,
         status: "active",
         updated_at: new Date().toISOString(),
       })
-      .eq("id", session.id);
+      .eq("id", session.id)
+      .is("guest_id", null)
+      .select("id")
+      .single();
 
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    if (updateError || !updated) {
+      return NextResponse.json({ error: "Session full" }, { status: 409 });
     }
 
     return NextResponse.json({

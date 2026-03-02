@@ -24,7 +24,7 @@ src/
   app/
     (app)/        # Auth-beskyttede sider
     api/          # API-routes (kritisk kode)
-    together/     # Se Sammen (auth-only per Feb 2026)
+    together/     # Se Sammen (guest-tilgang via X-WT-Guest-ID)
     page.tsx
   lib/            # tmdb.ts, ai.ts, auth.ts, supabase-server/browser
   components/
@@ -39,7 +39,8 @@ Server:
 - requireUser()  → kaster "Unauthorized"
 - getUser()      → returnerer null
 
-WT swipes krever innlogging (auth-only).
+WT bruker `getWtUserId()` som aksepterer både auth-bruker og gjest (via `X-WT-Guest-ID` header).
+Partner trenger ikke konto — senker terskel for deling.
 
 ---
 
