@@ -3,6 +3,11 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Kontakt | Logflix",
+  description:
+    "Ta kontakt med Logflix. Vi svarer på spørsmål om appen, personvern og tekniske problemer.",
+  alternates: {
+    canonical: "https://logflix.app/contact",
+  },
 };
 
 export default function ContactPage() {

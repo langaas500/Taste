@@ -3,6 +3,11 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Brukervilkår | Logflix",
+  description:
+    "Les brukervilkårene for Logflix — hva du godtar ved bruk av tjenesten.",
+  alternates: {
+    canonical: "https://logflix.app/terms",
+  },
 };
 
 export default function TermsPage() {
@@ -20,7 +25,7 @@ export default function TermsPage() {
         </Link>
 
         <h1 className="text-2xl font-bold text-white mb-1">Brukervilkår &ndash; Logflix</h1>
-        <p className="text-white/30 text-sm mb-8">Sist oppdatert: 15. februar 2025</p>
+        <p className="text-white/30 text-sm mb-8">Sist oppdatert: 1. mars 2026</p>
 
         <p className="mb-2 text-[15px] leading-relaxed">
           Ved å bruke Logflix godtar du disse vilkårene.
@@ -36,10 +41,12 @@ export default function TermsPage() {
             <p className="mb-1">Logflix er en digital tjeneste for:</p>
             <ul className="list-disc pl-5 space-y-0.5 mb-3">
               <li>Film- og serieoversikt</li>
-              <li>Smaksanalyse</li>
+              <li>Smaksanalyse og AI-anbefalinger</li>
               <li>Personlige anbefalinger</li>
-              <li>Deling av lister</li>
-              <li>Valgfri kontokobling for &laquo;watch together&raquo;</li>
+              <li>Se Sammen (Watch Together) — sveipebasert matching for to eller flere</li>
+              <li>Gruppesesjoner for felles filmvalg</li>
+              <li>Delte lister</li>
+              <li>Valgfri kontokobling</li>
             </ul>
             <p className="mb-2">
               Logflix er ikke en strømmetjeneste og tilbyr ikke direkte tilgang til filmer eller serier.
