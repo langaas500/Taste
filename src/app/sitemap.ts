@@ -8,6 +8,7 @@ const pairs: [string, string][] = [
   ["/no/serie-a-se-sammen", "/en/tv-shows-to-watch-together"],
   ["/no/film-for-filmkveld-med-venner", "/en/movies-to-watch-with-friends"],
   ["/no/romantiske-filmer-netflix-norge", "/en/movies-for-date-night"],
+  ["/no/filmer-a-se-med-familien", "/en/movies-to-watch-with-the-family"],
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
