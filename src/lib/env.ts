@@ -28,7 +28,16 @@ if (!ANTHROPIC_API_KEY && !OPENAI_API_KEY) {
   );
 }
 
+// --- Stripe (required for billing) ---
+const STRIPE_SECRET_KEY = required("STRIPE_SECRET_KEY");
+const STRIPE_WEBHOOK_SECRET = required("STRIPE_WEBHOOK_SECRET");
+const STRIPE_FOUNDING_PRICE_ID = required("STRIPE_FOUNDING_PRICE_ID");
+const STRIPE_STANDARD_PRICE_ID = required("STRIPE_STANDARD_PRICE_ID");
+
 // --- Warn only ---
+if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+  console.warn("Optional env var NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set.");
+}
 if (!process.env.NEXT_PUBLIC_SENTRY_DSN) {
   console.warn("Optional env var NEXT_PUBLIC_SENTRY_DSN is not set.");
 }
@@ -63,4 +72,11 @@ export const env = {
 
   // Backfill
   BACKFILL_SECRET: process.env.BACKFILL_SECRET,
+
+  // Stripe
+  STRIPE_SECRET_KEY,
+  STRIPE_WEBHOOK_SECRET,
+  STRIPE_FOUNDING_PRICE_ID,
+  STRIPE_STANDARD_PRICE_ID,
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
 } as const;
