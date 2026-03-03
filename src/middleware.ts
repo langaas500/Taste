@@ -72,6 +72,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/tmdb/") ||
     pathname.startsWith("/api/together/") ||
     pathname.startsWith("/api/group/") ||
+    pathname === "/api/stripe/webhook" ||
     isSeoPage;
 
   if (!user && !isPublic && !isGuestAllowed) {

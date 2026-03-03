@@ -12,6 +12,7 @@
   "dependencies": {
     "@lottiefiles/dotlottie-react": "^0.17.15",
     "@sentry/nextjs": "^10.41.0",
+    "@stripe/stripe-js": "^8.9.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/postcss": "^4.1.18",
@@ -28,6 +29,7 @@
     "qrcode": "^1.5.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "stripe": "^20.4.0",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3"
   },
