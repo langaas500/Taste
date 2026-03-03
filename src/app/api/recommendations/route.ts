@@ -4,10 +4,16 @@ import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase-server
 import { tmdbDiscover, tmdbTrending, tmdbSimilar, parseTitleFromTMDB } from "@/lib/tmdb";
 import type { UserTitle, TitleCache, Recommendation, ContentFilters } from "@/lib/types";
 import { getWatchProvidersCachedBatch } from "@/lib/watch-providers-cache";
+import { withLogger } from "@/lib/logger";
+import { applyRateLimit } from "@/lib/rate-limit";
 
-export async function GET(req: NextRequest) {
+export const GET = withLogger("/api/recommendations", async (req, { logger }) => {
   try {
     const user = await requireUser();
+    logger.setUserId(user.id);
+
+    const limited = await applyRateLimit("recommendations", user.id);
+    if (limited) return limited;
     const supabase = await createSupabaseServer();
     const admin = createSupabaseAdmin();
 
@@ -143,7 +149,7 @@ export async function GET(req: NextRequest) {
       if (BLOCKED_LANGS.has(lang)) { candidates.delete(key); continue; }
       if (genreIds.some((g) => BLOCKED_GENRES.has(g))) { candidates.delete(key); continue; }
     }
-    console.log(`[recommendations] quality filter: ${beforeQualityFilter} → ${candidates.size} (removed ${beforeQualityFilter - candidates.size})`);
+    logger.info(`quality filter: ${beforeQualityFilter} → ${candidates.size} (removed ${beforeQualityFilter - candidates.size})`);
 
     // Score candidates
     const dislikedGenres = new Set<number>();
@@ -367,7 +373,7 @@ export async function GET(req: NextRequest) {
       admin.from("titles_cache").upsert(cacheRows, { onConflict: "tmdb_id,type" })
         .then(() => {})
         .catch((err: unknown) => {
-          console.error("titles_cache bulk upsert failed:", err instanceof Error ? err.message : err);
+          logger.error("titles_cache bulk upsert failed", err);
         });
     }
 
@@ -406,7 +412,7 @@ export async function GET(req: NextRequest) {
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
-    console.error("Recommendations error:", e);
+    logger.error("Recommendations error", e);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

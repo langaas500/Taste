@@ -6,7 +6,9 @@ import { cacheTitleIfNeeded } from "@/lib/cache-title";
 export async function POST(req: NextRequest) {
   try {
     const user = await requireUser();
-    const { items } = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
+    const { items } = body;
 
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: "No items provided" }, { status: 400 });

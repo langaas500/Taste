@@ -1,5 +1,7 @@
 // Server-only TMDB API utility
 
+import { env } from "@/lib/env";
+
 const BASE = "https://api.themoviedb.org/3";
 
 /* ── In-memory cache (20 min TTL) ─────────────────────── */
@@ -21,7 +23,7 @@ function isCacheable(url: string): boolean {
 
 function headers() {
   return {
-    Authorization: `Bearer ${process.env.TMDB_API_KEY}`,
+    Authorization: `Bearer ${env.TMDB_API_KEY}`,
     "Content-Type": "application/json",
   };
 }
@@ -32,9 +34,7 @@ function sleep(ms: number) {
 
 /** Fetch wrapper with TMDB_API_KEY validation, 20-min cache, and 429 retry/backoff. */
 async function tmdbFetch(url: string): Promise<Response> {
-  if (!process.env.TMDB_API_KEY) {
-    throw new Error("TMDB_API_KEY is not set");
-  }
+  // env.TMDB_API_KEY is validated at startup
 
   // Return cached response for cacheable endpoints
   if (isCacheable(url)) {

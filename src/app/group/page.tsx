@@ -433,7 +433,7 @@ export default function GroupPage() {
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                 placeholder={lt(locale, "codePlaceholder")}
                 style={{ ...inputStyle, textAlign: "center", fontSize: 24, fontWeight: 700, letterSpacing: 6 }}
-                maxLength={5}
+                maxLength={7}
               />
             </div>
 

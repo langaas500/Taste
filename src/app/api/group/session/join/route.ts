@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWtUserId } from "@/lib/auth";
+import { getWtUserId, getUser } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
+import { withLogger } from "@/lib/logger";
+import { applyRateLimit, getClientIp } from "@/lib/rate-limit";
+import { generateGuestToken } from "@/lib/guest-token";
 
 // POST: Join a group session by code
-export async function POST(req: NextRequest) {
+export const POST = withLogger("/api/group/session/join", async (req, { logger }) => {
   try {
+    const limited = await applyRateLimit("join", getClientIp(req));
+    if (limited) return limited;
+
     const userId = await getWtUserId(req);
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    logger.setUserId(userId);
 
-    const body = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
     const code = typeof body.code === "string" ? body.code.toUpperCase().trim() : "";
     if (!code) return NextResponse.json({ error: "Missing code" }, { status: 400 });
 
@@ -61,9 +69,15 @@ export async function POST(req: NextRequest) {
       .select("*")
       .eq("session_id", session.id);
 
-    return NextResponse.json({ session, participants: participants || [] });
+    const authUser = await getUser();
+    const guestToken = !authUser ? generateGuestToken(userId, session.id) : undefined;
+    return NextResponse.json({
+      session,
+      participants: participants || [],
+      ...(guestToken && { guestToken }),
+    });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

@@ -5,7 +5,9 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 export async function POST(req: NextRequest) {
   try {
     const user = await requireUser();
-    const { invite_code } = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
+    const { invite_code } = body;
 
     if (!invite_code?.trim()) {
       return NextResponse.json({ error: "Invite code is required" }, { status: 400 });

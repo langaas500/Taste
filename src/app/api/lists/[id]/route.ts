@@ -60,7 +60,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     await requireUser();
     const { id } = await params;
-    const body = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
     const supabase = await createSupabaseServer();
 
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };

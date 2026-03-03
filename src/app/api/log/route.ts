@@ -6,7 +6,8 @@ import { cacheTitleIfNeeded } from "@/lib/cache-title";
 export async function POST(req: NextRequest) {
   try {
     const user = await requireUser();
-    const body = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
     const { tmdb_id, type, status, sentiment, rating, note, watched_at, last_season, last_episode, favorite } = body;
 
     if (!tmdb_id || !type || !status) {
@@ -52,7 +53,8 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const user = await requireUser();
-    const body = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
     const { tmdb_id, type, ...updates } = body;
 
     if (!tmdb_id || !type) {
@@ -97,7 +99,9 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const user = await requireUser();
-    const { tmdb_id, type } = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
+    const { tmdb_id, type } = body;
 
     const supabase = await createSupabaseServer();
     const { error } = await supabase

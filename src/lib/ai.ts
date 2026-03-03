@@ -1,25 +1,50 @@
 // Server-only AI provider abstraction
 // Uses AI_PROVIDER env var to select between Anthropic and OpenAI
 
+import { env } from "@/lib/env";
+
 interface AIMessage {
   role: "user" | "assistant" | "system";
   content: string;
 }
 
-async function callAI(messages: AIMessage[], temperature = 0.3): Promise<string> {
-  const provider = process.env.AI_PROVIDER || "anthropic";
-
-  if (provider === "anthropic") {
-    return callAnthropic(messages, temperature);
-  } else if (provider === "openai") {
-    return callOpenAI(messages, temperature);
+function isRetryable(err: unknown): boolean {
+  if (err instanceof DOMException && err.name === "TimeoutError") return true;
+  if (err instanceof DOMException && err.name === "AbortError") return true;
+  if (err instanceof Error) {
+    const m = err.message.match(/API error (\d+)/);
+    if (m && Number(m[1]) >= 500) return true;
   }
-  throw new Error(`Unknown AI_PROVIDER: ${provider}`);
+  return false;
+}
+
+async function callAI(messages: AIMessage[], temperature = 0.3): Promise<string> {
+  const provider = env.AI_PROVIDER;
+
+  const invoke = () => {
+    if (provider === "anthropic") return callAnthropic(messages, temperature);
+    if (provider === "openai") return callOpenAI(messages, temperature);
+    throw new Error(`Unknown AI_PROVIDER: ${provider}`);
+  };
+
+  try {
+    return await invoke();
+  } catch (err) {
+    if (!isRetryable(err)) throw err;
+    console.warn("[ai] retryable error, waiting 1s…", err instanceof Error ? err.message : err);
+    await new Promise((r) => setTimeout(r, 1000));
+    try {
+      return await invoke();
+    } catch (retryErr) {
+      throw new Error(
+        `AI call failed after retry: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`
+      );
+    }
+  }
 }
 
 async function callAnthropic(messages: AIMessage[], temperature: number): Promise<string> {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error("ANTHROPIC_API_KEY not set");
+  if (!env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY not set");
 
   const systemMsg = messages.find((m) => m.role === "system")?.content || "";
   const userMessages = messages
@@ -29,17 +54,18 @@ async function callAnthropic(messages: AIMessage[], temperature: number): Promis
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
-      "x-api-key": key,
+      "x-api-key": env.ANTHROPIC_API_KEY,
       "anthropic-version": "2024-06-01",
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
+      model: env.ANTHROPIC_MODEL,
       max_tokens: 2048,
       temperature,
       system: systemMsg,
       messages: userMessages,
     }),
+    signal: AbortSignal.timeout(10_000),
   });
 
   if (!res.ok) {
@@ -52,13 +78,12 @@ async function callAnthropic(messages: AIMessage[], temperature: number): Promis
 }
 
 async function callOpenAI(messages: AIMessage[], temperature: number): Promise<string> {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) throw new Error("OPENAI_API_KEY not set");
+  if (!env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY not set");
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${key}`,
+      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -67,6 +92,7 @@ async function callOpenAI(messages: AIMessage[], temperature: number): Promise<s
       temperature,
       max_tokens: 2048,
     }),
+    signal: AbortSignal.timeout(10_000),
   });
 
   if (!res.ok) {
@@ -100,12 +126,16 @@ export interface TasteInput {
   feedbackNotForMe: { title: string; type: string }[];
 }
 
-export async function generateTasteSummary(input: TasteInput): Promise<{
-  youLike: string;
-  avoid: string;
-  pacing: string;
-}> {
-  const prompt = `Analyze this user's viewing taste and return a JSON object with exactly these keys:
+export interface TasteSummary {
+  youLike: string | null;
+  avoid: string | null;
+  pacing: string | null;
+  error?: string;
+}
+
+export async function generateTasteSummary(input: TasteInput): Promise<TasteSummary> {
+  try {
+    const prompt = `Analyze this user's viewing taste and return a JSON object with exactly these keys:
 - "youLike": 2-3 sentences about what they enjoy (themes, genres, tones, storytelling styles)
 - "avoid": 1-2 sentences about what they dislike or avoid
 - "pacing": 1-2 sentences about their preferred pacing, tone, and recurring themes
@@ -117,21 +147,26 @@ Rejected recommendations: ${JSON.stringify(input.feedbackNotForMe)}
 
 Return ONLY valid JSON, no markdown fences.`;
 
-  const result = await callAI([
-    { role: "system", content: "You are a film/TV taste analyst. Return only valid JSON." },
-    { role: "user", content: prompt },
-  ], 0.3);
+    const result = await callAI([
+      { role: "system", content: "You are a film/TV taste analyst. Return only valid JSON." },
+      { role: "user", content: prompt },
+    ], 0.3);
 
-  const parsed = safeParseJson<{ youLike: string; avoid: string; pacing: string }>(result);
-  if (!parsed.ok) throw new Error(`AI returned invalid JSON: ${parsed.error}`);
-  return parsed.data;
+    const parsed = safeParseJson<{ youLike: string; avoid: string; pacing: string }>(result);
+    if (!parsed.ok) throw new Error(`AI returned invalid JSON: ${parsed.error}`);
+    return parsed.data;
+  } catch (e) {
+    console.error("[ai] generateTasteSummary failed, returning fallback:", e instanceof Error ? e.message : e);
+    return { youLike: null, avoid: null, pacing: null, error: "unavailable" };
+  }
 }
 
 export async function explainRecommendations(
   userTaste: { youLike: string; avoid: string },
   titles: { title: string; type: string; year: number | null; overview: string; genres: string[] }[]
 ): Promise<{ title: string; why: string; tags: string[] }[]> {
-  const prompt = `Given this user's taste:
+  try {
+    const prompt = `Given this user's taste:
 Likes: ${userTaste.youLike}
 Avoids: ${userTaste.avoid}
 
@@ -145,18 +180,22 @@ ${titles.map((t, i) => `${i + 1}. "${t.title}" (${t.type}, ${t.year}) - ${t.over
 Return a JSON array of objects with keys: "title", "why", "tags" (array of 3 strings).
 Return ONLY valid JSON, no markdown fences.`;
 
-  const result = await callAI([
-    { role: "system", content: "You are a personalized recommendation explainer. Return only valid JSON array." },
-    { role: "user", content: prompt },
-  ], 0.3);
+    const result = await callAI([
+      { role: "system", content: "You are a personalized recommendation explainer. Return only valid JSON array." },
+      { role: "user", content: prompt },
+    ], 0.3);
 
-  const parsed = safeParseJson<{ title: string; why: string; tags: string[] }[]>(result);
-  if (!parsed.ok) throw new Error(`AI returned invalid JSON: ${parsed.error}`);
-  return parsed.data;
+    const parsed = safeParseJson<{ title: string; why: string; tags: string[] }[]>(result);
+    if (!parsed.ok) throw new Error(`AI returned invalid JSON: ${parsed.error}`);
+    return parsed.data;
+  } catch (e) {
+    console.error("[ai] explainRecommendations failed, returning fallback:", e instanceof Error ? e.message : e);
+    return titles.map((t) => ({ title: t.title, why: "", tags: [] }));
+  }
 }
 
 export async function testAIConnection(): Promise<{ ok: boolean; provider: string; error?: string }> {
-  const provider = process.env.AI_PROVIDER || "anthropic";
+  const provider = env.AI_PROVIDER;
   try {
     await callAI([
       { role: "system", content: "Reply with: ok" },

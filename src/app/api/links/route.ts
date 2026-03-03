@@ -189,7 +189,9 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const user = await requireUser();
-    const { link_id } = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
+    const { link_id } = body;
     const supabase = await createSupabaseServer();
 
     const { error } = await supabase

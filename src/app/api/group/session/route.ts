@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWtUserId } from "@/lib/auth";
+import { getWtUserId, getUser } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
 import { generateGroupCode } from "@/lib/group-utils";
+import { withLogger } from "@/lib/logger";
+import { generateGuestToken } from "@/lib/guest-token";
 
 // POST: Create a new group session
-export async function POST(req: NextRequest) {
+export const POST = withLogger("/api/group/session", async (req, { logger }) => {
   try {
     const userId = await getWtUserId(req);
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    logger.setUserId(userId);
 
     let body: Record<string, unknown> = {};
     try {
@@ -38,7 +41,7 @@ export async function POST(req: NextRequest) {
       .then(() => {})
       .catch(() => {});
 
-    // Generate unique 5-char code (retry on collision)
+    // Generate unique 7-char code (retry on collision)
     let code = generateGroupCode();
     let attempts = 0;
     while (attempts < 5) {
@@ -76,9 +79,15 @@ export async function POST(req: NextRequest) {
       provider_ids,
     });
 
-    return NextResponse.json({ session, code });
+    const authUser = await getUser();
+    const guestToken = !authUser ? generateGuestToken(userId, session.id) : undefined;
+    return NextResponse.json({
+      session,
+      code,
+      ...(guestToken && { guestToken }),
+    });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

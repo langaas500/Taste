@@ -1613,9 +1613,9 @@ export default function WTBetaPage() {
                 />
                 <button
                   onClick={() => joinSession()}
-                  disabled={joinCode.length < 4 || titlesLoading}
+                  disabled={joinCode.length < 6 || titlesLoading}
                   className="button"
-                  style={{ width: "100%", maxWidth: 320, opacity: (joinCode.length < 4 || titlesLoading) ? 0.4 : 1 }}
+                  style={{ width: "100%", maxWidth: 320, opacity: (joinCode.length < 6 || titlesLoading) ? 0.4 : 1 }}
                 >
                   {titlesLoading ? t(locale, "join", "connecting") : t(locale, "join", "joinBtn")}
                 </button>

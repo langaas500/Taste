@@ -11,7 +11,9 @@ export async function POST(req: NextRequest) {
     const userId = await getWtUserId(req);
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { session_id } = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
+    const { session_id } = body;
     if (!session_id) return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
 
     const admin = createSupabaseAdmin();

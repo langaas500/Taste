@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getWtUserId, getUser } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
+import { withLogger } from "@/lib/logger";
 
 // POST: Submit a swipe action (atomic — writes to wt_session_swipes)
-export async function POST(req: NextRequest) {
+export const POST = withLogger("/api/together/session/swipe", async (req, { logger }) => {
   try {
     const userId = await getWtUserId(req);
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    logger.setUserId(userId);
 
     // Determine if caller is an authenticated user or a guest (no auth session)
     const authUser = await getUser();
     const isGuest = !authUser;
 
-    const { session_id, tmdb_id, type, action } = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
+    const { session_id, tmdb_id, type, action } = body;
 
     if (!session_id || !tmdb_id || !type || !action) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -128,4 +132,4 @@ export async function POST(req: NextRequest) {
     const msg = e instanceof Error ? e.message : "Error";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

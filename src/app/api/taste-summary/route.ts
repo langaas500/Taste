@@ -3,10 +3,13 @@ import { requireUser } from "@/lib/auth";
 import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase-server";
 import { generateTasteSummary, type TasteInput } from "@/lib/ai";
 import type { UserTitle, TitleCache } from "@/lib/types";
+import { withLogger } from "@/lib/logger";
+import { applyRateLimit } from "@/lib/rate-limit";
 
-export async function GET() {
+export const GET = withLogger("/api/taste-summary", async (req, { logger }) => {
   try {
     const user = await requireUser();
+    logger.setUserId(user.id);
     const supabase = await createSupabaseServer();
 
     // Check cached summary
@@ -26,11 +29,16 @@ export async function GET() {
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});
 
-export async function POST() {
+export const POST = withLogger("/api/taste-summary", async (req, { logger }) => {
   try {
     const user = await requireUser();
+    logger.setUserId(user.id);
+
+    const limited = await applyRateLimit("tasteSummary", user.id);
+    if (limited) return limited;
+
     const supabase = await createSupabaseServer();
     const admin = createSupabaseAdmin();
 
@@ -124,7 +132,7 @@ export async function POST() {
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
-    console.error("Taste summary error:", e);
+    logger.error("Taste summary error", e);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

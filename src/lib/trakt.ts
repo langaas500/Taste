@@ -1,22 +1,30 @@
 // Server-only Trakt API utility
 
+import { env } from "@/lib/env";
+
 const TRAKT_BASE = "https://api.trakt.tv";
+
+function requireTraktClientId(): string {
+  if (!env.TRAKT_CLIENT_ID) throw new Error("TRAKT_CLIENT_ID is not set");
+  return env.TRAKT_CLIENT_ID;
+}
 
 function traktHeaders(accessToken?: string) {
   const h: Record<string, string> = {
     "Content-Type": "application/json",
     "trakt-api-version": "2",
-    "trakt-api-key": process.env.TRAKT_CLIENT_ID!,
+    "trakt-api-key": requireTraktClientId(),
   };
   if (accessToken) h["Authorization"] = `Bearer ${accessToken}`;
   return h;
 }
 
 export function getTraktAuthorizeUrl(state: string) {
+  if (!env.TRAKT_REDIRECT_URI) throw new Error("TRAKT_REDIRECT_URI is not set");
   const params = new URLSearchParams({
     response_type: "code",
-    client_id: process.env.TRAKT_CLIENT_ID!,
-    redirect_uri: process.env.TRAKT_REDIRECT_URI!,
+    client_id: requireTraktClientId(),
+    redirect_uri: env.TRAKT_REDIRECT_URI,
     state,
   });
   return `${TRAKT_BASE}/oauth/authorize?${params}`;

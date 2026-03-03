@@ -72,7 +72,9 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const user = await requireUser();
-    const { name, description } = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
+    const { name, description } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });

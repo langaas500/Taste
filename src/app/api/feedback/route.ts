@@ -5,7 +5,9 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 export async function POST(req: NextRequest) {
   try {
     const user = await requireUser();
-    const { tmdb_id, type, feedback } = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
+    const { tmdb_id, type, feedback } = body;
     if (!tmdb_id || !type || !feedback) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }

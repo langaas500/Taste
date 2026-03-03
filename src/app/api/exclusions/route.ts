@@ -5,7 +5,9 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 export async function POST(req: NextRequest) {
   try {
     const user = await requireUser();
-    const { tmdb_id, type, reason } = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
+    const { tmdb_id, type, reason } = body;
     if (!tmdb_id || !type) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
     const supabase = await createSupabaseServer();
@@ -30,7 +32,9 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const user = await requireUser();
-    const { tmdb_id, type } = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
+    const { tmdb_id, type } = body;
 
     const supabase = await createSupabaseServer();
     const { error } = await supabase

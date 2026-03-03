@@ -1,25 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWtUserId } from "@/lib/auth";
+import { getWtUserId, getUser } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
 import { buildWtDeck } from "@/lib/wt-titles";
 import type { Mood } from "@/lib/wt-titles";
+import { withLogger } from "@/lib/logger";
+import { generateGuestToken } from "@/lib/guest-token";
 
 const VALID_MOODS = new Set<Mood>(["light", "dark", "thriller", "action", "romance", "horror"]);
 
 function generateCode(): string {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
   let code = "";
-  for (let i = 0; i < 4; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 6; i++) {
+    code += chars[bytes[i] % chars.length];
   }
   return code;
 }
 
 // POST: Create a new WT session
-export async function POST(req: NextRequest) {
+export const POST = withLogger("/api/together/session", async (req, { logger }) => {
   try {
     const userId = await getWtUserId(req);
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    logger.setUserId(userId);
 
     const admin = createSupabaseAdmin();
 
@@ -138,31 +143,28 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Fire-and-forget: clean up sessions older than 24 hours
-    admin
-      .from("wt_session_swipes")
-      .delete()
-      .lt("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-      .then(() =>
-        admin
-          .from("wt_sessions")
-          .delete()
-          .lt("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-      )
-      .catch(() => {});
+    // DISABLED: Couple co-preference data is retained for taste graph
+    // Previously deleted wt_session_swipes and wt_sessions older than 24h.
+    // Sessions are now archived (archived_at) instead of deleted.
 
-    return NextResponse.json({ session: { ...session, titles, deck_seed } });
+    const authUser = await getUser();
+    const guestToken = !authUser ? generateGuestToken(userId, session.id) : undefined;
+    return NextResponse.json({
+      session: { ...session, titles, deck_seed },
+      ...(guestToken && { guestToken }),
+    });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});
 
 // GET: Poll session state
-export async function GET(req: NextRequest) {
+export const GET = withLogger("/api/together/session", async (req, { logger }) => {
   try {
     const userId = await getWtUserId(req);
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    logger.setUserId(userId);
 
     const sessionId = req.nextUrl.searchParams.get("id");
     if (!sessionId) {
@@ -220,4 +222,4 @@ export async function GET(req: NextRequest) {
     const msg = e instanceof Error ? e.message : "Error";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

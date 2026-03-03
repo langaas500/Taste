@@ -3,17 +3,16 @@ import { getWtUserId } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
 import type { GroupPoolItem, GroupVotesMap, GroupFinalVotesMap } from "@/types/group";
 import type { Sentiment } from "@/lib/types";
+import { withLogger } from "@/lib/logger";
 
 // GET: Poll group session state
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withLogger("/api/group/session/[id]", async (req, { logger, params }) => {
   try {
     const userId = await getWtUserId(req);
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    logger.setUserId(userId);
 
-    const { id: sessionId } = await params;
+    const { id: sessionId } = await params!;
     const admin = createSupabaseAdmin();
 
     // 1. Fetch session
@@ -102,4 +101,4 @@ export async function GET(
     const msg = e instanceof Error ? e.message : "Error";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWtUserId } from "@/lib/auth";
+import { getWtUserId, getUser } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
+import { withLogger } from "@/lib/logger";
+import { applyRateLimit, getClientIp } from "@/lib/rate-limit";
+import { generateGuestToken } from "@/lib/guest-token";
 
 // POST: Join a session with a code
-export async function POST(req: NextRequest) {
+export const POST = withLogger("/api/together/session/join", async (req, { logger }) => {
   try {
+    const limited = await applyRateLimit("join", getClientIp(req));
+    if (limited) return limited;
+
     const userId = await getWtUserId(req);
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    logger.setUserId(userId);
 
-    const { code } = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
+    const { code } = body;
 
     if (!code || typeof code !== "string") {
       return NextResponse.json({ error: "Missing code" }, { status: 400 });
@@ -37,6 +46,8 @@ export async function POST(req: NextRequest) {
 
     // Already the guest → allow rejoin without re-updating
     if (session.guest_id === userId) {
+      const authUser = await getUser();
+      const guestToken = !authUser ? generateGuestToken(userId, session.id) : undefined;
       return NextResponse.json({
         session: {
           id: session.id,
@@ -44,6 +55,7 @@ export async function POST(req: NextRequest) {
           deck_seed: session.deck_seed ?? null,
           status: session.status,
         },
+        ...(guestToken && { guestToken }),
       });
     }
 
@@ -68,6 +80,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Session full" }, { status: 409 });
     }
 
+    const authUser = await getUser();
+    const guestToken = !authUser ? generateGuestToken(userId, session.id) : undefined;
     return NextResponse.json({
       session: {
         id: session.id,
@@ -75,9 +89,10 @@ export async function POST(req: NextRequest) {
         deck_seed: session.deck_seed ?? null,
         status: "active",
       },
+      ...(guestToken && { guestToken }),
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

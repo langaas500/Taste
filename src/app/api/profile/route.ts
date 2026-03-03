@@ -24,7 +24,8 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   try {
     const user = await requireUser();
-    const body = await req.json();
+    let body;
+    try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
     const allowed = ["display_name", "language", "exploration_slider", "content_filters"];
     const updates: Record<string, unknown> = {};
     for (const key of allowed) {
