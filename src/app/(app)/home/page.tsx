@@ -8,6 +8,7 @@ import { logTitle } from "@/lib/api";
 import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-browser";
 import { prefetchNetflixIds } from "@/lib/prefetch-netflix-ids";
 import type { UserTitle, TitleCache, MediaType, Recommendation } from "@/lib/types";
+import { track } from "@/lib/posthog";
 
 /* ── locale strings ─────────────────────────────────────── */
 
@@ -138,6 +139,7 @@ export default function HomePage() {
       totalTitles: allTitles.length,
     });
     setLoading(false);
+    track("home_viewed", { has_library: allTitles.length > 0 });
 
     // Prefetch Netflix IDs for watching titles (best-effort)
     const prefetchItems = watching.map((t) => ({ id: t.tmdb_id, type: t.type }));

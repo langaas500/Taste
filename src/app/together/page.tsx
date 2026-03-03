@@ -7,6 +7,7 @@ import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { getMessages } from "./messages";
 import { getLocale, t, type Locale } from "./strings";
 import QRCode from "qrcode";
+import { track } from "@/lib/posthog";
 
 /* ── constants ─────────────────────────────────────────── */
 
@@ -59,46 +60,47 @@ const PROVIDERS: Provider[] = [
   { id: 439,  name: "TV 2 Play" },
 ];
 
-const PROVIDER_URLS: Record<number, (title: string) => string> = {
-  8:    (t) => `https://www.netflix.com/search?q=${encodeURIComponent(t)}`,
-  9:    (t) => `https://www.primevideo.com/search?phrase=${encodeURIComponent(t)}`,
-  337:  (t) => `https://www.disneyplus.com/search?q=${encodeURIComponent(t)}`,
-  1899: (t) => `https://www.max.com/search?q=${encodeURIComponent(t)}`,
-  350:  (t) => `https://tv.apple.com/search?term=${encodeURIComponent(t)}`,
-  76:   (t) => `https://viaplay.no/search?query=${encodeURIComponent(t)}`,
-  439:  () => `https://play.tv2.no`,
-  531:  (t) => `https://www.paramountplus.com/search?q=${encodeURIComponent(t)}`,
-  15:   (t) => `https://www.hulu.com/search?q=${encodeURIComponent(t)}`,
-  386:  (t) => `https://www.peacocktv.com/search?q=${encodeURIComponent(t)}`,
+const PROVIDER_URLS: Record<string, string> = {
+  netflix:      "https://www.netflix.com/search?q={title}",
+  disney:       "https://www.disneyplus.com/search/{title}",
+  amazon:       "https://www.primevideo.com/search/ref=atv_nb_sr?phrase={title}",
+  prime:        "https://www.primevideo.com/search/ref=atv_nb_sr?phrase={title}",
+  viaplay:      "https://viaplay.com/no/search?query={title}",
+  max:          "https://www.max.com/search?q={title}",
+  hbo:          "https://www.max.com/search?q={title}",
+  apple:        "https://tv.apple.com/search?term={title}",
+  paramount:    "https://www.paramountplus.com/search/{title}",
+  tv2:          "https://tv2play.no/search?q={title}",
 };
 
+function getProviderUrl(providerName: string, title: string): string {
+  const key = providerName.toLowerCase();
+  const encoded = encodeURIComponent(title);
+  for (const [k, template] of Object.entries(PROVIDER_URLS)) {
+    if (key.includes(k)) return template.replace("{title}", encoded);
+  }
+  return `https://www.justwatch.com/search?q=${encoded}`;
+}
+
 function getWatchInfo(title: string, tmdbId: number, type: "movie" | "tv", selectedProviders: number[], actualProviderIds?: number[]): { url: string; providerName: string | null } {
-  // If we have actual provider data from TMDB, use that to find the right service
+  // Resolve provider name and build direct link
   if (actualProviderIds && actualProviderIds.length > 0) {
-    // Prefer a provider the user selected AND is actually available
     for (const id of selectedProviders) {
-      if (actualProviderIds.includes(id) && PROVIDER_URLS[id]) {
+      if (actualProviderIds.includes(id)) {
         const provider = PROVIDERS.find((p) => p.id === id);
-        return { url: PROVIDER_URLS[id](title), providerName: provider?.name ?? null };
+        if (provider) return { url: getProviderUrl(provider.name, title), providerName: provider.name };
       }
     }
-    // Fallback: first actual provider we have a URL for
     for (const id of actualProviderIds) {
-      if (PROVIDER_URLS[id]) {
-        const provider = PROVIDERS.find((p) => p.id === id);
-        return { url: PROVIDER_URLS[id](title), providerName: provider?.name ?? null };
-      }
-    }
-  }
-  // Fallback: first selected provider (old behaviour)
-  for (const id of selectedProviders) {
-    const urlFn = PROVIDER_URLS[id];
-    if (urlFn) {
       const provider = PROVIDERS.find((p) => p.id === id);
-      return { url: urlFn(title), providerName: provider?.name ?? null };
+      if (provider) return { url: getProviderUrl(provider.name, title), providerName: provider.name };
     }
   }
-  return { url: `https://www.themoviedb.org/${type}/${tmdbId}/watch`, providerName: null };
+  for (const id of selectedProviders) {
+    const provider = PROVIDERS.find((p) => p.id === id);
+    if (provider) return { url: getProviderUrl(provider.name, title), providerName: provider.name };
+  }
+  return { url: getProviderUrl("", title), providerName: null };
 }
 
 async function fetchActualProviders(tmdbId: number, type: "movie" | "tv"): Promise<number[]> {
@@ -323,6 +325,8 @@ export default function WTBetaPage() {
   const [finalWinner, setFinalWinner] = useState<WTTitle | null>(null);
   const [winnerProviderIds, setWinnerProviderIds] = useState<number[]>([]);
   const [shareState, setShareState] = useState<"idle" | "copied">("idle");
+  const [emailCaptured, setEmailCaptured] = useState(false);
+  const [emailValue, setEmailValue] = useState("");
   const [superLikesUsed, setSuperLikesUsed] = useState(0);
   const [iAmDone, setIAmDone] = useState(false);
   const [waitingFactIndex, setWaitingFactIndex] = useState(0);
@@ -670,6 +674,7 @@ export default function WTBetaPage() {
         endedRoundRef.current = r;
         endingRoundRef.current = false;
         setRoundPhase("no-match");
+        track("together_no_match", { mode, round: r });
       }
     } else {
       const candidates = mutualIds.length > 0 ? mutualIds : myLikedIds.length > 0 ? myLikedIds : theirLikedIds;
@@ -725,6 +730,9 @@ export default function WTBetaPage() {
   /* ── match moment reveal sequence ── */
   useEffect(() => {
     if (roundPhase !== "winner") { setMatchRevealPhase(0); return; }
+    if (finalWinner) {
+      track("together_match_found", { mode, tmdb_id: finalWinner.tmdb_id, title: finalWinner.title, type: finalWinner.type, round });
+    }
     try { localStorage.removeItem("wt_session_resume"); } catch {}
     const t1 = window.setTimeout(() => setMatchRevealPhase(1), 400);
     const t2 = window.setTimeout(() => setMatchRevealPhase(2), 700);
@@ -811,6 +819,7 @@ export default function WTBetaPage() {
     setDeck([...ts]);
     setDeckIndex(0);
     setScreen("together");
+    track("together_session_started", { mode: "solo", locale });
     try { localStorage.setItem("ss_last_play_date", new Date().toISOString().slice(0, 10)); } catch { /* ignore */ }
     setTimer(ROUND1_DURATION);
     setTimerRunning(true);
@@ -1035,6 +1044,7 @@ export default function WTBetaPage() {
       try { localStorage.setItem("wt_session_resume", JSON.stringify({ sessionId: data.session.id, sessionCode: data.session.code, ts: Date.now() })); } catch {}
       endedRoundRef.current = 0; endingRoundRef.current = false;
       setMode("paired"); setScreen("waiting");
+      track("together_session_started", { mode: "duo", locale });
     } catch (e: unknown) {
       setSessionError(e instanceof Error ? e.message : "Kunne ikke opprette runde");
     }
@@ -1806,7 +1816,7 @@ export default function WTBetaPage() {
                       ? t(locale, "winner", "watchOn").replace("{provider}", wi.providerName)
                       : t(locale, "doubleSuper", "startWatching");
                     return (
-                      <button onClick={() => { setRoundPhase("winner"); window.open(wi.url, "_blank"); }} className="button" style={{ width: "100%", marginBottom: 8 }}>
+                      <button onClick={() => { setRoundPhase("winner"); window.open(wi.url, "_blank", "noopener,noreferrer"); }} className="button" style={{ width: "100%", marginBottom: 8 }}>
                         {label}
                       </button>
                     );
@@ -1853,7 +1863,7 @@ export default function WTBetaPage() {
                       ? t(locale, "winner", "watchOn").replace("{provider}", wi.providerName)
                       : t(locale, "results", "startWatching");
                     return (
-                      <button onClick={() => { setFinalWinner(m); setRoundPhase("winner"); window.open(wi.url, "_blank"); }} className="button" style={{ width: "100%", marginBottom: 12 }}>
+                      <button onClick={() => { setFinalWinner(m); setRoundPhase("winner"); window.open(wi.url, "_blank", "noopener,noreferrer"); }} className="button" style={{ width: "100%", marginBottom: 12 }}>
                         {label}
                       </button>
                     );
@@ -1902,7 +1912,7 @@ export default function WTBetaPage() {
                       ? t(locale, "winner", "watchOn").replace("{provider}", wi.providerName)
                       : t(locale, "winner", "startWatching");
                     return (
-                      <button onClick={() => { setFinalWinner(compromiseTitle); setRoundPhase("winner"); window.open(wi.url, "_blank"); }} className="button" style={{ width: "100%", marginBottom: 8 }}>
+                      <button onClick={() => { setFinalWinner(compromiseTitle); setRoundPhase("winner"); window.open(wi.url, "_blank", "noopener,noreferrer"); }} className="button" style={{ width: "100%", marginBottom: 8 }}>
                         {label}
                       </button>
                     );
@@ -2001,11 +2011,61 @@ export default function WTBetaPage() {
                         ? t(locale, "winner", "watchOn").replace("{provider}", wi.providerName)
                         : t(locale, "winner", "startWatching");
                       return (
-                        <button onClick={() => window.open(wi.url, "_blank")} className="button" style={{ width: "100%", marginBottom: 12 }}>
+                        <button onClick={() => { track("together_watch_clicked", { provider: wi.providerName, tmdb_id: finalWinner.tmdb_id, title: finalWinner.title }); window.open(wi.url, "_blank", "noopener,noreferrer"); }} className="button" style={{ width: "100%", marginBottom: 12 }}>
                           {label}
                         </button>
                       );
                     })()}
+                    {/* Email capture — show once per session, skip if user has email */}
+                    {!emailCaptured && !(authUser?.email) && (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const email = emailValue.trim();
+                          if (!email) return;
+                          setEmailCaptured(true);
+                          track("together_email_captured", { tmdb_id: finalWinner.tmdb_id, title: finalWinner.title });
+                          fetch("/api/email-capture", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              email,
+                              tmdb_id: finalWinner.tmdb_id,
+                              title: finalWinner.title,
+                              type: finalWinner.type,
+                            }),
+                          }).catch(() => {});
+                        }}
+                        className="flex gap-2 mb-3"
+                      >
+                        <input
+                          type="email"
+                          required
+                          placeholder="din@epost.no"
+                          value={emailValue}
+                          onChange={(e) => setEmailValue(e.target.value)}
+                          className="flex-1 min-w-0 px-3 py-2 rounded-lg text-sm"
+                          style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", outline: "none" }}
+                        />
+                        <button
+                          type="submit"
+                          className="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
+                          style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.85)", cursor: "pointer" }}
+                        >
+                          Send meg påminnelse
+                        </button>
+                      </form>
+                    )}
+                    {!emailCaptured && !(authUser?.email) && (
+                      <p className="text-xs mb-3 -mt-1" style={{ color: "rgba(255,255,255,0.32)" }}>
+                        Få påminnelse om å se den i kveld?
+                      </p>
+                    )}
+                    {emailCaptured && (
+                      <p className="text-xs mb-3" style={{ color: "rgba(255,200,100,0.7)" }}>
+                        ✓ Vi sender deg en påminnelse!
+                      </p>
+                    )}
                     <button
                       onClick={() => finalWinner && handleShare(finalWinner.title)}
                       className="w-full py-3 rounded-xl text-sm font-medium mb-3"
