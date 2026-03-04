@@ -5,6 +5,7 @@ import { sendWelcomeEmail } from "@/lib/email";
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
   const next = req.nextUrl.searchParams.get("next") || "/home";
+  const from = req.nextUrl.searchParams.get("from");
 
   if (code) {
     const supabase = await createSupabaseServer();
@@ -23,7 +24,12 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      const destination = count === 0 ? "/onboarding" : next;
+      let destination: string;
+      if (count === 0) {
+        destination = from === "together" ? "/onboarding?from=together" : "/onboarding";
+      } else {
+        destination = from === "together" ? "/together" : next;
+      }
       return NextResponse.redirect(new URL(destination, req.url));
     }
   }

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { getLocale, type Locale } from "../together/strings";
+import { track } from "@/lib/posthog";
 
 type MediaType = "movie" | "tv";
 
@@ -51,6 +52,7 @@ const strings = {
     pacing: "Tempo",
     exploreRec: "Utforsk anbefalinger",
     goLibrary: "Gå til biblioteket",
+    startTogether: "Start Se Sammen",
   },
   en: {
     headline: "Let's build your",
@@ -80,6 +82,7 @@ const strings = {
     pacing: "Pacing",
     exploreRec: "Explore recommendations",
     goLibrary: "Go to library",
+    startTogether: "Start Watch Together",
   },
 } as const;
 
@@ -105,6 +108,8 @@ const STREAMING_SERVICES: StreamingService[] = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isTogether = searchParams.get("from") === "together";
   const [step, setStep] = useState(1);
   const [titles, setTitles] = useState<OnboardingTitle[]>([]);
   const [loading, setLoading] = useState(false);
@@ -264,9 +269,11 @@ export default function OnboardingPage() {
         // Not critical
       }
 
+      track("onboarding_completed", { selection_count: selections.size, services_count: selectedServices.size });
       setStep(4);
     } catch {
       // Still move forward
+      track("onboarding_completed", { selection_count: selections.size, services_count: selectedServices.size });
       setStep(4);
     }
     setSaving(false);
@@ -326,7 +333,7 @@ export default function OnboardingPage() {
             </p>
 
             <button
-              onClick={() => setStep(2)}
+              onClick={() => { track("onboarding_started"); setStep(2); }}
               className="btn-press px-8 py-3.5 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_30px_var(--accent-glow-strong)] text-white rounded-[var(--radius-lg)] font-semibold text-sm transition-all duration-200"
             >
               {s.cta}
@@ -632,19 +639,32 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+            <div className="flex flex-col gap-3 w-full max-w-md">
+              {/* Primary CTA: Se Sammen if from=together, otherwise recommendations */}
               <button
-                onClick={() => router.push("/recommendations")}
-                className="btn-press flex-1 py-3 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_24px_var(--accent-glow-strong)] text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all"
+                onClick={() => router.push(isTogether ? "/together" : "/recommendations")}
+                className="btn-press w-full py-3 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_24px_var(--accent-glow-strong)] text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all"
               >
-                {s.exploreRec}
+                {isTogether ? s.startTogether : s.exploreRec}
               </button>
-              <button
-                onClick={() => router.push("/library")}
-                className="btn-press flex-1 py-3 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-md)] font-medium text-sm transition-all"
-              >
-                {s.goLibrary}
-              </button>
+
+              {/* Secondary CTAs — smaller, less prominent */}
+              {!isTogether && (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => router.push("/together")}
+                    className="btn-press flex-1 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-md)] font-medium text-xs transition-all"
+                  >
+                    {s.startTogether}
+                  </button>
+                  <button
+                    onClick={() => router.push("/library")}
+                    className="btn-press flex-1 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-md)] font-medium text-xs transition-all"
+                  >
+                    {s.goLibrary}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

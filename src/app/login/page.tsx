@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
+import { track } from "@/lib/posthog";
 
 /* ── Norwegian translations for common Supabase errors ── */
 function translateError(msg: string): string {
@@ -55,6 +56,7 @@ function LoginContent() {
     const supabase = createSupabaseBrowser();
 
     if (mode === "signup") {
+      track("signup_started");
       if (!termsAccepted) {
         setError("Du må godta brukervilkår og personvernerklæring.");
         setLoading(false);
@@ -64,7 +66,7 @@ function LoginContent() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/api/auth/callback${isTogether ? "?from=together" : ""}`,
           data: {
             terms_accepted_at: new Date().toISOString(),
             terms_version: "2025-02-15",
@@ -76,6 +78,7 @@ function LoginContent() {
       } else {
         setSignupEmail(email);
         setSignupDone(true);
+        track("signup_submitted");
       }
     } else {
       const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
@@ -97,7 +100,7 @@ function LoginContent() {
           if (count === 0) {
             if (rememberMe) localStorage.setItem("logflix_remember_me", "1");
             else localStorage.removeItem("logflix_remember_me");
-            window.location.href = "/onboarding";
+            window.location.href = isTogether ? "/onboarding?from=together" : "/onboarding";
             setLoading(false);
             return;
           }
@@ -105,7 +108,7 @@ function LoginContent() {
 
         if (rememberMe) localStorage.setItem("logflix_remember_me", "1");
         else localStorage.removeItem("logflix_remember_me");
-        window.location.href = hasGuestData ? "/home?migrated=guest" : "/home";
+        window.location.href = isTogether ? "/together" : (hasGuestData ? "/home?migrated=guest" : "/home");
       }
     }
     setLoading(false);
@@ -119,13 +122,18 @@ function LoginContent() {
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: signupEmail,
-      options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
+      options: { emailRedirectTo: `${window.location.origin}/api/auth/callback${isTogether ? "?from=together" : ""}` },
     });
     if (error) {
       setError(translateError(error.message));
     }
     setLoading(false);
   }
+
+  // Track email verification screen view
+  useEffect(() => {
+    if (signupDone) track("email_verification_viewed");
+  }, [signupDone]);
 
   const features = isTogether ? [
     {
@@ -394,6 +402,7 @@ function LoginContent() {
               <button
                 type="button"
                 onClick={async () => {
+                  track("google_oauth_clicked");
                   const supabase = createSupabaseBrowser();
                   const from = searchParams.get("from");
                   const callbackUrl = `${window.location.origin}/api/auth/callback${from ? `?from=${from}` : ""}`;
