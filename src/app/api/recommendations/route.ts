@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase-server";
 import { tmdbDiscover, tmdbTrending, tmdbSimilar, parseTitleFromTMDB } from "@/lib/tmdb";
+import { explainRecommendations } from "@/lib/ai";
 import type { UserTitle, TitleCache, Recommendation, ContentFilters } from "@/lib/types";
 import { getWatchProvidersCachedBatch } from "@/lib/watch-providers-cache";
 import { withLogger } from "@/lib/logger";
@@ -29,11 +30,32 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
       { data: exclusions },
       { data: feedback },
       { data: profile },
+      wtNopesResult,
+      wtSessionsResult,
     ] = await Promise.all([
       supabase.from("user_titles").select("*").eq("user_id", user.id),
       supabase.from("user_exclusions").select("*").eq("user_id", user.id),
       supabase.from("user_feedback").select("*").eq("user_id", user.id),
       supabase.from("profiles").select("*").eq("id", user.id).single(),
+      admin.from("wt_session_swipes")
+        .select("tmdb_id, media_type")
+        .eq("user_id", user.id)
+        .in("decision", ["nope", "meh"])
+        .then((res: { data: { tmdb_id: number; media_type: string }[] | null }) => res)
+        .catch((err: unknown) => {
+          logger.error("Failed to fetch WT nope swipes", err);
+          return { data: null } as { data: { tmdb_id: number; media_type: string }[] | null };
+        }),
+      admin.from("wt_sessions")
+        .select("id")
+        .or(`host_id.eq.${user.id},guest_id.eq.${user.id}`)
+        .order("created_at", { ascending: false })
+        .limit(50)
+        .then((res: { data: { id: string }[] | null }) => res)
+        .catch((err: unknown) => {
+          logger.error("Failed to fetch WT sessions for couple prefs", err);
+          return { data: null } as { data: { id: string }[] | null };
+        }),
     ]);
 
     const titles = (userTitles || []) as UserTitle[];
@@ -45,10 +67,79 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
         .filter((f: { feedback: string }) => f.feedback === "not_for_me")
         .map((f: { tmdb_id: number; type: string }) => `${f.tmdb_id}:${f.type}`)
     );
+    const wtNopedIds = new Set(
+      (wtNopesResult.data || []).map(
+        (s: { tmdb_id: number; media_type: string }) => `${s.tmdb_id}:${s.media_type}`
+      )
+    );
+
+    // Couple co-preference: find titles both players liked in WT sessions
+    const coupleMatchIds = new Set<string>();
+    const coupleMatchGenres = new Set<number>();
+    const wtSessionIds = (wtSessionsResult.data || []).map((s: { id: string }) => s.id);
+    if (wtSessionIds.length > 0) {
+      try {
+        const { data: coupleSwipes } = await admin
+          .from("wt_session_swipes")
+          .select("session_id, user_id, guest_id, tmdb_id, media_type")
+          .in("session_id", wtSessionIds)
+          .in("decision", ["like", "superlike"]);
+
+        // Group by (session_id:tmdb_id:media_type) → collect distinct player identities
+        const groups = new Map<string, Set<string>>();
+        for (const s of (coupleSwipes || []) as { session_id: string; user_id: string | null; guest_id: string | null; tmdb_id: number; media_type: string }[]) {
+          const key = `${s.session_id}:${s.tmdb_id}:${s.media_type}`;
+          if (!groups.has(key)) groups.set(key, new Set());
+          groups.get(key)!.add(s.user_id || s.guest_id || "unknown");
+        }
+
+        for (const [key, players] of groups) {
+          if (players.size >= 2) {
+            const parts = key.split(":");
+            coupleMatchIds.add(`${parts[1]}:${parts[2]}`);
+          }
+        }
+
+        // Fetch genres for couple-matched titles
+        if (coupleMatchIds.size > 0) {
+          const matchTmdbIds = [...coupleMatchIds].map((k) => Number(k.split(":")[0]));
+          const { data: matchCache } = await admin
+            .from("titles_cache")
+            .select("genres")
+            .in("tmdb_id", matchTmdbIds);
+
+          for (const tc of (matchCache || []) as { genres: { id: number }[] }[]) {
+            for (const g of tc.genres || []) {
+              coupleMatchGenres.add(g.id);
+            }
+          }
+        }
+      } catch (err) {
+        logger.error("Failed to fetch couple co-preferences", err);
+      }
+    }
 
     const liked = titles.filter((t) => t.sentiment === "liked");
     const disliked = titles.filter((t) => t.sentiment === "disliked");
     const explorationSlider = profile?.exploration_slider ?? 50;
+
+    // Extract taste summary keywords for scoring
+    const tasteSummary = profile?.taste_summary as {
+      youLike?: string; avoid?: string; pacing?: string;
+    } | null;
+
+    function extractKeywords(text: string | null | undefined): string[] {
+      if (!text) return [];
+      return text
+        .toLowerCase()
+        .split(/[,.\-;:()]+|\bog\b|\band\b/)
+        .map((s) => s.trim())
+        .filter((s) => s.length >= 3);
+    }
+
+    const youLikeKeywords = extractKeywords(tasteSummary?.youLike);
+    const avoidKeywords = extractKeywords(tasteSummary?.avoid);
+    const pacingText = (tasteSummary?.pacing || "").toLowerCase();
 
     function shuffle<T>(arr: T[]): T[] {
       const a = [...arr];
@@ -81,9 +172,38 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
       .slice(0, 5)
       .map(([id]) => id);
 
+    // --- Director/Cast preference extraction from liked titles ---
+    const directorCounts = new Map<string, number>();
+    const castCounts = new Map<string, number>();
+    try {
+      if (likedCached.length >= 5) {
+        for (const tc of likedCached) {
+          const payload = tc.tmdb_payload as Record<string, unknown> | null;
+          if (!payload?.credits) continue;
+          const credits = payload.credits as {
+            crew?: { job: string; name: string }[];
+            cast?: { name: string; order: number }[];
+          };
+          for (const member of credits.crew || []) {
+            if (member.job === "Director") {
+              directorCounts.set(member.name, (directorCounts.get(member.name) || 0) + 1);
+            }
+          }
+          const topCast = (credits.cast || [])
+            .sort((a, b) => a.order - b.order)
+            .slice(0, 3);
+          for (const member of topCast) {
+            castCounts.set(member.name, (castCounts.get(member.name) || 0) + 1);
+          }
+        }
+      }
+    } catch {
+      // Never crash on preference extraction
+    }
+
     // Build candidate pool
     const candidates = new Map<string, Record<string, unknown>>();
-    const skipIds = new Set([...excludedIds, ...notForMeIds]);
+    const skipIds = new Set([...excludedIds, ...notForMeIds, ...wtNopedIds, ...coupleMatchIds]);
 
     function addCandidate(item: Record<string, unknown>, type: "movie" | "tv") {
       const key = `${item.id}:${type}`;
@@ -151,6 +271,35 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
     }
     logger.info(`quality filter: ${beforeQualityFilter} → ${candidates.size} (removed ${beforeQualityFilter - candidates.size})`);
 
+    // TMDB genre ID -> name mapping
+    const GENRE_MAP: Record<number, string> = {
+      28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy", 80: "Crime",
+      99: "Documentary", 18: "Drama", 10751: "Family", 14: "Fantasy", 36: "History",
+      27: "Horror", 10402: "Music", 9648: "Mystery", 10749: "Romance", 878: "Sci-Fi",
+      10770: "TV Movie", 53: "Thriller", 10752: "War", 37: "Western",
+      10759: "Action & Adventure", 10762: "Kids", 10763: "News", 10764: "Reality",
+      10765: "Sci-Fi & Fantasy", 10766: "Soap", 10767: "Talk", 10768: "War & Politics"
+    };
+
+    // Batch-fetch candidate cache for director/cast scoring (single DB call)
+    const candidateCacheMap = new Map<string, { tmdb_payload: Record<string, unknown> | null }>();
+    if (directorCounts.size > 0 || castCounts.size > 0) {
+      try {
+        const candidateTmdbIds = [...candidates.values()].map((item) => item.id as number);
+        if (candidateTmdbIds.length > 0) {
+          const { data: candidateCache } = await admin
+            .from("titles_cache")
+            .select("tmdb_id, type, tmdb_payload")
+            .in("tmdb_id", candidateTmdbIds);
+          for (const tc of (candidateCache || []) as { tmdb_id: number; type: string; tmdb_payload: Record<string, unknown> | null }[]) {
+            candidateCacheMap.set(`${tc.tmdb_id}:${tc.type}`, tc);
+          }
+        }
+      } catch {
+        // Never crash on candidate cache fetch
+      }
+    }
+
     // Score candidates
     const dislikedGenres = new Set<number>();
     const dislikedTmdbIds = disliked.map((t) => t.tmdb_id);
@@ -212,6 +361,69 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
       // Popularity boost for moderate exploration
       const popularity = (item.popularity as number) || 0;
       if (explorationSlider > 50 && popularity > 50) score += 3;
+
+      // Taste summary scoring
+      if (tasteSummary) {
+        const overview = ((item.overview as string) || "").toLowerCase();
+        const genreNames = genreIds.map((gid) => (GENRE_MAP[gid] || "").toLowerCase()).join(" ");
+        const matchText = `${overview} ${genreNames}`;
+
+        // youLike boosting (max +2.0)
+        let youLikeBoost = 0;
+        for (const kw of youLikeKeywords) {
+          if (matchText.includes(kw)) youLikeBoost += 0.5;
+        }
+        score += Math.min(youLikeBoost, 2.0);
+
+        // avoid penalization
+        for (const kw of avoidKeywords) {
+          if (matchText.includes(kw)) score -= 1.0;
+        }
+
+        // pacing preference
+        const runtime = (item.runtime as number) || 0;
+        if (runtime > 0) {
+          if (/rolig|slow/.test(pacingText) && runtime < 100) score += 0.3;
+          if (/intens|fast/.test(pacingText) && runtime > 100) score += 0.3;
+        }
+      }
+
+      // Couple co-preference genre boost (+0.4 per genre, max +1.6)
+      if (coupleMatchGenres.size > 0) {
+        let coupleBoost = 0;
+        for (const gid of genreIds) {
+          if (coupleMatchGenres.has(gid)) coupleBoost += 0.4;
+        }
+        score += Math.min(coupleBoost, 1.6);
+      }
+
+      // Director/Cast preference boost (only when we have preference data)
+      if (candidateCacheMap.size > 0) {
+        const cached = candidateCacheMap.get(key);
+        if (cached?.tmdb_payload?.credits) {
+          const credits = cached.tmdb_payload.credits as {
+            crew?: { job: string; name: string }[];
+            cast?: { name: string; order: number }[];
+          };
+          // Director boost: +1.0 if count >= 2, +1.5 if count >= 3
+          for (const member of credits.crew || []) {
+            if (member.job === "Director") {
+              const count = directorCounts.get(member.name) || 0;
+              if (count >= 3) { score += 1.5; break; }
+              if (count >= 2) { score += 1.0; break; }
+            }
+          }
+          // Cast boost: +0.3 per match in top 5 cast, max +1.2
+          let castBoost = 0;
+          const topCandidateCast = (credits.cast || [])
+            .sort((a, b) => a.order - b.order)
+            .slice(0, 5);
+          for (const member of topCandidateCast) {
+            if ((castCounts.get(member.name) || 0) >= 2) castBoost += 0.3;
+          }
+          score += Math.min(castBoost, 1.2);
+        }
+      }
 
       scored.push({ item, score, type });
     }
@@ -308,16 +520,6 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
       top20 = pick7030(scored);
     }
 
-    // TMDB genre ID -> name mapping
-    const GENRE_MAP: Record<number, string> = {
-      28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy", 80: "Crime",
-      99: "Documentary", 18: "Drama", 10751: "Family", 14: "Fantasy", 36: "History",
-      27: "Horror", 10402: "Music", 9648: "Mystery", 10749: "Romance", 878: "Sci-Fi",
-      10770: "TV Movie", 53: "Thriller", 10752: "War", 37: "Western",
-      10759: "Action & Adventure", 10762: "Kids", 10763: "News", 10764: "Reality",
-      10765: "Sci-Fi & Fantasy", 10766: "Soap", 10767: "Talk", 10768: "War & Politics"
-    };
-
     // Cache titles and build response
     const results: {
       tmdb_id: number;
@@ -407,6 +609,32 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
         tags,
       };
     });
+
+    // Overlay AI-generated explanations if taste summary is available
+    if (tasteSummary?.youLike && tasteSummary?.avoid) {
+      try {
+        const aiTitles = top20.map(({ item, type }, i) => ({
+          title: results[i].title,
+          type,
+          year: results[i].year,
+          overview: (item.overview as string) || "",
+          genres: ((item.genre_ids as number[]) || []).map((gid) => GENRE_MAP[gid] || "").filter(Boolean),
+        }));
+        const aiExplanations = await explainRecommendations(
+          { youLike: tasteSummary.youLike, avoid: tasteSummary.avoid },
+          aiTitles
+        );
+        for (const aiExp of aiExplanations) {
+          const rec = recommendations.find((r) => r.title === aiExp.title);
+          if (rec && aiExp.why) {
+            rec.why = aiExp.why;
+            if (aiExp.tags?.length > 0) rec.tags = aiExp.tags.slice(0, 3);
+          }
+        }
+      } catch {
+        // Keep deterministic explanations as fallback
+      }
+    }
 
     return NextResponse.json({ recommendations });
   } catch (e: unknown) {

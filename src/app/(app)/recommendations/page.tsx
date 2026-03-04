@@ -360,7 +360,7 @@ export default function RecommendationsPage() {
 
               {/* Why text */}
               {hero.why && (
-                <p className="text-sm text-white/55 leading-relaxed line-clamp-2">
+                <p className="text-sm italic leading-relaxed line-clamp-2" style={{ color: "rgba(255,255,255,0.6)" }}>
                   {hero.why}
                 </p>
               )}
@@ -368,8 +368,8 @@ export default function RecommendationsPage() {
               {/* Tags */}
               {hero.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
-                  {hero.tags.map((tag) => (
-                    <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-glow)] text-[var(--accent-light)] font-medium">
+                  {hero.tags.slice(0, 3).map((tag) => (
+                    <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(255,42,42,0.08)", border: "1px solid rgba(255,42,42,0.25)", color: "rgba(255,255,255,0.7)" }}>
                       {tag}
                     </span>
                   ))}
@@ -503,12 +503,12 @@ export default function RecommendationsPage() {
                   </div>
                   <h3 className="text-xs font-semibold text-white/90 line-clamp-2 leading-tight mb-1.5">{rec.title}</h3>
                   {rec.why && (
-                    <p className="text-[10px] text-white/40 leading-relaxed line-clamp-2 mb-1.5">{rec.why}</p>
+                    <p className="text-[10px] italic leading-relaxed line-clamp-2 mb-1.5" style={{ color: "rgba(255,255,255,0.6)" }}>{rec.why}</p>
                   )}
                   {rec.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-2">
-                      {rec.tags.slice(0, 2).map((tag) => (
-                        <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--accent-glow)] text-[var(--accent-light)] font-medium">
+                      {rec.tags.slice(0, 3).map((tag) => (
+                        <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "rgba(255,42,42,0.08)", border: "1px solid rgba(255,42,42,0.25)", color: "rgba(255,255,255,0.7)" }}>
                           {tag}
                         </span>
                       ))}
@@ -561,8 +561,11 @@ export default function RecommendationsPage() {
       {/* Premium wall after free limit */}
       {hitLimit && (
         <div className="mt-6 text-center">
-          <p className="text-sm text-white/40 mb-3">
+          <p className="text-sm text-white/40 mb-1">
             Du har sett {FREE_REC_LIMIT} av {allVisible.length} anbefalinger
+          </p>
+          <p className="text-xs text-white/25 mb-3">
+            Premium-medlemmer ser forklaringer for alle anbefalinger
           </p>
           <button
             onClick={() => setShowWall(true)}
