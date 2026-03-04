@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
@@ -14,6 +15,13 @@ export async function GET(req: NextRequest) {
         .from("user_titles")
         .select("*", { count: "exact", head: true })
         .eq("user_id", data.session.user.id);
+
+      if (count === 0) {
+        const { email, user_metadata } = data.session.user;
+        if (email) {
+          sendWelcomeEmail(email, user_metadata?.full_name).catch(() => {});
+        }
+      }
 
       const destination = count === 0 ? "/onboarding" : next;
       return NextResponse.redirect(new URL(destination, req.url));
