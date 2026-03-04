@@ -6,6 +6,7 @@ import AIThinkingScreen from "@/components/AIThinkingScreen";
 import EmptyState from "@/components/EmptyState";
 import GlassCard from "@/components/GlassCard";
 import GlowButton from "@/components/GlowButton";
+import PremiumModal from "@/components/PremiumModal";
 import type { TasteSummary } from "@/lib/types";
 
 export default function TastePage() {
@@ -13,8 +14,14 @@ export default function TastePage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [isPremium, setIsPremium] = useState(true);
+  const [showPremium, setShowPremium] = useState(false);
 
   useEffect(() => {
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((d) => { if (d.profile) setIsPremium(!!d.profile.is_premium); })
+      .catch(() => {});
     loadSummary();
   }, []);
 
@@ -50,9 +57,28 @@ export default function TastePage() {
     <div className="animate-fade-in-up">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-[var(--text-primary)]">Din smaksprofil</h2>
-        <GlowButton onClick={generate} disabled={generating}>
-          {summary ? "Generer på nytt" : "Analyser min smak"}
-        </GlowButton>
+        {/* No summary yet: allow free first generation */}
+        {!summary && (
+          <GlowButton onClick={generate} disabled={generating}>
+            Analyser min smak
+          </GlowButton>
+        )}
+        {/* Has summary + premium: allow refresh */}
+        {summary && isPremium && (
+          <GlowButton onClick={generate} disabled={generating}>
+            Oppdater smaksprofil
+          </GlowButton>
+        )}
+        {/* Has summary + NOT premium: show upgrade trigger */}
+        {summary && !isPremium && (
+          <button
+            onClick={() => setShowPremium(true)}
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: "#ff2a2a" }}
+          >
+            Oppgrader for å oppdatere
+          </button>
+        )}
       </div>
 
       {error && (
@@ -112,6 +138,8 @@ export default function TastePage() {
           )}
         </div>
       )}
+
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} />
     </div>
   );
 }

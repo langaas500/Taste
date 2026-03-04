@@ -6,6 +6,7 @@ import Link from "next/link";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import GlassCard from "@/components/GlassCard";
 import GlowButton from "@/components/GlowButton";
+import PremiumModal from "@/components/PremiumModal";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { fetchLinks, createInvite, acceptInvite, updateLinkSharing, revokeLink, fetchLists } from "@/lib/api";
 import { FILTER_PRESETS, presetsToFilters, filtersToPresets } from "@/lib/filter-presets";
@@ -35,6 +36,8 @@ function SettingsContent() {
   const [savingFilters, setSavingFilters] = useState(false);
   const [linkedProviders, setLinkedProviders] = useState<string[]>([]);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
+  const [showPremium, setShowPremium] = useState(false);
 
   const traktMsg = searchParams.get("trakt");
   const errorMsg = searchParams.get("error");
@@ -51,6 +54,7 @@ function SettingsContent() {
       if (data.profile) {
         setExplorationSlider(data.profile.exploration_slider ?? 50);
         setDisplayName(data.profile.display_name || "");
+        setIsPremium(!!data.profile.is_premium);
         const filters = (data.profile.content_filters || {}) as ContentFilters;
         setActivePresets(filtersToPresets(filters));
       }
@@ -292,6 +296,27 @@ function SettingsContent() {
               Rediger
             </button>
           </div>
+        )}
+      </GlassCard>
+
+      {/* Premium */}
+      <GlassCard hover={false} className="p-5">
+        <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">Premium</h3>
+        {isPremium ? (
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+            <span className="text-sm font-medium text-emerald-400">Premium-medlem</span>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowPremium(true)}
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: "#ff2a2a" }}
+          >
+            Oppgrader til Premium
+          </button>
         )}
       </GlassCard>
 
@@ -626,6 +651,8 @@ function SettingsContent() {
           Logg ut
         </GlowButton>
       </GlassCard>
+
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} />
     </div>
   );
 }

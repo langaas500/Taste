@@ -7,10 +7,13 @@ import EmptyState from "@/components/EmptyState";
 import GlowButton from "@/components/GlowButton";
 import StreamingModal from "@/components/StreamingModal";
 import AddToListModal from "@/components/AddToListModal";
+import ConversionWall from "@/components/ConversionWall";
 import { submitFeedback, addExclusion, logTitle } from "@/lib/api";
 import { prefetchNetflixIds } from "@/lib/prefetch-netflix-ids";
 import type { Recommendation, MediaType } from "@/lib/types";
 import { getLocale, type Locale } from "@/app/together/strings";
+
+const FREE_REC_LIMIT = 5;
 
 type TypeFilter = "all" | "tv" | "movie";
 
@@ -84,9 +87,15 @@ export default function RecommendationsPage() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [locale, setLocale] = useState<Locale>("en");
+  const [isPremium, setIsPremium] = useState(true); // default true to avoid flash
+  const [showWall, setShowWall] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((d) => { if (d.profile) setIsPremium(!!d.profile.is_premium); })
+      .catch(() => {});
     loadRecs();
     fetch("/api/together/ribbon")
       .then((r) => r.json())
@@ -178,9 +187,12 @@ export default function RecommendationsPage() {
 
   const s = strings[locale];
 
-  const visible = recs
+  const allVisible = recs
     .filter((r) => !dismissed.has(`${r.tmdb_id}:${r.type}`))
     .filter((r) => typeFilter === "all" || r.type === typeFilter);
+
+  const hitLimit = !isPremium && allVisible.length > FREE_REC_LIMIT;
+  const visible = hitLimit ? allVisible.slice(0, FREE_REC_LIMIT) : allVisible;
 
   const hero = visible[0] ?? null;
   const gridRecs = visible.slice(1);
@@ -545,6 +557,24 @@ export default function RecommendationsPage() {
           })}
         </div>
       )}
+
+      {/* Premium wall after free limit */}
+      {hitLimit && (
+        <div className="mt-6 text-center">
+          <p className="text-sm text-white/40 mb-3">
+            Du har sett {FREE_REC_LIMIT} av {allVisible.length} anbefalinger
+          </p>
+          <button
+            onClick={() => setShowWall(true)}
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: "#ff2a2a" }}
+          >
+            Oppgrader til Premium
+          </button>
+        </div>
+      )}
+
+      <ConversionWall open={showWall} onClose={() => setShowWall(false)} premium />
 
       {/* Add to List Modal */}
       {addToListItem && (
