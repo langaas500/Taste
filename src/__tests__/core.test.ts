@@ -210,6 +210,10 @@ describe("env validation (env.ts)", () => {
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "test-service-key");
     vi.stubEnv("TMDB_API_KEY", "test-tmdb-key");
     vi.stubEnv("ANTHROPIC_API_KEY", "test-ai-key");
+    vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_xxx");
+    vi.stubEnv("STRIPE_WEBHOOK_SECRET", "whsec_test_xxx");
+    vi.stubEnv("STRIPE_FOUNDING_PRICE_ID", "price_test_founding");
+    vi.stubEnv("STRIPE_STANDARD_PRICE_ID", "price_test_standard");
 
     const { env } = await import("@/lib/env");
     expect(env.TMDB_API_KEY).toBe("test-tmdb-key");
