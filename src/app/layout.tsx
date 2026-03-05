@@ -9,25 +9,27 @@ const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://logflix.app"),
-  title: "Logflix — Agree on what to watch. Instantly.",
-  description: "Swipe separately. Match when you both like it. Free, no account needed.",
+  title: "Logflix — Finn noe å se sammen",
+  description: "Sveip deg frem til enighet. Match med partneren din på under 3 minutter.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Logflix",
   },
   openGraph: {
-    title: "Logflix — Agree on what to watch. Instantly.",
-    description: "Swipe separately. Match when you both like it. Free, no account needed.",
+    title: "Logflix — Finn noe å se sammen",
+    description: "Sveip deg frem til enighet. Match med partneren din på under 3 minutter.",
     url: "https://logflix.app",
     siteName: "Logflix",
-    locale: "en_US",
+    locale: "nb_NO",
     type: "website",
+    images: ["/og-image.png"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Logflix — Agree on what to watch. Instantly.",
-    description: "Swipe separately. Match when you both like it.",
+    title: "Logflix — Finn noe å se sammen",
+    description: "Sveip deg frem til enighet. Match med partneren din på under 3 minutter.",
+    images: ["/og-image.png"],
   },
   verification: {
     google: "google3a70000c026a667b",
