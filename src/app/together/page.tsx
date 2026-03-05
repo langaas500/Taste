@@ -1703,25 +1703,21 @@ export default function WTBetaPage() {
                   {titlesLoading ? t(locale, "intro", "loading") : introChoice === "solo" ? t(locale, "intro", "startSolo") : t(locale, "intro", "startPaired")}
                 </button>
                 {!authUser && (
-                  <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", textAlign: "center", marginTop: 8 }}>
+                  <p className="text-xs text-white/40 text-center mt-2">
                     {t(locale, "intro", "noAccountNeeded")}
                   </p>
                 )}
               </div>
 
               {/* Secondary: I have a code — always visible */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                 <button
                   onClick={() => setScreen("join")}
-                  style={{
-                    background: "none", border: "none",
-                    color: "rgba(255,255,255,0.28)",
-                    fontSize: "0.75rem", fontWeight: 500,
-                    cursor: "pointer", padding: "4px 0",
-                  }}
+                  className="mt-3 w-full rounded-xl border border-white/8 bg-white/5 py-2.5 text-sm font-medium text-white/60 hover:bg-white/[0.08] active:bg-white/10 transition-colors cursor-pointer"
                 >
                   {t(locale, "intro", "hasCode")}
                 </button>
+                <p className="mt-1 text-xs text-white/35 text-center">Enter 6 characters</p>
                 {sessionError && <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: "0.25rem" }}>{sessionError}</p>}
               </div>
 
