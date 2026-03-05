@@ -356,6 +356,7 @@ export default function WTBetaPage() {
   const [fly, setFly] = useState<{ active: boolean; x: number; rot: number }>({ active: false, x: 0, rot: 0 });
 
   const [authUser, setAuthUser] = useState<{ email?: string } | null>(null);
+  const firstSwipeTrackedRef = useRef(false);
   const ptr = useRef<{ id: number | null; sx: number; sy: number; target: HTMLElement | null }>({ id: null, sx: 0, sy: 0, target: null });
 
   const { isTouch } = useInputMode();
@@ -365,6 +366,7 @@ export default function WTBetaPage() {
   /* ── mount ── */
   useEffect(() => {
     setMounted(true);
+    track("together_viewed", { mode: introChoice, is_guest: !authUser });
     try {
       const saved = localStorage.getItem("ss_pref_mode");
       if (saved === "series" || saved === "movies" || saved === "mix") {
@@ -732,6 +734,7 @@ export default function WTBetaPage() {
     if (roundPhase !== "winner") { setMatchRevealPhase(0); return; }
     if (finalWinner) {
       track("together_match_found", { mode, tmdb_id: finalWinner.tmdb_id, title: finalWinner.title, type: finalWinner.type, round });
+      track("match_created", { session_id: sessionId, title_id: finalWinner.tmdb_id, match_type: "like_like" });
     }
     try { localStorage.removeItem("wt_session_resume"); } catch {}
     const t1 = window.setTimeout(() => setMatchRevealPhase(1), 400);
@@ -770,7 +773,10 @@ export default function WTBetaPage() {
 
   /* ── reset message index on context change ── */
   useEffect(() => {
-    if (screen === "waiting") setWaitingFactIndex(0);
+    if (screen === "waiting") {
+      setWaitingFactIndex(0);
+      track("invite_share_opened", { session_id: sessionId });
+    }
   }, [screen]);
 
   useEffect(() => {
@@ -819,6 +825,7 @@ export default function WTBetaPage() {
     setDeck([...ts]);
     setDeckIndex(0);
     setScreen("together");
+    firstSwipeTrackedRef.current = false;
     track("together_session_started", { mode: "solo", locale });
     try { localStorage.setItem("ss_last_play_date", new Date().toISOString().slice(0, 10)); } catch { /* ignore */ }
     setTimer(ROUND1_DURATION);
@@ -858,6 +865,7 @@ export default function WTBetaPage() {
     endedRoundRef.current = 0;
     endingRoundRef.current = false;
     iAmDoneRef.current = false;
+    firstSwipeTrackedRef.current = false;
     setIAmDone(false);
     setWaitingFactIndex(0);
     setRound(1);
@@ -884,12 +892,13 @@ export default function WTBetaPage() {
     const shareUrl = "https://logflix.app/together";
     const shareText = `${t(locale, "winner", "shareText")} ${titleName}`;
     if (typeof navigator !== "undefined" && navigator.share) {
-      try { await navigator.share({ title: titleName, text: shareText, url: shareUrl }); } catch { /* cancelled */ }
+      try { await navigator.share({ title: titleName, text: shareText, url: shareUrl }); track("invite_shared", { session_id: sessionId, method: "native_share" }); } catch { /* cancelled */ }
     } else {
       try {
         await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
         setShareState("copied");
         setTimeout(() => setShareState("idle"), 2000);
+        track("invite_copy_link", { session_id: sessionId, method: "copy" });
       } catch { /* ignore */ }
     }
   }
@@ -918,6 +927,10 @@ export default function WTBetaPage() {
     // Warm up AudioContext on first user gesture (Safari requires this)
     if (!audioCtxRef.current) {
       try { audioCtxRef.current = new AudioContext(); } catch { /* ignore */ }
+    }
+    if (!firstSwipeTrackedRef.current) {
+      firstSwipeTrackedRef.current = true;
+      track("swipe_started", { session_id: sessionId, is_guest: !authUser });
     }
     if (!(t.tmdb_id in swipeTimings.current)) {
       swipeTimings.current[t.tmdb_id] = Date.now() - cardStartTime.current;
@@ -961,7 +974,7 @@ export default function WTBetaPage() {
         .then((data) => {
           if (data.doubleSuperMatch) {
             const mt = titles.find((x) => x.tmdb_id === data.doubleSuperMatch.tmdb_id);
-            if (mt) { setFinalWinner(mt); setRoundPhase("double-super"); setTimerRunning(false); }
+            if (mt) { setFinalWinner(mt); setRoundPhase("double-super"); setTimerRunning(false); track("match_created", { session_id: sessionId, title_id: mt.tmdb_id, match_type: "superlike" }); }
           }
         })
         .catch(() => {});
@@ -1043,8 +1056,10 @@ export default function WTBetaPage() {
       try { localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify({ titles: data.session.titles, mood: "", ts: Date.now() })); } catch { /* ignore */ }
       try { localStorage.setItem("wt_session_resume", JSON.stringify({ sessionId: data.session.id, sessionCode: data.session.code, ts: Date.now() })); } catch {}
       endedRoundRef.current = 0; endingRoundRef.current = false;
+      firstSwipeTrackedRef.current = false;
       setMode("paired"); setScreen("waiting");
       track("together_session_started", { mode: "duo", locale });
+      track("duo_session_started", { provider_count: selectedProviders.length });
     } catch (e: unknown) {
       setSessionError(e instanceof Error ? e.message : "Kunne ikke opprette runde");
     }
@@ -1086,6 +1101,7 @@ export default function WTBetaPage() {
         if (!data.session) return;
         if (!partnerJoined && data.session.partner_joined) {
           setPartnerJoined(true);
+          track("partner_joined", { is_guest: !authUser });
           if (screen === "waiting") {
             setDeck([...titles]); setDeckIndex(0);
             setScreen("together"); setTimer(ROUND1_DURATION); setTimerRunning(true);
@@ -1114,7 +1130,7 @@ export default function WTBetaPage() {
             const key = `${myId}:${myTitle.type}`;
             const partnerSw = (data.session.partner_swipes ?? {}) as Record<string, string>;
             if (partnerSw[key] === "superlike") {
-              setFinalWinner(myTitle); setRoundPhase("double-super"); setTimerRunning(false); return;
+              setFinalWinner(myTitle); setRoundPhase("double-super"); setTimerRunning(false); track("match_created", { session_id: sessionId, title_id: myId, match_type: "superlike" }); return;
             }
           }
         }
@@ -1565,7 +1581,7 @@ export default function WTBetaPage() {
                   border: "1px solid rgba(255,255,255,0.10)",
                   animation: "code-glow 2s ease-in-out infinite alternate",
                 }}
-                onClick={() => { navigator.clipboard.writeText(sessionCode).catch(() => {}); track("invite_shared", { method: "copy" }); }}
+                onClick={() => { navigator.clipboard.writeText(sessionCode).catch(() => {}); track("invite_copy_link", { session_id: sessionId, method: "copy" }); }}
               >
                 <span className="text-3xl font-mono font-black tracking-[0.3em] text-white">{sessionCode}</span>
                 <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="rgba(255,255,255,0.4)">
@@ -2082,11 +2098,10 @@ export default function WTBetaPage() {
                           const text = t(locale, "winner", "soloInviteCta");
                           const url = `${window.location.origin}/together`;
                           if (navigator.share) {
-                            navigator.share({ title: "Logflix — Se Sammen", text, url }).catch(() => {});
-                            track("invite_shared", { method: "share_api" });
+                            navigator.share({ title: "Logflix — Se Sammen", text, url }).then(() => { track("invite_shared", { session_id: sessionId, method: "native_share" }); }).catch(() => {});
                           } else {
                             navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
-                            track("invite_shared", { method: "copy" });
+                            track("invite_copy_link", { session_id: sessionId, method: "copy" });
                           }
                         }}
                         className="w-full py-3 mt-2 rounded-xl text-sm font-medium"
