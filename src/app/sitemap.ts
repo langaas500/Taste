@@ -14,35 +14,45 @@ const pairs: [string, string][] = [
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
 
-  return [
-    ...pairs.flatMap(([no, en]) => [
-      {
-        url: `${base}${no}`,
-        lastModified,
-        alternates: {
-          languages: {
-            nb: `${base}${no}`,
-            en: `${base}${en}`,
-            "x-default": `${base}${no}`,
-          },
-        },
-      },
-      {
-        url: `${base}${en}`,
-        lastModified,
-        alternates: {
-          languages: {
-            nb: `${base}${no}`,
-            en: `${base}${en}`,
-            "x-default": `${base}${no}`,
-          },
-        },
-      },
-    ]),
-    { url: `${base}/`, lastModified },
-    { url: `${base}/together`, lastModified },
-    { url: `${base}/privacy`, lastModified },
-    { url: `${base}/contact`, lastModified },
-    { url: `${base}/terms`, lastModified },
+  const mainPages: MetadataRoute.Sitemap = [
+    { url: `${base}/`, lastModified, changeFrequency: "weekly", priority: 1 },
+    { url: `${base}/together`, lastModified, changeFrequency: "weekly", priority: 0.9 },
   ];
+
+  const seoPages: MetadataRoute.Sitemap = pairs.flatMap(([no, en]) => [
+    {
+      url: `${base}${no}`,
+      lastModified,
+      changeFrequency: "weekly",
+      priority: 0.85,
+      alternates: {
+        languages: {
+          nb: `${base}${no}`,
+          en: `${base}${en}`,
+          "x-default": `${base}${no}`,
+        },
+      },
+    },
+    {
+      url: `${base}${en}`,
+      lastModified,
+      changeFrequency: "weekly",
+      priority: 0.85,
+      alternates: {
+        languages: {
+          nb: `${base}${no}`,
+          en: `${base}${en}`,
+          "x-default": `${base}${no}`,
+        },
+      },
+    },
+  ]);
+
+  const utilityPages: MetadataRoute.Sitemap = [
+    { url: `${base}/privacy`, lastModified, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${base}/contact`, lastModified, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${base}/terms`, lastModified, changeFrequency: "monthly", priority: 0.3 },
+  ];
+
+  return [...mainPages, ...seoPages, ...utilityPages];
 }
