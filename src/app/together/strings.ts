@@ -29,6 +29,8 @@ const strings = {
     pairedExplainer: { no: "Begge swiper. Kun felles liker gir match.", en: "Both swipe. Only mutual likes become a match." },
     recommended: { no: "Anbefalt", en: "Recommended" },
     soon: { no: "BETA", en: "BETA" },
+    noAccountNeeded: { no: "Ingen konto nødvendig", en: "No account needed" },
+    otherWays: { no: "Andre måter", en: "Other ways" },
   },
 
   // ============================================
@@ -51,10 +53,12 @@ const strings = {
   // WAITING (host venter på partner)
   // ============================================
   waiting: {
-    headline: { no: "Venter på partner…", en: "Waiting for partner…" },
+    headline: { no: "Inviter partneren din", en: "Invite your partner" },
     ingress: { no: "Del koden med den andre.", en: "Share the code with your partner." },
     copyHint: { no: "Trykk for å kopiere", en: "Tap to copy" },
     scanOrShare: { no: "Skann eller del koden", en: "Scan or share the code" },
+    sendInvite: { no: "Send invitasjon", en: "Send invitation" },
+    copied: { no: "Kopiert!", en: "Copied!" },
     cancel: { no: "Avbryt", en: "Cancel" },
   },
 

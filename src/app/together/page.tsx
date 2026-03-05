@@ -315,6 +315,7 @@ export default function WTBetaPage() {
   const [partnerJoined, setPartnerJoined] = useState(false);
   const [partnerSwipeCount, setPartnerSwipeCount] = useState(0);
   const [sessionError, setSessionError] = useState("");
+  const [shareState, setShareState] = useState<"idle" | "copied">("idle");
 
   // Round engine
   const [roundPhase, setRoundPhase] = useState<RoundPhase>("swiping");
@@ -324,7 +325,6 @@ export default function WTBetaPage() {
   const [isFallbackCompromise, setIsFallbackCompromise] = useState(false);
   const [finalWinner, setFinalWinner] = useState<WTTitle | null>(null);
   const [winnerProviderIds, setWinnerProviderIds] = useState<number[]>([]);
-  const [shareState, setShareState] = useState<"idle" | "copied">("idle");
   const [emailCaptured, setEmailCaptured] = useState(false);
   const [emailValue, setEmailValue] = useState("");
   const [superLikesUsed, setSuperLikesUsed] = useState(0);
@@ -1342,103 +1342,142 @@ export default function WTBetaPage() {
                 </p>
               </div>
 
-              {/* Mode selector cards */}
+              {/* Primary: Duo card */}
+              <div style={{ marginBottom: 16 }}>
+                <button
+                  className="intro-card"
+                  onClick={() => setIntroChoice("paired")}
+                  style={{
+                    width: "100%",
+                    position: "relative",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                    padding: "20px 10px",
+                    minHeight: 130,
+                    borderRadius: 16,
+                    border: introChoice === "paired" ? "1.5px solid rgba(255,42,42,0.5)" : "1px solid rgba(255,42,42,0.3)",
+                    background: introChoice === "paired" ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    transform: introChoice === "paired" ? "scale(1.02)" : "scale(1)",
+                    boxShadow: "0 0 24px rgba(255,42,42,0.2)",
+                  }}
+                >
+                  <span style={{
+                    position: "absolute",
+                    top: 6,
+                    right: 6,
+                    fontSize: "0.625rem",
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.9)",
+                    backgroundColor: "rgba(255,42,42,0.8)",
+                    padding: "2px 6px",
+                    borderRadius: 6,
+                    letterSpacing: "0.02em",
+                    textTransform: "uppercase",
+                  }}>
+                    {t(locale, "intro", "recommended")}
+                  </span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/two-phones.svg"
+                    alt={t(locale, "intro", "pairedLabel")}
+                    className="intro-card-icon"
+                    style={{ height: 48, width: "auto", opacity: 1, transition: "opacity 160ms ease" }}
+                  />
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                    <span className="intro-card-label" style={{
+                      fontSize: "0.875rem",
+                      fontWeight: 600,
+                      color: "rgba(255,255,255,0.92)",
+                      letterSpacing: "-0.01em",
+                    }}>
+                      {t(locale, "intro", "pairedLabel")}
+                    </span>
+                    <span style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 400,
+                      color: "rgba(255,255,255,0.45)",
+                      letterSpacing: "-0.005em",
+                      lineHeight: 1.3,
+                    }}>
+                      {t(locale, "intro", "pairedDesc")}
+                    </span>
+                    <span style={{
+                      fontSize: "12px",
+                      fontWeight: 400,
+                      color: "rgba(255,255,255,0.6)",
+                      textAlign: "center",
+                      marginTop: "8px",
+                      lineHeight: 1.3,
+                    }}>
+                      {t(locale, "intro", "pairedExplainer")}
+                    </span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Secondary: Solo + Group */}
+              <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", textAlign: "center", marginBottom: 8 }}>
+                {t(locale, "intro", "otherWays")}
+              </p>
               <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                {(["solo", "paired"] as const).map((choice) => {
-                  const active = introChoice === choice;
-                  const isPaired = choice === "paired";
-                  return (
-                    <button
-                      key={choice}
-                      className="intro-card"
-                      onClick={() => setIntroChoice(choice)}
-                      style={{
-                        flex: 1,
-                        position: "relative",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 10,
-                        padding: isPaired ? "20px 10px" : "18px 8px",
-                        minHeight: 130,
-                        borderRadius: 16,
-                        border: isPaired
-                          ? (active ? "1.5px solid rgba(255,42,42,0.5)" : "1px solid rgba(255,42,42,0.3)")
-                          : (active ? "1.5px solid rgba(255,255,255,0.25)" : "1px solid rgba(255,255,255,0.06)"),
-                        background: active ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.03)",
-                        opacity: active ? 1 : 0.6,
-                        cursor: "pointer",
-                        transition: "all 0.3s ease",
-                        transform: isPaired
-                          ? (active ? "scale(1.06)" : "scale(1.04)")
-                          : (active ? "scale(1.03)" : "scale(1)"),
-                        boxShadow: isPaired
-                          ? "0 0 24px rgba(255,42,42,0.2)"
-                          : (active ? "0 0 20px rgba(255,42,42,0.12)" : "none"),
-                      }}
-                    >
-                      {isPaired && (
-                        <span style={{
-                          position: "absolute",
-                          top: 6,
-                          right: 6,
-                          fontSize: "0.625rem",
-                          fontWeight: 600,
-                          color: "rgba(255,255,255,0.9)",
-                          backgroundColor: "rgba(255,42,42,0.8)",
-                          padding: "2px 6px",
-                          borderRadius: 6,
-                          letterSpacing: "0.02em",
-                          textTransform: "uppercase",
-                        }}>
-                          {t(locale, "intro", "recommended")}
-                        </span>
-                      )}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={choice === "solo" ? "/one-phone.svg" : "/two-phones.svg"}
-                        alt={choice === "solo" ? t(locale, "intro", "soloLabel") : t(locale, "intro", "pairedLabel")}
-                        className="intro-card-icon"
-                        style={{ height: 48, width: "auto", opacity: active ? 1 : 0.55, transition: "opacity 160ms ease" }}
-                      />
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                        <span className="intro-card-label" style={{
-                          fontSize: "0.875rem",
-                          fontWeight: active ? 600 : 400,
-                          color: active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.42)",
-                          letterSpacing: "-0.01em",
-                          transition: "all 160ms ease",
-                        }}>
-                          {choice === "solo" ? t(locale, "intro", "soloLabel") : t(locale, "intro", "pairedLabel")}
-                        </span>
-                        <span style={{
-                          fontSize: "0.75rem",
-                          fontWeight: 400,
-                          color: active ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.22)",
-                          letterSpacing: "-0.005em",
-                          lineHeight: 1.3,
-                          transition: "all 160ms ease",
-                        }}>
-                          {choice === "solo" ? t(locale, "intro", "soloDesc") : t(locale, "intro", "pairedDesc")}
-                        </span>
-                        {isPaired && (
-                          <span style={{
-                            fontSize: "12px",
-                            fontWeight: 400,
-                            color: "rgba(255,255,255,0.6)",
-                            textAlign: "center",
-                            marginTop: "8px",
-                            lineHeight: 1.3,
-                          }}>
-                            {t(locale, "intro", "pairedExplainer")}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-                {/* Group teaser — not interactive */}
+                {/* Solo card */}
+                <button
+                  className="intro-card"
+                  onClick={() => setIntroChoice("solo")}
+                  style={{
+                    flex: 1,
+                    position: "relative",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                    padding: "18px 8px",
+                    minHeight: 110,
+                    borderRadius: 16,
+                    border: introChoice === "solo" ? "1.5px solid rgba(255,255,255,0.25)" : "1px solid rgba(255,255,255,0.06)",
+                    background: introChoice === "solo" ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.03)",
+                    opacity: introChoice === "solo" ? 0.9 : 0.55,
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/one-phone.svg"
+                    alt={t(locale, "intro", "soloLabel")}
+                    className="intro-card-icon"
+                    style={{ height: 36, width: "auto", opacity: introChoice === "solo" ? 0.8 : 0.45, transition: "opacity 160ms ease" }}
+                  />
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                    <span className="intro-card-label" style={{
+                      fontSize: "0.8rem",
+                      fontWeight: introChoice === "solo" ? 600 : 400,
+                      color: introChoice === "solo" ? "rgba(255,255,255,0.80)" : "rgba(255,255,255,0.38)",
+                      letterSpacing: "-0.01em",
+                      transition: "all 160ms ease",
+                    }}>
+                      {t(locale, "intro", "soloLabel")}
+                    </span>
+                    <span style={{
+                      fontSize: "0.7rem",
+                      fontWeight: 400,
+                      color: introChoice === "solo" ? "rgba(255,255,255,0.38)" : "rgba(255,255,255,0.20)",
+                      letterSpacing: "-0.005em",
+                      lineHeight: 1.3,
+                      transition: "all 160ms ease",
+                    }}>
+                      {t(locale, "intro", "soloDesc")}
+                    </span>
+                  </div>
+                </button>
+
+                {/* Group card */}
                 <div className="intro-card" style={{
                   flex: 1,
                   display: "flex",
@@ -1447,39 +1486,40 @@ export default function WTBetaPage() {
                   justifyContent: "center",
                   gap: 10,
                   padding: "18px 8px",
-                  minHeight: 130,
+                  minHeight: 110,
                   borderRadius: 16,
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.06)",
                   background: "rgba(255,255,255,0.03)",
                   cursor: "pointer",
                   position: "relative",
+                  opacity: 0.55,
                 }}
                 onClick={() => router.push("/group")}
                 >
                   <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 4 }}>
                     <div style={{
-                      fontSize: "0.6rem", fontWeight: 600,
-                      padding: "2px 6px", borderRadius: 4,
+                      fontSize: "0.55rem", fontWeight: 600,
+                      padding: "2px 5px", borderRadius: 4,
                       background: "rgba(255,42,42,0.2)",
                       border: "1px solid rgba(255,42,42,0.3)",
                       color: "rgba(255,255,255,0.8)",
                       letterSpacing: "0.06em",
                     }}>NEW</div>
                     <div style={{
-                      fontSize: "0.6rem", fontWeight: 600,
-                      padding: "2px 6px", borderRadius: 4,
+                      fontSize: "0.55rem", fontWeight: 600,
+                      padding: "2px 5px", borderRadius: 4,
                       background: "rgba(74,222,128,0.15)",
                       border: "1px solid rgba(74,222,128,0.3)",
                       color: "#4ade80",
                       letterSpacing: "0.06em",
                     }}>{t(locale, "intro", "soon")}</div>
                   </div>
-                  <span style={{ fontSize: 36, lineHeight: 1 }}>👥</span>
+                  <span style={{ fontSize: 28, lineHeight: 1 }}>👥</span>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                    <span style={{ fontSize: "0.875rem", fontWeight: 500, color: "rgba(255,255,255,0.65)", letterSpacing: "-0.01em" }}>
+                    <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "rgba(255,255,255,0.50)", letterSpacing: "-0.01em" }}>
                       {t(locale, "intro", "groupLabel")}
                     </span>
-                    <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "rgba(255,255,255,0.30)", letterSpacing: "-0.005em", lineHeight: 1.3 }}>
+                    <span style={{ fontSize: "0.7rem", fontWeight: 400, color: "rgba(255,255,255,0.22)", letterSpacing: "-0.005em", lineHeight: 1.3 }}>
                       {t(locale, "intro", "groupDesc")}
                     </span>
                   </div>
@@ -1507,6 +1547,11 @@ export default function WTBetaPage() {
                 >
                   {titlesLoading ? t(locale, "intro", "loading") : introChoice === "solo" ? t(locale, "intro", "startSolo") : t(locale, "intro", "startPaired")}
                 </button>
+                {!authUser && (
+                  <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", textAlign: "center", marginTop: 8 }}>
+                    {t(locale, "intro", "noAccountNeeded")}
+                  </p>
+                )}
               </div>
 
               {/* Secondary: I have a code — always visible */}
@@ -1589,6 +1634,29 @@ export default function WTBetaPage() {
                 </svg>
               </div>
               <p className="text-[11px] mb-6" style={{ color: "rgba(255,255,255,0.25)" }}>{t(locale, "waiting", "copyHint")}</p>
+              <button
+                onClick={() => {
+                  const shareUrl = `https://logflix.app/together?code=${sessionCode}`;
+                  const shareText = locale === "no"
+                    ? "Swipe filmer med meg og se hva vi matcher på \u{1F3AC}"
+                    : "Swipe movies with me and see what we match on \u{1F3AC}";
+                  if (navigator.share) {
+                    navigator.share({ title: "Logflix", text: shareText, url: shareUrl })
+                      .then(() => { track("invite_shared", { session_id: sessionId, method: "native_share" }); })
+                      .catch(() => {});
+                  } else {
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                      setShareState("copied");
+                      track("invite_shared", { session_id: sessionId, method: "copy" });
+                      setTimeout(() => setShareState("idle"), 2000);
+                    }).catch(() => {});
+                  }
+                }}
+                className="w-full mt-4 py-3 px-4 rounded-xl text-white font-medium text-sm transition-colors cursor-pointer"
+                style={{ background: shareState === "copied" ? "#3f3f46" : RED, border: "none", marginBottom: 16 }}
+              >
+                {shareState === "copied" ? t(locale, "waiting", "copied") : t(locale, "waiting", "sendInvite")}
+              </button>
               <p
                 key={waitingFactIndex}
                 className="wf-msg text-[11px] mb-8"
