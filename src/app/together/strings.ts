@@ -60,6 +60,7 @@ const strings = {
     sendInvite: { no: "Send invitasjon", en: "Send invitation" },
     copied: { no: "Kopiert!", en: "Copied!" },
     cancel: { no: "Avbryt", en: "Cancel" },
+    startSolo: { no: "Start alene i stedet", en: "Start solo instead" },
   },
 
   // ============================================
@@ -169,6 +170,12 @@ const strings = {
     login: { no: "Logg inn", en: "Log in" },
   },
 } as const;
+
+export function cardsLeft(locale: Locale, round: number, n: number): string {
+  return locale === "no"
+    ? `Runde ${round} \u2022 ${n} kort igjen`
+    : `Round ${round} \u2022 ${n} cards left`;
+}
 
 // Helper: hent streng for gitt locale
 export function t(locale: Locale, screen: keyof typeof strings, key: string): string {

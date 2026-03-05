@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { logTitle } from "@/lib/api";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { getMessages } from "./messages";
-import { getLocale, t, type Locale } from "./strings";
+import { getLocale, t, cardsLeft, type Locale } from "./strings";
 import QRCode from "qrcode";
 import { track } from "@/lib/posthog";
 
@@ -344,6 +344,9 @@ export default function WTBetaPage() {
   const [iAmDone, setIAmDone] = useState(false);
   const [waitingFactIndex, setWaitingFactIndex] = useState(0);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const [showSuperLikeFlash, setShowSuperLikeFlash] = useState(false);
+  const superLikeFlashTimeoutRef = useRef<number | null>(null);
+  useEffect(() => () => { if (superLikeFlashTimeoutRef.current) clearTimeout(superLikeFlashTimeoutRef.current); }, []);
 
   const superLikedIdRef = useRef<number | null>(null);
   const cardStartTime = useRef<number>(0);
@@ -1004,6 +1007,13 @@ export default function WTBetaPage() {
     if (superLikesUsed >= SUPERLIKES_PER_ROUND) return;
     const t = deck[deckIndex];
     if (!t) return;
+    // Flash overlay
+    if (superLikeFlashTimeoutRef.current) clearTimeout(superLikeFlashTimeoutRef.current);
+    setShowSuperLikeFlash(true);
+    superLikeFlashTimeoutRef.current = window.setTimeout(() => {
+      setShowSuperLikeFlash(false);
+      superLikeFlashTimeoutRef.current = null;
+    }, 400);
     setSuperLikesUsed((n) => n + 1);
     superLikedIdRef.current = t.tmdb_id;
     swipeTimings.current[t.tmdb_id] = Date.now() - cardStartTime.current;
@@ -1816,6 +1826,19 @@ export default function WTBetaPage() {
               >
                 {t(locale, "waiting", "cancel")}
               </button>
+              <button
+                onClick={() => {
+                  setMode("solo");
+                  setPartnerJoined(false);
+                  setRoundPhase("swiping");
+                  setScreen("together");
+                  setTimerRunning(true);
+                  partnerRef.current = generateMockPartner(titles);
+                }}
+                className="block mx-auto mt-4 text-sm text-white/40 underline bg-transparent border-0 cursor-pointer"
+              >
+                {t(locale, "waiting", "startSolo")}
+              </button>
             </div>
           </div>
         )}
@@ -2518,7 +2541,23 @@ export default function WTBetaPage() {
                           </div>
                         )}
                       </div>
+
+                      {/* Superlike flash overlay */}
+                      {showSuperLikeFlash && (
+                        <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+                          <span className="text-2xl font-bold text-yellow-400 tracking-widest animate-pulse">
+                            SUPER LIKE ⭐
+                          </span>
+                        </div>
+                      )}
                     </div>
+                  )}
+
+                  {/* Progress indicator */}
+                  {deck.length > 0 && (
+                    <p className="text-xs text-white/40 text-center mt-2">
+                      {cardsLeft(locale, round, Math.max(0, deck.length - deckIndex))}
+                    </p>
                   )}
 
                   {/* Mobile swipe hint — first session only, fades after first swipe */}
