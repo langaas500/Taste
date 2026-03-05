@@ -184,6 +184,19 @@ interface RoundMatch {
   decisionTime: number; // ms — ranking signal only, never shown to user
 }
 
+interface QueuedSwipe {
+  clientSwipeId: string;
+  sessionId: string;
+  tmdbId: number;
+  type: "movie" | "tv";
+  action: "like" | "nope" | "superlike";
+  round: number;
+  createdAt: number;
+  attempt: number;
+  nextRetryAt: number;
+  status: "pending" | "inflight" | "ack" | "stuck";
+}
+
 /* ── helpers ─────────────────────────────────────────────── */
 
 function getGenreColor(genre_ids: number[]): string {
@@ -358,6 +371,13 @@ export default function WTBetaPage() {
   const [authUser, setAuthUser] = useState<{ email?: string } | null>(null);
   const firstSwipeTrackedRef = useRef(false);
   const ptr = useRef<{ id: number | null; sx: number; sy: number; target: HTMLElement | null }>({ id: null, sx: 0, sy: 0, target: null });
+
+  // Swipe queue (offline-first reliability)
+  const swipeQueue = useRef<QueuedSwipe[]>([]);
+  const inFlight = useRef<Set<string>>(new Set());
+  const queueWorkerRunning = useRef(false);
+  const [, forceQueueRender] = useState(0);
+  const [syncingBeforeEnd, setSyncingBeforeEnd] = useState(false);
 
   const { isTouch } = useInputMode();
   const isDesktop = mounted && !isTouch;
@@ -549,6 +569,31 @@ export default function WTBetaPage() {
     if (endedRoundRef.current >= r) return;  // round already finished
     if (endingRoundRef.current) return;      // another call is in-flight
     endingRoundRef.current = true;
+
+    // Wait for round-specific swipes in queue (max 3s)
+    const roundSwipesPending = () =>
+      swipeQueue.current.some(
+        (s) => s.round === round && s.status !== "ack"
+      );
+
+    if (roundSwipesPending()) {
+      setSyncingBeforeEnd(true);
+      const deadline = Date.now() + 3000;
+      await new Promise<void>((resolve) => {
+        const check = () => {
+          if (!roundSwipesPending() || Date.now() >= deadline) {
+            resolve();
+          } else {
+            setTimeout(check, 200);
+          }
+        };
+        check();
+      });
+      setSyncingBeforeEnd(false);
+    }
+
+    // Extra pause to let partner's last swipe land on server
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
     let myLikedIds: number[] = [];
     let theirLikedIds: number[] = [];
@@ -885,6 +930,11 @@ export default function WTBetaPage() {
     partnerRef.current = null;
     setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
     setFly({ active: false, x: 0, rot: 0 });
+    swipeQueue.current = [];
+    inFlight.current = new Set();
+    queueWorkerRunning.current = false;
+    setSyncingBeforeEnd(false);
+    forceQueueRender((x) => x + 1);
     try { localStorage.removeItem("wt_session_resume"); } catch {}
   }
 
@@ -937,7 +987,7 @@ export default function WTBetaPage() {
     }
     sessionSwipes.current[t.tmdb_id] = action;
     if (mode === "paired") {
-      submitPairedSwipe(t, action);
+      enqueueSwipe(t.tmdb_id, t.type, action === "meh" ? "nope" : action);
       setDeckIndex((i) => i + 1);
       if (action === "like") logTitle({ tmdb_id: t.tmdb_id, type: t.type, status: "watched", sentiment: "liked" }).catch(() => {});
       return;
@@ -965,19 +1015,8 @@ export default function WTBetaPage() {
       setRoundPhase("winner");
       logTitle({ tmdb_id: t.tmdb_id, type: t.type, status: "watchlist" }).catch(() => {});
     } else {
-      fetch("/api/together/session/swipe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current },
-        body: JSON.stringify({ session_id: sessionId, tmdb_id: t.tmdb_id, type: t.type, action: "superlike" }),
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.doubleSuperMatch) {
-            const mt = titles.find((x) => x.tmdb_id === data.doubleSuperMatch.tmdb_id);
-            if (mt) { setFinalWinner(mt); setRoundPhase("double-super"); setTimerRunning(false); track("match_created", { session_id: sessionId, title_id: mt.tmdb_id, match_type: "superlike" }); }
-          }
-        })
-        .catch(() => {});
+      // Queue the superlike — doubleSuperMatch is detected via poll or endRound
+      enqueueSwipe(t.tmdb_id, t.type, "superlike");
       setDeckIndex((i) => i + 1);
     }
   }
@@ -1145,19 +1184,120 @@ export default function WTBetaPage() {
     return () => clearInterval(interval);
   }, [mode, sessionId, partnerJoined, screen, titles, chosen]);
 
-  /* ── paired: submit swipe (fire-and-forget with 1 retry) ── */
-  function submitPairedSwipe(t: WTTitle, action: SwipeAction) {
+  /* ── paired: submit swipe (returns Promise for queue worker) ── */
+  function submitPairedSwipe(
+    sid: string, tmdbId: number, mediaType: "movie" | "tv", action: string
+  ): Promise<{ ok: boolean; data?: Record<string, unknown> }> {
+    const body = JSON.stringify({ session_id: sid, tmdb_id: tmdbId, type: mediaType, action });
+    const hdrs = { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current };
+    return fetch("/api/together/session/swipe", { method: "POST", headers: hdrs, body })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, data: d as Record<string, unknown> })))
+      .catch(() => ({ ok: false }));
+  }
+
+  /* ── swipe queue helpers ── */
+
+  function generateSwipeId(): string {
+    return crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
+  }
+
+  function enqueueSwipe(
+    tmdbId: number,
+    type: "movie" | "tv",
+    action: "like" | "nope" | "superlike"
+  ) {
     if (!sessionId) return;
-    const body = JSON.stringify({ session_id: sessionId, tmdb_id: t.tmdb_id, type: t.type, action });
-    const headers = { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current };
-    fetch("/api/together/session/swipe", { method: "POST", headers, body })
-      .then((r) => { if (!r.ok) throw new Error(); })
-      .catch(() => {
-        // Retry once after 1s — server is idempotent (upsert)
-        setTimeout(() => {
-          fetch("/api/together/session/swipe", { method: "POST", headers, body }).catch(() => {});
-        }, 1000);
-      });
+
+    // Dedupe: skip if same tmdbId + round already pending/inflight
+    const alreadyQueued = swipeQueue.current.some(
+      (s) => s.tmdbId === tmdbId && s.round === round && s.sessionId === sessionId && s.status !== "ack"
+    );
+    if (alreadyQueued) return;
+
+    const item: QueuedSwipe = {
+      clientSwipeId: generateSwipeId(),
+      sessionId,
+      tmdbId,
+      type,
+      action,
+      round,
+      createdAt: Date.now(),
+      attempt: 0,
+      nextRetryAt: Date.now(),
+      status: "pending",
+    };
+
+    swipeQueue.current = [...swipeQueue.current, item];
+    forceQueueRender((x) => x + 1);
+    startQueueWorker();
+  }
+
+  function requeueItem(item: QueuedSwipe) {
+    const attempt = item.attempt + 1;
+    const backoffMs = attempt <= 5 ? Math.pow(2, attempt - 1) * 1000 : 15000;
+    const status: QueuedSwipe["status"] = attempt >= 5 ? "stuck" : "pending";
+
+    swipeQueue.current = swipeQueue.current.map((s) =>
+      s.clientSwipeId === item.clientSwipeId
+        ? { ...s, status, attempt, nextRetryAt: Date.now() + backoffMs }
+        : s
+    );
+    forceQueueRender((x) => x + 1);
+
+    if (status === "stuck") {
+      queueWorkerRunning.current = false;
+      setTimeout(startQueueWorker, 15000);
+    }
+  }
+
+  function startQueueWorker() {
+    if (queueWorkerRunning.current) return;
+    queueWorkerRunning.current = true;
+
+    async function tick() {
+      const now = Date.now();
+      const pending = swipeQueue.current.filter(
+        (s) => s.status === "pending" && s.nextRetryAt <= now
+      );
+
+      for (const item of pending) {
+        if (inFlight.current.has(item.clientSwipeId)) continue;
+
+        inFlight.current.add(item.clientSwipeId);
+        swipeQueue.current = swipeQueue.current.map((s) =>
+          s.clientSwipeId === item.clientSwipeId ? { ...s, status: "inflight" as const } : s
+        );
+
+        submitPairedSwipe(item.sessionId, item.tmdbId, item.type, item.action)
+          .then((result) => {
+            inFlight.current.delete(item.clientSwipeId);
+            if (result?.ok) {
+              // ACK — remove from queue
+              swipeQueue.current = swipeQueue.current.filter(
+                (s) => s.clientSwipeId !== item.clientSwipeId
+              );
+            } else {
+              requeueItem(item);
+            }
+            forceQueueRender((x) => x + 1);
+          })
+          .catch(() => {
+            inFlight.current.delete(item.clientSwipeId);
+            requeueItem(item);
+          });
+      }
+
+      const hasActive = swipeQueue.current.some(
+        (s) => s.status === "pending" || s.status === "inflight" || s.status === "stuck"
+      );
+      if (hasActive) {
+        setTimeout(tick, 1000);
+      } else {
+        queueWorkerRunning.current = false;
+      }
+    }
+
+    tick();
   }
 
   /* ── hydration guard ── */
@@ -1167,6 +1307,11 @@ export default function WTBetaPage() {
   const deckExhausted = deck.length > 0 && deckIndex >= deck.length;
   const maxTimer = round === 1 ? ROUND1_DURATION : ROUND2_DURATION;
   const timerPct = Math.round((timer / maxTimer) * 100);
+
+  const swipeQueueStatus =
+    swipeQueue.current.some((s) => s.status === "stuck") ? "stuck" :
+    swipeQueue.current.some((s) => s.status === "pending" || s.status === "inflight") ? "pending" :
+    "idle";
 
   /* ── shared card styles ── */
   const btnBase: React.CSSProperties = {
@@ -1878,6 +2023,27 @@ export default function WTBetaPage() {
             <div className="fixed top-0 left-0 right-0 z-50" style={{ height: "2px", background: "rgba(255,255,255,0.07)" }}>
               <div style={{ height: "100%", width: `${timerPct}%`, background: "#7a1010", transition: "width 1s linear" }} />
             </div>
+
+            {/* Swipe queue status indicator */}
+            {swipeQueueStatus !== "idle" && (
+              <div
+                className="fixed top-4 right-4 z-50"
+                aria-label={swipeQueueStatus === "stuck" ? "Tilkobling svak" : "Sender swipes"}
+              >
+                <div className={`w-2 h-2 rounded-full ${
+                  swipeQueueStatus === "stuck"
+                    ? "bg-red-500"
+                    : "bg-yellow-400 animate-pulse"
+                }`} />
+              </div>
+            )}
+
+            {/* Syncing overlay — shown while endRound waits for queue drain */}
+            {syncingBeforeEnd && (
+              <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                <p className="text-white/80 text-sm">Synker…</p>
+              </div>
+            )}
 
             {/* ── RESULT SCREENS (fullscreen overlays) ── */}
 
