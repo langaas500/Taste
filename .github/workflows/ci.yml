@@ -78,6 +78,14 @@ jobs:
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
+      SUPABASE_SERVICE_ROLE_KEY: placeholder
+      TMDB_API_KEY: placeholder
+      ANTHROPIC_API_KEY: placeholder
+      STRIPE_SECRET_KEY: placeholder
+      STRIPE_WEBHOOK_SECRET: placeholder
+      STRIPE_FOUNDING_PRICE_ID: placeholder
+      STRIPE_STANDARD_PRICE_ID: placeholder
+      SENTRY_AUTH_TOKEN: placeholder
     steps:
       - uses: actions/checkout@v4
 
