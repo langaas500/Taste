@@ -64,7 +64,8 @@ export async function GET(req: NextRequest) {
           .in("tmdb_id", likedIds.slice(0, 20));
 
         if (cached && cached.length > 0) {
-          const seeds = cached.slice(0, 5);
+          // Shuffle so seeds differ each session
+          const seeds = cached.sort(() => Math.random() - 0.5).slice(0, 5);
           for (const c of seeds) {
             seedLiked.push({
               tmdb_id: c.tmdb_id,

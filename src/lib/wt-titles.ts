@@ -137,6 +137,10 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
     ? { with_watch_providers: providerIds.join("|"), watch_region: region }
     : {};
 
+  // Type flags — skip irrelevant fetches entirely when preference is single-type
+  const wantMovie = preference !== "series";
+  const wantTv = preference !== "movies";
+
   const seed = inputSeed ?? `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
   const seen = new Set<string>();
@@ -226,7 +230,12 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
 
   // ── 1. Seed-based recommendations — score +4 ──
   if (seedLiked.length > 0) {
-    const seeds = seedLiked.slice(0, 5);
+    const filteredSeeds = preference === "movies"
+      ? seedLiked.filter((s) => s.type === "movie")
+      : preference === "series"
+        ? seedLiked.filter((s) => s.type === "tv")
+        : seedLiked;
+    const seeds = filteredSeeds.slice(0, 5);
     const recResults = await Promise.all(
       seeds.map(async (s) => {
         try {
@@ -248,28 +257,35 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
   if (mood) {
     const genreStr = MOOD_GENRES[mood].slice(0, 3).join("|");
     const moodLabel = MOOD_LABELS[mood];
+    const moodPage = String(Math.floor(Math.random() * 5) + 1);
 
     const [moodMovies, moodTv] = await Promise.all([
-      tmdbDiscover("movie", {
-        with_genres: genreStr,
-        sort_by: "popularity.desc",
-        "vote_average.gte": String(QUALITY.minRating),
-        "vote_count.gte": String(FETCH_MIN_VOTE_MOVIE),
-        "primary_release_date.gte": `${MIN_YEAR}-01-01`,
-        ...providerParams,
-      }),
-      tmdbDiscover("tv", {
-        with_genres: genreStr,
-        sort_by: "popularity.desc",
-        "vote_average.gte": String(QUALITY.minRating),
-        "vote_count.gte": String(FETCH_MIN_VOTE_TV),
-        "first_air_date.gte": `${MIN_YEAR}-01-01`,
-        ...providerParams,
-      }),
+      wantMovie
+        ? tmdbDiscover("movie", {
+            with_genres: genreStr,
+            sort_by: "popularity.desc",
+            "vote_average.gte": String(QUALITY.minRating),
+            "vote_count.gte": String(FETCH_MIN_VOTE_MOVIE),
+            "primary_release_date.gte": `${MIN_YEAR}-01-01`,
+            page: moodPage,
+            ...providerParams,
+          })
+        : { results: [] },
+      wantTv
+        ? tmdbDiscover("tv", {
+            with_genres: genreStr,
+            sort_by: "popularity.desc",
+            "vote_average.gte": String(QUALITY.minRating),
+            "vote_count.gte": String(FETCH_MIN_VOTE_TV),
+            "first_air_date.gte": `${MIN_YEAR}-01-01`,
+            page: moodPage,
+            ...providerParams,
+          })
+        : { results: [] },
     ]);
 
-    addItems(moodMovies.results, "movie", `${moodLabel}-stemning`, 3);
-    addItems(moodTv.results, "tv", `${moodLabel}-stemning`, 3);
+    if (wantMovie) addItems(moodMovies.results, "movie", `${moodLabel}-stemning`, 3);
+    if (wantTv) addItems(moodTv.results, "tv", `${moodLabel}-stemning`, 3);
   }
   const discover_count = pool.length - similar_count;
   console.log(`[buildWtDeck] step2_mood_discover=${discover_count} (pool=${pool.length})`);
@@ -279,56 +295,68 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
   // instead of trending (which has no provider/region filtering).
   if (providerIds.length > 0) {
     const [trendingMovies, trendingTv] = await Promise.all([
-      tmdbDiscover("movie", {
-        sort_by: "popularity.desc",
-        "vote_average.gte": String(QUALITY.minRating),
-        "vote_count.gte": String(FETCH_MIN_VOTE_MOVIE),
-        "primary_release_date.gte": `${MIN_YEAR}-01-01`,
-        ...providerParams,
-      }),
-      tmdbDiscover("tv", {
-        sort_by: "popularity.desc",
-        "vote_average.gte": String(QUALITY.minRating),
-        "vote_count.gte": String(FETCH_MIN_VOTE_TV),
-        "first_air_date.gte": `${MIN_YEAR}-01-01`,
-        ...providerParams,
-      }),
+      wantMovie
+        ? tmdbDiscover("movie", {
+            sort_by: "popularity.desc",
+            "vote_average.gte": String(QUALITY.minRating),
+            "vote_count.gte": String(FETCH_MIN_VOTE_MOVIE),
+            "primary_release_date.gte": `${MIN_YEAR}-01-01`,
+            ...providerParams,
+          })
+        : { results: [] },
+      wantTv
+        ? tmdbDiscover("tv", {
+            sort_by: "popularity.desc",
+            "vote_average.gte": String(QUALITY.minRating),
+            "vote_count.gte": String(FETCH_MIN_VOTE_TV),
+            "first_air_date.gte": `${MIN_YEAR}-01-01`,
+            ...providerParams,
+          })
+        : { results: [] },
     ]);
-    addItems(trendingMovies.results, "movie", "Populær akkurat nå", 2);
-    addItems(trendingTv.results, "tv", "Populær akkurat nå", 2);
+    const trendMovieResults = (trendingMovies.results || []).sort(() => Math.random() - 0.5);
+    const trendTvResults = (trendingTv.results || []).sort(() => Math.random() - 0.5);
+    if (wantMovie) addItems(trendMovieResults, "movie", "Populær akkurat nå", 2);
+    if (wantTv) addItems(trendTvResults, "tv", "Populær akkurat nå", 2);
   } else {
     const [trendingMovies, trendingTv] = await Promise.all([
-      tmdbTrending("movie", "week"),
-      tmdbTrending("tv", "week"),
+      wantMovie ? tmdbTrending("movie", "week") : { results: [] },
+      wantTv ? tmdbTrending("tv", "week") : { results: [] },
     ]);
-    addItems(trendingMovies.results, "movie", "Populær akkurat nå", 2);
-    addItems(trendingTv.results, "tv", "Populær akkurat nå", 2);
+    const trendMovieResults = (trendingMovies.results || []).sort(() => Math.random() - 0.5);
+    const trendTvResults = (trendingTv.results || []).sort(() => Math.random() - 0.5);
+    if (wantMovie) addItems(trendMovieResults, "movie", "Populær akkurat nå", 2);
+    if (wantTv) addItems(trendTvResults, "tv", "Populær akkurat nå", 2);
   }
   const trending_count = pool.length - similar_count - discover_count;
   console.log(`[buildWtDeck] step3_trending=${trending_count} (pool=${pool.length})`);
 
-  // ── 4. Popular discover — score +1 ────────────────────────────────
+  // ── 4. Popular discover — score +2 ────────────────────────────────
   const fetchPopularDiscover = async (page = 1) => {
     const [popMovies, popTv] = await Promise.all([
-      tmdbDiscover("movie", {
-        sort_by: "popularity.desc",
-        "vote_average.gte": String(QUALITY.minRating),
-        "vote_count.gte": String(FETCH_MIN_VOTE_MOVIE),
-        "primary_release_date.gte": `${MIN_YEAR}-01-01`,
-        page: String(page),
-        ...providerParams,
-      }),
-      tmdbDiscover("tv", {
-        sort_by: "popularity.desc",
-        "vote_average.gte": String(QUALITY.minRating),
-        "vote_count.gte": String(FETCH_MIN_VOTE_TV),
-        "first_air_date.gte": `${MIN_YEAR}-01-01`,
-        page: String(page),
-        ...providerParams,
-      }),
+      wantMovie
+        ? tmdbDiscover("movie", {
+            sort_by: "popularity.desc",
+            "vote_average.gte": String(QUALITY.minRating),
+            "vote_count.gte": String(FETCH_MIN_VOTE_MOVIE),
+            "primary_release_date.gte": `${MIN_YEAR}-01-01`,
+            page: String(page),
+            ...providerParams,
+          })
+        : { results: [] },
+      wantTv
+        ? tmdbDiscover("tv", {
+            sort_by: "popularity.desc",
+            "vote_average.gte": String(QUALITY.minRating),
+            "vote_count.gte": String(FETCH_MIN_VOTE_TV),
+            "first_air_date.gte": `${MIN_YEAR}-01-01`,
+            page: String(page),
+            ...providerParams,
+          })
+        : { results: [] },
     ]);
-    addItems(popMovies.results, "movie", "Populær akkurat nå", 1);
-    addItems(popTv.results, "tv", "Populær akkurat nå", 1);
+    if (wantMovie) addItems(popMovies.results, "movie", "Populær akkurat nå", 2);
+    if (wantTv) addItems(popTv.results, "tv", "Populær akkurat nå", 2);
   };
 
   // Randomized start page — vary results across sessions even with large excludeIds
@@ -394,28 +422,30 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
   // Target counts for each type
   let tvTarget: number, movieTarget: number;
   if (preference === "movies") {
-    movieTarget = Math.ceil(limit * 0.70);
-    tvTarget = limit - movieTarget;
-  } else if (preference === "mix") {
-    tvTarget = Math.ceil(limit * 0.50);
-    movieTarget = limit - tvTarget;
+    movieTarget = limit;
+    tvTarget = 0;
+  } else if (preference === "series") {
+    tvTarget = limit;
+    movieTarget = 0;
   } else {
-    // "series" — default
-    tvTarget = Math.ceil(limit * 0.70);
+    // "mix" — 50/50
+    tvTarget = Math.ceil(limit * 0.50);
     movieTarget = limit - tvTarget;
   }
 
   let tvSlice = tvPool.slice(0, tvTarget);
   let movieSlice = moviePool.slice(0, movieTarget);
 
-  // Fill any shortfall from the other pool (quality filter already applied)
-  const tvShortfall = tvTarget - tvSlice.length;
-  if (tvShortfall > 0) {
-    movieSlice = [...movieSlice, ...moviePool.slice(movieTarget, movieTarget + tvShortfall)];
-  }
-  const movieShortfall = movieTarget - movieSlice.length;
-  if (movieShortfall > 0) {
-    tvSlice = [...tvSlice, ...tvPool.slice(tvTarget, tvTarget + movieShortfall)];
+  // Fill any shortfall from the other pool — only for "mix" preference
+  if (preference === "mix") {
+    const tvShortfall = tvTarget - tvSlice.length;
+    if (tvShortfall > 0) {
+      movieSlice = [...movieSlice, ...moviePool.slice(movieTarget, movieTarget + tvShortfall)];
+    }
+    const movieShortfall = movieTarget - movieSlice.length;
+    if (movieShortfall > 0) {
+      tvSlice = [...tvSlice, ...tvPool.slice(tvTarget, tvTarget + movieShortfall)];
+    }
   }
 
   // ── 8. Interleave major (dominant type) and minor into the deck ──
