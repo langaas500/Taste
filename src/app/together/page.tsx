@@ -1565,7 +1565,7 @@ export default function WTBetaPage() {
                   border: "1px solid rgba(255,255,255,0.10)",
                   animation: "code-glow 2s ease-in-out infinite alternate",
                 }}
-                onClick={() => { navigator.clipboard.writeText(sessionCode).catch(() => {}); }}
+                onClick={() => { navigator.clipboard.writeText(sessionCode).catch(() => {}); track("invite_shared", { method: "copy" }); }}
               >
                 <span className="text-3xl font-mono font-black tracking-[0.3em] text-white">{sessionCode}</span>
                 <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="rgba(255,255,255,0.4)">
@@ -2083,8 +2083,10 @@ export default function WTBetaPage() {
                           const url = `${window.location.origin}/together`;
                           if (navigator.share) {
                             navigator.share({ title: "Logflix — Se Sammen", text, url }).catch(() => {});
+                            track("invite_shared", { method: "share_api" });
                           } else {
                             navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
+                            track("invite_shared", { method: "copy" });
                           }
                         }}
                         className="w-full py-3 mt-2 rounded-xl text-sm font-medium"

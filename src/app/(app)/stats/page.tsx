@@ -70,7 +70,7 @@ export default function StatsPage() {
       .map((t) => ({
         title: cacheMap.get(`${t.tmdb_id}:${t.type}`)?.title || `TMDB:${t.tmdb_id}`,
         type: t.type,
-        date: new Date(t.watched_at!).toLocaleDateString(),
+        date: new Date(t.watched_at!).toLocaleDateString("nb-NO"),
       }));
 
     setStats({
