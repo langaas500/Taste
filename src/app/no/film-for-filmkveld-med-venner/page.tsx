@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://logflix.app/no/film-for-filmkveld-med-venner",
     languages: {
-      no: "https://logflix.app/no/film-for-filmkveld-med-venner",
+      nb: "https://logflix.app/no/film-for-filmkveld-med-venner",
       en: "https://logflix.app/en/movies-to-watch-with-friends",
       "x-default": "https://logflix.app/no/film-for-filmkveld-med-venner",
     },

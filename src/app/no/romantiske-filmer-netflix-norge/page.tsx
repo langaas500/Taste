@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://logflix.app/no/romantiske-filmer-netflix-norge",
     languages: {
-      no: "https://logflix.app/no/romantiske-filmer-netflix-norge",
+      nb: "https://logflix.app/no/romantiske-filmer-netflix-norge",
       en: "https://logflix.app/en/movies-for-date-night",
       "x-default": "https://logflix.app/no/romantiske-filmer-netflix-norge",
     },
@@ -62,6 +62,7 @@ export default function RomantiskeFilmerNetflixPage() {
           { href: "/no/film-a-se-med-kjaeresten", label: "Film å se med kjæresten" },
           { href: "/no/hva-skal-vi-se-i-kveld", label: "Hva skal vi se i kveld?" },
           { href: "/no/serie-a-se-sammen", label: "Serie å se sammen" },
+          { href: "/no/film-for-filmkveld-med-venner", label: "Filmer til filmkveld med venner" },
         ]}
       >
         <section style={{ marginBottom: 32 }}>

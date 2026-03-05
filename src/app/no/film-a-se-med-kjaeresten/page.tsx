@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://logflix.app/no/film-a-se-med-kjaeresten",
     languages: {
-      no: "https://logflix.app/no/film-a-se-med-kjaeresten",
+      nb: "https://logflix.app/no/film-a-se-med-kjaeresten",
       en: "https://logflix.app/en/movie-to-watch-with-your-girlfriend",
       "x-default": "https://logflix.app/no/film-a-se-med-kjaeresten",
     },
@@ -66,6 +66,7 @@ export default function FilmMedKjaerestenPage() {
           { href: "/no/hva-skal-vi-se-i-kveld", label: "Hva skal vi se i kveld?" },
           { href: "/no/serie-a-se-sammen", label: "Serie å se sammen" },
           { href: "/no/romantiske-filmer-netflix-norge", label: "Romantiske filmer på Netflix Norge" },
+          { href: "/no/filmer-a-se-med-familien", label: "Filmer å se med familien" },
         ]}
       >
         <section style={{ marginBottom: 32 }}>

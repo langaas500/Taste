@@ -9,6 +9,7 @@ export const metadata: Metadata = {
     canonical: "https://logflix.app/no/filmer-a-se-med-familien",
     languages: {
       nb: "https://logflix.app/no/filmer-a-se-med-familien",
+      en: "https://logflix.app/en/movies-to-watch-with-the-family",
       "x-default": "https://logflix.app/no/filmer-a-se-med-familien",
     },
   },

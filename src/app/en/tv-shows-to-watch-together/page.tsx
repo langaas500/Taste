@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     canonical: "https://logflix.app/en/tv-shows-to-watch-together",
     languages: {
       en: "https://logflix.app/en/tv-shows-to-watch-together",
-      no: "https://logflix.app/no/serie-a-se-sammen",
+      nb: "https://logflix.app/no/serie-a-se-sammen",
       "x-default": "https://logflix.app/en/tv-shows-to-watch-together",
     },
   },

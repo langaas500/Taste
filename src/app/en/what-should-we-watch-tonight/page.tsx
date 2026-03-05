@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     canonical: "https://logflix.app/en/what-should-we-watch-tonight",
     languages: {
       en: "https://logflix.app/en/what-should-we-watch-tonight",
-      no: "https://logflix.app/no/hva-skal-vi-se-i-kveld",
+      nb: "https://logflix.app/no/hva-skal-vi-se-i-kveld",
       "x-default": "https://logflix.app/en/what-should-we-watch-tonight",
     },
   },

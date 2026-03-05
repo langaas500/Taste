@@ -9,8 +9,8 @@ export const metadata: Metadata = {
     canonical: "https://logflix.app/en/movies-for-date-night",
     languages: {
       en: "https://logflix.app/en/movies-for-date-night",
-      no: "https://logflix.app/no/romantiske-filmer-netflix-norge",
-      "x-default": "https://logflix.app/en/movies-for-date-night",
+      nb: "https://logflix.app/no/romantiske-filmer-netflix-norge",
+      "x-default": "https://logflix.app/no/romantiske-filmer-netflix-norge",
     },
   },
 };

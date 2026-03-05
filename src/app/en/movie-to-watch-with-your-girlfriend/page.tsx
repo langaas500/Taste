@@ -9,8 +9,8 @@ export const metadata: Metadata = {
     canonical: "https://logflix.app/en/movie-to-watch-with-your-girlfriend",
     languages: {
       en: "https://logflix.app/en/movie-to-watch-with-your-girlfriend",
-      no: "https://logflix.app/no/film-a-se-med-kjaeresten",
-      "x-default": "https://logflix.app/en/movie-to-watch-with-your-girlfriend",
+      nb: "https://logflix.app/no/film-a-se-med-kjaeresten",
+      "x-default": "https://logflix.app/no/film-a-se-med-kjaeresten",
     },
   },
 };

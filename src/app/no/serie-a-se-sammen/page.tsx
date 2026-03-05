@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://logflix.app/no/serie-a-se-sammen",
     languages: {
-      no: "https://logflix.app/no/serie-a-se-sammen",
+      nb: "https://logflix.app/no/serie-a-se-sammen",
       en: "https://logflix.app/en/tv-shows-to-watch-together",
       "x-default": "https://logflix.app/no/serie-a-se-sammen",
     },
@@ -61,7 +61,8 @@ export default function SerieASeSammenPage() {
         relatedLinks={[
           { href: "/no/film-a-se-med-kjaeresten", label: "Film å se med kjæresten" },
           { href: "/no/hva-skal-vi-se-i-kveld", label: "Hva skal vi se i kveld?" },
-          { href: "/no/romantiske-filmer-netflix-norge", label: "Romantiske filmer på Netflix Norge" },
+          { href: "/no/filmer-a-se-med-familien", label: "Filmer for hele familien" },
+          { href: "/no/film-for-filmkveld-med-venner", label: "Film for filmkveld med venner" },
         ]}
       >
         <section style={{ marginBottom: 32 }}>
