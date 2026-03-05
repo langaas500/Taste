@@ -1385,8 +1385,8 @@ export default function WTBetaPage() {
               }
               .ribbon-track { animation: ribbon-scroll 40s linear infinite; }
               @keyframes pulse-glow {
-                0%, 100% { box-shadow: 0 0 16px rgba(255,42,42,0.4); }
-                50% { box-shadow: 0 0 32px rgba(255,42,42,0.7); }
+                0%, 100% { box-shadow: 0 0 16px rgba(255,42,42,0.22); }
+                50% { box-shadow: 0 0 32px rgba(255,42,42,0.39); }
               }
               .cta-btn { transition: filter 180ms ease, transform 140ms ease, opacity 150ms, box-shadow 180ms ease; animation: pulse-glow 2s ease-in-out infinite; }
               .cta-btn:hover:not(:disabled) { filter: brightness(1.08); transform: scale(1.03); box-shadow: 0 4px 30px rgba(255,42,42,0.5) !important; }
@@ -1493,109 +1493,97 @@ export default function WTBetaPage() {
               {/* Subtext */}
               <div style={{ marginBottom: "10px" }}>
                 <p style={{ fontSize: "0.875rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: "0 auto", maxWidth: "20rem", textAlign: "center" }}>
-                  {t(locale, "intro", "subtext")}
+                  {locale === "no" ? "Swipe hver for dere. Vi finner matchen." : "Swipe separately. We\u2019ll find the match."}
                 </p>
               </div>
 
-              {/* Primary: Duo card with embedded CTA */}
-              <div style={{ marginBottom: 10 }}>
-                <div
-                  className="intro-card"
+              {/* Duo card */}
+              <div
+                className="intro-card"
+                style={{
+                  width: "100%",
+                  position: "relative",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  padding: "14px 14px 10px",
+                  borderRadius: 16,
+                  border: "1px solid rgba(255,42,42,0.3)",
+                  background: "rgba(255,255,255,0.06)",
+                  boxShadow: "0 0 40px rgba(255,0,0,0.2)",
+                  marginBottom: 10,
+                }}
+              >
+                <span style={{
+                  position: "absolute", top: 6, right: 6,
+                  fontSize: "0.625rem", fontWeight: 600,
+                  color: "rgba(255,255,255,0.9)",
+                  backgroundColor: "rgba(255,42,42,0.8)",
+                  padding: "2px 6px", borderRadius: 6,
+                  letterSpacing: "0.02em", textTransform: "uppercase",
+                }}>
+                  {t(locale, "intro", "recommended")}
+                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/two-phones.svg"
+                  alt={t(locale, "intro", "pairedLabel")}
+                  className="intro-card-icon"
+                  style={{ height: 36, width: "auto", opacity: 1 }}
+                />
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  <span className="intro-card-label" style={{ fontSize: "0.875rem", fontWeight: 600, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.01em" }}>
+                    {t(locale, "intro", "pairedLabel")}
+                  </span>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "rgba(255,255,255,0.45)", lineHeight: 1.3 }}>
+                    {locale === "no" ? "Begge swiper. Kun felles liker matcher." : "Both swipe. Only mutual likes match."}
+                  </span>
+                  <span style={{ fontSize: "0.7rem", fontWeight: 400, color: "rgba(255,255,255,0.30)", lineHeight: 1.3 }}>
+                    {locale === "no" ? "Ingen diskusjon nødvendig." : "No discussion needed."}
+                  </span>
+                </div>
+                <button
+                  className="cta-btn button"
+                  onClick={() => {
+                    if (titlesLoading || ritualState !== "idle") return;
+                    startRitual(() => { setMode("paired"); setSelectedProviders([]); setScreen("providers"); });
+                  }}
+                  disabled={titlesLoading || ritualState !== "idle"}
                   style={{
                     width: "100%",
-                    position: "relative",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                    padding: "14px 14px 10px",
-                    borderRadius: 16,
-                    border: "1px solid rgba(255,42,42,0.3)",
-                    background: "rgba(255,255,255,0.06)",
-                    boxShadow: "0 0 24px rgba(255,42,42,0.2)",
+                    marginTop: 4,
+                    cursor: titlesLoading ? "default" : "pointer",
+                    opacity: titlesLoading ? 0.55 : 1,
                   }}
                 >
-                  <span style={{
-                    position: "absolute",
-                    top: 6,
-                    right: 6,
-                    fontSize: "0.625rem",
-                    fontWeight: 600,
-                    color: "rgba(255,255,255,0.9)",
-                    backgroundColor: "rgba(255,42,42,0.8)",
-                    padding: "2px 6px",
-                    borderRadius: 6,
-                    letterSpacing: "0.02em",
-                    textTransform: "uppercase",
-                  }}>
-                    {t(locale, "intro", "recommended")}
-                  </span>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/two-phones.svg"
-                    alt={t(locale, "intro", "pairedLabel")}
-                    className="intro-card-icon"
-                    style={{ height: 36, width: "auto", opacity: 1, transition: "opacity 160ms ease" }}
-                  />
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                    <span className="intro-card-label" style={{
-                      fontSize: "0.875rem",
-                      fontWeight: 600,
-                      color: "rgba(255,255,255,0.92)",
-                      letterSpacing: "-0.01em",
-                    }}>
-                      {t(locale, "intro", "pairedLabel")}
-                    </span>
-                    <span style={{
-                      fontSize: "0.75rem",
-                      fontWeight: 400,
-                      color: "rgba(255,255,255,0.45)",
-                      letterSpacing: "-0.005em",
-                      lineHeight: 1.3,
-                    }}>
-                      {t(locale, "intro", "pairedDesc")}
-                    </span>
-                    <span style={{
-                      fontSize: "12px",
-                      fontWeight: 400,
-                      color: "rgba(255,255,255,0.6)",
-                      textAlign: "center",
-                      marginTop: "4px",
-                      lineHeight: 1.3,
-                    }}>
-                      {t(locale, "intro", "pairedExplainer")}
-                    </span>
-                  </div>
-                  <button
-                    className="cta-btn button"
-                    onClick={() => {
-                      if (titlesLoading || ritualState !== "idle") return;
-                      startRitual(() => { setMode("paired"); setSelectedProviders([]); setScreen("providers"); });
-                    }}
-                    disabled={titlesLoading || ritualState !== "idle"}
-                    style={{
-                      width: "100%",
-                      marginTop: 4,
-                      cursor: titlesLoading ? "default" : "pointer",
-                      opacity: titlesLoading ? 0.55 : 1,
-                    }}
-                  >
-                    {titlesLoading ? t(locale, "intro", "loading") : t(locale, "intro", "startPaired")}
-                  </button>
-                  {!authUser && (
-                    <p className="text-xs text-white/40 text-center" style={{ margin: 0 }}>
-                      {t(locale, "intro", "noAccountNeeded")}
-                    </p>
-                  )}
-                </div>
+                  {titlesLoading ? t(locale, "intro", "loading") : t(locale, "intro", "startPaired")}
+                </button>
+                {!authUser && (
+                  <p className="text-xs text-white/40 text-center" style={{ margin: 0 }}>
+                    {t(locale, "intro", "noAccountNeeded")}
+                  </p>
+                )}
               </div>
 
-              {/* Secondary: Solo + Group */}
-              <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", textAlign: "center", marginBottom: 6 }}>
+              {/* I have a code */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 10 }}>
+                <button
+                  onClick={() => setScreen("join")}
+                  className="w-full rounded-xl border border-white/10 bg-white/5 py-2 px-4 text-sm font-medium text-white/80 hover:bg-white/10 active:bg-white/10 transition-colors cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>{t(locale, "intro", "hasCode")}</span>
+                  <span className="text-[0.65rem] font-normal text-white/25">Enter 6 characters</span>
+                </button>
+                {sessionError && <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: "0.25rem" }}>{sessionError}</p>}
+              </div>
+
+              {/* Other ways: Solo + Group */}
+              <p className="text-xs text-white/50 uppercase tracking-wide" style={{ textAlign: "center", marginTop: 12, marginBottom: 6 }}>
                 {t(locale, "intro", "otherWays")}
               </p>
-              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+              <div style={{ display: "flex", gap: 8 }}>
                 {/* Solo card */}
                 <button
                   className="intro-card"
@@ -1695,18 +1683,6 @@ export default function WTBetaPage() {
                     </span>
                   </div>
                 </div>
-              </div>
-
-              {/* Secondary: I have a code — always visible */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <button
-                  onClick={() => setScreen("join")}
-                  className="mt-2 w-full rounded-xl border border-white/8 bg-white/5 py-2 text-sm font-medium text-white/60 hover:bg-white/[0.08] active:bg-white/10 transition-colors cursor-pointer"
-                >
-                  {t(locale, "intro", "hasCode")}
-                </button>
-                <p className="mt-1 text-xs text-white/35 text-center">Enter 6 characters</p>
-                {sessionError && <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: "0.25rem" }}>{sessionError}</p>}
               </div>
 
             </div>
@@ -2821,7 +2797,7 @@ export default function WTBetaPage() {
         {/* Profile link — goes to /home if logged in, /login otherwise */}
         <button
           onClick={() => router.push(authUser ? "/home" : "/login?from=together")}
-          className="fixed bottom-4 right-4 z-60 select-none cursor-pointer"
+          className="fixed top-4 right-4 z-60 select-none cursor-pointer"
           style={{ background: "transparent", border: "none", padding: 0 }}
           aria-label={authUser ? t(locale, "global", "myProfile") : t(locale, "global", "login")}
         >
