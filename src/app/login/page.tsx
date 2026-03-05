@@ -32,8 +32,6 @@ function LoginContent() {
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [signupDone, setSignupDone] = useState(false);
-  const [signupEmail, setSignupEmail] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -76,9 +74,12 @@ function LoginContent() {
       if (error) {
         setError(translateError(error.message));
       } else {
-        setSignupEmail(email);
-        setSignupDone(true);
         track("signup_submitted");
+        if (rememberMe) localStorage.setItem("logflix_remember_me", "1");
+        else localStorage.removeItem("logflix_remember_me");
+        window.location.href = isTogether ? "/onboarding?from=together" : "/onboarding";
+        setLoading(false);
+        return;
       }
     } else {
       const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
@@ -114,26 +115,6 @@ function LoginContent() {
     setLoading(false);
   }
 
-  async function handleResendConfirmation() {
-    if (!signupEmail) return;
-    setLoading(true);
-    setError("");
-    const supabase = createSupabaseBrowser();
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email: signupEmail,
-      options: { emailRedirectTo: `${window.location.origin}/api/auth/callback${isTogether ? "?from=together" : ""}` },
-    });
-    if (error) {
-      setError(translateError(error.message));
-    }
-    setLoading(false);
-  }
-
-  // Track email verification screen view
-  useEffect(() => {
-    if (signupDone) track("email_verification_viewed");
-  }, [signupDone]);
 
   const features = isTogether ? [
     {
@@ -331,53 +312,7 @@ function LoginContent() {
 
         {/* Auth card */}
         <div className="w-full max-w-sm">
-          {/* Signup confirmation screen */}
-          {signupDone ? (
-            <div className="glass-strong rounded-[var(--radius-xl)] p-6 text-center">
-              <div className="w-14 h-14 rounded-full bg-[var(--green-glow)] flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7 text-[var(--green)]" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                </svg>
-              </div>
-
-              <h2 className="text-lg font-bold text-[var(--text-primary)] mb-2">Sjekk innboksen din</h2>
-              <p className="text-sm text-[var(--text-secondary)] mb-1">
-                Vi sendte en bekreftelseslenke til:
-              </p>
-              <p className="text-sm font-semibold text-[var(--text-primary)] mb-4">
-                {signupEmail}
-              </p>
-
-              <div className="text-xs text-[var(--text-tertiary)] space-y-1.5 mb-5">
-                <p>Klikk lenken i e-posten for å aktivere kontoen.</p>
-                <p>Sjekk også spam-mappen hvis du ikke finner den.</p>
-              </div>
-
-              {error && (
-                <div className="text-sm text-[var(--red)] bg-[var(--red-glow)] rounded-[var(--radius-md)] px-3.5 py-2.5 border border-[rgba(248,113,113,0.1)] mb-4">
-                  {error}
-                </div>
-              )}
-
-              <button
-                onClick={handleResendConfirmation}
-                disabled={loading}
-                className="text-sm font-medium text-[var(--accent-light)] hover:text-[var(--accent)] transition-colors disabled:opacity-40"
-              >
-                {loading ? "Sender..." : "Send lenken på nytt"}
-              </button>
-
-              <div className="mt-5 pt-4 border-t border-[var(--border)]">
-                <button
-                  onClick={() => { setSignupDone(false); setMode("login"); setError(""); }}
-                  className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
-                >
-                  ← Tilbake til innlogging
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="glass-strong rounded-[var(--radius-xl)] p-6">
+          <div className="glass-strong rounded-[var(--radius-xl)] p-6">
               {/* Tabs */}
               <div className="flex mb-6 bg-[var(--bg-surface)] rounded-[var(--radius-md)] p-1">
                 {(["signup", "login"] as const).map((m) => (
@@ -548,19 +483,16 @@ function LoginContent() {
                 </div>
               )}
             </div>
-          )}
 
           {/* Guest mode */}
-          {!signupDone && (
-            <div className="text-center mt-5">
-              <Link
-                href="/search"
-                className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
-              >
-                Bare se rundt først →
-              </Link>
-            </div>
-          )}
+          <div className="text-center mt-5">
+            <Link
+              href="/search"
+              className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+            >
+              Bare se rundt først →
+            </Link>
+          </div>
         </div>
       </div>
     </div>
