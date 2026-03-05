@@ -6,7 +6,9 @@ export async function middleware(request: NextRequest) {
   // Bypass all auth for crawlable endpoints
   if (
     request.nextUrl.pathname === "/robots.txt" ||
-    request.nextUrl.pathname === "/sitemap.xml"
+    request.nextUrl.pathname === "/sitemap.xml" ||
+    request.nextUrl.pathname === "/sitemap.xsl" ||
+    request.nextUrl.pathname === "/api/sitemap"
   ) {
     return NextResponse.next();
   }
