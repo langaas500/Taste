@@ -314,7 +314,7 @@ export default function WTBetaPage() {
   const [userRegion, setUserRegion] = useState("US");
   const [locale, setLocale] = useState<Locale>("en");
   const [matchRevealPhase, setMatchRevealPhase] = useState<0 | 1 | 2 | 3>(0);
-  const [introChoice, setIntroChoice] = useState<"solo" | "paired">("paired");
+  const introChoice = "paired"; // default mode for tracking
   const [introFading, setIntroFading] = useState(false);
   const [ritualState, setRitualState] = useState<RitualState>("idle");
   const [ritualPhase, setRitualPhase] = useState<0 | 1 | 2>(0);
@@ -1340,7 +1340,7 @@ export default function WTBetaPage() {
   };
 
   return (
-    <div className="min-h-dvh" style={{ background: "#0a0a0f" }}>
+    <div className="h-dvh overflow-hidden flex flex-col" style={{ background: "#0a0a0f" }}>
       {/* Vignette overlay */}
       <div
         className="fixed inset-0 pointer-events-none"
@@ -1352,7 +1352,7 @@ export default function WTBetaPage() {
         {/* ── INTRO ── */}
         {screen === "intro" && (
           <div
-            className="flex-1 flex flex-col"
+            className="flex-1 flex flex-col overflow-hidden"
             style={{
               position: "relative",
               opacity: introFading ? 0.88 : 1,
@@ -1417,7 +1417,7 @@ export default function WTBetaPage() {
             />
 
             {/* ── Logo — top center, in flow ── */}
-            <div style={{ display: "flex", justifyContent: "center", paddingTop: 28, paddingBottom: 4, flexShrink: 0, position: "relative", zIndex: 1 }}>
+            <div style={{ display: "flex", justifyContent: "center", paddingTop: 16, paddingBottom: 2, flexShrink: 0, position: "relative", zIndex: 1 }}>
               <img
                 src="/logo.png"
                 alt="Logflix"
@@ -1433,9 +1433,9 @@ export default function WTBetaPage() {
                 flexShrink: 0,
                 position: "relative",
                 zIndex: 1,
-                marginTop: 24,
+                marginTop: 10,
                 overflow: "hidden",
-                height: 132,
+                height: 90,
                 WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
                 maskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
                 pointerEvents: "none",
@@ -1453,7 +1453,7 @@ export default function WTBetaPage() {
                       key={i}
                       src={`https://image.tmdb.org/t/p/w185${poster}`}
                       alt=""
-                      style={{ height: 120, width: "auto", borderRadius: 16, opacity: 0.65, flexShrink: 0, display: "block", objectFit: "cover" }}
+                      style={{ height: 80, width: "auto", borderRadius: 12, opacity: 0.65, flexShrink: 0, display: "block", objectFit: "cover" }}
                     />
                   ))}
                 </div>
@@ -1466,15 +1466,15 @@ export default function WTBetaPage() {
                   {[...RIBBON_COLORS, ...RIBBON_COLORS].map(([from, to], i) => (
                     <div
                       key={i}
-                      style={{ height: 120, width: 80, borderRadius: 16, background: `linear-gradient(160deg, ${from} 0%, ${to} 100%)`, opacity: 0.18, flexShrink: 0 }}
+                      style={{ height: 80, width: 54, borderRadius: 12, background: `linear-gradient(160deg, ${from} 0%, ${to} 100%)`, opacity: 0.18, flexShrink: 0 }}
                     />
                   ))}
                 </div>
               )}
             </div>
 
-            {/* ── Hero block — flex-1, centered below ribbon ── */}
-            <div style={{ flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "32px 24px 0", position: "relative", zIndex: 1 }}>
+            {/* ── Hero block — flex-1, no scroll ── */}
+            <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "12px 24px 10px", position: "relative", zIndex: 1, overflow: "hidden" }}>
             <div className="intro-content" style={{ width: "100%", maxWidth: 340, textAlign: "center" }}>
 
               {/* Headline */}
@@ -1484,24 +1484,23 @@ export default function WTBetaPage() {
                 letterSpacing: "-0.02em",
                 color: "#ffffff",
                 lineHeight: 1.1,
-                margin: "10px auto 16px",
+                margin: "0 auto 8px",
                 maxWidth: "85%",
               }}>
                 {t(locale, "intro", "headline")}
               </h1>
 
               {/* Subtext */}
-              <div style={{ marginBottom: "24px" }}>
+              <div style={{ marginBottom: "10px" }}>
                 <p style={{ fontSize: "0.875rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: "0 auto", maxWidth: "20rem", textAlign: "center" }}>
                   {t(locale, "intro", "subtext")}
                 </p>
               </div>
 
-              {/* Primary: Duo card */}
-              <div style={{ marginBottom: 16 }}>
-                <button
+              {/* Primary: Duo card with embedded CTA */}
+              <div style={{ marginBottom: 10 }}>
+                <div
                   className="intro-card"
-                  onClick={() => setIntroChoice("paired")}
                   style={{
                     width: "100%",
                     position: "relative",
@@ -1509,15 +1508,11 @@ export default function WTBetaPage() {
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: 10,
-                    padding: "20px 10px",
-                    minHeight: 130,
+                    gap: 6,
+                    padding: "14px 14px 10px",
                     borderRadius: 16,
-                    border: introChoice === "paired" ? "1.5px solid rgba(255,42,42,0.5)" : "1px solid rgba(255,42,42,0.3)",
-                    background: introChoice === "paired" ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)",
-                    cursor: "pointer",
-                    transition: "all 0.3s ease",
-                    transform: introChoice === "paired" ? "scale(1.02)" : "scale(1)",
+                    border: "1px solid rgba(255,42,42,0.3)",
+                    background: "rgba(255,255,255,0.06)",
                     boxShadow: "0 0 24px rgba(255,42,42,0.2)",
                   }}
                 >
@@ -1541,7 +1536,7 @@ export default function WTBetaPage() {
                     src="/two-phones.svg"
                     alt={t(locale, "intro", "pairedLabel")}
                     className="intro-card-icon"
-                    style={{ height: 48, width: "auto", opacity: 1, transition: "opacity 160ms ease" }}
+                    style={{ height: 36, width: "auto", opacity: 1, transition: "opacity 160ms ease" }}
                   />
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
                     <span className="intro-card-label" style={{
@@ -1566,24 +1561,49 @@ export default function WTBetaPage() {
                       fontWeight: 400,
                       color: "rgba(255,255,255,0.6)",
                       textAlign: "center",
-                      marginTop: "8px",
+                      marginTop: "4px",
                       lineHeight: 1.3,
                     }}>
                       {t(locale, "intro", "pairedExplainer")}
                     </span>
                   </div>
-                </button>
+                  <button
+                    className="cta-btn button"
+                    onClick={() => {
+                      if (titlesLoading || ritualState !== "idle") return;
+                      startRitual(() => { setMode("paired"); setSelectedProviders([]); setScreen("providers"); });
+                    }}
+                    disabled={titlesLoading || ritualState !== "idle"}
+                    style={{
+                      width: "100%",
+                      marginTop: 4,
+                      cursor: titlesLoading ? "default" : "pointer",
+                      opacity: titlesLoading ? 0.55 : 1,
+                    }}
+                  >
+                    {titlesLoading ? t(locale, "intro", "loading") : t(locale, "intro", "startPaired")}
+                  </button>
+                  {!authUser && (
+                    <p className="text-xs text-white/40 text-center" style={{ margin: 0 }}>
+                      {t(locale, "intro", "noAccountNeeded")}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Secondary: Solo + Group */}
-              <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", textAlign: "center", marginBottom: 8 }}>
+              <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", textAlign: "center", marginBottom: 6 }}>
                 {t(locale, "intro", "otherWays")}
               </p>
-              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                 {/* Solo card */}
                 <button
                   className="intro-card"
-                  onClick={() => setIntroChoice("solo")}
+                  onClick={() => {
+                    if (titlesLoading || ritualState !== "idle") return;
+                    startRitual(() => { setMode("solo"); setSelectedProviders([]); setScreen("providers"); });
+                  }}
+                  disabled={titlesLoading || ritualState !== "idle"}
                   style={{
                     flex: 1,
                     position: "relative",
@@ -1591,13 +1611,12 @@ export default function WTBetaPage() {
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: 10,
-                    padding: "18px 8px",
-                    minHeight: 110,
-                    borderRadius: 16,
-                    border: introChoice === "solo" ? "1.5px solid rgba(255,255,255,0.25)" : "1px solid rgba(255,255,255,0.06)",
-                    background: introChoice === "solo" ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.03)",
-                    opacity: introChoice === "solo" ? 0.9 : 0.55,
+                    gap: 4,
+                    padding: "10px 8px",
+                    borderRadius: 14,
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    background: "rgba(255,255,255,0.03)",
+                    opacity: 0.55,
                     cursor: "pointer",
                     transition: "all 0.3s ease",
                   }}
@@ -1607,25 +1626,23 @@ export default function WTBetaPage() {
                     src="/one-phone.svg"
                     alt={t(locale, "intro", "soloLabel")}
                     className="intro-card-icon"
-                    style={{ height: 36, width: "auto", opacity: introChoice === "solo" ? 0.8 : 0.45, transition: "opacity 160ms ease" }}
+                    style={{ height: 24, width: "auto", opacity: 0.45, transition: "opacity 160ms ease" }}
                   />
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                     <span className="intro-card-label" style={{
                       fontSize: "0.8rem",
-                      fontWeight: introChoice === "solo" ? 600 : 400,
-                      color: introChoice === "solo" ? "rgba(255,255,255,0.80)" : "rgba(255,255,255,0.38)",
+                      fontWeight: 400,
+                      color: "rgba(255,255,255,0.38)",
                       letterSpacing: "-0.01em",
-                      transition: "all 160ms ease",
                     }}>
                       {t(locale, "intro", "soloLabel")}
                     </span>
                     <span style={{
                       fontSize: "0.7rem",
                       fontWeight: 400,
-                      color: introChoice === "solo" ? "rgba(255,255,255,0.38)" : "rgba(255,255,255,0.20)",
+                      color: "rgba(255,255,255,0.20)",
                       letterSpacing: "-0.005em",
                       lineHeight: 1.3,
-                      transition: "all 160ms ease",
                     }}>
                       {t(locale, "intro", "soloDesc")}
                     </span>
@@ -1639,10 +1656,9 @@ export default function WTBetaPage() {
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 10,
-                  padding: "18px 8px",
-                  minHeight: 110,
-                  borderRadius: 16,
+                  gap: 4,
+                  padding: "10px 8px",
+                  borderRadius: 14,
                   border: "1px solid rgba(255,255,255,0.06)",
                   background: "rgba(255,255,255,0.03)",
                   cursor: "pointer",
@@ -1651,7 +1667,7 @@ export default function WTBetaPage() {
                 }}
                 onClick={() => router.push("/group")}
                 >
-                  <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 4 }}>
+                  <div style={{ position: "absolute", top: 6, right: 6, display: "flex", gap: 4 }}>
                     <div style={{
                       fontSize: "0.55rem", fontWeight: 600,
                       padding: "2px 5px", borderRadius: 4,
@@ -1669,8 +1685,8 @@ export default function WTBetaPage() {
                       letterSpacing: "0.06em",
                     }}>{t(locale, "intro", "soon")}</div>
                   </div>
-                  <span style={{ fontSize: 28, lineHeight: 1 }}>👥</span>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontSize: 18, lineHeight: 1 }}>👥</span>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                     <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "rgba(255,255,255,0.50)", letterSpacing: "-0.01em" }}>
                       {t(locale, "intro", "groupLabel")}
                     </span>
@@ -1681,39 +1697,11 @@ export default function WTBetaPage() {
                 </div>
               </div>
 
-              {/* Primary CTA */}
-              <div className="intro-cta" style={{ marginBottom: 12 }}>
-                <button
-                  onClick={() => {
-                    if (titlesLoading || ritualState !== "idle") return;
-                    if (introChoice === "solo") {
-                      startRitual(() => { setMode("solo"); setSelectedProviders([]); setScreen("providers"); });
-                    } else {
-                      startRitual(() => { setMode("paired"); setSelectedProviders([]); setScreen("providers"); });
-                    }
-                  }}
-                  disabled={titlesLoading || ritualState !== "idle"}
-                  className="button"
-                  style={{
-                    width: "100%",
-                    cursor: titlesLoading ? "default" : "pointer",
-                    opacity: titlesLoading ? 0.55 : 1,
-                  }}
-                >
-                  {titlesLoading ? t(locale, "intro", "loading") : introChoice === "solo" ? t(locale, "intro", "startSolo") : t(locale, "intro", "startPaired")}
-                </button>
-                {!authUser && (
-                  <p className="text-xs text-white/40 text-center mt-2">
-                    {t(locale, "intro", "noAccountNeeded")}
-                  </p>
-                )}
-              </div>
-
               {/* Secondary: I have a code — always visible */}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                 <button
                   onClick={() => setScreen("join")}
-                  className="mt-3 w-full rounded-xl border border-white/8 bg-white/5 py-2.5 text-sm font-medium text-white/60 hover:bg-white/[0.08] active:bg-white/10 transition-colors cursor-pointer"
+                  className="mt-2 w-full rounded-xl border border-white/8 bg-white/5 py-2 text-sm font-medium text-white/60 hover:bg-white/[0.08] active:bg-white/10 transition-colors cursor-pointer"
                 >
                   {t(locale, "intro", "hasCode")}
                 </button>
@@ -1892,7 +1880,7 @@ export default function WTBetaPage() {
 
         {/* ── PROVIDERS ── */}
         {screen === "providers" && (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 relative overflow-hidden">
+          <div className="flex-1 flex flex-col items-center justify-center px-6 py-6 relative overflow-hidden">
             <style dangerouslySetInnerHTML={{ __html: `@keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }` }} />
             {ribbonPosters.length > 0 && (
               <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
@@ -1908,10 +1896,10 @@ export default function WTBetaPage() {
               <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#fff", marginBottom: 6, textAlign: "center" }}>
                 {t(locale, "providers", "headline")}
               </h2>
-              <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.42)", marginBottom: 32, textAlign: "center" }}>
+              <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.42)", marginBottom: 20, textAlign: "center" }}>
                 {t(locale, "providers", "ingress")}
               </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", marginBottom: 40 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", marginBottom: 24 }}>
                 {PROVIDERS
                   .filter((p) => {
                     if (NORDIC_ONLY_PROVIDERS.has(p.id)) return VIAPLAY_REGIONS.has(userRegion);
@@ -1947,7 +1935,7 @@ export default function WTBetaPage() {
                   })}
               </div>
               {/* Tonight preference toggle */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 28 }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 20 }}>
                 <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 10, letterSpacing: "0.02em" }}>
                   {t(locale, "providers", "tonightLabel")}
                 </span>
