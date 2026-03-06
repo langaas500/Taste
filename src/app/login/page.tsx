@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -33,7 +33,9 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const termsRef = useRef<HTMLLabelElement>(null);
 
   // Auto-redirect if "remember me" was set and session is still active
   useEffect(() => {
@@ -56,7 +58,9 @@ function LoginContent() {
     if (mode === "signup") {
       track("signup_started");
       if (!termsAccepted) {
-        setError("Du må godta brukervilkår og personvernerklæring.");
+        setTermsError(true);
+        termsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => setTermsError(false), 600);
         setLoading(false);
         return;
       }
@@ -408,32 +412,43 @@ function LoginContent() {
                 )}
 
                 {mode === "signup" && (
-                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={termsAccepted}
-                      onChange={(e) => setTermsAccepted(e.target.checked)}
-                      className="mt-0.5 w-4 h-4 rounded border-[var(--border)] bg-[var(--bg-surface)] accent-[var(--accent)] cursor-pointer"
-                    />
-                    <span className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                      Jeg godtar{" "}
-                      <Link
-                        href="/terms"
-                        target="_blank"
-                        className="text-[var(--accent-light)] hover:text-[var(--accent)] underline transition-colors"
-                      >
-                        Brukervilkår
-                      </Link>{" "}
-                      og{" "}
-                      <Link
-                        href="/privacy"
-                        target="_blank"
-                        className="text-[var(--accent-light)] hover:text-[var(--accent)] underline transition-colors"
-                      >
-                        Personvernerklæring
-                      </Link>
-                    </span>
-                  </label>
+                  <div>
+                    <label
+                      ref={termsRef}
+                      className={`flex items-start gap-2.5 cursor-pointer select-none transition-colors ${termsError ? "animate-[terms-shake_0.3s_ease-in-out]" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={termsAccepted}
+                        onChange={(e) => { setTermsAccepted(e.target.checked); setTermsError(false); }}
+                        className={`mt-0.5 w-4 h-4 rounded bg-[var(--bg-surface)] accent-[var(--accent)] cursor-pointer transition-colors duration-300 ${termsError ? "border-[var(--red)]" : "border-[var(--border)]"}`}
+                        style={termsError ? { outline: "2px solid rgba(248,113,113,0.6)", outlineOffset: 1 } : undefined}
+                      />
+                      <span className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                        Jeg godtar{" "}
+                        <Link
+                          href="/terms"
+                          target="_blank"
+                          className="text-[var(--accent-light)] hover:text-[var(--accent)] underline transition-colors"
+                        >
+                          Brukervilkår
+                        </Link>{" "}
+                        og{" "}
+                        <Link
+                          href="/privacy"
+                          target="_blank"
+                          className="text-[var(--accent-light)] hover:text-[var(--accent)] underline transition-colors"
+                        >
+                          Personvernerklæring
+                        </Link>
+                      </span>
+                    </label>
+                    {termsError && (
+                      <p className="text-xs text-[var(--red)] mt-1.5">
+                        Du må godta brukervilkårene for å opprette konto
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {error && (
@@ -444,7 +459,7 @@ function LoginContent() {
 
                 <button
                   type="submit"
-                  disabled={loading || (mode === "signup" && !termsAccepted)}
+                  disabled={loading}
                   className="btn-press w-full py-2.5 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_24px_var(--accent-glow-strong)] text-white rounded-[var(--radius-md)] font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none"
                 >
                   {loading ? (
