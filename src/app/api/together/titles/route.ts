@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     if (user) {
       const supabase = await createSupabaseServer();
 
-      const [{ data: userTitles }, { data: exclusions }] = await Promise.all([
+      const [{ data: userTitles }, { data: exclusions }, { data: togetherExcl }] = await Promise.all([
         supabase
           .from("user_titles")
           .select("tmdb_id, type, sentiment, favorite")
@@ -42,6 +42,10 @@ export async function GET(req: NextRequest) {
           .from("user_exclusions")
           .select("tmdb_id, type")
           .eq("user_id", user.id),
+        supabase
+          .from("together_title_exclusions")
+          .select("tmdb_id, media_type")
+          .eq("user_id", user.id),
       ]);
 
       userTitles?.forEach((t: { tmdb_id: number; type: string }) =>
@@ -49,6 +53,9 @@ export async function GET(req: NextRequest) {
       );
       exclusions?.forEach((t: { tmdb_id: number; type: string }) =>
         excludeIds.add(`${t.tmdb_id}:${t.type}`)
+      );
+      togetherExcl?.forEach((t: { tmdb_id: number; media_type: string }) =>
+        excludeIds.add(`${t.tmdb_id}:${t.media_type}`)
       );
 
       const likedTitles = (userTitles || []).filter(
