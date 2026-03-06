@@ -347,6 +347,9 @@ export default function WTBetaPage() {
   const [showSuperLikeFlash, setShowSuperLikeFlash] = useState(false);
   const superLikeFlashTimeoutRef = useRef<number | null>(null);
   useEffect(() => () => { if (superLikeFlashTimeoutRef.current) clearTimeout(superLikeFlashTimeoutRef.current); }, []);
+  const [excludeToast, setExcludeToast] = useState(false);
+  const excludeToastRef = useRef<number | null>(null);
+  useEffect(() => () => { if (excludeToastRef.current) clearTimeout(excludeToastRef.current); }, []);
 
   const superLikedIdRef = useRef<number | null>(null);
   const cardStartTime = useRef<number>(0);
@@ -1029,6 +1032,21 @@ export default function WTBetaPage() {
       enqueueSwipe(t.tmdb_id, t.type, "superlike");
       setDeckIndex((i) => i + 1);
     }
+  }
+
+  /* ── exclude ("Ikke for oss") ── */
+  function handleExclude() {
+    const card = deck[deckIndex];
+    if (!card || !authUser) return;
+    fetch("/api/together/exclude", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tmdb_id: card.tmdb_id, media_type: card.type }),
+    }).catch(() => {});
+    if (excludeToastRef.current) clearTimeout(excludeToastRef.current);
+    setExcludeToast(true);
+    excludeToastRef.current = window.setTimeout(() => { setExcludeToast(false); excludeToastRef.current = null; }, 1800);
+    endSwipe("nope");
   }
 
   /* ── keyboard (desktop) ── */
@@ -2510,6 +2528,15 @@ export default function WTBetaPage() {
                           </span>
                         </div>
                       )}
+
+                      {/* Exclude toast */}
+                      {excludeToast && (
+                        <div className="absolute inset-0 z-30 flex items-end justify-center pointer-events-none" style={{ paddingBottom: 24 }}>
+                          <span style={{ background: "rgba(0,0,0,0.8)", color: "rgba(255,255,255,0.7)", fontSize: 12, padding: "6px 14px", borderRadius: 8 }}>
+                            Skjult — vises ikke igjen
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -2682,6 +2709,27 @@ export default function WTBetaPage() {
                     Like
                   </button>
                   </div>
+
+                  {/* Ikke for oss — logged-in only */}
+                  {authUser && (
+                    <div className="flex justify-center" style={{ marginTop: 4 }}>
+                      <button
+                        onClick={handleExclude}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "rgba(255,255,255,0.28)",
+                          fontSize: 12,
+                          cursor: "pointer",
+                          padding: "10px 16px",
+                          minHeight: 44,
+                          lineHeight: "24px",
+                        }}
+                      >
+                        Ikke for oss
+                      </button>
+                    </div>
+                  )}
 
                   {/* Desktop arrow hint */}
                   {isDesktop && (
