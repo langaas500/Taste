@@ -63,7 +63,8 @@ const MOOD_LABELS: Record<Mood, string> = {
 
 /* ── quality + mainstream constants ────────────────────── */
 
-const MIN_YEAR = 1995;
+const MIN_YEAR_TV = 2016;
+const MIN_YEAR_MOVIE = 2012;
 const DEFAULT_LIMIT = 60;
 const MIN_FILTERED_POOL = 30; // minimum pool size before trying the next pass
 
@@ -180,7 +181,8 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
       const key = `${parsed.tmdb_id}:${parsed.type}`;
       if (seen.has(key) || excludeIds.has(key)) continue;
 
-      if (parsed.year && parsed.year < MIN_YEAR) continue;
+      const yearCutoff = type === "tv" ? MIN_YEAR_TV : MIN_YEAR_MOVIE;
+      if (parsed.year && parsed.year < yearCutoff) continue;
 
       // Per-type popularity floor
       const popularity = (item.popularity as number) ?? 0;
@@ -205,6 +207,11 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
       }
       if (likedGenreSet.size > 0) {
         score += genreIds.filter((g) => likedGenreSet.has(g)).length * 2;
+      }
+      if (parsed.year) {
+        if (parsed.year >= 2023) score += 4;
+        else if (parsed.year >= 2020) score += 3;
+        else if (parsed.year >= 2016) score += 1;
       }
 
       pool.push({
@@ -266,7 +273,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
             sort_by: "popularity.desc",
             "vote_average.gte": String(QUALITY.minRating),
             "vote_count.gte": String(FETCH_MIN_VOTE_MOVIE),
-            "primary_release_date.gte": `${MIN_YEAR}-01-01`,
+            "primary_release_date.gte": `${MIN_YEAR_MOVIE}-01-01`,
             page: moodPage,
             ...providerParams,
           })
@@ -277,7 +284,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
             sort_by: "popularity.desc",
             "vote_average.gte": String(QUALITY.minRating),
             "vote_count.gte": String(FETCH_MIN_VOTE_TV),
-            "first_air_date.gte": `${MIN_YEAR}-01-01`,
+            "first_air_date.gte": `${MIN_YEAR_TV}-01-01`,
             page: moodPage,
             ...providerParams,
           })
@@ -300,7 +307,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
             sort_by: "popularity.desc",
             "vote_average.gte": String(QUALITY.minRating),
             "vote_count.gte": String(FETCH_MIN_VOTE_MOVIE),
-            "primary_release_date.gte": `${MIN_YEAR}-01-01`,
+            "primary_release_date.gte": `${MIN_YEAR_MOVIE}-01-01`,
             ...providerParams,
           })
         : { results: [] },
@@ -309,7 +316,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
             sort_by: "popularity.desc",
             "vote_average.gte": String(QUALITY.minRating),
             "vote_count.gte": String(FETCH_MIN_VOTE_TV),
-            "first_air_date.gte": `${MIN_YEAR}-01-01`,
+            "first_air_date.gte": `${MIN_YEAR_TV}-01-01`,
             ...providerParams,
           })
         : { results: [] },
@@ -339,7 +346,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
             sort_by: "popularity.desc",
             "vote_average.gte": String(QUALITY.minRating),
             "vote_count.gte": String(FETCH_MIN_VOTE_MOVIE),
-            "primary_release_date.gte": `${MIN_YEAR}-01-01`,
+            "primary_release_date.gte": `${MIN_YEAR_MOVIE}-01-01`,
             page: String(page),
             ...providerParams,
           })
@@ -349,7 +356,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
             sort_by: "popularity.desc",
             "vote_average.gte": String(QUALITY.minRating),
             "vote_count.gte": String(FETCH_MIN_VOTE_TV),
-            "first_air_date.gte": `${MIN_YEAR}-01-01`,
+            "first_air_date.gte": `${MIN_YEAR_TV}-01-01`,
             page: String(page),
             ...providerParams,
           })
