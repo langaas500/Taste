@@ -59,6 +59,7 @@ export default function RomantiskeFilmerNetflixPage() {
         h1="Romantiske filmer på Netflix Norge"
         heroSubtitle="Fra lett rom-com til gripende drama — finn den romantiske filmen dere begge faktisk vil se."
         relatedLinks={[
+          { href: "/together", label: "🔥 Prøv Se Sammen – Finn matchen nå" },
           { href: "/no/film-a-se-med-kjaeresten", label: "Film å se med kjæresten" },
           { href: "/no/hva-skal-vi-se-i-kveld", label: "Hva skal vi se i kveld?" },
           { href: "/no/serie-a-se-sammen", label: "Serie å se sammen" },

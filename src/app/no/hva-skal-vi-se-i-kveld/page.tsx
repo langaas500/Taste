@@ -59,6 +59,7 @@ export default function HvaSkalViSePage() {
         h1="Hva skal vi se i kveld?"
         heroSubtitle="Lei av å bruke halve kvelden på å velge? Sveip og finn en film dere begge liker — på under 3 minutter."
         relatedLinks={[
+          { href: "/together", label: "🔥 Prøv Se Sammen – Finn matchen nå" },
           { href: "/no/film-a-se-med-kjaeresten", label: "Film å se med kjæresten" },
           { href: "/no/serie-a-se-sammen", label: "Serie å se sammen" },
           { href: "/no/film-for-filmkveld-med-venner", label: "Film for filmkveld med venner" },

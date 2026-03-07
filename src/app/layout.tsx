@@ -9,27 +9,10 @@ const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://logflix.app"),
-  title: "Logflix — Finn noe å se sammen",
-  description: "Sveip deg frem til enighet. Match med partneren din på under 3 minutter.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Logflix",
-  },
-  openGraph: {
-    title: "Logflix — Finn noe å se sammen",
-    description: "Sveip deg frem til enighet. Match med partneren din på under 3 minutter.",
-    url: "https://logflix.app",
-    siteName: "Logflix",
-    locale: "nb_NO",
-    type: "website",
-    images: ["/og-image.png"],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Logflix — Finn noe å se sammen",
-    description: "Sveip deg frem til enighet. Match med partneren din på under 3 minutter.",
-    images: ["/og-image.png"],
   },
   verification: {
     google: "google3a70000c026a667b",
@@ -55,6 +38,20 @@ export default async function RootLayout({
   return (
     <html lang={lang} className={inter.className}>
       <body className="min-h-dvh antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Logflix",
+              url: "https://logflix.app",
+              description:
+                "Finn noe å se sammen. Sveip hver for dere, match på det begge vil se.",
+              inLanguage: ["nb", "en"],
+            }),
+          }}
+        />
         <PostHogProvider>
           <ToastProvider>
             <div className="relative z-10">{children}</div>

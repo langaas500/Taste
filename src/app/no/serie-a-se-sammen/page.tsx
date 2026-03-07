@@ -59,6 +59,7 @@ export default function SerieASeSammenPage() {
         h1="Serie å se sammen"
         heroSubtitle="Finn neste serie å binge sammen — uten diskusjon, uten kompromiss."
         relatedLinks={[
+          { href: "/together", label: "🔥 Prøv Se Sammen – Finn matchen nå" },
           { href: "/no/film-a-se-med-kjaeresten", label: "Film å se med kjæresten" },
           { href: "/no/hva-skal-vi-se-i-kveld", label: "Hva skal vi se i kveld?" },
           { href: "/no/filmer-a-se-med-familien", label: "Filmer for hele familien" },

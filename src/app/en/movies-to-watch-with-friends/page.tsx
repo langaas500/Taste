@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     languages: {
       en: "https://logflix.app/en/movies-to-watch-with-friends",
       nb: "https://logflix.app/no/film-for-filmkveld-med-venner",
-      "x-default": "https://logflix.app/en/movies-to-watch-with-friends",
+      "x-default": "https://logflix.app/no/film-for-filmkveld-med-venner",
     },
   },
 };

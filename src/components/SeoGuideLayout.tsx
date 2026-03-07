@@ -82,7 +82,14 @@ export default function SeoGuideLayout({
 
         {/* Primary CTA */}
         <div style={{ maxWidth: 400, margin: "0 auto", padding: "0 24px", textAlign: "center" }}>
-          <Link href="/together" className="button" style={{ width: "100%", maxWidth: 320, display: "inline-block" }}>
+          <Link
+            href="/together"
+            className="button"
+            style={{ width: "100%", maxWidth: 320, display: "inline-block" }}
+            data-ph-capture="seo-guide-conversion"
+            data-source="seo-guide"
+            data-page-title={h1}
+          >
             {resolvedCtaText}
           </Link>
           {resolvedTrustLine && (
@@ -111,6 +118,11 @@ export default function SeoGuideLayout({
                 <Link
                   key={link.href}
                   href={link.href}
+                  {...(link.href === "/together" ? {
+                    "data-ph-capture": "seo-guide-conversion",
+                    "data-source": "seo-guide",
+                    "data-page-title": h1,
+                  } : {})}
                   style={{
                     color: "rgba(255,255,255,0.55)", fontSize: 14,
                     textDecoration: "none", padding: "10px 14px",
@@ -147,7 +159,14 @@ export default function SeoGuideLayout({
             <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 15, marginBottom: 24, lineHeight: 1.5 }}>
               {locale === "en" ? "Use Watch Together to match your taste with a friend in under 3 minutes." : "Bruk Se Sammen til å matche smaken din med en venn på under 3 minutter."}
             </p>
-            <Link href="/together" className="button" style={{ width: "100%", maxWidth: 320, display: "inline-block" }}>
+            <Link
+              href="/together"
+              className="button"
+              style={{ width: "100%", maxWidth: 320, display: "inline-block" }}
+              data-ph-capture="seo-guide-conversion"
+              data-source="seo-guide"
+              data-page-title={h1}
+            >
               {resolvedCtaText}
             </Link>
           </div>

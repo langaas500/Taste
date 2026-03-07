@@ -415,13 +415,15 @@ function LoginContent() {
                   <div>
                     <label
                       ref={termsRef}
-                      className={`flex items-start gap-2.5 cursor-pointer select-none transition-colors ${termsError ? "animate-[terms-shake_0.3s_ease-in-out]" : ""}`}
+                      htmlFor="terms-checkbox"
+                      className={`flex items-start gap-2.5 cursor-pointer select-none py-1 transition-colors ${termsError ? "animate-[terms-shake_0.3s_ease-in-out]" : ""}`}
                     >
                       <input
+                        id="terms-checkbox"
                         type="checkbox"
                         checked={termsAccepted}
                         onChange={(e) => { setTermsAccepted(e.target.checked); setTermsError(false); }}
-                        className={`mt-0.5 w-4 h-4 rounded bg-[var(--bg-surface)] accent-[var(--accent)] cursor-pointer transition-colors duration-300 ${termsError ? "border-[var(--red)]" : "border-[var(--border)]"}`}
+                        className={`mt-0.5 w-5 h-5 rounded bg-[var(--bg-surface)] accent-[var(--accent)] cursor-pointer transition-colors duration-300 ${termsError ? "border-[var(--red)]" : "border-[var(--border)]"}`}
                         style={termsError ? { outline: "2px solid rgba(248,113,113,0.6)", outlineOffset: 1 } : undefined}
                       />
                       <span className="text-xs text-[var(--text-secondary)] leading-relaxed">

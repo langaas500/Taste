@@ -63,6 +63,7 @@ export default function FilmMedKjaerestenPage() {
         h1="Film å se med kjæresten"
         heroSubtitle="Slutt å scrolle i evigheter. Sveip hver for dere og finn en film dere begge liker — på under 3 minutter."
         relatedLinks={[
+          { href: "/together", label: "🔥 Prøv Se Sammen – Finn matchen nå" },
           { href: "/no/hva-skal-vi-se-i-kveld", label: "Hva skal vi se i kveld?" },
           { href: "/no/serie-a-se-sammen", label: "Serie å se sammen" },
           { href: "/no/romantiske-filmer-netflix-norge", label: "Romantiske filmer på Netflix Norge" },

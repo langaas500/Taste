@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     languages: {
       en: "https://logflix.app/en/what-should-we-watch-tonight",
       nb: "https://logflix.app/no/hva-skal-vi-se-i-kveld",
-      "x-default": "https://logflix.app/en/what-should-we-watch-tonight",
+      "x-default": "https://logflix.app/no/hva-skal-vi-se-i-kveld",
     },
   },
 };

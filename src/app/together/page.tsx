@@ -1511,7 +1511,7 @@ export default function WTBetaPage() {
               {/* Subtext */}
               <div style={{ marginBottom: "10px" }}>
                 <p style={{ fontSize: "0.875rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: "0 auto", maxWidth: "20rem", textAlign: "center" }}>
-                  {locale === "no" ? "Swipe hver for dere. Vi finner matchen." : "Swipe separately. We\u2019ll find the match."}
+                  {locale === "no" ? "Ingen diskusjon. Bare match." : "No debate. Just match."}
                 </p>
               </div>
 
@@ -1701,6 +1701,27 @@ export default function WTBetaPage() {
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* ── SEO crawlable text ── */}
+              <div style={{
+                marginTop: 18,
+                padding: "12px 14px",
+                borderRadius: 12,
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.04)",
+              }}>
+                <p style={{ fontSize: "0.7rem", fontWeight: 400, color: "rgba(255,255,255,0.25)", lineHeight: 1.6, margin: 0 }}>
+                  {locale === "no"
+                    ? "Begge swiper hver for seg på filmer og serier. Når dere matcher, har dere funnet noe dere begge faktisk vil se."
+                    : "Each of you swipes on movies and shows separately. When you match, you have found something you both actually want to watch."}
+                </p>
+                <a
+                  href={locale === "no" ? "/no/film-a-se-med-kjaeresten" : "/en/what-should-we-watch-tonight"}
+                  style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.20)", marginTop: 6, display: "inline-block", textDecoration: "underline", textUnderlineOffset: 2 }}
+                >
+                  {locale === "no" ? "Tips til filmkveld med kjæresten" : "What should we watch tonight?"}
+                </a>
               </div>
 
             </div>

@@ -15,8 +15,8 @@ export function GET() {
   const lastmod = new Date().toISOString();
 
   const urls = [
-    entry(`${base}/`, lastmod, "weekly", "1"),
-    entry(`${base}/together`, lastmod, "weekly", "0.9"),
+    entry(`${base}/`, lastmod, "weekly", "1", { nb: `${base}/`, en: `${base}/`, "x-default": `${base}/` }),
+    entry(`${base}/together`, lastmod, "weekly", "0.9", { nb: `${base}/together`, en: `${base}/together`, "x-default": `${base}/together` }),
     ...pairs.flatMap(([no, en]) => [
       entry(`${base}${no}`, lastmod, "weekly", "0.85", { nb: `${base}${no}`, en: `${base}${en}`, "x-default": `${base}${no}` }),
       entry(`${base}${en}`, lastmod, "weekly", "0.85", { nb: `${base}${no}`, en: `${base}${en}`, "x-default": `${base}${no}` }),

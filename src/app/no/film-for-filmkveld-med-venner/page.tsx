@@ -59,6 +59,7 @@ export default function FilmkveldMedVennerPage() {
         h1="Film for filmkveld med venner"
         heroSubtitle="Finn filmer hele gjengen faktisk vil se — uten at noen må ofre seg."
         relatedLinks={[
+          { href: "/together", label: "🔥 Prøv Se Sammen – Finn matchen nå" },
           { href: "/no/film-a-se-med-kjaeresten", label: "Film å se med kjæresten" },
           { href: "/no/hva-skal-vi-se-i-kveld", label: "Hva skal vi se i kveld?" },
           { href: "/no/serie-a-se-sammen", label: "Serie å se sammen" },

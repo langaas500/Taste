@@ -63,6 +63,7 @@ export default function FilmerMedFamilienPage() {
         h1="Filmer å se med familien"
         heroSubtitle="Finn en film hele familien faktisk vil se — uten endeløs diskusjon foran TV-en."
         relatedLinks={[
+          { href: "/together", label: "🔥 Prøv Se Sammen – Finn matchen nå" },
           { href: "/no/film-a-se-med-kjaeresten", label: "Film å se med kjæresten" },
           { href: "/no/hva-skal-vi-se-i-kveld", label: "Hva skal vi se i kveld?" },
           { href: "/no/serie-a-se-sammen", label: "Serie å se sammen" },
