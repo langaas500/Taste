@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PremiumModal from "@/components/PremiumModal";
+import { track } from "@/lib/posthog";
 
 interface ConversionWallProps {
   open: boolean;
@@ -16,12 +17,13 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
 
   useEffect(() => {
     if (!open) return;
+    track("conversion_wall_viewed", { type: premium ? "recommendation_limit" : "auth_required" });
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, premium]);
 
   if (!open) return null;
 
@@ -72,7 +74,7 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
           <div className="flex flex-col gap-2.5">
             {premium ? (
               <button
-                onClick={() => setShowPremium(true)}
+                onClick={() => { track("conversion_wall_cta_clicked", { target: "premium" }); setShowPremium(true); }}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-white text-center transition-opacity hover:opacity-90"
                 style={{ background: "#ff2a2a", minHeight: 44 }}
               >
@@ -82,6 +84,7 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
               <>
                 <Link
                   href="/login?mode=signup"
+                  onClick={() => track("conversion_wall_cta_clicked", { target: "signup" })}
                   className="w-full py-2.5 rounded-xl text-sm font-semibold text-white text-center transition-opacity hover:opacity-90"
                   style={{ background: "#ff2a2a", minHeight: 44 }}
                 >
@@ -89,6 +92,7 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
                 </Link>
                 <Link
                   href="/login"
+                  onClick={() => track("conversion_wall_cta_clicked", { target: "login" })}
                   className="w-full py-2.5 rounded-xl text-sm font-medium text-center transition-all"
                   style={{
                     background: "rgba(255,255,255,0.06)",
@@ -105,7 +109,7 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
         </div>
       </div>
 
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} />
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="conversion_wall" />
     </>
   );
 }

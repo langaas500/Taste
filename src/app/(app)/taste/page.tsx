@@ -139,7 +139,7 @@ export default function TastePage() {
         </div>
       )}
 
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} />
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="taste_refresh" />
     </div>
   );
 }

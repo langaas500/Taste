@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import SwipeMatchDemo from "@/app/SwipeMatchDemo";
+import { track } from "@/lib/posthog";
 
 /* ── Main Layout ──────────────────────────────────────── */
 
@@ -89,6 +90,7 @@ export default function SeoGuideLayout({
             data-ph-capture="seo-guide-conversion"
             data-source="seo-guide"
             data-page-title={h1}
+            onClick={() => track("seo_guide_cta_clicked", { source_page: window.location.pathname, target: "/together" })}
           >
             {resolvedCtaText}
           </Link>
@@ -118,6 +120,7 @@ export default function SeoGuideLayout({
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={() => track("seo_guide_cta_clicked", { source_page: window.location.pathname, target: link.href })}
                   {...(link.href === "/together" ? {
                     "data-ph-capture": "seo-guide-conversion",
                     "data-source": "seo-guide",
@@ -166,6 +169,7 @@ export default function SeoGuideLayout({
               data-ph-capture="seo-guide-conversion"
               data-source="seo-guide"
               data-page-title={h1}
+              onClick={() => track("seo_guide_cta_clicked", { source_page: window.location.pathname, target: "/together" })}
             >
               {resolvedCtaText}
             </Link>
@@ -258,7 +262,11 @@ export function MidPageCta({
       <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>
         {subtitle}
       </p>
-      <Link href={ctaHref} className="button">
+      <Link
+        href={ctaHref}
+        className="button"
+        onClick={() => track("seo_guide_cta_clicked", { source_page: typeof window !== "undefined" ? window.location.pathname : "", target: ctaHref })}
+      >
         {ctaText}
       </Link>
     </section>

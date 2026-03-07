@@ -1,26 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { track } from "@/lib/posthog";
 
 interface PremiumModalProps {
   isOpen: boolean;
   onClose: () => void;
+  source?: string;
 }
 
-export default function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
+export default function PremiumModal({ isOpen, onClose, source }: PremiumModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!isOpen) return;
+    track("premium_modal_viewed", { source });
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, source]);
 
   async function handleCheckout() {
+    track("premium_checkout_initiated", { source });
     setLoading(true);
     setError("");
     try {
@@ -41,11 +45,7 @@ export default function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
 
   const features = [
     "Ubegrensede AI-anbefalinger",
-    "Smaksprofil (refresh når du vil)",
-    "Avanserte filtre",
-    "Delte lister med partner",
-    "Statistikk og innsikt",
-    "Scout AI-søk (kommer snart)",
+    "Personlig smaksprofil (refresh når du vil)",
   ];
 
   return (
@@ -105,7 +105,7 @@ export default function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
             Founding Member-pris — eksklusivt for de første 500
           </p>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
-            Lås inn prisen for alltid
+            Lås inn 29,-/mnd for alltid
           </p>
         </div>
 

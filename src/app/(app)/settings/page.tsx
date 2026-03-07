@@ -652,7 +652,7 @@ function SettingsContent() {
         </GlowButton>
       </GlassCard>
 
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} />
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="settings" />
     </div>
   );
 }
