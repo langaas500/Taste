@@ -8,7 +8,7 @@ type Locale = "no" | "en";
 
 const strings = {
   no: {
-    hero: "Bli enige om hva dere skal se. Nå.",
+    hero: "Finn noe å se sammen. Bestem dere nå.",
     sub: "Bestem dere på minutter, ikke 30.",
     cta: "Start Swiping",
     trust: "Gratis. Ingen konto nødvendig.",
@@ -24,7 +24,7 @@ const strings = {
     micro3: "Mindre krangling. Mer filmkveld.",
   },
   en: {
-    hero: "Agree on what to watch. Instantly.",
+    hero: "Find something to watch together. Instantly.",
     sub: "Decide in minutes, not 30.",
     cta: "Start Swiping",
     trust: "Free. No account needed.",
