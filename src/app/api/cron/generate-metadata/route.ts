@@ -105,7 +105,7 @@ async function callAI(systemPrompt: string, userPrompt: string): Promise<string>
     method: "POST",
     headers: {
       "x-api-key": env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2024-06-01",
+      "anthropic-version": "2023-06-01",
       "content-type": "application/json",
     },
     body: JSON.stringify({
@@ -134,6 +134,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const sp = req.nextUrl.searchParams;
+  const batchSize = Math.min(Math.max(parseInt(sp.get("limit") || String(BATCH_SIZE), 10) || BATCH_SIZE, 1), 50);
+
   const admin = createSupabaseAdmin();
 
   // Lock check: prevent duplicate runs
@@ -157,7 +160,7 @@ export async function POST(req: NextRequest) {
     .is("curator_hook", null)
     .in("backfill_status", ["pending", "failed"])
     .order("popularity", { ascending: false })
-    .limit(BATCH_SIZE);
+    .limit(batchSize);
 
   if (fetchErr) {
     return NextResponse.json({ error: fetchErr.message }, { status: 500 });
