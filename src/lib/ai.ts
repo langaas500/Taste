@@ -194,6 +194,36 @@ Return ONLY valid JSON, no markdown fences.`;
   }
 }
 
+export async function generateVibeTitle(
+  titles: string[],
+  topGenres: string[],
+  region: string,
+): Promise<string> {
+  const langMap: Record<string, string> = {
+    no: "Norwegian Bokmål",
+    dk: "Danish",
+    fi: "Finnish",
+    se: "Swedish",
+  };
+  const lang = langMap[region] || "Norwegian Bokmål";
+
+  const result = await callAI(
+    [
+      {
+        role: "system",
+        content: `You create fun, creative personality titles for movie/TV viewers. Reply with ONLY the title, nothing else. Write in ${lang}. Max 6 words.`,
+      },
+      {
+        role: "user",
+        content: `Based on these watched titles: ${titles.join(", ")}. Top genres: ${topGenres.join(", ")}. Create a fun personality title like "Nattens Thriller-Junkie" or "Sci-Fi Drømmeren".`,
+      },
+    ],
+    0.8,
+  );
+
+  return result.trim().replace(/^["']|["']$/g, "");
+}
+
 export async function testAIConnection(): Promise<{ ok: boolean; provider: string; error?: string }> {
   const provider = env.AI_PROVIDER;
   try {

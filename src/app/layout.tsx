@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { headers } from "next/headers";
+import { REGION_TEXT, type RegionTextKey } from "@/components/TitlePageContent";
 import { ToastProvider } from "@/components/Toast";
 import PostHogProvider from "@/components/PostHogProvider";
 import "./globals.css";
@@ -33,7 +34,10 @@ export default async function RootLayout({
 }) {
   const h = await headers();
   const country = h.get("x-vercel-ip-country") ?? "";
-  const lang = country === "NO" ? "nb" : "en";
+  const regionMap: Record<string, RegionTextKey> = { NO: "no", DK: "dk", FI: "fi", SE: "se" };
+  const siteRegion = regionMap[country] ?? "no";
+  const lang = ({ no: "nb", dk: "da", fi: "fi", se: "sv" } as const)[siteRegion];
+  const siteT = REGION_TEXT[siteRegion];
 
   return (
     <html lang={lang} className={inter.className}>
@@ -46,9 +50,8 @@ export default async function RootLayout({
               "@type": "WebSite",
               name: "Logflix",
               url: "https://logflix.app",
-              description:
-                "Finn noe å se sammen. Sveip hver for dere, match på det begge vil se.",
-              inLanguage: ["nb", "en"],
+              description: siteT.siteDescription,
+              inLanguage: [lang, "en"],
             }),
           }}
         />

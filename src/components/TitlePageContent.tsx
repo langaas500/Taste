@@ -76,6 +76,7 @@ export const REGION_TEXT = {
     providerStream: (title: string, provider: string) => `Du kan strømme ${title} på ${provider}.`,
     providerRent: (title: string, provider: string) => `${title} kan leies på ${provider}.`,
     providerNone: (title: string) => `Vi har ikke funnet strømmetilbud for ${title} ennå.`,
+    siteDescription: "Finn noe å se sammen. Sveip hver for dere, match på det begge vil se.",
   },
   dk: {
     streaming: "Streaming i",
@@ -102,6 +103,7 @@ export const REGION_TEXT = {
     providerStream: (title: string, provider: string) => `Du kan streame ${title} på ${provider}.`,
     providerRent: (title: string, provider: string) => `${title} kan lejes på ${provider}.`,
     providerNone: (title: string) => `Vi har ikke fundet streamingtilbud for ${title} endnu.`,
+    siteDescription: "Find noget at se sammen. Swipe hver for sig, match på det I begge vil se.",
   },
   fi: {
     streaming: "Suoratoisto maassa",
@@ -128,6 +130,7 @@ export const REGION_TEXT = {
     providerStream: (title: string, provider: string) => `Voit katsoa ${title} palvelussa ${provider}.`,
     providerRent: (title: string, provider: string) => `${title} on vuokrattavissa palvelusta ${provider}.`,
     providerNone: (title: string) => `Emme ole löytäneet suoratoistopalveluita kohteelle ${title} vielä.`,
+    siteDescription: "Löydä jotain katsottavaa yhdessä. Selaa erikseen, löydä yhteinen valinta.",
   },
   se: {
     streaming: "Streaming i",
@@ -154,15 +157,11 @@ export const REGION_TEXT = {
     providerStream: (title: string, provider: string) => `Du kan streama ${title} på ${provider}.`,
     providerRent: (title: string, provider: string) => `${title} kan hyras på ${provider}.`,
     providerNone: (title: string) => `Vi har inte hittat streamingtjänster för ${title} än.`,
+    siteDescription: "Hitta något att se tillsammans. Swipa var för sig, matcha på det ni båda vill se.",
   },
 };
 
 export type RegionTextKey = keyof typeof REGION_TEXT;
-
-const TYPE_LABEL: Record<string, string> = {
-  movie: "Film",
-  tv: "Serie",
-};
 
 /* ── Helpers ──────────────────────────────────────────── */
 
@@ -455,7 +454,7 @@ export default function TitlePageContent(props: TitlePageProps) {
             </>
           ) : (
             <p className="text-sm text-white/40">
-              {REGION_UNAVAILABLE_TEXT[region] ?? "Ikke tilgjengelig på strømmetjenester ennå."}
+              {REGION_UNAVAILABLE_TEXT[region] ?? "Not available on streaming services yet."}
             </p>
           )}
         </section>
