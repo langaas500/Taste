@@ -75,9 +75,12 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
             {premium ? (
               <button
                 onClick={() => { track("conversion_wall_cta_clicked", { target: "premium" }); setShowPremium(true); }}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold text-white text-center transition-opacity hover:opacity-90"
-                style={{ background: "#ff2a2a", minHeight: 44 }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white text-center transition-all hover:opacity-90 hover:-translate-y-[2px]"
+                style={{ background: "linear-gradient(#B00000, #E50914)", minHeight: 44 }}
               >
+                <svg width={14} height={14} fill="none" viewBox="0 0 24 24" stroke="#FFD700" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
                 Oppgrader til Premium
               </button>
             ) : (

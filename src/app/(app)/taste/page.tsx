@@ -9,6 +9,50 @@ import GlowButton from "@/components/GlowButton";
 import PremiumModal from "@/components/PremiumModal";
 import type { TasteSummary } from "@/lib/types";
 
+const BLUR_CHAR_LIMIT = 100;
+
+function TasteCard({ color, labelColor, label, text, isPremium }: {
+  color: string;
+  labelColor?: string;
+  label: string;
+  text: string;
+  isPremium: boolean;
+}) {
+  const needsBlur = !isPremium && text.length > BLUR_CHAR_LIMIT;
+  const visibleText = needsBlur ? text.slice(0, BLUR_CHAR_LIMIT) : text;
+  const blurredText = needsBlur ? text.slice(BLUR_CHAR_LIMIT) : "";
+
+  return (
+    <GlassCard hover={false} className="p-5">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-2 h-2 rounded-full" style={{ background: color }} />
+        <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: labelColor || color }}>
+          {label}
+        </h3>
+      </div>
+      <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+        {visibleText}
+        {needsBlur && (
+          <span
+            className="select-none"
+            style={{ filter: "blur(12px)", opacity: 0.65 }}
+          >
+            {blurredText}
+          </span>
+        )}
+      </p>
+      {needsBlur && (
+        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/[0.06]">
+          <svg width={14} height={14} fill="none" viewBox="0 0 24 24" stroke="#FFD700" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <span className="text-[11px] text-white/40">Oppgrader til Premium for å se hele profilen</span>
+        </div>
+      )}
+    </GlassCard>
+  );
+}
+
 export default function TastePage() {
   const [summary, setSummary] = useState<TasteSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,9 +117,12 @@ export default function TastePage() {
         {summary && !isPremium && (
           <button
             onClick={() => setShowPremium(true)}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ background: "#ff2a2a" }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:opacity-90 hover:-translate-y-[2px] cursor-pointer"
+            style={{ background: "linear-gradient(#B00000, #E50914)" }}
           >
+            <svg width={14} height={14} fill="none" viewBox="0 0 24 24" stroke="#FFD700" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
             Oppgrader for å oppdatere
           </button>
         )}
@@ -101,35 +148,25 @@ export default function TastePage() {
 
       {summary && (
         <div className="space-y-4 stagger">
-          <GlassCard hover={false} className="p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 rounded-full bg-[var(--green)]" />
-              <h3 className="text-xs font-semibold text-[var(--green)] uppercase tracking-wider">
-                Du liker...
-              </h3>
-            </div>
-            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{summary.youLike}</p>
-          </GlassCard>
-
-          <GlassCard hover={false} className="p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 rounded-full bg-[var(--red)]" />
-              <h3 className="text-xs font-semibold text-[var(--red)] uppercase tracking-wider">
-                Du unngår gjerne...
-              </h3>
-            </div>
-            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{summary.avoid}</p>
-          </GlassCard>
-
-          <GlassCard hover={false} className="p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 rounded-full bg-[var(--accent)]" />
-              <h3 className="text-xs font-semibold text-[var(--accent-light)] uppercase tracking-wider">
-                Tempo, tone og temaer
-              </h3>
-            </div>
-            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{summary.pacing}</p>
-          </GlassCard>
+          <TasteCard
+            color="var(--green)"
+            label="Du liker..."
+            text={summary.youLike}
+            isPremium={isPremium}
+          />
+          <TasteCard
+            color="var(--red)"
+            label="Du unngår gjerne..."
+            text={summary.avoid}
+            isPremium={isPremium}
+          />
+          <TasteCard
+            color="var(--accent)"
+            labelColor="var(--accent-light)"
+            label="Tempo, tone og temaer"
+            text={summary.pacing}
+            isPremium={isPremium}
+          />
 
           {summary.updatedAt && (
             <p className="text-xs text-[var(--text-tertiary)] text-center pt-2">

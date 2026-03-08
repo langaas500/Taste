@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
     if (action === "providers") {
       const type = (sp.get("type") as "movie" | "tv") || "movie";
-      const region = sp.get("region") || "NO";
+      const region = sp.get("region") || "US";
       const data = await tmdbProviderList(type, region);
       return NextResponse.json({ providers: data.results });
     }

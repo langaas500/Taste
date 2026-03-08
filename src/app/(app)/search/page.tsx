@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import StreamingModal from "@/components/StreamingModal";
@@ -14,6 +14,152 @@ import { recordGuestTitleAction } from "@/lib/guest-actions";
 import Link from "next/link";
 import type { TMDBSearchResult, MediaType, AdvancedSearchFilters } from "@/lib/types";
 
+/* ── Discovery row types ─────────────────────────────── */
+
+interface DiscoveryItem {
+  id: number;
+  title?: string;
+  name?: string;
+  media_type?: string;
+  release_date?: string;
+  first_air_date?: string;
+  poster_path: string | null;
+  vote_average: number;
+}
+
+interface DiscoveryRowData {
+  key: string;
+  label: string;
+  results: DiscoveryItem[];
+}
+
+/* ── Skeleton row ────────────────────────────────────── */
+
+function SkeletonRow() {
+  return (
+    <div className="mb-8">
+      <div className="h-3 w-28 rounded bg-white/[0.06] mb-3 animate-pulse" />
+      <div className="flex gap-3 overflow-hidden">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="flex-shrink-0 w-[140px] aspect-[2/3] rounded-[10px] bg-white/[0.04] animate-pulse"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Single discovery row with scroll + arrows ───────── */
+
+function DiscoveryRow({ row, onSelect }: { row: DiscoveryRowData; onSelect: (item: DiscoveryItem) => void }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [hovered, setHovered] = useState(false);
+
+  const scroll = useCallback((dir: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const amount = el.clientWidth * 0.75;
+    el.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
+  }, []);
+
+  return (
+    <div
+      className="mb-8 relative group/row"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <h3
+        className="mb-3 px-0.5"
+        style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}
+      >
+        {row.label}
+      </h3>
+
+      <div className="relative">
+        {/* Left arrow */}
+        {hovered && (
+          <button
+            onClick={() => scroll("left")}
+            className="absolute left-0 top-0 bottom-0 z-20 w-10 bg-gradient-to-r from-black/60 to-transparent items-center justify-center cursor-pointer transition-opacity hidden md:flex"
+          >
+            <svg className="w-5 h-5 text-white/70" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+          </button>
+        )}
+
+        {/* Scrollable cards */}
+        <div
+          ref={scrollRef}
+          className="flex gap-3 overflow-x-auto pb-2 discovery-scroll"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
+        >
+          {row.results.map((item) => {
+            const title = item.title || item.name || "";
+            const year = (item.release_date || item.first_air_date || "").slice(0, 4);
+            const imgSrc = item.poster_path
+              ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
+              : null;
+
+            return (
+              <div
+                key={`${item.id}-${item.media_type || "x"}`}
+                className="flex-shrink-0 w-[140px] cursor-pointer group/card"
+                onClick={() => onSelect(item)}
+              >
+                <div className="relative aspect-[2/3] w-full rounded-[10px] overflow-hidden bg-white/[0.03] transition-transform duration-250 ease-out group-hover/card:scale-[1.04]">
+                  {imgSrc ? (
+                    <Image
+                      src={imgSrc}
+                      alt={title}
+                      fill
+                      sizes="140px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-white/10">
+                        <rect x="2" y="3" width="20" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                      </svg>
+                    </div>
+                  )}
+
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-250 flex flex-col justify-end p-2.5">
+                    <p className="text-[12px] font-semibold text-white leading-tight line-clamp-2">{title}</p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      {year && <span className="text-[10px] text-white/50">{year}</span>}
+                      {item.vote_average > 0 && (
+                        <span className="text-[10px] font-bold text-white bg-red-600 rounded px-1.5 py-0.5 leading-none">
+                          {item.vote_average.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Right arrow */}
+        {hovered && (
+          <button
+            onClick={() => scroll("right")}
+            className="absolute right-0 top-0 bottom-0 z-20 w-10 bg-gradient-to-l from-black/60 to-transparent items-center justify-center cursor-pointer transition-opacity hidden md:flex"
+          >
+            <svg className="w-5 h-5 text-white/70" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function SearchPage() {
   const guest = useGuestMode();
   const [query, setQuery] = useState("");
@@ -21,6 +167,7 @@ export default function SearchPage() {
   const [results, setResults] = useState<TMDBSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [userRegion, setUserRegion] = useState("US");
   const [actionStates, setActionStates] = useState<Record<string, string>>({});
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
   const [addToListItem, setAddToListItem] = useState<{ id: number; type: MediaType; title: string } | null>(null);
@@ -48,6 +195,42 @@ export default function SearchPage() {
   } | null>(null);
 
   const [topicMatch, setTopicMatch] = useState(false);
+
+  // Discovery rows (shown when search is empty)
+  const [discoveryRows, setDiscoveryRows] = useState<DiscoveryRowData[]>([]);
+  const [discoveryLoading, setDiscoveryLoading] = useState(true);
+  const discoveryFetched = useRef(false);
+
+  useEffect(() => {
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((d) => { if (d.profile?.preferred_region) setUserRegion(d.profile.preferred_region); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (discoveryFetched.current) return;
+    discoveryFetched.current = true;
+    fetch("/api/tmdb/discovery")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.rows) setDiscoveryRows(data.rows);
+      })
+      .catch(() => {})
+      .finally(() => setDiscoveryLoading(false));
+  }, []);
+
+  const showDiscovery = !query.trim() && !isAdvancedMode && results.length === 0;
+
+  function handleDiscoverySelect(item: DiscoveryItem) {
+    const type: MediaType = item.media_type === "tv" || (!item.title && item.name) ? "tv" : "movie";
+    setSelectedItem({
+      id: item.id,
+      type,
+      title: item.title || item.name || "Unknown",
+      poster_path: item.poster_path,
+    });
+  }
 
   // Simple search
   async function handleSearch(e: React.FormEvent) {
@@ -85,7 +268,7 @@ export default function SearchPage() {
       }
       if (advancedFilters.providers.length > 0) {
         params.set("with_watch_providers", advancedFilters.providers.join("|"));
-        params.set("watch_region", "NO");
+        params.set("watch_region", userRegion);
       }
       if (advancedFilters.yearFrom) {
         const key = advancedFilters.type === "movie" ? "primary_release_date.gte" : "first_air_date.gte";
@@ -512,14 +695,21 @@ export default function SearchPage() {
         </div>
       )}
 
-      {!isLoading && results.length === 0 && !isAdvancedMode && !query && (
-        <div className="text-center py-24">
-          <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center">
-            <svg className="w-6 h-6 text-white/20" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-          </div>
-          <p className="text-white/25 text-sm">Søk etter filmer og serier</p>
+      {/* Discovery rows — shown when search field is empty */}
+      {showDiscovery && (
+        <div className="transition-opacity duration-300" style={{ opacity: showDiscovery ? 1 : 0 }}>
+          <style>{`.discovery-scroll::-webkit-scrollbar { display: none; }`}</style>
+          {discoveryLoading ? (
+            <>
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+            </>
+          ) : (
+            discoveryRows.map((row) => (
+              <DiscoveryRow key={row.key} row={row} onSelect={handleDiscoverySelect} />
+            ))
+          )}
         </div>
       )}
 

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { isSupportedRegion } from "@/lib/region";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const user = await requireUser();
     const supabase = await createSupabaseServer();
@@ -13,6 +14,20 @@ export async function GET() {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Auto-save preferred_region from IP header if not yet set
+    if (data && !data.preferred_region) {
+      const ipCountry = req.headers.get("x-vercel-ip-country")?.toUpperCase();
+      if (ipCountry && isSupportedRegion(ipCountry)) {
+        supabase
+          .from("profiles")
+          .update({ preferred_region: ipCountry })
+          .eq("id", user.id)
+          .then(() => {});
+        data.preferred_region = ipCountry;
+      }
+    }
+
     return NextResponse.json({ profile: data });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
@@ -26,7 +41,7 @@ export async function PATCH(req: NextRequest) {
     const user = await requireUser();
     let body;
     try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
-    const allowed = ["display_name", "language", "exploration_slider", "content_filters"];
+    const allowed = ["display_name", "language", "exploration_slider", "content_filters", "preferred_region"];
     const updates: Record<string, unknown> = {};
     for (const key of allowed) {
       if (key in body) updates[key] = body[key];

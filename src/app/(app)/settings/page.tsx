@@ -10,6 +10,7 @@ import PremiumModal from "@/components/PremiumModal";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { fetchLinks, createInvite, acceptInvite, updateLinkSharing, revokeLink, fetchLists } from "@/lib/api";
 import { FILTER_PRESETS, presetsToFilters, filtersToPresets } from "@/lib/filter-presets";
+import { SUPPORTED_REGIONS, REGION_LABELS, REGION_FLAGS, type SupportedRegion } from "@/lib/region";
 import type { AccountLinkDisplay, CustomList, ContentFilters } from "@/lib/types";
 
 function SettingsContent() {
@@ -38,6 +39,8 @@ function SettingsContent() {
   const [linkError, setLinkError] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [showPremium, setShowPremium] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState<SupportedRegion>("US");
+  const [savingRegion, setSavingRegion] = useState(false);
 
   const traktMsg = searchParams.get("trakt");
   const errorMsg = searchParams.get("error");
@@ -55,6 +58,7 @@ function SettingsContent() {
         setExplorationSlider(data.profile.exploration_slider ?? 50);
         setDisplayName(data.profile.display_name || "");
         setIsPremium(!!data.profile.is_premium);
+        if (data.profile.preferred_region) setSelectedRegion(data.profile.preferred_region);
         const filters = (data.profile.content_filters || {}) as ContentFilters;
         setActivePresets(filtersToPresets(filters));
       }
@@ -165,6 +169,21 @@ function SettingsContent() {
       setActivePresets(activePresets);
     }
     setSavingFilters(false);
+  }
+
+  async function saveRegion(region: SupportedRegion) {
+    setSelectedRegion(region);
+    setSavingRegion(true);
+    try {
+      await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferred_region: region }),
+      });
+    } catch {
+      // revert on error
+    }
+    setSavingRegion(false);
   }
 
   async function handleGenerateInvite() {
@@ -297,6 +316,29 @@ function SettingsContent() {
             </button>
           </div>
         )}
+      </GlassCard>
+
+      {/* Region */}
+      <GlassCard hover={false} className="p-5">
+        <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Region</h3>
+        <p className="text-xs text-[var(--text-tertiary)] mb-3 leading-relaxed">
+          Bestemmer trender, strømmetilgjengelighet og anbefalinger.
+        </p>
+        <div className="flex items-center gap-3">
+          <select
+            value={selectedRegion}
+            onChange={(e) => saveRegion(e.target.value as SupportedRegion)}
+            disabled={savingRegion}
+            className="flex-1 px-3 py-2.5 bg-white/[0.04] border border-white/[0.1] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]/40 transition-all duration-200 disabled:opacity-40"
+          >
+            {SUPPORTED_REGIONS.map((code) => (
+              <option key={code} value={code}>
+                {REGION_FLAGS[code]} {REGION_LABELS[code]} ({code})
+              </option>
+            ))}
+          </select>
+          {savingRegion && <span className="text-xs text-[var(--text-tertiary)]">Lagrer...</span>}
+        </div>
       </GlassCard>
 
       {/* Premium */}

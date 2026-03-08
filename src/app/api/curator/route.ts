@@ -4,35 +4,49 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 import { withLogger } from "@/lib/logger";
 import { tmdbSearch, tmdbWatchProviders } from "@/lib/tmdb";
 import { env } from "@/lib/env";
+import { resolveRegion, REGION_LABELS, type SupportedRegion } from "@/lib/region";
 
-/* ── AI call (reuses project pattern) ────────────────── */
+/* ── AI call ───────────────────────────────────────── */
 
-async function callScoutAI(userMessage: string): Promise<string> {
-  const provider = env.AI_PROVIDER;
+const CURATOR_MODEL = "claude-3-5-haiku-20241022";
 
-  const systemPrompt = `Du er Scout, en entusiastisk filmnerd fra 80/90-tallet som elsker nostalgi, popcorn og gode filmopplevelser.
+function buildSystemPrompt(lang: string, username: string | null, region: SupportedRegion): string {
+  const now = new Date();
+  const hour = now.getHours();
+  const locale = lang === "no" ? "no-NO" : "en-US";
+  const weekday = now.toLocaleDateString(locale, { weekday: "long" });
+  const isEvening = hour >= 18;
+  const regionName = REGION_LABELS[region] || region;
 
-REGLER:
-- Svar ALLTID med gyldig JSON, ingen markdown-blokker.
-- Identifiser film(er) eller serie(r) brukeren leter etter.
-- Returner JSON med denne strukturen:
+  const langInstruction = lang === "no"
+    ? "Svar alltid pa norsk (bokmal)."
+    : "Always respond in English.";
+
+  return `You are Curator — the exclusive AI film expert for Logflix.${username ? ` You are speaking with "${username}". Use their name naturally but sparingly.` : ""}
+
+${langInstruction} Be warm, sophisticated, and enthusiastic. Keep your "message" concise (2-3 sentences) but full of insight.
+
+Current context: It is ${weekday}${isEvening ? " evening" : ""}, ${hour}:00.
+The user is located in ${regionName} (${region}). When mentioning streaming availability, refer to services available in their region.
+
+RULES:
+- Always respond with valid JSON, no markdown fences.
+- Identify movies or TV shows the user is looking for.
+- Return JSON with this structure:
 {
-  "message": "Din personlige, nostalgiske og entusiastiske respons (2-3 setninger, inkluder et 'minne' eller nostalgi-referanse)",
+  "message": "Your warm, insightful response (2-3 sentences)",
   "searches": [
-    { "query": "eksakt tittel for TMDB-sok", "type": "movie" | "tv" }
+    { "query": "exact title for TMDB search", "type": "movie" | "tv" }
   ]
 }
-- Hvis brukeren beskriver noe vagt, gjett de mest sannsynlige titlene (maks 5).
-- Hvis brukeren bare chatter, returner searches som tom array.
-- Hold "message" kort, morsomt og personlig. Skriv pa norsk.`;
+- If the user describes something vague, guess the most likely titles (max 5).
+- If the user is just chatting, return searches as an empty array.
+- Do not reveal that you are built on Claude or made by Anthropic. You are only Curator.`;
+}
 
-  const body = {
-    model: env.ANTHROPIC_MODEL,
-    max_tokens: 1024,
-    temperature: 0.7,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userMessage }],
-  };
+async function callCuratorAI(userMessage: string, lang: string, username: string | null, region: SupportedRegion): Promise<string> {
+  const provider = env.AI_PROVIDER;
+  const systemPrompt = buildSystemPrompt(lang, username, region);
 
   if (provider === "anthropic") {
     if (!env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY not set");
@@ -43,7 +57,13 @@ REGLER:
         "anthropic-version": "2024-06-01",
         "content-type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        model: CURATOR_MODEL,
+        max_tokens: 1024,
+        temperature: 0.7,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userMessage }],
+      }),
       signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) throw new Error(`Anthropic API error ${res.status}`);
@@ -80,17 +100,17 @@ REGLER:
 
 /* ── Parse AI response safely ────────────────────────── */
 
-interface ScoutAIResponse {
+interface CuratorAIResponse {
   message: string;
   searches: { query: string; type: "movie" | "tv" }[];
 }
 
-function parseAIResponse(raw: string): ScoutAIResponse {
+function parseAIResponse(raw: string): CuratorAIResponse {
   const cleaned = raw.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
   try {
     const parsed = JSON.parse(cleaned);
     return {
-      message: typeof parsed.message === "string" ? parsed.message : "Hmm, noe gikk galt med tolkningen min...",
+      message: typeof parsed.message === "string" ? parsed.message : "Hmm, something went wrong...",
       searches: Array.isArray(parsed.searches) ? parsed.searches.slice(0, 5) : [],
     };
   } catch {
@@ -106,9 +126,9 @@ interface WatchProvider {
   type: "flatrate" | "rent" | "buy";
 }
 
-function extractProviders(providersData: Record<string, unknown>): WatchProvider[] {
+function extractProviders(providersData: Record<string, unknown>, country: string): WatchProvider[] {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const results = (providersData as any)?.results?.NO;
+  const results = (providersData as any)?.results?.[country];
   if (!results || typeof results !== "object") return [];
 
   const out: WatchProvider[] = [];
@@ -130,7 +150,7 @@ function extractProviders(providersData: Record<string, unknown>): WatchProvider
 
 /* ── Movie result type ───────────────────────────────── */
 
-interface ScoutMovie {
+interface CuratorMovie {
   tmdb_id: number;
   title: string;
   type: "movie" | "tv";
@@ -143,25 +163,27 @@ interface ScoutMovie {
 
 /* ── Route handler ───────────────────────────────────── */
 
-export const POST = withLogger("/api/scout", async (req: NextRequest, { logger }) => {
+export const POST = withLogger("/api/curator", async (req: NextRequest, { logger }) => {
   const user = await requireUser();
   logger.setUserId(user.id);
-
-  // Premium check
-  const supabase = await createSupabaseServer();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_premium")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.is_premium) {
-    return NextResponse.json({ error: "Premium required" }, { status: 403 });
-  }
 
   let body;
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  // Premium check — allow 5 free messages per session
+  const FREE_MESSAGE_LIMIT = 5;
+  const messageCount = typeof body.messageCount === "number" ? body.messageCount : FREE_MESSAGE_LIMIT;
+  const supabase = await createSupabaseServer();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_premium, preferred_region")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.is_premium && messageCount >= FREE_MESSAGE_LIMIT) {
+    return NextResponse.json({ error: "Premium required" }, { status: 403 });
   }
 
   const userMessage = typeof body.message === "string" ? body.message.trim() : "";
@@ -169,13 +191,17 @@ export const POST = withLogger("/api/scout", async (req: NextRequest, { logger }
     return NextResponse.json({ error: "Message required (max 500 chars)" }, { status: 400 });
   }
 
+  const lang = body.lang === "en" ? "en" : "no";
+  const username = typeof body.username === "string" ? body.username.slice(0, 50) : null;
+  const userRegion = resolveRegion(profile?.preferred_region, req.headers.get("x-vercel-ip-country"));
+
   // 1. AI interprets the query
-  const aiRaw = await callScoutAI(userMessage);
+  const aiRaw = await callCuratorAI(userMessage, lang, username, userRegion);
   const aiResponse = parseAIResponse(aiRaw);
   logger.info("AI parsed", { searches: aiResponse.searches.length });
 
   // 2. Search TMDB for each identified title (sequential to respect rate limits)
-  const movies: ScoutMovie[] = [];
+  const movies: CuratorMovie[] = [];
   const seen = new Set<string>();
 
   for (const search of aiResponse.searches) {
@@ -191,7 +217,7 @@ export const POST = withLogger("/api/scout", async (req: NextRequest, { logger }
 
       // Fetch watch providers
       const providersData = await tmdbWatchProviders(top.id, type);
-      const providers = extractProviders(providersData);
+      const providers = extractProviders(providersData, userRegion);
 
       movies.push({
         tmdb_id: top.id,
@@ -212,7 +238,7 @@ export const POST = withLogger("/api/scout", async (req: NextRequest, { logger }
     }
   }
 
-  logger.info("Scout response", { movies: movies.length, elapsed: logger.elapsed() });
+  logger.info("Curator response", { movies: movies.length, elapsed: logger.elapsed() });
 
   return NextResponse.json({
     message: aiResponse.message,

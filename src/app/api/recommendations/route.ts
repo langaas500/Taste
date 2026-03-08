@@ -7,6 +7,7 @@ import type { UserTitle, TitleCache, Recommendation, ContentFilters } from "@/li
 import { getWatchProvidersCachedBatch } from "@/lib/watch-providers-cache";
 import { withLogger } from "@/lib/logger";
 import { applyRateLimit } from "@/lib/rate-limit";
+import { resolveRegion } from "@/lib/region";
 
 export const GET = withLogger("/api/recommendations", async (req, { logger }) => {
   try {
@@ -122,6 +123,7 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
     const liked = titles.filter((t) => t.sentiment === "liked");
     const disliked = titles.filter((t) => t.sentiment === "disliked");
     const explorationSlider = profile?.exploration_slider ?? 50;
+    const userRegion = resolveRegion(profile?.preferred_region, req.headers.get("x-vercel-ip-country"));
 
     // Extract taste summary keywords for scoring
     const tasteSummary = profile?.taste_summary as {
@@ -492,7 +494,7 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
       }));
       const providerMap1 = await getWatchProvidersCachedBatch({
         items: batchItems1,
-        country: "NO",
+        country: userRegion,
       });
       const filtered1 = filterByAvailability(pool1, providerMap1);
 
@@ -509,7 +511,7 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
         }));
         const providerMap2 = await getWatchProvidersCachedBatch({
           items: batchItems2,
-          country: "NO",
+          country: userRegion,
         });
         const filtered2 = filterByAvailability(pool2, providerMap2);
         top20 = pick7030(filtered2);

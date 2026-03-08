@@ -157,7 +157,7 @@ export async function tmdbGenres(type: "movie" | "tv") {
   return res.json();
 }
 
-export async function tmdbProviderList(type: "movie" | "tv", region = "NO") {
+export async function tmdbProviderList(type: "movie" | "tv", region = "US") {
   const res = await tmdbFetch(
     `${BASE}/watch/providers/${type}?language=en-US&watch_region=${region}`
   );

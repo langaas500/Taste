@@ -11,9 +11,9 @@ export async function GET(req: NextRequest) {
 
     // Try to detect country from headers
     const country =
-      req.headers.get("x-vercel-ip-country") ||
       req.nextUrl.searchParams.get("country") ||
-      "NO";
+      req.headers.get("x-vercel-ip-country") ||
+      "US";
 
     const result = await getWatchProvidersCached({ tmdbId, type, country });
 
