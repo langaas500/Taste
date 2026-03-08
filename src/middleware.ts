@@ -8,7 +8,10 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname === "/robots.txt" ||
     request.nextUrl.pathname === "/sitemap.xml" ||
     request.nextUrl.pathname === "/sitemap.xsl" ||
-    request.nextUrl.pathname === "/api/sitemap"
+    request.nextUrl.pathname === "/api/sitemap" ||
+    request.nextUrl.pathname.startsWith("/api/sitemap/") ||
+    request.nextUrl.pathname === "/api/backfill-slugs" ||
+    request.nextUrl.pathname.startsWith("/api/cron/")
   ) {
     return NextResponse.next();
   }
@@ -64,6 +67,14 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/no/") ||
     pathname.startsWith("/en/");
 
+  // SEO title pages — /no/movie/dune-123, /se/tv/breaking-bad-456 etc.
+  const isTitlePage = /^\/(?:no|dk|fi|se)\/(movie|tv)\/[a-z0-9-]+$/.test(pathname);
+
+  // Catch invalid regions that look like title pages (e.g. /us/movie/test) → 404
+  if (!isTitlePage && /^\/[a-z]{2}\/(movie|tv)\/[a-z0-9-]+$/.test(pathname)) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   // Guest-accessible routes (browsing without account)
   const isGuestAllowed =
     pathname === "/" ||
@@ -75,6 +86,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/together/") ||
     pathname.startsWith("/api/group/") ||
     pathname === "/api/stripe/webhook" ||
+    isTitlePage ||
     isSeoPage;
 
   if (!user && !isPublic && !isGuestAllowed) {

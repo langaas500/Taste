@@ -3,6 +3,8 @@ export type Status = "watched" | "watchlist" | "watching";
 export type Sentiment = "liked" | "disliked" | "neutral";
 export type FeedbackType = "like_suggestion" | "not_for_me";
 
+export type BackfillStatus = "pending" | "processing" | "completed" | "failed";
+
 export interface TitleCache {
   tmdb_id: number;
   type: MediaType;
@@ -19,6 +21,13 @@ export interface TitleCache {
   popularity: number | null;
   tmdb_payload: Record<string, unknown> | null;
   updated_at: string;
+  // SEO title page columns (migration 019/020)
+  slug: string | null;
+  curator_hook: string | null;
+  curator_body: string | null;
+  curator_verdict: string | null;
+  mood_tags: string[] | null;
+  backfill_status: BackfillStatus;
 }
 
 export interface UserTitle {
