@@ -79,6 +79,9 @@ export const REGION_TEXT = {
     providerRent: (title: string, provider: string) => `${title} kan leies på ${provider}.`,
     providerNone: (title: string) => `Vi har ikke funnet strømmetilbud for ${title} ennå.`,
     siteDescription: "Finn noe å se sammen. Sveip hver for dere, match på det begge vil se.",
+    home: "Hjem",
+    movies: "Filmer",
+    series: "Serier",
   },
   dk: {
     streaming: "Streaming i",
@@ -108,6 +111,9 @@ export const REGION_TEXT = {
     providerRent: (title: string, provider: string) => `${title} kan lejes på ${provider}.`,
     providerNone: (title: string) => `Vi har ikke fundet streamingtilbud for ${title} endnu.`,
     siteDescription: "Find noget at se sammen. Swipe hver for sig, match på det I begge vil se.",
+    home: "Hjem",
+    movies: "Film",
+    series: "Serier",
   },
   fi: {
     streaming: "Suoratoisto maassa",
@@ -137,6 +143,9 @@ export const REGION_TEXT = {
     providerRent: (title: string, provider: string) => `${title} on vuokrattavissa palvelusta ${provider}.`,
     providerNone: (title: string) => `Emme ole löytäneet suoratoistopalveluita kohteelle ${title} vielä.`,
     siteDescription: "Löydä jotain katsottavaa yhdessä. Selaa erikseen, löydä yhteinen valinta.",
+    home: "Koti",
+    movies: "Elokuvat",
+    series: "Sarjat",
   },
   se: {
     streaming: "Streaming i",
@@ -166,6 +175,9 @@ export const REGION_TEXT = {
     providerRent: (title: string, provider: string) => `${title} kan hyras på ${provider}.`,
     providerNone: (title: string) => `Vi har inte hittat streamingtjänster för ${title} än.`,
     siteDescription: "Hitta något att se tillsammans. Swipa var för sig, matcha på det ni båda vill se.",
+    home: "Hem",
+    movies: "Filmer",
+    series: "Serier",
   },
 };
 
@@ -352,7 +364,34 @@ export default function TitlePageContent(props: TitlePageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(buildFaqSchema(props)) }}
       />
 
+      {/* JSON-LD BreadcrumbList */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: t.home, item: "https://logflix.app" },
+              { "@type": "ListItem", position: 2, name: type === "movie" ? t.movies : t.series, item: "https://logflix.app/search" },
+              { "@type": "ListItem", position: 3, name: title },
+            ],
+          }),
+        }}
+      />
+
       <div className="mx-auto max-w-5xl px-4 pb-20 pt-8">
+        {/* Breadcrumbs */}
+        <nav aria-label="Breadcrumb" className="mb-4 text-xs text-white/40">
+          <ol className="flex items-center gap-1.5">
+            <li><Link href="/" className="hover:text-white/70 transition-colors">{t.home}</Link></li>
+            <li aria-hidden="true">›</li>
+            <li><Link href="/search" className="hover:text-white/70 transition-colors">{type === "movie" ? t.movies : t.series}</Link></li>
+            <li aria-hidden="true">›</li>
+            <li className="text-white/60 truncate max-w-[200px]">{title}</li>
+          </ol>
+        </nav>
+
         {/* ── Hero ─────────────────────────────────────── */}
         <section className="relative mb-10 overflow-hidden rounded-2xl border border-white/[0.06]">
           {/* Backdrop */}

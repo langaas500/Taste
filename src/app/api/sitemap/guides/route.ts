@@ -18,8 +18,8 @@ export function GET() {
     entry(`${base}/`, lastmod, "weekly", "1", { nb: `${base}/`, en: `${base}/`, "x-default": `${base}/` }),
     entry(`${base}/together`, lastmod, "weekly", "0.9", { nb: `${base}/together`, en: `${base}/together`, "x-default": `${base}/together` }),
     ...pairs.flatMap(([no, en]) => [
-      entry(`${base}${no}`, lastmod, "weekly", "0.85", { nb: `${base}${no}`, en: `${base}${en}`, "x-default": `${base}${en}` }),
-      entry(`${base}${en}`, lastmod, "weekly", "0.85", { nb: `${base}${no}`, en: `${base}${en}`, "x-default": `${base}${en}` }),
+      entry(`${base}${no}`, lastmod, "weekly", "0.85", { nb: `${base}${no}`, en: `${base}${en}`, "x-default": `${base}${no}` }),
+      entry(`${base}${en}`, lastmod, "weekly", "0.85", { nb: `${base}${no}`, en: `${base}${en}`, "x-default": `${base}${no}` }),
     ]),
     entry(`${base}/privacy`, lastmod, "monthly", "0.3"),
     entry(`${base}/contact`, lastmod, "monthly", "0.3"),
