@@ -4,7 +4,7 @@ import { createSupabaseAdmin } from "@/lib/supabase-server";
 import { tmdbDetails, tmdbWatchProviders } from "@/lib/tmdb";
 import { parseTitleFromTMDB } from "@/lib/tmdb";
 import { buildSlug, parseSlug } from "@/lib/slug";
-import TitlePageContent from "@/components/TitlePageContent";
+import TitlePageContent, { REGION_TEXT, type RegionTextKey } from "@/components/TitlePageContent";
 import type { WatchProviderData } from "@/lib/types";
 
 export const revalidate = 86400; // 24h ISR
@@ -109,11 +109,12 @@ export async function generateMetadata({
   if (!title) return {};
 
   const regionName = REGION_NAME[region];
+  const t = REGION_TEXT[region as RegionTextKey] ?? REGION_TEXT.no;
   const displayTitle = `${title.title}${title.year ? ` (${title.year})` : ""}`;
-  const pageTitle = `${displayTitle} – Strømming i ${regionName} | Logflix`;
+  const pageTitle = t.metaTitle(displayTitle, regionName);
   const description = title.overview
-    ? `Se hvor du kan strømme ${title.title} i ${regionName}. ${title.overview.slice(0, 140)}...`
-    : `Se hvor du kan strømme ${title.title} i ${regionName}. Finn strømmetjenester, anmeldelser og mer på Logflix.`;
+    ? `${t.metaDesc(title.title, regionName)} ${title.overview.slice(0, 140)}...`
+    : t.metaDescFallback(title.title, regionName);
 
   const canonical = `https://logflix.app/${region}/tv/${title.slug || slug}`;
 

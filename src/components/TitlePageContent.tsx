@@ -50,7 +50,7 @@ const REGION_HREFLANG: Record<string, string> = {
 
 const ALL_REGIONS = ["no", "dk", "fi", "se"] as const;
 
-const REGION_TEXT = {
+export const REGION_TEXT = {
   no: {
     streaming: "Strømming i",
     included: "Inkludert i abonnement",
@@ -63,6 +63,19 @@ const REGION_TEXT = {
     ctaTitle: (title: string) => `Logg og spor ${title} i ditt bibliotek`,
     ctaBody: "Hold oversikt over hva du har sett, lag lister, og få personlige anbefalinger.",
     ctaButton: "Kom i gang — gratis",
+    metaTitle: (title: string, region: string) => `${title} – Strømming i ${region} | Logflix`,
+    metaDesc: (title: string, region: string) => `Se hvor du kan strømme ${title} i ${region}.`,
+    metaDescFallback: (title: string, region: string) => `Se hvor du kan strømme ${title} i ${region}. Finn strømmetjenester, anbefalinger og mer på Logflix.`,
+    faqQ1: (title: string) => `Hvor kan jeg se ${title}?`,
+    faqQ2: (title: string, region: string) => `Er ${title} tilgjengelig på Netflix i ${region}?`,
+    faqQ3: (title: string) => `Er ${title} verdt å se?`,
+    netflixYes: (title: string, region: string) => `Ja, ${title} er tilgjengelig på Netflix i ${region}.`,
+    netflixNo: (title: string, provider: string, region: string) => `Nei, men du kan se ${title} på ${provider} i ${region}.`,
+    netflixRent: (title: string, provider: string) => `${title} er ikke inkludert i abonnement, men kan leies på ${provider}.`,
+    netflixNone: "Tilgjengelighet varierer. Sjekk logflix.app for oppdatert info.",
+    providerStream: (title: string, provider: string) => `Du kan strømme ${title} på ${provider}.`,
+    providerRent: (title: string, provider: string) => `${title} kan leies på ${provider}.`,
+    providerNone: (title: string) => `Vi har ikke funnet strømmetilbud for ${title} ennå.`,
   },
   dk: {
     streaming: "Streaming i",
@@ -76,6 +89,19 @@ const REGION_TEXT = {
     ctaTitle: (title: string) => `Log og følg ${title} i dit bibliotek`,
     ctaBody: "Hold styr på hvad du har set, lav lister og få personlige anbefalinger.",
     ctaButton: "Kom i gang — gratis",
+    metaTitle: (title: string, region: string) => `${title} – Streaming i ${region} | Logflix`,
+    metaDesc: (title: string, region: string) => `Se hvor du kan streame ${title} i ${region}.`,
+    metaDescFallback: (title: string, region: string) => `Se hvor du kan streame ${title} i ${region}. Find streamingtjenester, anbefalinger og mere på Logflix.`,
+    faqQ1: (title: string) => `Hvor kan jeg se ${title}?`,
+    faqQ2: (title: string, region: string) => `Er ${title} tilgængelig på Netflix i ${region}?`,
+    faqQ3: (title: string) => `Er ${title} værd at se?`,
+    netflixYes: (title: string, region: string) => `Ja, ${title} er tilgængelig på Netflix i ${region}.`,
+    netflixNo: (title: string, provider: string, region: string) => `Nej, men du kan se ${title} på ${provider} i ${region}.`,
+    netflixRent: (title: string, provider: string) => `${title} er ikke inkluderet i abonnement, men kan lejes på ${provider}.`,
+    netflixNone: "Tilgængelighed varierer. Tjek logflix.app for opdateret info.",
+    providerStream: (title: string, provider: string) => `Du kan streame ${title} på ${provider}.`,
+    providerRent: (title: string, provider: string) => `${title} kan lejes på ${provider}.`,
+    providerNone: (title: string) => `Vi har ikke fundet streamingtilbud for ${title} endnu.`,
   },
   fi: {
     streaming: "Suoratoisto maassa",
@@ -89,6 +115,19 @@ const REGION_TEXT = {
     ctaTitle: (title: string) => `Kirjaa ja seuraa ${title} kirjastossasi`,
     ctaBody: "Pidä kirjaa katsomistasi, luo listoja ja saa henkilökohtaisia suosituksia.",
     ctaButton: "Aloita — ilmaiseksi",
+    metaTitle: (title: string, region: string) => `${title} – Suoratoisto maassa ${region} | Logflix`,
+    metaDesc: (title: string, region: string) => `Katso mistä voit katsoa ${title} maassa ${region}.`,
+    metaDescFallback: (title: string, region: string) => `Katso mistä voit katsoa ${title} maassa ${region}. Löydä suoratoistopalvelut ja suositukset Logflixistä.`,
+    faqQ1: (title: string) => `Mistä voin katsoa ${title}?`,
+    faqQ2: (title: string, region: string) => `Onko ${title} saatavilla Netflixissä maassa ${region}?`,
+    faqQ3: (title: string) => `Onko ${title} katsomisen arvoinen?`,
+    netflixYes: (title: string, region: string) => `Kyllä, ${title} on saatavilla Netflixissä maassa ${region}.`,
+    netflixNo: (title: string, provider: string, region: string) => `Ei, mutta voit katsoa ${title} palvelussa ${provider} maassa ${region}.`,
+    netflixRent: (title: string, provider: string) => `${title} ei sisälly tilaukseen, mutta sen voi vuokrata palvelusta ${provider}.`,
+    netflixNone: "Saatavuus vaihtelee. Tarkista logflix.app ajantasaisen tiedon saamiseksi.",
+    providerStream: (title: string, provider: string) => `Voit katsoa ${title} palvelussa ${provider}.`,
+    providerRent: (title: string, provider: string) => `${title} on vuokrattavissa palvelusta ${provider}.`,
+    providerNone: (title: string) => `Emme ole löytäneet suoratoistopalveluita kohteelle ${title} vielä.`,
   },
   se: {
     streaming: "Streaming i",
@@ -102,10 +141,23 @@ const REGION_TEXT = {
     ctaTitle: (title: string) => `Logga och följ ${title} i ditt bibliotek`,
     ctaBody: "Håll koll på vad du har sett, skapa listor och få personliga rekommendationer.",
     ctaButton: "Kom igång — gratis",
+    metaTitle: (title: string, region: string) => `${title} – Streaming i ${region} | Logflix`,
+    metaDesc: (title: string, region: string) => `Se var du kan streama ${title} i ${region}.`,
+    metaDescFallback: (title: string, region: string) => `Se var du kan streama ${title} i ${region}. Hitta streamingtjänster, rekommendationer och mer på Logflix.`,
+    faqQ1: (title: string) => `Var kan jag se ${title}?`,
+    faqQ2: (title: string, region: string) => `Är ${title} tillgänglig på Netflix i ${region}?`,
+    faqQ3: (title: string) => `Är ${title} värd att se?`,
+    netflixYes: (title: string, region: string) => `Ja, ${title} är tillgänglig på Netflix i ${region}.`,
+    netflixNo: (title: string, provider: string, region: string) => `Nej, men du kan se ${title} på ${provider} i ${region}.`,
+    netflixRent: (title: string, provider: string) => `${title} ingår inte i prenumeration men kan hyras på ${provider}.`,
+    netflixNone: "Tillgänglighet varierar. Kolla logflix.app för uppdaterad info.",
+    providerStream: (title: string, provider: string) => `Du kan streama ${title} på ${provider}.`,
+    providerRent: (title: string, provider: string) => `${title} kan hyras på ${provider}.`,
+    providerNone: (title: string) => `Vi har inte hittat streamingtjänster för ${title} än.`,
   },
-} as const;
+};
 
-type RegionTextKey = keyof typeof REGION_TEXT;
+export type RegionTextKey = keyof typeof REGION_TEXT;
 
 const TYPE_LABEL: Record<string, string> = {
   movie: "Film",
@@ -119,11 +171,16 @@ function tmdbImg(path: string | null, size = "w500") {
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
+function resolveT(region: string) {
+  return REGION_TEXT[region as RegionTextKey] ?? REGION_TEXT.no;
+}
+
 function buildNetflixAnswer(
   title: string,
   region: string,
   providers: WatchProviderData | null,
 ): string {
+  const t = resolveT(region);
   const regionName = REGION_NAME[region] || region.toUpperCase();
   const flatrate = providers?.flatrate || [];
 
@@ -131,19 +188,19 @@ function buildNetflixAnswer(
     p.provider_name.toLowerCase().includes("netflix"),
   );
   if (netflix) {
-    return `Ja, ${title} er tilgjengelig på Netflix i ${regionName}.`;
+    return t.netflixYes(title, regionName);
   }
 
   if (flatrate.length > 0) {
-    return `Nei, men du kan se ${title} på ${flatrate[0].provider_name} i ${regionName}.`;
+    return t.netflixNo(title, flatrate[0].provider_name, regionName);
   }
 
   const rent = providers?.rent || [];
   if (rent.length > 0) {
-    return `${title} er ikke inkludert i noe abonnement i ${regionName}, men kan leies på ${rent[0].provider_name}.`;
+    return t.netflixRent(title, rent[0].provider_name);
   }
 
-  return `Tilgjengelighet varierer. Sjekk logflix.app for oppdatert info.`;
+  return t.netflixNone;
 }
 
 function buildProviderAnswer(
@@ -151,41 +208,42 @@ function buildProviderAnswer(
   region: string,
   providers: WatchProviderData | null,
 ): string {
-  const regionName = REGION_NAME[region] || region.toUpperCase();
+  const t = resolveT(region);
   const flatrate = providers?.flatrate || [];
 
   if (flatrate.length > 0) {
     const names = flatrate.slice(0, 3).map((p) => p.provider_name).join(", ");
-    return `Du kan strømme ${title} på ${names} i ${regionName}.`;
+    return t.providerStream(title, names);
   }
 
   const rent = providers?.rent || [];
   if (rent.length > 0) {
     const names = rent.slice(0, 3).map((p) => p.provider_name).join(", ");
-    return `${title} kan leies på ${names} i ${regionName}.`;
+    return t.providerRent(title, names);
   }
 
-  return `Vi har ikke funnet strømmetilbud for ${title} i ${regionName} akkurat nå. Sjekk logflix.app for oppdatert info.`;
+  return t.providerNone(title);
 }
 
 function buildFaqSchema(props: TitlePageProps) {
   const { title, region, providers, curatorHook, curatorVerdict } = props;
+  const t = resolveT(region);
   const regionName = REGION_NAME[region] || region.toUpperCase();
 
   const questions: { q: string; a: string }[] = [
     {
-      q: `Hvor kan jeg se ${title} i ${regionName}?`,
+      q: t.faqQ1(title),
       a: buildProviderAnswer(title, region, providers),
     },
     {
-      q: `Er ${title} tilgjengelig på Netflix i ${regionName}?`,
+      q: t.faqQ2(title, regionName),
       a: buildNetflixAnswer(title, region, providers),
     },
   ];
 
   if (curatorHook && curatorVerdict) {
     questions.push({
-      q: `Er ${title} verdt å se?`,
+      q: t.faqQ3(title),
       a: `${curatorHook} ${curatorVerdict}`,
     });
   }
