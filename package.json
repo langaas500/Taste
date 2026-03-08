@@ -22,6 +22,7 @@
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.3",
     "framer-motion": "^12.34.0",
+    "html-to-image": "^1.11.13",
     "next": "^16.1.6",
     "pg": "^8.18.0",
     "postcss": "^8.5.6",

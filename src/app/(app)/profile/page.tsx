@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-browser";
 import type { UserTitle } from "@/lib/types";
 
@@ -29,6 +30,79 @@ const strings = {
     noytral: "Nøytral",
     mislikte: "Mislikte",
     uvurdert: "Uvurdert",
+    wrapped: "Se din månedsrapport",
+  },
+  dk: {
+    title: "Profil",
+    tasteProfile: "Smagsprofil",
+    stats: "Statistik",
+    youLike: "Du kan lide",
+    avoid: "Du undgår",
+    tempoTone: "Tempo & tone",
+    generateTaste: "Generer smagsprofil",
+    noTaste: "Ingen smagsprofil endnu",
+    noTasteSub: "Tilføj nogle sete titler til dit bibliotek for at generere en analyse.",
+    filmLover: "Filmelsker",
+    generating: "Genererer...",
+    vurdering: "Vurdering",
+    toppsjangre: "Topgenrer",
+    sett: "Set",
+    seliste: "Se-liste",
+    filmer: "Film",
+    serier: "Serier",
+    likte: "Kunne lide",
+    noytral: "Neutral",
+    mislikte: "Kunne ikke lide",
+    uvurdert: "Uvurderet",
+    wrapped: "Se din månedsoversigt",
+  },
+  fi: {
+    title: "Profiili",
+    tasteProfile: "Makuprofiili",
+    stats: "Tilastot",
+    youLike: "Pidät",
+    avoid: "Vältät",
+    tempoTone: "Tempo & sävy",
+    generateTaste: "Luo makuprofiili",
+    noTaste: "Ei makuprofiilia vielä",
+    noTasteSub: "Lisää katsottuja nimikkeitä kirjastoosi luodaksesi analyysin.",
+    filmLover: "Elokuvarakastaja",
+    generating: "Luodaan...",
+    vurdering: "Arviointi",
+    toppsjangre: "Suosikkilajityypit",
+    sett: "Katsottu",
+    seliste: "Katselulista",
+    filmer: "Elokuvat",
+    serier: "Sarjat",
+    likte: "Pidetty",
+    noytral: "Neutraali",
+    mislikte: "Ei pidetty",
+    uvurdert: "Arvioimaton",
+    wrapped: "Katso kuukausiraporttisi",
+  },
+  se: {
+    title: "Profil",
+    tasteProfile: "Smakprofil",
+    stats: "Statistik",
+    youLike: "Du gillar",
+    avoid: "Du undviker",
+    tempoTone: "Tempo & ton",
+    generateTaste: "Generera smakprofil",
+    noTaste: "Ingen smakprofil ännu",
+    noTasteSub: "Lägg till några sedda titlar i ditt bibliotek för att generera en analys.",
+    filmLover: "Filmälskare",
+    generating: "Genererar...",
+    vurdering: "Betyg",
+    toppsjangre: "Toppgenrer",
+    sett: "Sett",
+    seliste: "Se-lista",
+    filmer: "Filmer",
+    serier: "Serier",
+    likte: "Gillade",
+    noytral: "Neutral",
+    mislikte: "Ogillade",
+    uvurdert: "Ej betygsatt",
+    wrapped: "Se din månadsrapport",
   },
   en: {
     title: "Profile",
@@ -52,13 +126,18 @@ const strings = {
     noytral: "Neutral",
     mislikte: "Disliked",
     uvurdert: "Unrated",
+    wrapped: "Monthly Wrapped",
   },
 } as const;
 
-type Locale = "no" | "en";
+type Locale = "no" | "dk" | "fi" | "se" | "en";
+
+const regionToLocale: Record<string, Locale> = {
+  NO: "no", DK: "dk", FI: "fi", SE: "se",
+};
 
 function getLocale(region: string): Locale {
-  return region === "NO" ? "no" : "en";
+  return regionToLocale[region] || "en";
 }
 
 interface Stats {
@@ -301,6 +380,38 @@ export default function ProfilePage() {
             <h1 className="text-xl font-extrabold tracking-tight text-[var(--text-primary)]">{userName}</h1>
             <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", margin: 0 }}>{s.filmLover}</p>
           </div>
+        </div>
+
+        {/* Wrapped button */}
+        <div style={{ marginBottom: 20 }}>
+          <Link
+            href="/wrapped"
+            style={{
+              ...cardStyle,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              padding: "12px 20px",
+              fontSize: 14,
+              fontWeight: 600,
+              color: "rgba(255,255,255,0.85)",
+              textDecoration: "none",
+              border: "1px solid rgba(229,9,20,0.4)",
+            }}
+            className="hover:border-[rgba(229,9,20,0.7)] hover:-translate-y-0.5"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(229,9,20,0.85)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            {s.wrapped}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </Link>
         </div>
 
         {/* Taste profile section */}

@@ -19,7 +19,7 @@ const TYPES = ["movie", "tv"] as const;
 const PER_PAGE = 500;
 
 const REGION_HREFLANG: Record<string, string> = {
-  no: "nb", dk: "da", fi: "fi", se: "sv",
+  no: "nb-NO", dk: "da-DK", fi: "fi-FI", se: "sv-SE",
 };
 
 export async function GET(req: NextRequest) {
