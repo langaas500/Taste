@@ -322,22 +322,25 @@ function SettingsContent() {
       <GlassCard hover={false} className="p-5">
         <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Region</h3>
         <p className="text-xs text-[var(--text-tertiary)] mb-3 leading-relaxed">
-          Bestemmer trender, strømmetilgjengelighet og anbefalinger.
+          {selectedRegion === "NO"
+            ? "Bestemmer trender, strømmetilgjengelighet og anbefalinger."
+            : "Determines trends, streaming availability and recommendations."}
         </p>
         <div className="flex items-center gap-3">
           <select
             value={selectedRegion}
             onChange={(e) => saveRegion(e.target.value as SupportedRegion)}
             disabled={savingRegion}
-            className="flex-1 px-3 py-2.5 bg-white/[0.04] border border-white/[0.1] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]/40 transition-all duration-200 disabled:opacity-40"
+            className="flex-1 px-3 py-2.5 border border-white/[0.1] rounded-xl text-sm text-white focus:outline-none focus:border-[var(--accent)]/40 transition-all duration-200 disabled:opacity-40"
+            style={{ background: "#0a0a0a" }}
           >
             {SUPPORTED_REGIONS.map((code) => (
-              <option key={code} value={code}>
+              <option key={code} value={code} style={{ background: "#0a0a0a", color: "#fff" }}>
                 {REGION_FLAGS[code]} {REGION_LABELS[code]} ({code})
               </option>
             ))}
           </select>
-          {savingRegion && <span className="text-xs text-[var(--text-tertiary)]">Lagrer...</span>}
+          {savingRegion && <span className="text-xs text-[var(--text-tertiary)]">{selectedRegion === "NO" ? "Lagrer..." : "Saving..."}</span>}
         </div>
       </GlassCard>
 
