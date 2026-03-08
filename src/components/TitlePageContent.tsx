@@ -69,6 +69,8 @@ export const REGION_TEXT = {
     faqQ1: (title: string) => `Hvor kan jeg se ${title}?`,
     faqQ2: (title: string, region: string) => `Er ${title} tilgjengelig på Netflix i ${region}?`,
     faqQ3: (title: string) => `Er ${title} verdt å se?`,
+    faqQ4: "Hvordan finner jeg en film begge vil se?",
+    faqA4: "Med Logflix Se Sammen kan du koble deg med en venn eller partner. Dere sveiper hver for dere, og Logflix finner filmen dere begge vil se — ingen diskusjon, bare match.",
     netflixYes: (title: string, region: string) => `Ja, ${title} er tilgjengelig på Netflix i ${region}.`,
     netflixNo: (title: string, provider: string, region: string) => `Nei, men du kan se ${title} på ${provider} i ${region}.`,
     netflixRent: (title: string, provider: string) => `${title} er ikke inkludert i abonnement, men kan leies på ${provider}.`,
@@ -96,6 +98,8 @@ export const REGION_TEXT = {
     faqQ1: (title: string) => `Hvor kan jeg se ${title}?`,
     faqQ2: (title: string, region: string) => `Er ${title} tilgængelig på Netflix i ${region}?`,
     faqQ3: (title: string) => `Er ${title} værd at se?`,
+    faqQ4: "Hvordan finder jeg en film vi begge vil se?",
+    faqA4: "Med Logflix Se Sammen kan du forbinde dig med en ven eller partner. I swiper hver for jer, og Logflix finder den film I begge vil se — ingen diskussion, bare match.",
     netflixYes: (title: string, region: string) => `Ja, ${title} er tilgængelig på Netflix i ${region}.`,
     netflixNo: (title: string, provider: string, region: string) => `Nej, men du kan se ${title} på ${provider} i ${region}.`,
     netflixRent: (title: string, provider: string) => `${title} er ikke inkluderet i abonnement, men kan lejes på ${provider}.`,
@@ -123,6 +127,8 @@ export const REGION_TEXT = {
     faqQ1: (title: string) => `Mistä voin katsoa ${title}?`,
     faqQ2: (title: string, region: string) => `Onko ${title} saatavilla Netflixissä maassa ${region}?`,
     faqQ3: (title: string) => `Onko ${title} katsomisen arvoinen?`,
+    faqQ4: "Miten löydän elokuvan josta molemmat pitävät?",
+    faqA4: "Logflix Se Sammen -toiminnolla voit yhdistää tilisi ystävän tai kumppanin kanssa. Selaat erikseen ja Logflix löytää elokuvan josta molemmat pitävät — ei väittelyä, vain täsmäys.",
     netflixYes: (title: string, region: string) => `Kyllä, ${title} on saatavilla Netflixissä maassa ${region}.`,
     netflixNo: (title: string, provider: string, region: string) => `Ei, mutta voit katsoa ${title} palvelussa ${provider} maassa ${region}.`,
     netflixRent: (title: string, provider: string) => `${title} ei sisälly tilaukseen, mutta sen voi vuokrata palvelusta ${provider}.`,
@@ -150,6 +156,8 @@ export const REGION_TEXT = {
     faqQ1: (title: string) => `Var kan jag se ${title}?`,
     faqQ2: (title: string, region: string) => `Är ${title} tillgänglig på Netflix i ${region}?`,
     faqQ3: (title: string) => `Är ${title} värd att se?`,
+    faqQ4: "Hur hittar vi en film vi båda vill se?",
+    faqA4: "Med Logflix Se Sammen kan du koppla ihop dig med en vän eller partner. Ni swipear var för sig och Logflix hittar filmen ni båda vill se — ingen diskussion, bara match.",
     netflixYes: (title: string, region: string) => `Ja, ${title} är tillgänglig på Netflix i ${region}.`,
     netflixNo: (title: string, provider: string, region: string) => `Nej, men du kan se ${title} på ${provider} i ${region}.`,
     netflixRent: (title: string, provider: string) => `${title} ingår inte i prenumeration men kan hyras på ${provider}.`,
@@ -246,6 +254,11 @@ function buildFaqSchema(props: TitlePageProps) {
       a: `${curatorHook} ${curatorVerdict}`,
     });
   }
+
+  questions.push({
+    q: t.faqQ4,
+    a: t.faqA4,
+  });
 
   return {
     "@context": "https://schema.org",
