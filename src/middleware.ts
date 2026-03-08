@@ -16,6 +16,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Rewrite /no/(movie|tv)/slug → /_titles/no/... to avoid static /no/ folder collision
+  if (/^\/no\/(movie|tv)\/[a-z0-9-]+$/.test(request.nextUrl.pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/seo-titles${request.nextUrl.pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
