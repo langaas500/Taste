@@ -34,6 +34,13 @@ const REGION_NAME: Record<string, string> = {
   se: "Sverige",
 };
 
+const REGION_UNAVAILABLE_TEXT: Record<string, string> = {
+  no: "Ikke tilgjengelig på strømmetjenester i Norge ennå.",
+  dk: "Ikke tilgængelig på streamingtjenester i Danmark endnu.",
+  fi: "Ei saatavilla suoratoistopalveluissa Suomessa vielä.",
+  se: "Inte tillgänglig på streamingtjänster i Sverige ännu.",
+};
+
 const REGION_HREFLANG: Record<string, string> = {
   no: "nb",
   dk: "da",
@@ -42,6 +49,63 @@ const REGION_HREFLANG: Record<string, string> = {
 };
 
 const ALL_REGIONS = ["no", "dk", "fi", "se"] as const;
+
+const REGION_TEXT = {
+  no: {
+    streaming: "Strømming i",
+    included: "Inkludert i abonnement",
+    rent: "Leie",
+    buy: "Kjøp",
+    seeAll: "Se alle alternativer",
+    otherCountries: "i andre nordiske land",
+    originaltitle: "Originaltittel",
+    mood: "Stemning",
+    ctaTitle: (title: string) => `Logg og spor ${title} i ditt bibliotek`,
+    ctaBody: "Hold oversikt over hva du har sett, lag lister, og få personlige anbefalinger.",
+    ctaButton: "Kom i gang — gratis",
+  },
+  dk: {
+    streaming: "Streaming i",
+    included: "Inkluderet i abonnement",
+    rent: "Leje",
+    buy: "Køb",
+    seeAll: "Se alle alternativer",
+    otherCountries: "i andre nordiske lande",
+    originaltitle: "Originaltitel",
+    mood: "Stemning",
+    ctaTitle: (title: string) => `Log og følg ${title} i dit bibliotek`,
+    ctaBody: "Hold styr på hvad du har set, lav lister og få personlige anbefalinger.",
+    ctaButton: "Kom i gang — gratis",
+  },
+  fi: {
+    streaming: "Suoratoisto maassa",
+    included: "Sisältyy tilaukseen",
+    rent: "Vuokraa",
+    buy: "Osta",
+    seeAll: "Näytä kaikki vaihtoehdot",
+    otherCountries: "muissa Pohjoismaissa",
+    originaltitle: "Alkuperäinen nimi",
+    mood: "Tunnelma",
+    ctaTitle: (title: string) => `Kirjaa ja seuraa ${title} kirjastossasi`,
+    ctaBody: "Pidä kirjaa katsomistasi, luo listoja ja saa henkilökohtaisia suosituksia.",
+    ctaButton: "Aloita — ilmaiseksi",
+  },
+  se: {
+    streaming: "Streaming i",
+    included: "Ingår i prenumeration",
+    rent: "Hyr",
+    buy: "Köp",
+    seeAll: "Se alla alternativ",
+    otherCountries: "i andra nordiska länder",
+    originaltitle: "Originaltitel",
+    mood: "Stämning",
+    ctaTitle: (title: string) => `Logga och följ ${title} i ditt bibliotek`,
+    ctaBody: "Håll koll på vad du har sett, skapa listor och få personliga rekommendationer.",
+    ctaButton: "Kom igång — gratis",
+  },
+} as const;
+
+type RegionTextKey = keyof typeof REGION_TEXT;
 
 const TYPE_LABEL: Record<string, string> = {
   movie: "Film",
@@ -202,6 +266,7 @@ export default function TitlePageContent(props: TitlePageProps) {
   } = props;
 
   const regionName = REGION_NAME[region] || region.toUpperCase();
+  const t = REGION_TEXT[region as RegionTextKey] ?? REGION_TEXT.no;
   const backdrop = tmdbImg(backdropPath, "w1280");
   const poster = tmdbImg(posterPath, "w500");
   const flatrate = providers?.flatrate || [];
@@ -266,7 +331,7 @@ export default function TitlePageContent(props: TitlePageProps) {
 
               {originalTitle && originalTitle !== title && (
                 <p className="mb-3 text-xs text-white/35">
-                  Originaltittel: {originalTitle}
+                  {t.originaltitle}: {originalTitle}
                 </p>
               )}
 
@@ -308,28 +373,34 @@ export default function TitlePageContent(props: TitlePageProps) {
         </section>
 
         {/* ── Streaming ────────────────────────────────── */}
-        {(flatrate.length > 0 || rent.length > 0 || buy.length > 0) && (
-          <section className="mb-8 rounded-2xl border border-white/[0.06] p-6" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(30px)" }}>
-            <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/80">
-              Strømming i {regionName}
-            </h2>
-            <div className="space-y-4">
-              <ProviderSection label="Inkludert i abonnement" providers={flatrate} />
-              <ProviderSection label="Leie" providers={rent} />
-              <ProviderSection label="Kjøp" providers={buy} />
-            </div>
-            {providers?.link && (
-              <a
-                href={providers.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 inline-block text-xs text-white/40 hover:text-white/60 transition-colors"
-              >
-                Se alle alternativer &rarr;
-              </a>
-            )}
-          </section>
-        )}
+        <section className="mb-8 rounded-2xl border border-white/[0.06] p-6" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(30px)" }}>
+          <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/80">
+            {t.streaming} {regionName}
+          </h2>
+          {flatrate.length > 0 || rent.length > 0 || buy.length > 0 ? (
+            <>
+              <div className="space-y-4">
+                <ProviderSection label={t.included} providers={flatrate} />
+                <ProviderSection label={t.rent} providers={rent} />
+                <ProviderSection label={t.buy} providers={buy} />
+              </div>
+              {providers?.link && (
+                <a
+                  href={providers.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-block text-xs text-white/40 hover:text-white/60 transition-colors"
+                >
+                  {t.seeAll} &rarr;
+                </a>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-white/40">
+              {REGION_UNAVAILABLE_TEXT[region] ?? "Ikke tilgjengelig på strømmetjenester ennå."}
+            </p>
+          )}
+        </section>
 
         {/* ── Curator ──────────────────────────────────── */}
         {hasCurator && (
@@ -359,7 +430,7 @@ export default function TitlePageContent(props: TitlePageProps) {
         {moodTags && moodTags.length > 0 && (
           <section className="mb-8">
             <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/80">
-              Stemning
+              {t.mood}
             </h2>
             <div className="flex flex-wrap gap-2">
               {moodTags.map((tag) => (
@@ -377,7 +448,7 @@ export default function TitlePageContent(props: TitlePageProps) {
         {/* ── Andre land (Cross-region) ────────────────── */}
         <section className="mb-8 rounded-2xl border border-white/[0.06] p-6" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(30px)" }}>
           <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/80">
-            {title} i andre nordiske land
+            {title} {t.otherCountries}
           </h2>
           <div className="flex flex-wrap gap-2">
             {ALL_REGIONS.filter((r) => r !== region).map((r) => (
@@ -399,17 +470,17 @@ export default function TitlePageContent(props: TitlePageProps) {
           style={{ background: "rgba(229,9,20,0.03)", backdropFilter: "blur(30px)" }}
         >
           <h2 className="mb-2 text-base font-semibold text-white/90">
-            Logg og spor {title} i ditt bibliotek
+            {t.ctaTitle(title)}
           </h2>
           <p className="mb-4 text-sm text-white/50">
-            Hold oversikt over hva du har sett, lag lister, og få personlige anbefalinger.
+            {t.ctaBody}
           </p>
           <Link
             href="/login"
             className="inline-block rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             style={{ background: "#E50914" }}
           >
-            Kom i gang — gratis
+            {t.ctaButton}
           </Link>
         </section>
       </div>
