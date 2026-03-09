@@ -11,6 +11,13 @@ const pairs: [string, string][] = [
   ["/no/filmer-a-se-med-familien", "/en/movies-to-watch-with-the-family"],
 ];
 
+const paskekrim: Record<string, string> = {
+  "nb-NO": "/no/guides/paskekrim-2026",
+  "sv-SE": "/se/guides/paskkrim-2026",
+  "da-DK": "/dk/guides/paskekrim-2026",
+  "fi-FI": "/fi/guides/paasiainen-dekkari-2026",
+};
+
 export function GET() {
   const lastmod = new Date().toISOString();
 
@@ -24,6 +31,12 @@ export function GET() {
     entry(`${base}/privacy`, lastmod, "monthly", "0.3"),
     entry(`${base}/contact`, lastmod, "monthly", "0.3"),
     entry(`${base}/terms`, lastmod, "monthly", "0.3"),
+    ...Object.values(paskekrim).map((path) =>
+      entry(`${base}${path}`, "2026-03-09T00:00:00.000Z", "weekly", "0.8", {
+        ...Object.fromEntries(Object.entries(paskekrim).map(([lang, p]) => [lang, `${base}${p}`])),
+        "x-default": `${base}${paskekrim["nb-NO"]}`,
+      }),
+    ),
   ];
 
   const xml = [

@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://logflix.app/sitemap.xml",
+    sitemap: "https://logflix.app/api/sitemap",
   };
 }
