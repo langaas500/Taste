@@ -18,7 +18,7 @@ const REGION_NAME: Record<string, string> = {
 };
 
 const REGION_HREFLANG: Record<string, string> = {
-  no: "nb", dk: "da", fi: "fi", se: "sv",
+  no: "nb-NO", dk: "da-DK", fi: "fi-FI", se: "sv-SE",
 };
 
 const REGION_COUNTRY: Record<string, string> = {
@@ -214,6 +214,18 @@ export default async function TvPage({
       )
     : [];
 
+  // Similar titles by mood_tag overlap
+  const moodTags = title.mood_tags as string[] | null;
+  const similarTitles = moodTags?.length
+    ? (await createSupabaseAdmin()
+        .from("titles_cache")
+        .select("tmdb_id, type, title, poster_path, slug, year")
+        .overlaps("mood_tags", moodTags)
+        .neq("tmdb_id", title.tmdb_id)
+        .not("slug", "is", null)
+        .limit(4)).data || []
+    : [];
+
   return (
     <TitlePageContent
       title={title.title}
@@ -234,6 +246,7 @@ export default async function TvPage({
       curatorBody={title.curator_body ?? null}
       curatorVerdict={title.curator_verdict ?? null}
       moodTags={title.mood_tags ?? null}
+      similarTitles={similarTitles}
     />
   );
 }

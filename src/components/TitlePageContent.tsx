@@ -23,6 +23,7 @@ export interface TitlePageProps {
   curatorBody: string | null;
   curatorVerdict: string | null;
   moodTags: string[] | null;
+  similarTitles?: { tmdb_id: number; type: string; title: string; poster_path: string | null; slug: string; year: number | null }[];
 }
 
 /* ── Constants ────────────────────────────────────────── */
@@ -85,6 +86,7 @@ export const REGION_TEXT = {
     sesammenTitle: "Vil dere se denne sammen?",
     sesammenBody: "Sjekk om dere matcher på denne filmen.",
     sesammenButton: "Start Se Sammen →",
+    similarTitles: "Lignende titler",
   },
   dk: {
     streaming: "Streaming i",
@@ -120,6 +122,7 @@ export const REGION_TEXT = {
     sesammenTitle: "Vil I se denne sammen?",
     sesammenBody: "Tjek om I matcher på denne film.",
     sesammenButton: "Start Se Sammen →",
+    similarTitles: "Lignende titler",
   },
   fi: {
     streaming: "Suoratoisto maassa",
@@ -155,6 +158,7 @@ export const REGION_TEXT = {
     sesammenTitle: "Haluatteko katsoa tämän yhdessä?",
     sesammenBody: "Tarkista matchaatteko tässä elokuvassa.",
     sesammenButton: "Aloita Se Sammen →",
+    similarTitles: "Samankaltaiset elokuvat",
   },
   se: {
     streaming: "Streaming i",
@@ -189,7 +193,8 @@ export const REGION_TEXT = {
     series: "Serier",
     sesammenTitle: "Vill ni se den här tillsammans?",
     sesammenBody: "Kolla om ni matchar på den här filmen.",
-    sesammenButton: "Starta Se Samen →",
+    sesammenButton: "Starta Se Sammen →",
+    similarTitles: "Liknande titlar",
   },
 };
 
@@ -561,6 +566,46 @@ export default function TitlePageContent(props: TitlePageProps) {
                 >
                   {tag}
                 </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Lignende titler (Similar Titles) ───────────── */}
+        {props.similarTitles && props.similarTitles.length > 0 && (
+          <section className="mb-8">
+            <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/80">
+              {t.similarTitles}
+            </h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {props.similarTitles.map((st) => (
+                <Link
+                  key={`${st.tmdb_id}-${st.type}`}
+                  href={`/${region}/${st.type}/${st.slug}`}
+                  className="group rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden transition-all hover:border-white/[0.15] hover:bg-white/[0.05]"
+                >
+                  {st.poster_path ? (
+                    <Image
+                      src={`https://image.tmdb.org/t/p/w300${st.poster_path}`}
+                      alt={st.title}
+                      width={300}
+                      height={450}
+                      className="w-full object-cover"
+                    />
+                  ) : (
+                    <div className="aspect-[2/3] w-full bg-white/[0.04] flex items-center justify-center text-white/20 text-xs">
+                      No poster
+                    </div>
+                  )}
+                  <div className="p-2">
+                    <p className="text-xs font-medium text-white/80 truncate group-hover:text-white/95">
+                      {st.title}
+                    </p>
+                    {st.year && (
+                      <p className="text-[10px] text-white/40">{st.year}</p>
+                    )}
+                  </div>
+                </Link>
               ))}
             </div>
           </section>
