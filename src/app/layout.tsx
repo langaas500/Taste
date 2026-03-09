@@ -18,11 +18,13 @@ export const metadata: Metadata = {
   verification: {
     google: "google3a70000c026a667b",
   },
-  other: {
-    "fb:app_id": "1502002261429610",
-  },
   openGraph: {
+    siteName: "Logflix",
+    type: "website",
     images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Logflix" }],
+  },
+  facebook: {
+    appId: "1502002261429610",
   },
   twitter: {
     card: "summary_large_image",
