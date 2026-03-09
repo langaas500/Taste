@@ -82,6 +82,9 @@ export const REGION_TEXT = {
     home: "Hjem",
     movies: "Filmer",
     series: "Serier",
+    sesammenTitle: "Vil dere se denne sammen?",
+    sesammenBody: "Sjekk om dere matcher på denne filmen.",
+    sesammenButton: "Start Se Sammen →",
   },
   dk: {
     streaming: "Streaming i",
@@ -114,6 +117,9 @@ export const REGION_TEXT = {
     home: "Hjem",
     movies: "Film",
     series: "Serier",
+    sesammenTitle: "Vil I se denne sammen?",
+    sesammenBody: "Tjek om I matcher på denne film.",
+    sesammenButton: "Start Se Sammen →",
   },
   fi: {
     streaming: "Suoratoisto maassa",
@@ -146,6 +152,9 @@ export const REGION_TEXT = {
     home: "Koti",
     movies: "Elokuvat",
     series: "Sarjat",
+    sesammenTitle: "Haluatteko katsoa tämän yhdessä?",
+    sesammenBody: "Tarkista matchaatteko tässä elokuvassa.",
+    sesammenButton: "Aloita Se Sammen →",
   },
   se: {
     streaming: "Streaming i",
@@ -178,6 +187,9 @@ export const REGION_TEXT = {
     home: "Hem",
     movies: "Filmer",
     series: "Serier",
+    sesammenTitle: "Vill ni se den här tillsammans?",
+    sesammenBody: "Kolla om ni matchar på den här filmen.",
+    sesammenButton: "Starta Se Samen →",
   },
 };
 
@@ -571,6 +583,26 @@ export default function TitlePageContent(props: TitlePageProps) {
               </Link>
             ))}
           </div>
+        </section>
+
+        {/* ── Se Sammen CTA ─────────────────────────────── */}
+        <section
+          className="mb-8 rounded-2xl border border-[rgba(229,9,20,0.2)] p-6 text-center"
+          style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(30px)" }}
+        >
+          <h2 className="mb-2 text-base font-semibold text-white/90">
+            {t.sesammenTitle}
+          </h2>
+          <p className="mb-4 text-sm text-white/50">
+            {t.sesammenBody}
+          </p>
+          <Link
+            href="/together"
+            className="inline-block rounded-xl border border-[rgba(229,9,20,0.4)] px-6 py-2.5 text-sm font-semibold text-white/90 transition-all hover:border-[rgba(229,9,20,0.7)] hover:bg-[rgba(229,9,20,0.06)]"
+            style={{ background: "rgba(229,9,20,0.08)" }}
+          >
+            {t.sesammenButton}
+          </Link>
         </section>
 
         {/* ── Premium CTA ──────────────────────────────── */}
