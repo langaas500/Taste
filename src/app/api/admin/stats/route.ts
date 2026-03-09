@@ -33,6 +33,8 @@ export async function GET(req: NextRequest) {
       provDistinctRes,
       seoTitlesRes,
       recentRes,
+      totalMembersRes,
+      premiumMembersRes,
     ] = await Promise.all([
       // Total with slug
       admin
@@ -99,6 +101,17 @@ export async function GET(req: NextRequest) {
         .not("slug", "is", null)
         .order("updated_at", { ascending: false })
         .limit(10),
+
+      // Total members (profiles count)
+      admin
+        .from("profiles")
+        .select("*", { count: "exact", head: true }),
+
+      // Paying members
+      admin
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("is_premium", true),
     ]);
 
     // For SEO titles — batch check which have providers
@@ -135,6 +148,10 @@ export async function GET(req: NextRequest) {
     );
 
     return NextResponse.json({
+      members: {
+        total: totalMembersRes.count || 0,
+        premium: premiumMembersRes.count || 0,
+      },
       curator: {
         total_with_slug: slugCountRes.count || 0,
         has_curator: curatorCountRes.count || 0,

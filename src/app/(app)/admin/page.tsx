@@ -39,6 +39,10 @@ interface RecentTitle {
 }
 
 interface Stats {
+  members: {
+    total: number;
+    premium: number;
+  };
   curator: {
     total_with_slug: number;
     has_curator: number;
@@ -192,6 +196,31 @@ export default function AdminPage() {
         <LoadingSpinner text="Laster data..." />
       ) : (
         <div className="space-y-5">
+          {/* ── 0. Members ────────────────────────── */}
+          <div className={glassCard} style={glassCardStyle}>
+            <p className={sectionLabel}>Members</p>
+            <p className={sectionDesc}>Registrerte brukere og betalende medlemmer.</p>
+
+            <div className="flex flex-wrap gap-3 mb-3">
+              <StatBox label="Totalt" value={stats.members.total} />
+              <StatBox label="Premium" value={stats.members.premium} />
+              <StatBox
+                label="Konvertering"
+                value={
+                  stats.members.total > 0
+                    ? `${((stats.members.premium / stats.members.total) * 100).toFixed(1)}%`
+                    : "–"
+                }
+              />
+            </div>
+
+            <ProgressBar
+              value={stats.members.premium}
+              max={stats.members.total}
+              label="Premium-andel"
+            />
+          </div>
+
           {/* ── 1. Curator Generation Progress ──────── */}
           <div className={glassCard} style={glassCardStyle}>
             <p className={sectionLabel}>Curator Generation</p>
