@@ -5,6 +5,15 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import GlowButton from "@/components/GlowButton";
 import type { TMDBGenre, TMDBPersonResult, AdvancedSearchFilters, WatchProvider } from "@/lib/types";
+import { useLocale } from "@/hooks/useLocale";
+
+const strings = {
+  no: { type: "Type", movie: "Film", tvSeries: "TV-serier", actor: "Skuespiller", searchActor: "Søk etter skuespiller...", showFilmography: "Vis filmografi", genre: "Sjanger", streamingService: "Strømmetjeneste", showFewer: "Vis færre", showAll: "Vis alle", year: "Årstall", from: "Fra", to: "Til", sortBy: "Sorter etter", mostPopular: "Mest populær", highestRated: "Høyest rangert", newestFirst: "Nyeste først", oldestFirst: "Eldste først", searchWithFilters: "Søk med filtre", searching: "Søker..." },
+  en: { type: "Type", movie: "Film", tvSeries: "TV series", actor: "Actor", searchActor: "Search for actor...", showFilmography: "Show filmography", genre: "Genre", streamingService: "Streaming service", showFewer: "Show fewer", showAll: "Show all", year: "Year", from: "From", to: "To", sortBy: "Sort by", mostPopular: "Most popular", highestRated: "Highest rated", newestFirst: "Newest first", oldestFirst: "Oldest first", searchWithFilters: "Search with filters", searching: "Searching..." },
+  dk: { type: "Type", movie: "Film", tvSeries: "TV-serier", actor: "Skuespiller", searchActor: "Søg efter skuespiller...", showFilmography: "Vis filmografi", genre: "Genre", streamingService: "Streamingtjeneste", showFewer: "Vis færre", showAll: "Vis alle", year: "År", from: "Fra", to: "Til", sortBy: "Sorter efter", mostPopular: "Mest populær", highestRated: "Højest bedømt", newestFirst: "Nyeste først", oldestFirst: "Ældste først", searchWithFilters: "Søg med filtre", searching: "Søger..." },
+  se: { type: "Typ", movie: "Film", tvSeries: "TV-serier", actor: "Skådespelare", searchActor: "Sök efter skådespelare...", showFilmography: "Visa filmografi", genre: "Genre", streamingService: "Streamingtjänst", showFewer: "Visa färre", showAll: "Visa alla", year: "År", from: "Från", to: "Till", sortBy: "Sortera efter", mostPopular: "Mest populär", highestRated: "Högst betyg", newestFirst: "Nyaste först", oldestFirst: "Äldst först", searchWithFilters: "Sök med filter", searching: "Söker..." },
+  fi: { type: "Tyyppi", movie: "Elokuva", tvSeries: "TV-sarjat", actor: "Näyttelijä", searchActor: "Hae näyttelijää...", showFilmography: "Näytä filmografia", genre: "Genre", streamingService: "Suoratoistopalvelu", showFewer: "Näytä vähemmän", showAll: "Näytä kaikki", year: "Vuosi", from: "Alkaen", to: "Asti", sortBy: "Järjestä", mostPopular: "Suosituin", highestRated: "Parhaiten arvioitu", newestFirst: "Uusin ensin", oldestFirst: "Vanhin ensin", searchWithFilters: "Hae suodattimilla", searching: "Haetaan..." },
+} as const;
 
 interface Props {
   isOpen: boolean;
@@ -15,6 +24,8 @@ interface Props {
 }
 
 export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, onSearch, onPersonSelect }: Props) {
+  const locale = useLocale();
+  const s = strings[locale] ?? strings.en;
   const [genres, setGenres] = useState<Record<string, TMDBGenre[]>>({});
   const [providers, setProviders] = useState<Record<string, WatchProvider[]>>({});
   const [personQuery, setPersonQuery] = useState("");
@@ -115,7 +126,7 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
           <div className="glass rounded-2xl p-4 mb-6 space-y-4">
             {/* Type toggle */}
             <div>
-              <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider mb-2 block">Type</label>
+              <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider mb-2 block">{s.type}</label>
               <div className="flex gap-1.5">
                 {(["movie", "tv"] as const).map((t) => (
                   <button
@@ -127,7 +138,7 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
                         : "bg-white/[0.04] text-white/50 border border-white/[0.06] hover:bg-white/[0.08]"
                     }`}
                   >
-                    {t === "movie" ? "Film" : "TV-serier"}
+                    {t === "movie" ? s.movie : s.tvSeries}
                   </button>
                 ))}
               </div>
@@ -135,7 +146,7 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
 
             {/* Person search */}
             <div className="relative">
-              <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider mb-2 block">Skuespiller</label>
+              <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider mb-2 block">{s.actor}</label>
               {selectedPersons.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {selectedPersons.map((p) => (
@@ -158,7 +169,7 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
                   type="text"
                   value={personQuery}
                   onChange={(e) => handlePersonInput(e.target.value)}
-                  placeholder="Søk etter skuespiller..."
+                  placeholder={s.searchActor}
                   className="flex-1 px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/20 transition-all"
                 />
                 {selectedPersons.length === 1 && (
@@ -166,7 +177,7 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
                     onClick={() => onPersonSelect(selectedPersons[0].id, selectedPersons[0].name)}
                     className="px-3 py-2 rounded-lg bg-[var(--accent)]/15 text-[var(--accent-light)] text-xs font-semibold hover:bg-[var(--accent)]/25 transition-all"
                   >
-                    Vis filmografi
+                    {s.showFilmography}
                   </button>
                 )}
               </div>
@@ -204,14 +215,14 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
               {personLoading && personQuery && (
                 <div className="absolute z-30 left-0 right-0 mt-1 glass rounded-xl border border-white/[0.08] px-3 py-3 flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white/10 border-t-white/50 rounded-full animate-spin" />
-                  <span className="text-xs text-white/40">Søker...</span>
+                  <span className="text-xs text-white/40">{s.searching}</span>
                 </div>
               )}
             </div>
 
             {/* Genres */}
             <div>
-              <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider mb-2 block">Sjanger</label>
+              <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider mb-2 block">{s.genre}</label>
               <div className="flex flex-wrap gap-1.5">
                 {currentGenres.map((g) => {
                   const sel = filters.genres.includes(g.id);
@@ -235,13 +246,13 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
             {/* Streaming providers */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider">Strømmetjeneste</label>
+                <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider">{s.streamingService}</label>
                 {currentProviders.length > 10 && (
                   <button
                     onClick={() => setShowProviders(!showProviders)}
                     className="text-[10px] text-[var(--accent-light)] hover:text-[var(--accent)] transition-colors"
                   >
-                    {showProviders ? "Vis færre" : `Vis alle (${currentProviders.length})`}
+                    {showProviders ? s.showFewer : `${s.showAll} (${currentProviders.length})`}
                   </button>
                 )}
               </div>
@@ -276,13 +287,13 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
 
             {/* Year range */}
             <div>
-              <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider mb-2 block">Årstall</label>
+              <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider mb-2 block">{s.year}</label>
               <div className="flex items-center gap-3">
                 <input
                   type="number"
                   value={filters.yearFrom}
                   onChange={(e) => onFiltersChange({ ...filters, yearFrom: e.target.value })}
-                  placeholder="Fra"
+                  placeholder={s.from}
                   min={1900}
                   max={2026}
                   className="w-24 px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/20 transition-all"
@@ -292,7 +303,7 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
                   type="number"
                   value={filters.yearTo}
                   onChange={(e) => onFiltersChange({ ...filters, yearTo: e.target.value })}
-                  placeholder="Til"
+                  placeholder={s.to}
                   min={1900}
                   max={2026}
                   className="w-24 px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/20 transition-all"
@@ -302,22 +313,22 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
 
             {/* Sort by */}
             <div>
-              <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider mb-2 block">Sorter etter</label>
+              <label className="text-[11px] text-white/40 font-semibold uppercase tracking-wider mb-2 block">{s.sortBy}</label>
               <select
                 value={filters.sortBy}
                 onChange={(e) => onFiltersChange({ ...filters, sortBy: e.target.value })}
                 className="px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white/70 focus:outline-none focus:border-white/20 transition-all"
               >
-                <option value="popularity.desc">Mest populær</option>
-                <option value="vote_average.desc">Høyest rangert</option>
-                <option value="primary_release_date.desc">Nyeste først</option>
-                <option value="primary_release_date.asc">Eldste først</option>
+                <option value="popularity.desc">{s.mostPopular}</option>
+                <option value="vote_average.desc">{s.highestRated}</option>
+                <option value="primary_release_date.desc">{s.newestFirst}</option>
+                <option value="primary_release_date.asc">{s.oldestFirst}</option>
               </select>
             </div>
 
             {/* Search button */}
             <GlowButton onClick={onSearch} fullWidth>
-              Søk med filtre
+              {s.searchWithFilters}
             </GlowButton>
           </div>
         </motion.div>

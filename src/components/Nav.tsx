@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
+import { getLocale, type Locale } from "@/lib/i18n";
 
 /* ── colors ─────────────────────────────────────────────── */
 
@@ -53,13 +54,67 @@ const strings = {
     logout: "Log out",
     connected: "Connected",
   },
+  dk: {
+    home: "Hjem",
+    together: "Se sammen",
+    search: "Søg",
+    library: "Bibliotek",
+    premium: "Premium",
+    taste: "Smagsprofil",
+    profile: "Profil",
+    settings: "Indstillinger",
+    guest: "Gæst",
+    user: "Bruger",
+    login: "Log ind",
+    admin: "ADMIN",
+    filmelsker: "Filmelsker",
+    togetherTagline: "Hvad skal I se?",
+    togetherSub: "Find noget at se sammen — på under 3 minutter",
+    togetherCta: "Se sammen",
+    logout: "Log ud",
+    connected: "Forbundet",
+  },
+  se: {
+    home: "Hem",
+    together: "Se tillsammans",
+    search: "Sök",
+    library: "Bibliotek",
+    premium: "Premium",
+    taste: "Smakprofil",
+    profile: "Profil",
+    settings: "Inställningar",
+    guest: "Gäst",
+    user: "Användare",
+    login: "Logga in",
+    admin: "ADMIN",
+    filmelsker: "Filmälskare",
+    togetherTagline: "Vad ska ni se?",
+    togetherSub: "Hitta något att se tillsammans — på under 3 minuter",
+    togetherCta: "Se tillsammans",
+    logout: "Logga ut",
+    connected: "Ansluten",
+  },
+  fi: {
+    home: "Koti",
+    together: "Katsotaan yhdessä",
+    search: "Haku",
+    library: "Kirjasto",
+    premium: "Premium",
+    taste: "Makuprofiili",
+    profile: "Profiili",
+    settings: "Asetukset",
+    guest: "Vieras",
+    user: "Käyttäjä",
+    login: "Kirjaudu",
+    admin: "ADMIN",
+    filmelsker: "Elokuvarakastaja",
+    togetherTagline: "Mitä katsotte?",
+    togetherSub: "Löydä jotain katsottavaa yhdessä — alle 3 minuutissa",
+    togetherCta: "Katsotaan yhdessä",
+    logout: "Kirjaudu ulos",
+    connected: "Yhdistetty",
+  },
 } as const;
-
-type Locale = "no" | "en";
-
-function getLocale(region: string): Locale {
-  return region === "NO" ? "no" : "en";
-}
 
 /* ── component ──────────────────────────────────────────── */
 
@@ -70,7 +125,7 @@ export default function Nav() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
-  const [locale, setLocale] = useState<Locale>("no");
+  const [locale, setLocale] = useState<Locale>("en");
 
   useEffect(() => {
     (async () => {
@@ -96,7 +151,7 @@ export default function Nav() {
       .catch(() => {});
   }, []);
 
-  const s = strings[locale];
+  const s = strings[locale] ?? strings.en;
 
   const mobileBottomLinks = [
     { href: "/home", label: s.home, icon: "M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" },

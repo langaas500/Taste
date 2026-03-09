@@ -5,6 +5,16 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { WatchProvider, WatchProviderData, FriendOverlap } from "@/lib/types";
 import { getStreamingUrl } from "@/lib/streaming-links";
+import { useLocale } from "@/hooks/useLocale";
+import type { Locale } from "@/lib/i18n";
+
+const strings = {
+  no: { removeFav: "Fjern fra favoritter", addFav: "Legg til favoritter", season: "sesong", seasons: "sesonger", backTo: "Tilbake til", synopsis: "Handling", cast: "Skuespillere", friendsWho: "Venner som har denne", watched: "Sett", watchlist: "Se-liste", watchingNow: "Ser nå", availableIn: "Tilgjengelig i", notAvailable: "Ikke tilgjengelig for strømming i", findingSimilar: "Finner lignende titler du kan se...", watchInstead: "Se dette i stedet", noSimilar: "Fant ingen lignende titler tilgjengelig i", justwatch: "Data fra JustWatch", seeAll: "Se alle alternativer →", fetchingNetflix: "Henter Netflix-link...", openIn: "Åpne i", searchIn: "Søk i", opensDirect: "Åpner tittelen direkte i", opensSearch: "Åpner og søker etter tittelen i", stream: "Stream", rent: "Lei", buy: "Kjøp", watchTrailer: "Se trailer", rememberWhere: "Husk hvor du var" },
+  en: { removeFav: "Remove from favourites", addFav: "Add to favourites", season: "season", seasons: "seasons", backTo: "Back to", synopsis: "Synopsis", cast: "Cast", friendsWho: "Friends who have this", watched: "Watched", watchlist: "Watchlist", watchingNow: "Watching now", availableIn: "Available in", notAvailable: "Not available for streaming in", findingSimilar: "Finding similar titles you can watch...", watchInstead: "Watch this instead", noSimilar: "No similar titles available in", justwatch: "Data from JustWatch", seeAll: "See all options →", fetchingNetflix: "Fetching Netflix link...", openIn: "Open in", searchIn: "Search in", opensDirect: "Opens the title directly in", opensSearch: "Opens and searches for the title in", stream: "Stream", rent: "Rent", buy: "Buy", watchTrailer: "Watch trailer", rememberWhere: "Remember where you were" },
+  dk: { removeFav: "Fjern fra favoritter", addFav: "Tilføj til favoritter", season: "sæson", seasons: "sæsoner", backTo: "Tilbage til", synopsis: "Handling", cast: "Skuespillere", friendsWho: "Venner der har denne", watched: "Set", watchlist: "Se-liste", watchingNow: "Ser nu", availableIn: "Tilgængelig i", notAvailable: "Ikke tilgængelig til streaming i", findingSimilar: "Finder lignende titler du kan se...", watchInstead: "Se dette i stedet", noSimilar: "Fandt ingen lignende titler tilgængelige i", justwatch: "Data fra JustWatch", seeAll: "Se alle muligheder →", fetchingNetflix: "Henter Netflix-link...", openIn: "Åbn i", searchIn: "Søg i", opensDirect: "Åbner titlen direkte i", opensSearch: "Åbner og søger efter titlen i", stream: "Stream", rent: "Lej", buy: "Køb", watchTrailer: "Se trailer", rememberWhere: "Husk hvor du var" },
+  se: { removeFav: "Ta bort från favoriter", addFav: "Lägg till i favoriter", season: "säsong", seasons: "säsonger", backTo: "Tillbaka till", synopsis: "Handling", cast: "Skådespelare", friendsWho: "Vänner som har denna", watched: "Sedd", watchlist: "Att se-lista", watchingNow: "Tittar nu", availableIn: "Tillgänglig i", notAvailable: "Inte tillgänglig för streaming i", findingSimilar: "Hittar liknande titlar du kan se...", watchInstead: "Se detta istället", noSimilar: "Hittade inga liknande titlar tillgängliga i", justwatch: "Data från JustWatch", seeAll: "Se alla alternativ →", fetchingNetflix: "Hämtar Netflix-länk...", openIn: "Öppna i", searchIn: "Sök i", opensDirect: "Öppnar titeln direkt i", opensSearch: "Öppnar och söker efter titeln i", stream: "Stream", rent: "Hyr", buy: "Köp", watchTrailer: "Se trailer", rememberWhere: "Kom ihåg var du var" },
+  fi: { removeFav: "Poista suosikeista", addFav: "Lisää suosikkeihin", season: "kausi", seasons: "kautta", backTo: "Takaisin", synopsis: "Juoni", cast: "Näyttelijät", friendsWho: "Ystävät joilla on tämä", watched: "Katsottu", watchlist: "Katsottavat", watchingNow: "Katsoo nyt", availableIn: "Saatavilla", notAvailable: "Ei saatavilla suoratoistona", findingSimilar: "Etsitään samankaltaisia katsottavia...", watchInstead: "Katso tämä sen sijaan", noSimilar: "Ei löytynyt samankaltaisia saatavilla", justwatch: "Data JustWatchilta", seeAll: "Katso kaikki vaihtoehdot →", fetchingNetflix: "Haetaan Netflix-linkkiä...", openIn: "Avaa", searchIn: "Hae", opensDirect: "Avaa nimikkeen suoraan palvelussa", opensSearch: "Avaa ja hakee nimikettä palvelussa", stream: "Stream", rent: "Vuokraa", buy: "Osta", watchTrailer: "Katso traileri", rememberWhere: "Muista missä olit" },
+} as const;
 
 interface ModalAction {
   label: string;
@@ -77,6 +87,9 @@ interface SimilarAvailableTitle {
 }
 
 export default function StreamingModal({ tmdbId, type, title, posterPath, onClose, actions, onAction, isFavorite, onToggleFavorite, progress, onUpdateProgress, friendOverlap }: StreamingModalProps) {
+  const locale = useLocale();
+  const s = (strings[locale] ?? strings.en);
+
   // Override state for navigating to a similar title within the modal
   const [overrideTitle, setOverrideTitle] = useState<{
     tmdbId: number; type: "movie" | "tv"; title: string; posterPath: string | null;
@@ -284,7 +297,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
           {!overrideTitle && onToggleFavorite && (
             <button
               onClick={onToggleFavorite}
-              aria-label={isFavorite ? "Fjern fra favoritter" : "Legg til favoritter"}
+              aria-label={isFavorite ? s.removeFav : s.addFav}
               className="w-9 h-9 flex items-center justify-center rounded-full transition-all border border-white/10"
               style={{ background: isFavorite ? "rgba(250,204,21,0.2)" : "rgba(0,0,0,0.6)" }}
             >
@@ -361,7 +374,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                     <>
                       <span className="text-white/20">·</span>
                       <span className="text-sm text-white/50">
-                        {details.number_of_seasons} {details.number_of_seasons === 1 ? "sesong" : "sesonger"}
+                        {details.number_of_seasons} {details.number_of_seasons === 1 ? s.season : s.seasons}
                       </span>
                     </>
                   )}
@@ -399,7 +412,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                     </svg>
-                    Tilbake til «{title}»
+                    {s.backTo} «{title}»
                   </button>
                 )}
 
@@ -426,7 +439,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <p className="text-[10px] text-sky-400/60 font-semibold uppercase tracking-wider mb-1">Husk hvor du var</p>
+                      <p className="text-[10px] text-sky-400/60 font-semibold uppercase tracking-wider mb-1">{s.rememberWhere}</p>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-sky-400">S{progress.season} E{progress.episode}</span>
                       </div>
@@ -495,14 +508,14 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                     <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M8 5v14l11-7z" />
                     </svg>
-                    <span className="text-sm font-semibold">Se trailer</span>
+                    <span className="text-sm font-semibold">{s.watchTrailer}</span>
                   </button>
                 )}
 
                 {/* Overview */}
                 {details.overview && (
                   <div>
-                    <p className="text-[11px] text-white/30 font-semibold uppercase tracking-wider mb-1.5">Handling</p>
+                    <p className="text-[11px] text-white/30 font-semibold uppercase tracking-wider mb-1.5">{s.synopsis}</p>
                     <p className="text-sm text-white/60 leading-relaxed">{details.overview}</p>
                   </div>
                 )}
@@ -510,7 +523,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                 {/* Cast */}
                 {topCast.length > 0 && (
                   <div>
-                    <p className="text-[11px] text-white/30 font-semibold uppercase tracking-wider mb-2">Skuespillere</p>
+                    <p className="text-[11px] text-white/30 font-semibold uppercase tracking-wider mb-2">{s.cast}</p>
                     <div className="flex gap-3 overflow-x-auto pb-1 custom-scrollbar">
                       {topCast.map((person) => (
                         <div key={person.id} className="flex-shrink-0 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06]">
@@ -540,13 +553,13 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                 {/* Friend overlap — only for original title */}
                 {!overrideTitle && friendOverlap && friendOverlap.length > 0 && (
                   <div>
-                    <p className="text-[11px] text-white/30 font-semibold uppercase tracking-wider mb-2">Venner som har denne</p>
+                    <p className="text-[11px] text-white/30 font-semibold uppercase tracking-wider mb-2">{s.friendsWho}</p>
                     <div className="space-y-1.5">
                       {friendOverlap.map((f, i) => {
                         const statusLabel =
-                          f.status === "watched" ? "Sett" :
-                          f.status === "watchlist" ? "Se-liste" :
-                          f.status === "watching" ? `Ser nå${f.season && f.episode ? ` (S${f.season} E${f.episode})` : ""}` :
+                          f.status === "watched" ? s.watched :
+                          f.status === "watchlist" ? s.watchlist :
+                          f.status === "watching" ? `${s.watchingNow}${f.season && f.episode ? ` (S${f.season} E${f.episode})` : ""}` :
                           f.status;
                         const dotColor =
                           f.status === "watched" ? "bg-emerald-400" :
@@ -567,24 +580,24 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                 {/* Streaming deep links + providers */}
                 <div>
                   <p className="text-[11px] text-white/30 font-semibold uppercase tracking-wider mb-2">
-                    Tilgjengelig i {country || "..."}
+                    {s.availableIn} {country || "..."}
                   </p>
 
                   {!hasProviders && (
                     <div>
-                      <p className="text-sm text-white/40 mb-3">Ikke tilgjengelig for strømming i {country || "Norge"}</p>
+                      <p className="text-sm text-white/40 mb-3">{s.notAvailable} {country || "..."}</p>
 
                       {similarLoading && (
                         <div className="flex items-center gap-2 py-4">
                           <div className="w-4 h-4 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
-                          <span className="text-xs text-white/30">Finner lignende titler du kan se...</span>
+                          <span className="text-xs text-white/30">{s.findingSimilar}</span>
                         </div>
                       )}
 
                       {!similarLoading && similarAvailable.length > 0 && (
                         <div>
                           <p className="text-[11px] text-emerald-400/70 font-semibold uppercase tracking-wider mb-2.5">
-                            Se dette i stedet
+                            {s.watchInstead}
                           </p>
                           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                             {similarAvailable.map((item) => (
@@ -643,7 +656,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                       )}
 
                       {!similarLoading && similarAvailable.length === 0 && !loading && (
-                        <p className="text-xs text-white/20">Fant ingen lignende titler tilgjengelig i {country || "Norge"}</p>
+                        <p className="text-xs text-white/20">{s.noSimilar} {country || "..."}</p>
                       )}
                     </div>
                   )}
@@ -685,19 +698,19 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                               {isNetflix && netflixLoading ? (
                                 <div className="flex items-center gap-2">
                                   <div className="w-4 h-4 border-2 border-[#E50914]/30 border-t-[#E50914] rounded-full animate-spin" />
-                                  <span className="text-sm text-white/50">Henter Netflix-link...</span>
+                                  <span className="text-sm text-white/50">{s.fetchingNetflix}</span>
                                 </div>
                               ) : (
                                 <>
                                   <span className={`text-sm font-semibold ${isNetflix ? "text-[#E50914]" : "text-white/80"}`}>
                                     {link?.isDirect
-                                      ? `Åpne i ${p.provider_name}`
-                                      : `Søk i ${p.provider_name}`}
+                                      ? `${s.openIn} ${p.provider_name}`
+                                      : `${s.searchIn} ${p.provider_name}`}
                                   </span>
                                   <p className="text-[11px] text-white/35 mt-0.5">
                                     {link?.isDirect
-                                      ? `Åpner tittelen direkte i ${p.provider_name}`
-                                      : `Åpner ${p.provider_name} og søker etter tittelen`}
+                                      ? `${s.opensDirect} ${p.provider_name}`
+                                      : `${s.opensSearch} ${p.provider_name}`}
                                   </p>
                                 </>
                               )}
@@ -716,20 +729,20 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                   {hasProviders && (
                     <div className="space-y-3">
                       {providers!.flatrate && providers!.flatrate.length > 0 && (
-                        <ProviderSection label="Stream" providers={providers!.flatrate} />
+                        <ProviderSection label={s.stream} providers={providers!.flatrate} />
                       )}
                       {providers!.rent && providers!.rent.length > 0 && (
-                        <ProviderSection label="Lei" providers={providers!.rent} />
+                        <ProviderSection label={s.rent} providers={providers!.rent} />
                       )}
                       {providers!.buy && providers!.buy.length > 0 && (
-                        <ProviderSection label="Kjøp" providers={providers!.buy} />
+                        <ProviderSection label={s.buy} providers={providers!.buy} />
                       )}
                     </div>
                   )}
 
                   {/* JustWatch attribution */}
                   <div className="mt-3 pt-2 border-t border-white/[0.06] flex items-center justify-between">
-                    <span className="text-[10px] text-white/20">Data fra JustWatch</span>
+                    <span className="text-[10px] text-white/20">{s.justwatch}</span>
                     {providers?.link && (
                       <a
                         href={providers.link}
@@ -737,7 +750,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                         rel="noopener noreferrer"
                         className="text-[10px] text-white/30 hover:text-white/50 transition-colors"
                       >
-                        Se alle alternativer →
+                        {s.seeAll}
                       </a>
                     )}
                   </div>

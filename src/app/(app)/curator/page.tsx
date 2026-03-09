@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import PremiumModal from "@/components/PremiumModal";
 import { track } from "@/lib/posthog";
+import type { Locale } from "@/lib/i18n";
 
 /* ── Types ─────────────────────────────────────────── */
 
@@ -31,14 +32,16 @@ interface Message {
   loading?: boolean;
 }
 
-type Lang = "no" | "en";
-
 /* ── i18n ──────────────────────────────────────────── */
 
-function getUserLanguage(): Lang {
+function getUserLanguage(): Locale {
   if (typeof window === "undefined") return "no";
   const lang = navigator.language || "";
-  return lang.startsWith("nb") || lang.startsWith("no") || lang.startsWith("nn") ? "no" : "en";
+  if (lang.startsWith("nb") || lang.startsWith("no") || lang.startsWith("nn")) return "no";
+  if (lang.startsWith("da")) return "dk";
+  if (lang.startsWith("sv")) return "se";
+  if (lang.startsWith("fi")) return "fi";
+  return "en";
 }
 
 const i18n = {
@@ -77,6 +80,60 @@ const i18n = {
     premiumPerks: ["Deeper emotional matching", "Taste-based recommendations", "Access to hidden rarities"],
     premiumBody: "Curator has much more to offer — deeper insights and recommendations you won't find elsewhere.",
     premiumCta: "Upgrade to Premium →",
+  },
+  dk: {
+    greeting: (name: string) => `God aften, ${name}.\n\nBiografmørket har sænket sig. Hvad skal vi fylde lærredet med i aften?`,
+    fallback: "MAXI",
+    prompts: [
+      "Find en film der giver mig samme følelse som Interstellar",
+      "Planlæg en gyserfilmaften for to",
+      "Vis mig skjulte perler jeg aldrig har hørt om",
+      "En film der ændrer mit verdenssyn",
+    ],
+    placeholder: "Beskriv en film, en følelse eller en skuespiller...",
+    subtitle: "AI Filmekspert",
+    error: "Noget gik galt. Prøv igen.",
+    thinking: "Curator finder perlerne...",
+    premiumTitle: "Lås op for fuld filmviden",
+    premiumPerks: ["Dybere følelsesmæssig matching", "Smagsbaserede anbefalinger", "Adgang til skjulte rariteter"],
+    premiumBody: "Curator har meget mere at byde på — dybere indsigt og anbefalinger du ikke finder andre steder.",
+    premiumCta: "Opgrader til Premium →",
+  },
+  se: {
+    greeting: (name: string) => `God kväll, ${name}.\n\nBiomörkret har sänkt sig. Vad ska vi fylla duken med ikväll?`,
+    fallback: "MAXI",
+    prompts: [
+      "Hitta en film som ger mig samma känsla som Interstellar",
+      "Planera en skräckfilmskväll för två",
+      "Visa mig dolda pärlor jag aldrig hört talas om",
+      "En film som förändrar min världsbild",
+    ],
+    placeholder: "Beskriv en film, en känsla eller en skådespelare...",
+    subtitle: "AI Filmexpert",
+    error: "Något gick fel. Försök igen.",
+    thinking: "Curator letar fram pärlorna...",
+    premiumTitle: "Lås upp full filmkunskap",
+    premiumPerks: ["Djupare emotionell matchning", "Smakbaserade rekommendationer", "Tillgång till dolda rariteter"],
+    premiumBody: "Curator har mycket mer att erbjuda — djupare insikter och rekommendationer du inte hittar annars.",
+    premiumCta: "Uppgradera till Premium →",
+  },
+  fi: {
+    greeting: (name: string) => `Hyvää iltaa, ${name}.\n\nElokuvateatterin valot ovat himmenneet. Mitä täytämme valkokankaalle tänä iltana?`,
+    fallback: "MAXI",
+    prompts: [
+      "Etsi elokuva joka antaa saman tunteen kuin Interstellar",
+      "Suunnittele kauhuelokuvailta kahdelle",
+      "Näytä piilotettuja helmiä joista en ole kuullut",
+      "Elokuva joka muuttaa maailmankuvaani",
+    ],
+    placeholder: "Kuvaile elokuvaa, tunnetta tai näyttelijää...",
+    subtitle: "AI-elokuvaasiantuntija",
+    error: "Jokin meni pieleen. Yritä uudelleen.",
+    thinking: "Curator etsii helmiä...",
+    premiumTitle: "Avaa täysi elokuvatietämys",
+    premiumPerks: ["Syvempi tunnepohjainen matchaus", "Makuun perustuvat suositukset", "Pääsy piilotettuihin harvinaisuuksiin"],
+    premiumBody: "Curatorilla on paljon enemmän tarjottavaa — syvempiä oivalluksia ja suosituksia joita et löydä muualta.",
+    premiumCta: "Päivitä Premiumiin →",
   },
 } as const;
 
@@ -175,8 +232,8 @@ function MessageBubble({ msg }: { msg: Message }) {
 
 /* ── Premium unlock (inline, subtle) ───────────────── */
 
-function PremiumUnlock({ lang, onUpgrade }: { lang: Lang; onUpgrade: () => void }) {
-  const t = i18n[lang];
+function PremiumUnlock({ lang, onUpgrade }: { lang: Locale; onUpgrade: () => void }) {
+  const t = i18n[lang] ?? i18n.en;
   return (
     <div className="flex gap-3 items-start relative group" style={{ maxWidth: "75%" }}>
       {/* Ambient Red Glow for the Gate */}
@@ -223,7 +280,7 @@ function PremiumUnlock({ lang, onUpgrade }: { lang: Lang; onUpgrade: () => void 
 /* ── Main page ─────────────────────────────────────── */
 
 export default function CuratorPage() {
-  const [lang] = useState<Lang>(getUserLanguage);
+  const [lang] = useState<Locale>(getUserLanguage);
   const [username, setUsername] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const [showPremium, setShowPremium] = useState(false);
@@ -233,7 +290,7 @@ export default function CuratorPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const FREE_MESSAGE_LIMIT = 5;
-  const t = i18n[lang];
+  const t = i18n[lang] ?? i18n.en;
   const isLoading = messages.some((m) => m.loading);
   const userMessageCount = messages.filter((m) => m.role === "user").length;
 
@@ -441,7 +498,7 @@ export default function CuratorPage() {
 
 /* ── MovieCard ───────────────────────────────────────── */
 
-function MovieCard({ movie, lang }: { movie: CuratorMovie; lang: Lang }) {
+function MovieCard({ movie, lang }: { movie: CuratorMovie; lang: Locale }) {
   const imgSrc = movie.poster_path ? `https://image.tmdb.org/t/p/w154${movie.poster_path}` : null;
   const flatrate = movie.providers.filter((p) => p.type === "flatrate");
   const rentBuy = movie.providers.filter((p) => p.type === "rent" || p.type === "buy");

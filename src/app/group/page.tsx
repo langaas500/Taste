@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { getLocale, type Locale } from "@/app/together/strings";
+import { getLocale, type Locale } from "@/lib/i18n";
 
 /* ── constants ──────────────────────────────────────────── */
 
@@ -28,32 +28,32 @@ const US_ONLY_PROVIDERS = new Set([15, 386]);
 
 /* ── i18n strings ─────────────────────────────────────── */
 const ls = {
-  group:        { no: "Gruppe",           en: "Group" },
-  subtext:      { no: "Sveip. Stem. Se sammen.", en: "Swipe. Vote. Watch together." },
-  createGroup:  { no: "Opprett gruppe",   en: "Create group" },
-  joinGroup:    { no: "Bli med",          en: "Join group" },
-  yourName:     { no: "Ditt navn",        en: "Your name" },
-  namePlaceholder: { no: "Skriv navnet ditt…", en: "Enter your name…" },
-  whatToWatch:  { no: "Hva vil dere se?", en: "What do you want to watch?" },
-  all:          { no: "Alt",              en: "All" },
-  movies:       { no: "Film",             en: "Movies" },
-  series:       { no: "Serier",           en: "Series" },
-  providers:    { no: "Strømmetjenester", en: "Streaming services" },
-  optional:     { no: "valgfritt",        en: "optional" },
-  creating:     { no: "Oppretter…",       en: "Creating…" },
-  create:       { no: "Opprett",          en: "Create" },
-  back:         { no: "Tilbake",          en: "Back" },
-  enterName:    { no: "Skriv inn et navn", en: "Enter a name" },
-  enterCode:    { no: "Skriv inn koden",  en: "Enter the code" },
-  groupCode:    { no: "Gruppekode",       en: "Group code" },
-  codePlaceholder: { no: "F.eks. AB3KM",  en: "e.g. AB3KM" },
-  joining:      { no: "Blir med…",        en: "Joining…" },
-  join:         { no: "Bli med",          en: "Join" },
-  somethingWrong: { no: "Noe gikk galt", en: "Something went wrong" },
+  group:        { no: "Gruppe",           en: "Group",            dk: "Gruppe",           se: "Grupp",            fi: "Ryhmä" },
+  subtext:      { no: "Sveip. Stem. Se sammen.", en: "Swipe. Vote. Watch together.", dk: "Swipe. Stem. Se sammen.", se: "Svajpa. Rösta. Se tillsammans.", fi: "Swaippaa. Äänestä. Katsokaa yhdessä." },
+  createGroup:  { no: "Opprett gruppe",   en: "Create group",     dk: "Opret gruppe",     se: "Skapa grupp",      fi: "Luo ryhmä" },
+  joinGroup:    { no: "Bli med",          en: "Join group",       dk: "Deltag",           se: "Gå med",           fi: "Liity" },
+  yourName:     { no: "Ditt navn",        en: "Your name",        dk: "Dit navn",         se: "Ditt namn",        fi: "Nimesi" },
+  namePlaceholder: { no: "Skriv navnet ditt…", en: "Enter your name…", dk: "Skriv dit navn…", se: "Skriv ditt namn…", fi: "Kirjoita nimesi…" },
+  whatToWatch:  { no: "Hva vil dere se?", en: "What do you want to watch?", dk: "Hvad vil I se?", se: "Vad vill ni se?", fi: "Mitä haluatte katsoa?" },
+  all:          { no: "Alt",              en: "All",              dk: "Alt",              se: "Allt",             fi: "Kaikki" },
+  movies:       { no: "Film",             en: "Movies",           dk: "Film",             se: "Film",             fi: "Elokuvat" },
+  series:       { no: "Serier",           en: "Series",           dk: "Serier",           se: "Serier",           fi: "Sarjat" },
+  providers:    { no: "Strømmetjenester", en: "Streaming services", dk: "Streamingtjenester", se: "Streamingtjänster", fi: "Suoratoistopalvelut" },
+  optional:     { no: "valgfritt",        en: "optional",         dk: "valgfrit",         se: "valfritt",         fi: "valinnainen" },
+  creating:     { no: "Oppretter…",       en: "Creating…",        dk: "Opretter…",        se: "Skapar…",          fi: "Luodaan…" },
+  create:       { no: "Opprett",          en: "Create",           dk: "Opret",            se: "Skapa",            fi: "Luo" },
+  back:         { no: "Tilbake",          en: "Back",             dk: "Tilbage",          se: "Tillbaka",         fi: "Takaisin" },
+  enterName:    { no: "Skriv inn et navn", en: "Enter a name",    dk: "Skriv et navn",    se: "Ange ett namn",    fi: "Kirjoita nimi" },
+  enterCode:    { no: "Skriv inn koden",  en: "Enter the code",   dk: "Indtast koden",    se: "Ange koden",       fi: "Syötä koodi" },
+  groupCode:    { no: "Gruppekode",       en: "Group code",       dk: "Gruppekode",       se: "Gruppkod",         fi: "Ryhmäkoodi" },
+  codePlaceholder: { no: "F.eks. AB3KM",  en: "e.g. AB3KM",      dk: "F.eks. AB3KM",     se: "T.ex. AB3KM",      fi: "Esim. AB3KM" },
+  joining:      { no: "Blir med…",        en: "Joining…",         dk: "Deltager…",        se: "Ansluter…",        fi: "Liitytään…" },
+  join:         { no: "Bli med",          en: "Join",             dk: "Deltag",           se: "Gå med",           fi: "Liity" },
+  somethingWrong: { no: "Noe gikk galt", en: "Something went wrong", dk: "Noget gik galt", se: "Något gick fel", fi: "Jokin meni pieleen" },
 } as const;
 
 function lt(locale: Locale, key: keyof typeof ls): string {
-  return ls[key][locale];
+  return ls[key][locale] ?? ls[key].en;
 }
 
 /* ── component ──────────────────────────────────────────── */

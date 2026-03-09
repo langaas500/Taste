@@ -11,7 +11,7 @@ import ConversionWall from "@/components/ConversionWall";
 import { submitFeedback, addExclusion, logTitle } from "@/lib/api";
 import { prefetchNetflixIds } from "@/lib/prefetch-netflix-ids";
 import type { Recommendation, MediaType } from "@/lib/types";
-import { getLocale, type Locale } from "@/app/together/strings";
+import { getLocale, type Locale } from "@/lib/i18n";
 
 const FREE_REC_LIMIT = 5;
 
@@ -70,6 +70,84 @@ const strings = {
     typeTv: "Series",
     typeMovie: "Movie",
     typeLabel: "Type",
+  },
+  dk: {
+    title: "For dig",
+    refresh: "Opdater",
+    fetch: "Hent anbefalinger",
+    all: "Alle",
+    series: "Serier",
+    movies: "Film",
+    watched: "Set",
+    notForMe: "Ikke for mig",
+    dontRecommend: "Anbefal ikke",
+    addWatchlist: "Tilføj til se-liste",
+    addList: "Tilføj til liste",
+    undo: "Fortryd",
+    emptyTitle: "Personlige anbefalinger",
+    emptyDesc: "Tryk på knappen ovenfor for at generere anbefalinger baseret på dit bibliotek og din smagsprofil.",
+    allDoneTitle: "Alt gennemgået!",
+    allDoneDesc: "Du har vurderet alle anbefalinger. Tryk Opdater for at få flere.",
+    actionLiked: "Kunne lide",
+    actionWatchlist: "Tilføjet til se-liste",
+    actionDisliked: "Kunne ikke lide",
+    actionNotForMe: "Ikke for mig",
+    actionExclude: "Anbefaler ikke igen",
+    typeTv: "Serie",
+    typeMovie: "Film",
+    typeLabel: "Type",
+  },
+  se: {
+    title: "För dig",
+    refresh: "Uppdatera",
+    fetch: "Hämta rekommendationer",
+    all: "Alla",
+    series: "Serier",
+    movies: "Film",
+    watched: "Sett",
+    notForMe: "Inte för mig",
+    dontRecommend: "Rekommendera inte",
+    addWatchlist: "Lägg till i listan",
+    addList: "Lägg till i lista",
+    undo: "Ångra",
+    emptyTitle: "Personliga rekommendationer",
+    emptyDesc: "Tryck på knappen ovan för att generera rekommendationer baserat på ditt bibliotek och din smakprofil.",
+    allDoneTitle: "Allt klart!",
+    allDoneDesc: "Du har gått igenom alla rekommendationer. Tryck Uppdatera för att få fler.",
+    actionLiked: "Gillade",
+    actionWatchlist: "Tillagd i listan",
+    actionDisliked: "Ogillade",
+    actionNotForMe: "Inte för mig",
+    actionExclude: "Rekommenderar inte igen",
+    typeTv: "Serie",
+    typeMovie: "Film",
+    typeLabel: "Typ",
+  },
+  fi: {
+    title: "Sinulle",
+    refresh: "Päivitä",
+    fetch: "Hae suosituksia",
+    all: "Kaikki",
+    series: "Sarjat",
+    movies: "Elokuvat",
+    watched: "Katsottu",
+    notForMe: "Ei minulle",
+    dontRecommend: "Älä suosittele",
+    addWatchlist: "Lisää katselulistalle",
+    addList: "Lisää listaan",
+    undo: "Kumoa",
+    emptyTitle: "Henkilökohtaiset suositukset",
+    emptyDesc: "Paina yllä olevaa painiketta luodaksesi suosituksia kirjastosi ja makuprofiilisi perusteella.",
+    allDoneTitle: "Kaikki käyty läpi!",
+    allDoneDesc: "Olet arvioinut kaikki suositukset. Paina Päivitä saadaksesi lisää.",
+    actionLiked: "Pidin",
+    actionWatchlist: "Lisätty katselulistalle",
+    actionDisliked: "En pitänyt",
+    actionNotForMe: "Ei minulle",
+    actionExclude: "Ei suositella uudelleen",
+    typeTv: "Sarja",
+    typeMovie: "Elokuva",
+    typeLabel: "Tyyppi",
   },
 } as const;
 
@@ -185,7 +263,7 @@ export default function RecommendationsPage() {
     setFeedbackStates((prev) => { const n = { ...prev }; delete n[key]; return n; });
   }
 
-  const s = strings[locale];
+  const s = strings[locale] ?? strings.en;
 
   const allVisible = recs
     .filter((r) => !dismissed.has(`${r.tmdb_id}:${r.type}`))

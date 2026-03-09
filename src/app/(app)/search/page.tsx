@@ -10,6 +10,7 @@ import ConversionWall from "@/components/ConversionWall";
 import GlowButton from "@/components/GlowButton";
 import { logTitle } from "@/lib/api";
 import { useGuestMode } from "@/hooks/useGuestMode";
+import { useLocale } from "@/hooks/useLocale";
 import { recordGuestTitleAction } from "@/lib/guest-actions";
 import Link from "next/link";
 import type { TMDBSearchResult, MediaType, AdvancedSearchFilters } from "@/lib/types";
@@ -160,8 +161,173 @@ function DiscoveryRow({ row, onSelect }: { row: DiscoveryRowData; onSelect: (ite
   );
 }
 
+const strings = {
+  no: {
+    search: "Søk",
+    wrappedReady: "Din Wrapped er klar",
+    wrappedSubtitle: "Se ditt år i film og serier",
+    searchPlaceholder: "Søk etter filmer og serier...",
+    all: "Alle",
+    movies: "Filmer",
+    tv: "TV",
+    searchBtn: "Søk",
+    advancedSearch: "Avansert søk",
+    backToSearch: "Tilbake til vanlig søk",
+    searching: "Søker...",
+    filmography: "Filmografi:",
+    titles: "titler",
+    advancedSearchDash: "Avansert søk —",
+    results: "resultater",
+    film: "Film",
+    added: "Lagt til",
+    liked: "Likte",
+    disliked: "Nei",
+    meh: "Meh",
+    addWatchlist: "+ Se-liste",
+    listPlus: "List+",
+    loadMore: "Last inn flere",
+    noResults: "Ingen resultater. Prøv å endre filtrene.",
+    topicMatchHint: "Viser også relaterte filmer og serier basert på tema",
+    noResultsFor: "Ingen resultater for",
+    likedAction: "\ud83d\udc4d Likte",
+    dislikedAction: "\ud83d\udc4e Nei",
+    mehAction: "\ud83d\ude10 Meh",
+    watchlistAction: "+ Se-liste",
+  },
+  en: {
+    search: "Search",
+    wrappedReady: "Your Wrapped is ready",
+    wrappedSubtitle: "See your year in movies and series",
+    searchPlaceholder: "Search for movies and series...",
+    all: "All",
+    movies: "Movies",
+    tv: "TV",
+    searchBtn: "Search",
+    advancedSearch: "Advanced search",
+    backToSearch: "Back to regular search",
+    searching: "Searching...",
+    filmography: "Filmography:",
+    titles: "titles",
+    advancedSearchDash: "Advanced search —",
+    results: "results",
+    film: "Movie",
+    added: "Added",
+    liked: "Liked",
+    disliked: "No",
+    meh: "Meh",
+    addWatchlist: "+ Watchlist",
+    listPlus: "List+",
+    loadMore: "Load more",
+    noResults: "No results. Try changing the filters.",
+    topicMatchHint: "Also showing related movies and series based on topic",
+    noResultsFor: "No results for",
+    likedAction: "\ud83d\udc4d Liked",
+    dislikedAction: "\ud83d\udc4e No",
+    mehAction: "\ud83d\ude10 Meh",
+    watchlistAction: "+ Watchlist",
+  },
+  dk: {
+    search: "Søg",
+    wrappedReady: "Din Wrapped er klar",
+    wrappedSubtitle: "Se dit år i film og serier",
+    searchPlaceholder: "Søg efter film og serier...",
+    all: "Alle",
+    movies: "Film",
+    tv: "TV",
+    searchBtn: "Søg",
+    advancedSearch: "Avanceret søgning",
+    backToSearch: "Tilbage til normal søgning",
+    searching: "Søger...",
+    filmography: "Filmografi:",
+    titles: "titler",
+    advancedSearchDash: "Avanceret søgning —",
+    results: "resultater",
+    film: "Film",
+    added: "Tilføjet",
+    liked: "Kunne lide",
+    disliked: "Nej",
+    meh: "Meh",
+    addWatchlist: "+ Watchlist",
+    listPlus: "List+",
+    loadMore: "Indlæs flere",
+    noResults: "Ingen resultater. Prøv at ændre filtrene.",
+    topicMatchHint: "Viser også relaterede film og serier baseret på tema",
+    noResultsFor: "Ingen resultater for",
+    likedAction: "\ud83d\udc4d Kunne lide",
+    dislikedAction: "\ud83d\udc4e Nej",
+    mehAction: "\ud83d\ude10 Meh",
+    watchlistAction: "+ Watchlist",
+  },
+  se: {
+    search: "Sök",
+    wrappedReady: "Din Wrapped är klar",
+    wrappedSubtitle: "Se ditt år i film och serier",
+    searchPlaceholder: "Sök efter filmer och serier...",
+    all: "Alla",
+    movies: "Filmer",
+    tv: "TV",
+    searchBtn: "Sök",
+    advancedSearch: "Avancerad sökning",
+    backToSearch: "Tillbaka till vanlig sökning",
+    searching: "Söker...",
+    filmography: "Filmografi:",
+    titles: "titlar",
+    advancedSearchDash: "Avancerad sökning —",
+    results: "resultat",
+    film: "Film",
+    added: "Tillagd",
+    liked: "Gillade",
+    disliked: "Nej",
+    meh: "Meh",
+    addWatchlist: "+ Bevakningslista",
+    listPlus: "List+",
+    loadMore: "Ladda fler",
+    noResults: "Inga resultat. Försök att ändra filtren.",
+    topicMatchHint: "Visar även relaterade filmer och serier baserat på tema",
+    noResultsFor: "Inga resultat för",
+    likedAction: "\ud83d\udc4d Gillade",
+    dislikedAction: "\ud83d\udc4e Nej",
+    mehAction: "\ud83d\ude10 Meh",
+    watchlistAction: "+ Bevakningslista",
+  },
+  fi: {
+    search: "Haku",
+    wrappedReady: "Wrapped on valmis",
+    wrappedSubtitle: "Katso vuotesi elokuvina ja sarjoina",
+    searchPlaceholder: "Hae elokuvia ja sarjoja...",
+    all: "Kaikki",
+    movies: "Elokuvat",
+    tv: "TV",
+    searchBtn: "Hae",
+    advancedSearch: "Tarkennettu haku",
+    backToSearch: "Takaisin normaaliin hakuun",
+    searching: "Haetaan...",
+    filmography: "Filmografia:",
+    titles: "nimikettä",
+    advancedSearchDash: "Tarkennettu haku —",
+    results: "tulosta",
+    film: "Elokuva",
+    added: "Lisätty",
+    liked: "Tykkäsin",
+    disliked: "Ei",
+    meh: "Meh",
+    addWatchlist: "+ Seurantalista",
+    listPlus: "List+",
+    loadMore: "Lataa lisää",
+    noResults: "Ei tuloksia. Kokeile muuttaa suodattimia.",
+    topicMatchHint: "Näytetään myös aiheeseen liittyviä elokuvia ja sarjoja",
+    noResultsFor: "Ei tuloksia haulle",
+    likedAction: "\ud83d\udc4d Tykkäsin",
+    dislikedAction: "\ud83d\udc4e Ei",
+    mehAction: "\ud83d\ude10 Meh",
+    watchlistAction: "+ Seurantalista",
+  },
+} as const;
+
 export default function SearchPage() {
   const guest = useGuestMode();
+  const locale = useLocale();
+  const s = strings[locale] ?? strings.en;
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"multi" | "movie" | "tv">("multi");
   const [results, setResults] = useState<TMDBSearchResult[]>([]);
@@ -374,7 +540,7 @@ export default function SearchPage() {
 
   return (
     <div className="animate-fade-in-up">
-      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">Søk</h2>
+      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">{s.search}</h2>
 
       {/* Wrapped teaser */}
       <Link
@@ -383,8 +549,8 @@ export default function SearchPage() {
       >
         <span className="text-lg">🎬</span>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-[var(--text-primary)]">Din Wrapped er klar</p>
-          <p className="text-[10px] text-[var(--text-tertiary)]">Se ditt år i film og serier</p>
+          <p className="text-xs font-semibold text-[var(--text-primary)]">{s.wrappedReady}</p>
+          <p className="text-[10px] text-[var(--text-tertiary)]">{s.wrappedSubtitle}</p>
         </div>
         <svg className="w-4 h-4 text-[var(--text-tertiary)] group-hover:text-[var(--accent-light)] transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -404,7 +570,7 @@ export default function SearchPage() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Søk etter filmer og serier..."
+            placeholder={s.searchPlaceholder}
             className="w-full pl-9 pr-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder-white/25 transition-all duration-300 focus:outline-none focus:border-white/20 focus:bg-white/[0.06]"
           />
         </div>
@@ -413,16 +579,16 @@ export default function SearchPage() {
           onChange={(e) => setTypeFilter(e.target.value as "multi" | "movie" | "tv")}
           className="px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-secondary)] focus:outline-none focus:border-white/20 transition-all duration-300"
         >
-          <option value="multi">Alle</option>
-          <option value="movie">Filmer</option>
-          <option value="tv">TV</option>
+          <option value="multi">{s.all}</option>
+          <option value="movie">{s.movies}</option>
+          <option value="tv">{s.tv}</option>
         </select>
         <button
           type="submit"
           disabled={loading}
           className="px-5 py-2.5 bg-white/[0.08] hover:bg-white/[0.14] text-white/90 rounded-xl font-medium text-sm transition-all duration-300 disabled:opacity-30 active:scale-[0.97] border border-white/[0.08] hover:border-white/[0.15]"
         >
-          Søk
+          {s.searchBtn}
         </button>
       </form>
 
@@ -436,7 +602,7 @@ export default function SearchPage() {
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
           </svg>
-          Avansert søk
+          {s.advancedSearch}
           <svg
             className={`w-3 h-3 transition-transform duration-300 ${advancedOpen ? "rotate-180" : ""}`}
             fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
@@ -450,7 +616,7 @@ export default function SearchPage() {
             onClick={() => { setIsAdvancedMode(false); setPersonMode(null); setAdvancedResults([]); setAdvancedPage(1); }}
             className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] transition-colors"
           >
-            Tilbake til vanlig søk
+            {s.backToSearch}
           </button>
         )}
       </div>
@@ -470,7 +636,7 @@ export default function SearchPage() {
         </div>
       )}
 
-      {isLoading && <LoadingSpinner text="Søker..." />}
+      {isLoading && <LoadingSpinner text={s.searching} />}
 
       {/* Person filmography header */}
       {isAdvancedMode && personMode && (
@@ -484,16 +650,16 @@ export default function SearchPage() {
             </svg>
           </button>
           <h3 className="text-sm font-semibold text-white/80">
-            Filmografi: {personMode.personName}
+            {s.filmography} {personMode.personName}
           </h3>
-          <span className="text-xs text-white/30">{personMode.credits.length} titler</span>
+          <span className="text-xs text-white/30">{personMode.credits.length} {s.titles}</span>
         </div>
       )}
 
       {/* Advanced mode info */}
       {isAdvancedMode && !personMode && advancedResults.length > 0 && (
         <p className="text-xs text-white/30 mb-4">
-          Avansert søk — {advancedResults.length} resultater
+          {s.advancedSearchDash} {advancedResults.length} {s.results}
         </p>
       )}
 
@@ -533,7 +699,7 @@ export default function SearchPage() {
 
                 {/* Type badge */}
                 <span className="absolute top-2.5 left-2.5 z-10 text-[10px] px-2 py-0.5 rounded-md bg-black/50 text-white/50 uppercase font-bold tracking-widest">
-                  {type === "movie" ? "Film" : "TV"}
+                  {type === "movie" ? s.film : s.tv}
                 </span>
 
                 {/* Rating badge */}
@@ -554,7 +720,7 @@ export default function SearchPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
                       <span className="text-[13px] font-semibold text-emerald-400 capitalize">
-                        {actionDone === "watchlist" ? "Lagt til" : actionDone}
+                        {actionDone === "watchlist" ? s.added : actionDone}
                       </span>
                     </div>
                   ) : (
@@ -565,19 +731,19 @@ export default function SearchPage() {
                           onClick={(e) => { e.stopPropagation(); handleAction(item, "liked", fallbackType); }}
                           className="flex-1 py-2 rounded-lg bg-emerald-500/15 text-emerald-400 text-[12px] font-semibold tracking-wide hover:bg-emerald-500/30 transition-all duration-200 active:scale-95"
                         >
-                          Likte
+                          {s.liked}
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleAction(item, "disliked", fallbackType); }}
                           className="flex-1 py-2 rounded-lg bg-red-500/15 text-red-400 text-[12px] font-semibold tracking-wide hover:bg-red-500/30 transition-all duration-200 active:scale-95"
                         >
-                          Nei
+                          {s.disliked}
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleAction(item, "neutral", fallbackType); }}
                           className="flex-1 py-2 rounded-lg bg-amber-500/15 text-amber-400 text-[12px] font-semibold tracking-wide hover:bg-amber-500/30 transition-all duration-200 active:scale-95"
                         >
-                          Meh
+                          {s.meh}
                         </button>
                       </div>
                       {/* Watchlist + List */}
@@ -586,13 +752,13 @@ export default function SearchPage() {
                           onClick={(e) => { e.stopPropagation(); handleAction(item, "watchlist", fallbackType); }}
                           className="flex-1 py-2 rounded-lg bg-white/[0.08] text-white/70 text-[12px] font-semibold tracking-wide hover:bg-white/[0.15] hover:text-white transition-all duration-200 active:scale-[0.97] border border-white/[0.06]"
                         >
-                          + Se-liste
+                          {s.addWatchlist}
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); if (guest.isGuest) { guest.setShowWall(true); return; } setAddToListItem({ id: item.id, type, title }); }}
                           className="py-2 px-3 rounded-lg bg-[var(--accent)]/10 text-[var(--accent-light)] text-[12px] font-semibold hover:bg-[var(--accent)]/20 transition-all duration-200 active:scale-95"
                         >
-                          List+
+                          {s.listPlus}
                         </button>
                       </div>
                     </div>
@@ -616,19 +782,19 @@ export default function SearchPage() {
                       onClick={(e) => { e.stopPropagation(); handleAction(item, "liked", fallbackType); }}
                       className="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/15 active:scale-95 transition-all"
                     >
-                      Likte
+                      {s.liked}
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleAction(item, "disliked", fallbackType); }}
                       className="flex-1 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-[10px] font-semibold border border-red-500/15 active:scale-95 transition-all"
                     >
-                      Nei
+                      {s.disliked}
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleAction(item, "neutral", fallbackType); }}
                       className="flex-1 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 text-[10px] font-semibold border border-amber-500/15 active:scale-95 transition-all"
                     >
-                      Meh
+                      {s.meh}
                     </button>
                   </div>
                   <div className="flex gap-1">
@@ -636,13 +802,13 @@ export default function SearchPage() {
                       onClick={(e) => { e.stopPropagation(); handleAction(item, "watchlist", fallbackType); }}
                       className="flex-1 py-1.5 rounded-lg bg-white/[0.06] text-white/50 text-[10px] font-semibold border border-white/[0.06] active:scale-95 transition-all"
                     >
-                      + Se-liste
+                      {s.addWatchlist}
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); if (guest.isGuest) { guest.setShowWall(true); return; } setAddToListItem({ id: item.id, type, title }); }}
                       className="py-1.5 px-2.5 rounded-lg bg-[var(--accent)]/10 text-[var(--accent-light)] text-[10px] font-semibold border border-[var(--accent)]/15 active:scale-95 transition-all"
                     >
-                      List+
+                      {s.listPlus}
                     </button>
                   </div>
                 </div>
@@ -652,7 +818,7 @@ export default function SearchPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                   </svg>
                   <span className="text-[11px] font-semibold text-emerald-400 capitalize">
-                    {actionDone === "watchlist" ? "Lagt til" : actionDone}
+                    {actionDone === "watchlist" ? s.added : actionDone}
                   </span>
                 </div>
               )}
@@ -668,7 +834,7 @@ export default function SearchPage() {
             variant="ghost"
             onClick={() => handleAdvancedSearch(advancedPage + 1)}
           >
-            Last inn flere
+            {s.loadMore}
           </GlowButton>
         </div>
       )}
@@ -676,7 +842,7 @@ export default function SearchPage() {
       {/* Empty states */}
       {!isLoading && displayResults.length === 0 && isAdvancedMode && (
         <div className="text-center py-20">
-          <p className="text-white/30 text-sm">Ingen resultater. Prøv å endre filtrene.</p>
+          <p className="text-white/30 text-sm">{s.noResults}</p>
         </div>
       )}
 
@@ -685,13 +851,13 @@ export default function SearchPage() {
           <svg className="w-3.5 h-3.5 text-[var(--accent-light)]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
           </svg>
-          <span className="text-xs text-white/40">Viser også relaterte filmer og serier basert på tema</span>
+          <span className="text-xs text-white/40">{s.topicMatchHint}</span>
         </div>
       )}
 
       {!isLoading && results.length === 0 && !isAdvancedMode && query && (
         <div className="text-center py-20">
-          <p className="text-white/30 text-sm">Ingen resultater for &laquo;{query}&raquo;</p>
+          <p className="text-white/30 text-sm">{s.noResultsFor} &laquo;{query}&raquo;</p>
         </div>
       )}
 
@@ -735,11 +901,11 @@ export default function SearchPage() {
           posterPath={selectedItem.poster_path}
           onClose={() => setSelectedItem(null)}
           actions={[
-            { label: "\ud83d\udc4d Likte", action: "liked", variant: "green" },
-            { label: "\ud83d\udc4e Nei", action: "disliked", variant: "red" },
-            { label: "\ud83d\ude10 Meh", action: "neutral", variant: "yellow" },
-            { label: "+ Se-liste", action: "watchlist", variant: "default" },
-            { label: "List+", action: "add-to-list", variant: "accent" },
+            { label: s.likedAction, action: "liked", variant: "green" },
+            { label: s.dislikedAction, action: "disliked", variant: "red" },
+            { label: s.mehAction, action: "neutral", variant: "yellow" },
+            { label: s.watchlistAction, action: "watchlist", variant: "default" },
+            { label: s.listPlus, action: "add-to-list", variant: "accent" },
           ]}
           onAction={(action) => {
             if (action === "add-to-list") {

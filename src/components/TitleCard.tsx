@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useState } from "react";
 import type { MediaType, Sentiment, FriendOverlap } from "@/lib/types";
+import { useLocale } from "@/hooks/useLocale";
+import type { Locale } from "@/lib/i18n";
 
 interface TitleCardProps {
   tmdb_id: number;
@@ -21,10 +23,26 @@ interface TitleCardProps {
   children?: React.ReactNode;
 }
 
+const sentimentLabels: Record<Locale, Record<Sentiment, string>> = {
+  no: { liked: "Likte", disliked: "Mislikte", neutral: "Meh" },
+  en: { liked: "Liked", disliked: "Disliked", neutral: "Meh" },
+  dk: { liked: "Kunne lide", disliked: "Kunne ikke lide", neutral: "Meh" },
+  se: { liked: "Gillade", disliked: "Ogillade", neutral: "Meh" },
+  fi: { liked: "Pidin", disliked: "En pitänyt", neutral: "Meh" },
+};
+
+const typeBadge: Record<Locale, Record<"movie" | "tv", string>> = {
+  no: { movie: "Film", tv: "TV" },
+  en: { movie: "Film", tv: "TV" },
+  dk: { movie: "Film", tv: "TV" },
+  se: { movie: "Film", tv: "TV" },
+  fi: { movie: "Elokuva", tv: "TV" },
+};
+
 const sentimentConfig = {
-  liked: { dotBg: "bg-emerald-400", color: "text-emerald-400", label: "Likte" },
-  disliked: { dotBg: "bg-red-400", color: "text-red-400", label: "Mislikte" },
-  neutral: { dotBg: "bg-amber-400", color: "text-amber-400", label: "Meh" },
+  liked: { dotBg: "bg-emerald-400", color: "text-emerald-400" },
+  disliked: { dotBg: "bg-red-400", color: "text-red-400" },
+  neutral: { dotBg: "bg-amber-400", color: "text-amber-400" },
 };
 
 export default function TitleCard({
@@ -41,6 +59,7 @@ export default function TitleCard({
   actions,
   children,
 }: TitleCardProps) {
+  const locale = useLocale();
   const [imgLoaded, setImgLoaded] = useState(false);
   const imgSrc = poster_path ? `https://image.tmdb.org/t/p/w342${poster_path}` : null;
 
@@ -75,7 +94,7 @@ export default function TitleCard({
 
         {/* Type badge */}
         <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-black/50 text-[9px] font-semibold uppercase tracking-widest text-white/60">
-          {type === "tv" ? "TV" : "Film"}
+          {(typeBadge[locale] ?? typeBadge.en)[type]}
         </div>
 
         {/* Progress badge (episode tracking) */}
@@ -183,7 +202,7 @@ export default function TitleCard({
             <>
               <span className="text-white/10">·</span>
               <span className={`text-[11px] ${sentimentConfig[sentiment].color}`}>
-                {sentimentConfig[sentiment].label}
+                {(sentimentLabels[locale] ?? sentimentLabels.en)[sentiment]}
               </span>
             </>
           )}

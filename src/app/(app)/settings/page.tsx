@@ -6,6 +6,7 @@ import Link from "next/link";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import PremiumModal from "@/components/PremiumModal";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
+import { useLocale } from "@/hooks/useLocale";
 import { fetchLinks, createInvite, acceptInvite, updateLinkSharing, revokeLink, fetchLists } from "@/lib/api";
 import { FILTER_PRESETS, presetsToFilters, filtersToPresets } from "@/lib/filter-presets";
 import { SUPPORTED_REGIONS, REGION_LABELS, type SupportedRegion } from "@/lib/region";
@@ -84,9 +85,326 @@ function GhostButton({
   );
 }
 
+/* ── Locale strings ───────────────────────────────────── */
+
+const strings = {
+  no: {
+    loadingSettings: "Laster innstillinger...",
+    settings: "Innstillinger",
+    error: "Feil:",
+    profile: "Profil",
+    profileDesc: "Visningsnavnet ditt brukes i Curator og Se Sammen.",
+    displayName: "Visningsnavn",
+    saving: "Lagrer...",
+    save: "Lagre",
+    cancel: "Avbryt",
+    displayNameLabel: "Visningsnavn:",
+    notSet: "Ikke satt",
+    edit: "Rediger",
+    premiumMember: "Premium-medlem",
+    upgradeToPremium: "Oppgrader til Premium",
+    region: "Region",
+    regionDesc: "Bestemmer strømmetilgjengelighet, trender og anbefalinger.",
+    contentFilters: "Innholdsfiltre",
+    contentFiltersDesc: "Ekskluder innhold du ikke er interessert i fra anbefalinger og søk.",
+    aiExploration: "AI-utforskning",
+    whatDoesSliderDo: "Hva gjør slideren?",
+    aiExplorationDesc: "Juster hvor dristige anbefalinger du vil ha fra Curator og Søk.",
+    precise: "Presis",
+    explore: "Utforsk",
+    discovery: "Oppdagelse",
+    preciseDesc: "Bruker kun din smaksprofil. Ingen trending-titler blandes inn.",
+    discoveryDesc: "Blander inn trending-titler. Introduserer lett tilfeldig variasjon i rekkefølgen.",
+    exploreDesc: "Booster populære titler og maksimerer tilfeldig variasjon for bredest mulig utvalg.",
+    accountLinking: "Kontokobling",
+    accountLinkingDesc: "Koble kontoen din med en partner for å dele lister og Se Sammen.",
+    user: "Bruker",
+    done: "Ferdig",
+    sharing: "Deling",
+    remove: "Fjern",
+    shareTheseLists: "Del disse listene:",
+    noListsYet: "Ingen lister ennå.",
+    inviteCodeLabel: "Invitasjonskode (del med partner):",
+    cancelInvite: "Avbryt invitasjon",
+    generateInviteCode: "Generer invitasjonskode",
+    haveInviteCode: "Har du en invitasjonskode?",
+    accept: "Godta",
+    linked: "Koblet!",
+    traktSync: "Trakt-synkronisering",
+    traktDesc: "Importer seerhistorikk og ønskeliste fra Trakt.tv-kontoen din.",
+    connected: "Tilkoblet",
+    connectTrakt: "Koble til Trakt",
+    syncing: "Synkroniserer...",
+    merge: "Flett",
+    overwrite: "Overskriv",
+    dataAndExport: "Data og eksport",
+    dataAndExportDesc: "Last ned all data eller importer fra andre tjenester.",
+    exportJson: "Eksporter data som JSON",
+    timeMachineImport: "Tidsmaskinen / Import",
+    legal: "Juridisk",
+    legalDesc: "Personvern, vilkår og kontaktinformasjon.",
+    privacy: "Personvern",
+    terms: "Vilkår",
+    contact: "Kontakt",
+    dangerZone: "Faresone",
+    dangerZoneDesc: "Logg ut av kontoen din. Du kan logge inn igjen når som helst.",
+    signOut: "Logg ut",
+  },
+  en: {
+    loadingSettings: "Loading settings...",
+    settings: "Settings",
+    error: "Error:",
+    profile: "Profile",
+    profileDesc: "Your display name is used in Curator and Watch Together.",
+    displayName: "Display name",
+    saving: "Saving...",
+    save: "Save",
+    cancel: "Cancel",
+    displayNameLabel: "Display name:",
+    notSet: "Not set",
+    edit: "Edit",
+    premiumMember: "Premium member",
+    upgradeToPremium: "Upgrade to Premium",
+    region: "Region",
+    regionDesc: "Determines streaming availability, trends and recommendations.",
+    contentFilters: "Content filters",
+    contentFiltersDesc: "Exclude content you're not interested in from recommendations and search.",
+    aiExploration: "AI exploration",
+    whatDoesSliderDo: "What does the slider do?",
+    aiExplorationDesc: "Adjust how adventurous you want recommendations from Curator and Search.",
+    precise: "Precise",
+    explore: "Explore",
+    discovery: "Discovery",
+    preciseDesc: "Uses only your taste profile. No trending titles mixed in.",
+    discoveryDesc: "Mixes in trending titles. Introduces slight random variation in the order.",
+    exploreDesc: "Boosts popular titles and maximizes random variation for the widest selection.",
+    accountLinking: "Account linking",
+    accountLinkingDesc: "Link your account with a partner to share lists and Watch Together.",
+    user: "User",
+    done: "Done",
+    sharing: "Sharing",
+    remove: "Remove",
+    shareTheseLists: "Share these lists:",
+    noListsYet: "No lists yet.",
+    inviteCodeLabel: "Invite code (share with partner):",
+    cancelInvite: "Cancel invite",
+    generateInviteCode: "Generate invite code",
+    haveInviteCode: "Have an invite code?",
+    accept: "Accept",
+    linked: "Linked!",
+    traktSync: "Trakt sync",
+    traktDesc: "Import watch history and watchlist from your Trakt.tv account.",
+    connected: "Connected",
+    connectTrakt: "Connect Trakt",
+    syncing: "Syncing...",
+    merge: "Merge",
+    overwrite: "Overwrite",
+    dataAndExport: "Data & export",
+    dataAndExportDesc: "Download all your data or import from other services.",
+    exportJson: "Export data as JSON",
+    timeMachineImport: "Time Machine / Import",
+    legal: "Legal",
+    legalDesc: "Privacy, terms and contact information.",
+    privacy: "Privacy",
+    terms: "Terms",
+    contact: "Contact",
+    dangerZone: "Danger zone",
+    dangerZoneDesc: "Sign out of your account. You can sign back in anytime.",
+    signOut: "Sign out",
+  },
+  dk: {
+    loadingSettings: "Indlæser indstillinger...",
+    settings: "Indstillinger",
+    error: "Fejl:",
+    profile: "Profil",
+    profileDesc: "Dit visningsnavn bruges i Curator og Se Sammen.",
+    displayName: "Visningsnavn",
+    saving: "Gemmer...",
+    save: "Gem",
+    cancel: "Annuller",
+    displayNameLabel: "Visningsnavn:",
+    notSet: "Ikke angivet",
+    edit: "Rediger",
+    premiumMember: "Premium-medlem",
+    upgradeToPremium: "Opgrader til Premium",
+    region: "Region",
+    regionDesc: "Bestemmer streamingtilgængelighed, trends og anbefalinger.",
+    contentFilters: "Indholdsfiltre",
+    contentFiltersDesc: "Ekskluder indhold, du ikke er interesseret i, fra anbefalinger og søgning.",
+    aiExploration: "AI-udforskning",
+    whatDoesSliderDo: "Hvad gør slideren?",
+    aiExplorationDesc: "Juster hvor modige anbefalinger du vil have fra Curator og Søg.",
+    precise: "Præcis",
+    explore: "Udforsk",
+    discovery: "Opdagelse",
+    preciseDesc: "Bruger kun din smagsprofil. Ingen trending-titler blandes ind.",
+    discoveryDesc: "Blander trending-titler ind. Introducerer let tilfældig variation i rækkefølgen.",
+    exploreDesc: "Booster populære titler og maksimerer tilfældig variation for bredest muligt udvalg.",
+    accountLinking: "Kontokobling",
+    accountLinkingDesc: "Kobl din konto med en partner for at dele lister og Se Sammen.",
+    user: "Bruger",
+    done: "Færdig",
+    sharing: "Deling",
+    remove: "Fjern",
+    shareTheseLists: "Del disse lister:",
+    noListsYet: "Ingen lister endnu.",
+    inviteCodeLabel: "Invitationskode (del med partner):",
+    cancelInvite: "Annuller invitation",
+    generateInviteCode: "Generer invitationskode",
+    haveInviteCode: "Har du en invitationskode?",
+    accept: "Accepter",
+    linked: "Koblet!",
+    traktSync: "Trakt-synkronisering",
+    traktDesc: "Importer seerhistorik og ønskeliste fra din Trakt.tv-konto.",
+    connected: "Tilsluttet",
+    connectTrakt: "Tilslut Trakt",
+    syncing: "Synkroniserer...",
+    merge: "Flet",
+    overwrite: "Overskriv",
+    dataAndExport: "Data og eksport",
+    dataAndExportDesc: "Download alle data eller importer fra andre tjenester.",
+    exportJson: "Eksporter data som JSON",
+    timeMachineImport: "Tidsmaskinen / Import",
+    legal: "Juridisk",
+    legalDesc: "Privatlivspolitik, vilkår og kontaktoplysninger.",
+    privacy: "Privatlivspolitik",
+    terms: "Vilkår",
+    contact: "Kontakt",
+    dangerZone: "Farezone",
+    dangerZoneDesc: "Log ud af din konto. Du kan logge ind igen når som helst.",
+    signOut: "Log ud",
+  },
+  se: {
+    loadingSettings: "Laddar inställningar...",
+    settings: "Inställningar",
+    error: "Fel:",
+    profile: "Profil",
+    profileDesc: "Ditt visningsnamn används i Curator och Se Tillsammans.",
+    displayName: "Visningsnamn",
+    saving: "Sparar...",
+    save: "Spara",
+    cancel: "Avbryt",
+    displayNameLabel: "Visningsnamn:",
+    notSet: "Inte angett",
+    edit: "Redigera",
+    premiumMember: "Premium-medlem",
+    upgradeToPremium: "Uppgradera till Premium",
+    region: "Region",
+    regionDesc: "Bestämmer streamingtillgänglighet, trender och rekommendationer.",
+    contentFilters: "Innehållsfilter",
+    contentFiltersDesc: "Exkludera innehåll du inte är intresserad av från rekommendationer och sök.",
+    aiExploration: "AI-utforskning",
+    whatDoesSliderDo: "Vad gör slidern?",
+    aiExplorationDesc: "Justera hur djärva rekommendationer du vill ha från Curator och Sök.",
+    precise: "Precis",
+    explore: "Utforska",
+    discovery: "Upptäckt",
+    preciseDesc: "Använder bara din smakprofil. Inga trendande titlar blandas in.",
+    discoveryDesc: "Blandar in trendande titlar. Introducerar lätt slumpmässig variation i ordningen.",
+    exploreDesc: "Boostar populära titlar och maximerar slumpmässig variation för bredast möjliga urval.",
+    accountLinking: "Kontolänkning",
+    accountLinkingDesc: "Länka ditt konto med en partner för att dela listor och Se Tillsammans.",
+    user: "Användare",
+    done: "Klar",
+    sharing: "Delning",
+    remove: "Ta bort",
+    shareTheseLists: "Dela dessa listor:",
+    noListsYet: "Inga listor ännu.",
+    inviteCodeLabel: "Inbjudningskod (dela med partner):",
+    cancelInvite: "Avbryt inbjudan",
+    generateInviteCode: "Generera inbjudningskod",
+    haveInviteCode: "Har du en inbjudningskod?",
+    accept: "Acceptera",
+    linked: "Länkad!",
+    traktSync: "Trakt-synkronisering",
+    traktDesc: "Importera tittarhistorik och önskelista från ditt Trakt.tv-konto.",
+    connected: "Ansluten",
+    connectTrakt: "Anslut Trakt",
+    syncing: "Synkroniserar...",
+    merge: "Sammanfoga",
+    overwrite: "Skriv över",
+    dataAndExport: "Data och export",
+    dataAndExportDesc: "Ladda ner all data eller importera från andra tjänster.",
+    exportJson: "Exportera data som JSON",
+    timeMachineImport: "Tidsmaskinen / Import",
+    legal: "Juridiskt",
+    legalDesc: "Integritet, villkor och kontaktinformation.",
+    privacy: "Integritet",
+    terms: "Villkor",
+    contact: "Kontakt",
+    dangerZone: "Farozon",
+    dangerZoneDesc: "Logga ut från ditt konto. Du kan logga in igen när som helst.",
+    signOut: "Logga ut",
+  },
+  fi: {
+    loadingSettings: "Ladataan asetuksia...",
+    settings: "Asetukset",
+    error: "Virhe:",
+    profile: "Profiili",
+    profileDesc: "Näyttönimeäsi käytetään Curatorissa ja Katsotaan Yhdessä -toiminnossa.",
+    displayName: "Näyttönimi",
+    saving: "Tallennetaan...",
+    save: "Tallenna",
+    cancel: "Peruuta",
+    displayNameLabel: "Näyttönimi:",
+    notSet: "Ei asetettu",
+    edit: "Muokkaa",
+    premiumMember: "Premium-jäsen",
+    upgradeToPremium: "Päivitä Premiumiin",
+    region: "Alue",
+    regionDesc: "Määrittää suoratoistosaatavuuden, trendit ja suositukset.",
+    contentFilters: "Sisältösuodattimet",
+    contentFiltersDesc: "Sulje pois sisältö, josta et ole kiinnostunut, suosituksista ja hausta.",
+    aiExploration: "AI-tutkimus",
+    whatDoesSliderDo: "Mitä liukusäädin tekee?",
+    aiExplorationDesc: "Säädä kuinka rohkeita suosituksia haluat Curatorilta ja Hausta.",
+    precise: "Tarkka",
+    explore: "Tutustu",
+    discovery: "Löytö",
+    preciseDesc: "Käyttää vain makuprofiiliasi. Trendaavia nimikkeitä ei sekoiteta mukaan.",
+    discoveryDesc: "Sekoittaa mukaan trendaavia nimikkeitä. Lisää lievää satunnaista vaihtelua järjestykseen.",
+    exploreDesc: "Nostaa suosittuja nimikkeitä ja maksimoi satunnaisen vaihtelun laajimman valikoiman saamiseksi.",
+    accountLinking: "Tilin linkitys",
+    accountLinkingDesc: "Linkitä tilisi kumppanin kanssa jakaaksesi listoja ja Katsotaan Yhdessä.",
+    user: "Käyttäjä",
+    done: "Valmis",
+    sharing: "Jakaminen",
+    remove: "Poista",
+    shareTheseLists: "Jaa nämä listat:",
+    noListsYet: "Ei listoja vielä.",
+    inviteCodeLabel: "Kutsukoodi (jaa kumppanille):",
+    cancelInvite: "Peruuta kutsu",
+    generateInviteCode: "Luo kutsukoodi",
+    haveInviteCode: "Onko sinulla kutsukoodi?",
+    accept: "Hyväksy",
+    linked: "Linkitetty!",
+    traktSync: "Trakt-synkronointi",
+    traktDesc: "Tuo katseluhistoria ja toivelista Trakt.tv-tililtäsi.",
+    connected: "Yhdistetty",
+    connectTrakt: "Yhdistä Trakt",
+    syncing: "Synkronoidaan...",
+    merge: "Yhdistä",
+    overwrite: "Korvaa",
+    dataAndExport: "Data ja vienti",
+    dataAndExportDesc: "Lataa kaikki tietosi tai tuo muista palveluista.",
+    exportJson: "Vie data JSON-muodossa",
+    timeMachineImport: "Aikakone / Tuonti",
+    legal: "Oikeudelliset",
+    legalDesc: "Tietosuoja, ehdot ja yhteystiedot.",
+    privacy: "Tietosuoja",
+    terms: "Ehdot",
+    contact: "Yhteystiedot",
+    dangerZone: "Vaaravyöhyke",
+    dangerZoneDesc: "Kirjaudu ulos tililtäsi. Voit kirjautua takaisin milloin tahansa.",
+    signOut: "Kirjaudu ulos",
+  },
+} as const;
+
 /* ── Main ─────────────────────────────────────────────── */
 
 function SettingsContent() {
+  const locale = useLocale();
+  const s = strings[locale] ?? strings.en;
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [traktConnected, setTraktConnected] = useState(false);
@@ -232,7 +550,7 @@ function SettingsContent() {
     setAcceptMsg("");
     try {
       await acceptInvite(acceptCode.trim());
-      setAcceptMsg("Koblet!");
+      setAcceptMsg(s.linked);
       setAcceptCode("");
       const data = await fetchLinks();
       setLinks(data.links);
@@ -267,7 +585,7 @@ function SettingsContent() {
     window.location.href = "/login";
   }
 
-  if (loading) return <LoadingSpinner text="Laster innstillinger..." />;
+  if (loading) return <LoadingSpinner text={s.loadingSettings} />;
 
   return (
     <div className="animate-fade-in-up max-w-5xl mx-auto">
@@ -276,19 +594,19 @@ function SettingsContent() {
         className="mb-6"
         style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.6)" }}
       >
-        Innstillinger
+        {s.settings}
       </h2>
 
       {errorMsg && (
         <div className="text-sm text-red-400 bg-red-500/10 rounded-xl px-4 py-3 border border-red-500/20 mb-6">
-          Feil: {errorMsg}
+          {s.error} {errorMsg}
         </div>
       )}
 
       {/* ── Profile row (full width) ──────────────────── */}
       <div className={glassCard} style={glassCardStyle}>
-        <p className={sectionLabel}>Profil</p>
-        <p className={sectionDesc}>Visningsnavnet ditt brukes i Curator og Se Sammen.</p>
+        <p className={sectionLabel}>{s.profile}</p>
+        <p className={sectionDesc}>{s.profileDesc}</p>
         {editingName ? (
           <div className="flex items-center gap-2">
             <input
@@ -298,26 +616,26 @@ function SettingsContent() {
               onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") setEditingName(false); }}
               autoFocus
               maxLength={50}
-              placeholder="Visningsnavn"
+              placeholder={s.displayName}
               className="flex-1 px-3 py-2 bg-white/[0.04] border border-white/[0.1] rounded-xl text-sm text-white placeholder-white/25 focus:outline-none focus:border-[rgba(229,9,20,0.4)] transition-all duration-200"
             />
             <GhostButton onClick={saveName} disabled={savingName}>
-              {savingName ? "Lagrer..." : "Lagre"}
+              {savingName ? s.saving : s.save}
             </GhostButton>
             <button onClick={() => setEditingName(false)} className="px-3 py-2 text-xs text-white/50 hover:text-white/70 transition-colors cursor-pointer">
-              Avbryt
+              {s.cancel}
             </button>
           </div>
         ) : (
           <div className="flex items-center justify-between">
             <p className="text-sm text-white/60">
-              Visningsnavn: <span className="text-white font-medium">{displayName || "Ikke satt"}</span>
+              {s.displayNameLabel} <span className="text-white font-medium">{displayName || s.notSet}</span>
             </p>
             <button
               onClick={() => { setNameInput(displayName); setEditingName(true); }}
               className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium cursor-pointer"
             >
-              Rediger
+              {s.edit}
             </button>
           </div>
         )}
@@ -327,14 +645,14 @@ function SettingsContent() {
           {isPremium ? (
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
-              <span className="text-xs font-medium text-emerald-400">Premium-medlem</span>
+              <span className="text-xs font-medium text-emerald-400">{s.premiumMember}</span>
             </div>
           ) : (
             <button
               onClick={() => setShowPremium(true)}
               className="text-xs font-semibold text-white/70 border border-white/[0.1] rounded-xl px-4 py-2 hover:bg-[rgba(229,9,20,0.1)] hover:border-[rgba(229,9,20,0.3)] hover:text-white transition-all cursor-pointer"
             >
-              Oppgrader til Premium
+              {s.upgradeToPremium}
             </button>
           )}
         </div>
@@ -348,8 +666,8 @@ function SettingsContent() {
 
           {/* Region */}
           <div className={glassCard} style={glassCardStyle}>
-            <p className={sectionLabel}>Region</p>
-            <p className={sectionDesc}>Bestemmer strømmetilgjengelighet, trender og anbefalinger.</p>
+            <p className={sectionLabel}>{s.region}</p>
+            <p className={sectionDesc}>{s.regionDesc}</p>
             <div className="flex items-center gap-3">
               <select
                 value={selectedRegion}
@@ -371,13 +689,13 @@ function SettingsContent() {
                 {selectedRegion}
               </span>
             </div>
-            {savingRegion && <p className="text-[10px] text-white/40 mt-2">Lagrer...</p>}
+            {savingRegion && <p className="text-[10px] text-white/40 mt-2">{s.saving}</p>}
           </div>
 
           {/* Content Filters (Streaming Preferences) */}
           <div className={glassCard} style={glassCardStyle}>
-            <p className={sectionLabel}>Innholdsfiltre</p>
-            <p className={sectionDesc}>Ekskluder innhold du ikke er interessert i fra anbefalinger og søk.</p>
+            <p className={sectionLabel}>{s.contentFilters}</p>
+            <p className={sectionDesc}>{s.contentFiltersDesc}</p>
             <div className="flex flex-wrap gap-2">
               {FILTER_PRESETS.map((preset) => {
                 const isActive = activePresets.includes(preset.id);
@@ -403,17 +721,17 @@ function SettingsContent() {
                 );
               })}
             </div>
-            {savingFilters && <p className="text-[10px] text-white/40 mt-2">Lagrer...</p>}
+            {savingFilters && <p className="text-[10px] text-white/40 mt-2">{s.saving}</p>}
           </div>
 
           {/* AI Exploration Slider */}
           <div className={glassCard} style={glassCardStyle}>
             <div className="flex items-center justify-between">
-              <p className={sectionLabel}>AI-utforskning</p>
+              <p className={sectionLabel}>{s.aiExploration}</p>
               <button
                 onClick={() => setShowSliderInfo(!showSliderInfo)}
                 className="text-white/40 hover:text-white/70 transition-colors cursor-pointer"
-                title="Hva gjør slideren?"
+                title={s.whatDoesSliderDo}
               >
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                   <circle cx={12} cy={12} r={10} />
@@ -421,9 +739,9 @@ function SettingsContent() {
                 </svg>
               </button>
             </div>
-            <p className={sectionDesc}>Juster hvor dristige anbefalinger du vil ha fra Curator og Søk.</p>
+            <p className={sectionDesc}>{s.aiExplorationDesc}</p>
             <div className="flex items-center gap-3">
-              <div className="text-white/50" title="Presis">
+              <div className="text-white/50" title={s.precise}>
                 <ShieldIcon size={18} />
               </div>
               <input
@@ -435,12 +753,12 @@ function SettingsContent() {
                 onPointerUp={() => saveSlider(explorationSlider)}
                 className="flex-1 accent-[#E50914]"
               />
-              <div className="text-white/50" title="Utforsk">
+              <div className="text-white/50" title={s.explore}>
                 <CompassIcon size={18} />
               </div>
               <span className="text-xs font-mono w-7 text-center text-white/60">{explorationSlider}</span>
             </div>
-            {savingSlider && <p className="text-[10px] text-white/40 mt-2">Lagrer...</p>}
+            {savingSlider && <p className="text-[10px] text-white/40 mt-2">{s.saving}</p>}
 
             {/* Algorithm transparency */}
             {showSliderInfo && (
@@ -452,23 +770,23 @@ function SettingsContent() {
                   <div className={`px-4 py-3 ${explorationSlider <= 30 ? "bg-white/[0.04]" : ""}`}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded" style={{ background: "rgba(229,9,20,0.15)", color: "rgba(229,9,20,0.85)" }}>0–30</span>
-                      <span className="text-xs font-semibold text-white/80">Presis</span>
+                      <span className="text-xs font-semibold text-white/80">{s.precise}</span>
                     </div>
-                    <p className="text-[11px] text-white/50 leading-relaxed">Bruker kun din smaksprofil. Ingen trending-titler blandes inn.</p>
+                    <p className="text-[11px] text-white/50 leading-relaxed">{s.preciseDesc}</p>
                   </div>
                   <div className={`px-4 py-3 ${explorationSlider > 30 && explorationSlider <= 50 ? "bg-white/[0.04]" : ""}`}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded" style={{ background: "rgba(229,9,20,0.15)", color: "rgba(229,9,20,0.85)" }}>31–50</span>
-                      <span className="text-xs font-semibold text-white/80">Oppdagelse</span>
+                      <span className="text-xs font-semibold text-white/80">{s.discovery}</span>
                     </div>
-                    <p className="text-[11px] text-white/50 leading-relaxed">Blander inn trending-titler. Introduserer lett tilfeldig variasjon i rekkefølgen.</p>
+                    <p className="text-[11px] text-white/50 leading-relaxed">{s.discoveryDesc}</p>
                   </div>
                   <div className={`px-4 py-3 ${explorationSlider > 50 ? "bg-white/[0.04]" : ""}`}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded" style={{ background: "rgba(229,9,20,0.15)", color: "rgba(229,9,20,0.85)" }}>51–100</span>
-                      <span className="text-xs font-semibold text-white/80">Utforsk</span>
+                      <span className="text-xs font-semibold text-white/80">{s.explore}</span>
                     </div>
-                    <p className="text-[11px] text-white/50 leading-relaxed">Booster populære titler og maksimerer tilfeldig variasjon for bredest mulig utvalg.</p>
+                    <p className="text-[11px] text-white/50 leading-relaxed">{s.exploreDesc}</p>
                   </div>
                 </div>
               </div>
@@ -477,8 +795,8 @@ function SettingsContent() {
 
           {/* Account Linking */}
           <div className={glassCard} style={glassCardStyle}>
-            <p className={sectionLabel}>Kontokobling</p>
-            <p className={sectionDesc}>Koble kontoen din med en partner for å dele lister og Se Sammen.</p>
+            <p className={sectionLabel}>{s.accountLinking}</p>
+            <p className={sectionDesc}>{s.accountLinkingDesc}</p>
 
             {/* Active links */}
             {links.filter((l) => l.status === "accepted").map((link) => (
@@ -486,28 +804,28 @@ function SettingsContent() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <span className="text-sm text-white/80 font-medium">{link.partner_name || "Bruker"}</span>
+                    <span className="text-sm text-white/80 font-medium">{link.partner_name || s.user}</span>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setManagingLinkId(managingLinkId === link.id ? null : link.id)}
                       className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium cursor-pointer"
                     >
-                      {managingLinkId === link.id ? "Ferdig" : "Deling"}
+                      {managingLinkId === link.id ? s.done : s.sharing}
                     </button>
                     <button
                       onClick={() => handleUnlink(link.id)}
                       className="text-xs text-red-400/60 hover:text-red-400 transition-colors font-medium cursor-pointer"
                     >
-                      Fjern
+                      {s.remove}
                     </button>
                   </div>
                 </div>
                 {managingLinkId === link.id && (
                   <div className="mt-2 pt-2 border-t border-white/[0.06] space-y-1.5">
-                    <p className="text-[10px] text-white/45 uppercase tracking-wider font-semibold mb-2">Del disse listene:</p>
+                    <p className="text-[10px] text-white/45 uppercase tracking-wider font-semibold mb-2">{s.shareTheseLists}</p>
                     {myLists.length === 0 ? (
-                      <p className="text-xs text-white/20">Ingen lister ennå.</p>
+                      <p className="text-xs text-white/20">{s.noListsYet}</p>
                     ) : myLists.map((list) => {
                       const isShared = (link.shared_list_ids || []).includes(list.id);
                       return (
@@ -537,7 +855,7 @@ function SettingsContent() {
             {/* Pending invites */}
             {links.filter((l) => l.status === "pending" && !l.invitee_id).map((link) => (
               <div key={link.id} className="mb-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                <p className="text-[10px] text-white/45 mb-2">Invitasjonskode (del med partner):</p>
+                <p className="text-[10px] text-white/45 mb-2">{s.inviteCodeLabel}</p>
                 <div className="flex items-center gap-2">
                   <code className="text-lg font-mono font-bold text-[rgba(229,9,20,0.7)] tracking-[0.3em] select-all">
                     {link.invite_code}
@@ -555,7 +873,7 @@ function SettingsContent() {
                   onClick={() => handleUnlink(link.id)}
                   className="mt-2 text-xs text-red-400/60 hover:text-red-400 transition-colors cursor-pointer"
                 >
-                  Avbryt invitasjon
+                  {s.cancelInvite}
                 </button>
               </div>
             ))}
@@ -563,10 +881,10 @@ function SettingsContent() {
             {/* Generate / Accept */}
             <div className="flex flex-col gap-3">
               {!inviteCode && (
-                <GhostButton onClick={handleGenerateInvite}>Generer invitasjonskode</GhostButton>
+                <GhostButton onClick={handleGenerateInvite}>{s.generateInviteCode}</GhostButton>
               )}
               <div>
-                <p className="text-[10px] text-white/45 mb-2">Har du en invitasjonskode?</p>
+                <p className="text-[10px] text-white/45 mb-2">{s.haveInviteCode}</p>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -577,10 +895,10 @@ function SettingsContent() {
                     maxLength={6}
                     className="w-28 px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white font-mono tracking-[0.2em] text-center placeholder-white/15 focus:outline-none focus:border-white/20 transition-all"
                   />
-                  <GhostButton onClick={handleAcceptInvite} disabled={acceptCode.length < 6}>Godta</GhostButton>
+                  <GhostButton onClick={handleAcceptInvite} disabled={acceptCode.length < 6}>{s.accept}</GhostButton>
                 </div>
                 {acceptMsg && (
-                  <p className={`text-xs mt-2 font-medium ${acceptMsg === "Koblet!" ? "text-emerald-400" : "text-red-400"}`}>
+                  <p className={`text-xs mt-2 font-medium ${acceptMsg === s.linked ? "text-emerald-400" : "text-red-400"}`}>
                     {acceptMsg}
                   </p>
                 )}
@@ -594,31 +912,31 @@ function SettingsContent() {
 
           {/* Trakt */}
           <div className={glassCard} style={glassCardStyle}>
-            <p className={sectionLabel}>Trakt-synkronisering</p>
-            <p className={sectionDesc}>Importer seerhistorikk og ønskeliste fra Trakt.tv-kontoen din.</p>
+            <p className={sectionLabel}>{s.traktSync}</p>
+            <p className={sectionDesc}>{s.traktDesc}</p>
 
             {traktConnected ? (
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.3)]" />
-                <span className="text-xs text-emerald-400 font-medium">Tilkoblet</span>
+                <span className="text-xs text-emerald-400 font-medium">{s.connected}</span>
               </div>
             ) : (
               <a
                 href="/api/trakt/connect"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium border border-white/[0.08] text-white/65 hover:bg-[rgba(229,9,20,0.08)] hover:text-white hover:border-[rgba(229,9,20,0.3)] transition-all mb-4"
               >
-                Koble til Trakt
+                {s.connectTrakt}
               </a>
             )}
 
             <div className="flex gap-2">
               <GhostButton onClick={() => handleSync("merge")} disabled={syncing}>
                 <RefreshIcon />
-                {syncing ? "Synkroniserer..." : "Flett"}
+                {syncing ? s.syncing : s.merge}
               </GhostButton>
               <GhostButton onClick={() => handleSync("overwrite")} disabled={syncing} danger>
                 <RefreshIcon />
-                Overskriv
+                {s.overwrite}
               </GhostButton>
             </div>
 
@@ -631,18 +949,18 @@ function SettingsContent() {
 
           {/* Data Export & Import */}
           <div className={glassCard} style={glassCardStyle}>
-            <p className={sectionLabel}>Data og eksport</p>
-            <p className={sectionDesc}>Last ned all data eller importer fra andre tjenester.</p>
+            <p className={sectionLabel}>{s.dataAndExport}</p>
+            <p className={sectionDesc}>{s.dataAndExportDesc}</p>
             <div className="flex flex-col gap-2">
               <a href="/api/export" download>
                 <GhostButton className="w-full">
                   <DownloadIcon />
-                  Eksporter data som JSON
+                  {s.exportJson}
                 </GhostButton>
               </a>
               <Link href="/timemachine">
                 <GhostButton className="w-full">
-                  Tidsmaskinen / Import
+                  {s.timeMachineImport}
                 </GhostButton>
               </Link>
             </div>
@@ -650,12 +968,12 @@ function SettingsContent() {
 
           {/* Legal */}
           <div className={glassCard} style={glassCardStyle}>
-            <p className={sectionLabel}>Juridisk</p>
-            <p className={sectionDesc}>Personvern, vilkår og kontaktinformasjon.</p>
+            <p className={sectionLabel}>{s.legal}</p>
+            <p className={sectionDesc}>{s.legalDesc}</p>
             <div className="flex gap-3">
-              <a href="/privacy" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">Personvern</a>
-              <a href="/terms" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">Vilkår</a>
-              <a href="/contact" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">Kontakt</a>
+              <a href="/privacy" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">{s.privacy}</a>
+              <a href="/terms" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">{s.terms}</a>
+              <a href="/contact" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">{s.contact}</a>
             </div>
           </div>
 
@@ -664,13 +982,13 @@ function SettingsContent() {
             className="rounded-2xl border border-red-500/15 p-5 transition-all duration-200"
             style={{ ...glassCardStyle, background: "rgba(229,9,20,0.02)" }}
           >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-red-400/50 mb-1">Faresone</p>
-            <p className="text-[12px] text-red-400/30 leading-relaxed mb-4">Logg ut av kontoen din. Du kan logge inn igjen når som helst.</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-red-400/50 mb-1">{s.dangerZone}</p>
+            <p className="text-[12px] text-red-400/30 leading-relaxed mb-4">{s.dangerZoneDesc}</p>
             <GhostButton onClick={handleSignOut} danger>
               <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
               </svg>
-              Logg ut
+              {s.signOut}
             </GhostButton>
           </div>
         </div>
@@ -683,7 +1001,7 @@ function SettingsContent() {
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={<LoadingSpinner text="Laster innstillinger..." />}>
+    <Suspense fallback={<LoadingSpinner />}>
       <SettingsContent />
     </Suspense>
   );

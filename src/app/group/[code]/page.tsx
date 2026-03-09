@@ -64,7 +64,8 @@ const gs = {
 } as const;
 
 function gt(locale: Locale, key: keyof typeof gs): string {
-  return gs[key][locale];
+  const loc = locale === "no" ? "no" : "en";
+  return gs[key][loc];
 }
 
 function clamp(v: number, min: number, max: number) { return Math.min(Math.max(v, min), max); }

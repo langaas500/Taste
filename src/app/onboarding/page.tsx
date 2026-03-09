@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { getLocale, type Locale } from "../together/strings";
+import { getLocale, type Locale } from "@/lib/i18n";
 import { track } from "@/lib/posthog";
 
 type MediaType = "movie" | "tv";
@@ -83,6 +83,96 @@ const strings = {
     exploreRec: "Explore recommendations",
     goLibrary: "Go to library",
     startTogether: "Start Watch Together",
+  },
+  dk: {
+    headline: "Lad os bygge din",
+    headlineGradient: "filmprofil",
+    subtitle: "Vælg titler du har set, så vi kan lære din smag at kende og give dig personlige anbefalinger.",
+    cta: "Lad os starte",
+    timeHint: "Tager kun 2 minutter",
+    step2Title: "Hvad har du set?",
+    step2Hint: "Tryk = kunne lide, hold inde = kunne ikke lide",
+    searchPlaceholder: "Kan du ikke finde noget? Søg her...",
+    liked: "kunne lide",
+    disliked: "kunne ikke lide",
+    minSelected: "af minimum 5 valgt",
+    back: "Tilbage",
+    continue: "Fortsæt",
+    step3Title: "Hvilke tjenester bruger du?",
+    step3Subtitle: "Vi filtrerer anbefalinger til tjenester du har",
+    finish: "Færdig",
+    skip: "Spring over",
+    saving: "Gemmer...",
+    doneTitle: "Din profil er klar!",
+    doneSubtitle: (n: number) =>
+      `Vi loggede ${n} titler og byggede din smagsprofil. Nu kan vi give dig personlige anbefalinger.`,
+    tasteTitle: "Din smagsprofil",
+    youLike: "Du kan lide",
+    youAvoid: "Du undgår",
+    pacing: "Tempo",
+    exploreRec: "Udforsk anbefalinger",
+    goLibrary: "Gå til biblioteket",
+    startTogether: "Start Se Sammen",
+  },
+  se: {
+    headline: "Låt oss bygga din",
+    headlineGradient: "filmprofil",
+    subtitle: "Välj titlar du har sett så vi kan lära oss din smak och ge dig personliga rekommendationer.",
+    cta: "Låt oss börja",
+    timeHint: "Tar bara 2 minuter",
+    step2Title: "Vad har du sett?",
+    step2Hint: "Tryck = gillade, håll inne = ogillade",
+    searchPlaceholder: "Hittar du inte något? Sök här...",
+    liked: "gillade",
+    disliked: "ogillade",
+    minSelected: "av minimum 5 valda",
+    back: "Tillbaka",
+    continue: "Fortsätt",
+    step3Title: "Vilka tjänster använder du?",
+    step3Subtitle: "Vi filtrerar rekommendationer till tjänster du har",
+    finish: "Slutför",
+    skip: "Hoppa över",
+    saving: "Sparar...",
+    doneTitle: "Din profil är klar!",
+    doneSubtitle: (n: number) =>
+      `Vi loggade ${n} titlar och byggde din smakprofil. Nu kan vi ge dig personliga rekommendationer.`,
+    tasteTitle: "Din smakprofil",
+    youLike: "Du gillar",
+    youAvoid: "Du undviker",
+    pacing: "Tempo",
+    exploreRec: "Utforska rekommendationer",
+    goLibrary: "Gå till biblioteket",
+    startTogether: "Starta Se Tillsammans",
+  },
+  fi: {
+    headline: "Rakennetaan sinun",
+    headlineGradient: "elokuvaprofiilisi",
+    subtitle: "Valitse nähtyjen nimikkeiden joukosta, jotta opimme makusi ja voimme antaa henkilökohtaisia suosituksia.",
+    cta: "Aloitetaan",
+    timeHint: "Kestää vain 2 minuuttia",
+    step2Title: "Mitä olet nähnyt?",
+    step2Hint: "Napauta = pidin, pidä pohjassa = en pitänyt",
+    searchPlaceholder: "Etkö löydä? Hae täältä...",
+    liked: "pidin",
+    disliked: "en pitänyt",
+    minSelected: "vähintään 5 valittu",
+    back: "Takaisin",
+    continue: "Jatka",
+    step3Title: "Mitä palveluja käytät?",
+    step3Subtitle: "Suodatamme suositukset palveluihisi",
+    finish: "Valmis",
+    skip: "Ohita",
+    saving: "Tallennetaan...",
+    doneTitle: "Profiilisi on valmis!",
+    doneSubtitle: (n: number) =>
+      `Kirjasimme ${n} nimikettä ja rakensimme makuprofiilisi. Nyt voimme antaa sinulle henkilökohtaisia suosituksia.`,
+    tasteTitle: "Makuprofiilisi",
+    youLike: "Pidät",
+    youAvoid: "Vältät",
+    pacing: "Tempo",
+    exploreRec: "Tutustu suosituksiin",
+    goLibrary: "Siirry kirjastoon",
+    startTogether: "Aloita Katsotaan Yhdessä",
   },
 } as const;
 
@@ -287,7 +377,7 @@ function OnboardingContent() {
     setSaving(false);
   }
 
-  const s = strings[locale];
+  const s = strings[locale] ?? strings.en;
   const selectionCount = selections.size;
   const displayTitles = searchQuery.trim() ? searchResults : titles;
   const likedCount = Array.from(selections.values()).filter((v) => v.sentiment === "liked").length;

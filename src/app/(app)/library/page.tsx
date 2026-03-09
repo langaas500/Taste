@@ -13,20 +13,224 @@ import { removeTitle, addExclusion, toggleFavorite, fetchFriendOverlaps } from "
 import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-browser";
 import Link from "next/link";
 import type { UserTitle, TitleCache, MediaType, Recommendation, FriendOverlap } from "@/lib/types";
+import { useLocale } from "@/hooks/useLocale";
 
 type Filter = "all" | "favorites" | "liked" | "disliked" | "neutral" | "excluded";
 type SortKey = "recent" | "alpha" | "year";
 type TypeFilter = "all" | "tv" | "movie";
 
-const LIBRARY_TABS = [
-  { href: "/library", label: "Sett" },
-  { href: "/watch-bank", label: "Ser nå" },
-  { href: "/watchlist", label: "Vil se" },
-  { href: "/lists", label: "Lister" },
-];
+const strings = {
+  no: {
+    watched: "Sett",
+    watchingNow: "Ser nå",
+    wantToSee: "Vil se",
+    lists: "Lister",
+    myLibrary: "Mitt Bibliotek",
+    title: "tittel",
+    titles: "titler",
+    inYourCollection: "i samlingen din",
+    all: "Alle",
+    favorites: "★ Favoritter",
+    liked: "Likte",
+    neutral: "Nøytral",
+    disliked: "Mislikte",
+    excluded: "Ekskluderte",
+    type: "Type",
+    allType: "Alle",
+    series: "Serier",
+    film: "Film",
+    sort: "Sorter",
+    recent: "Nylig",
+    alpha: "A–Å",
+    year: "År",
+    allGenres: "Alle sjangere",
+    from: "Fra",
+    to: "Til",
+    reset: "Nullstill",
+    noExclusions: "Ingen ekskluderinger",
+    exclusionsDesc: "Titler du ekskluderer vises ikke i anbefalinger.",
+    libraryEmpty: "Biblioteket er tomt",
+    libraryEmptyDesc: "Start med å logge noe du har sett, eller importer seerhistorikken din fra Netflix.",
+    searchForTitles: "Søk etter titler",
+    importFromNetflix: "Importer fra Netflix",
+    removeExclusion: "Fjern ekskludering",
+    excludedAction: "Ekskludert",
+    exclude: "Ekskluder",
+    remove: "Fjern",
+    forYou: "For deg",
+    basedOnTaste: "Basert på din smak",
+    seeAll: "Se alle",
+  },
+  en: {
+    watched: "Watched",
+    watchingNow: "Watching",
+    wantToSee: "Want to see",
+    lists: "Lists",
+    myLibrary: "My Library",
+    title: "title",
+    titles: "titles",
+    inYourCollection: "in your collection",
+    all: "All",
+    favorites: "★ Favorites",
+    liked: "Liked",
+    neutral: "Neutral",
+    disliked: "Disliked",
+    excluded: "Excluded",
+    type: "Type",
+    allType: "All",
+    series: "Series",
+    film: "Film",
+    sort: "Sort",
+    recent: "Recent",
+    alpha: "A–Z",
+    year: "Year",
+    allGenres: "All genres",
+    from: "From",
+    to: "To",
+    reset: "Reset",
+    noExclusions: "No exclusions",
+    exclusionsDesc: "Titles you exclude won't appear in recommendations.",
+    libraryEmpty: "Library is empty",
+    libraryEmptyDesc: "Start by logging something you've watched, or import your watch history from Netflix.",
+    searchForTitles: "Search for titles",
+    importFromNetflix: "Import from Netflix",
+    removeExclusion: "Remove exclusion",
+    excludedAction: "Excluded",
+    exclude: "Exclude",
+    remove: "Remove",
+    forYou: "For you",
+    basedOnTaste: "Based on your taste",
+    seeAll: "See all",
+  },
+  dk: {
+    watched: "Set",
+    watchingNow: "Ser nu",
+    wantToSee: "Vil se",
+    lists: "Lister",
+    myLibrary: "Mit Bibliotek",
+    title: "titel",
+    titles: "titler",
+    inYourCollection: "i din samling",
+    all: "Alle",
+    favorites: "★ Favoritter",
+    liked: "Kunne lide",
+    neutral: "Neutral",
+    disliked: "Kunne ikke lide",
+    excluded: "Ekskluderede",
+    type: "Type",
+    allType: "Alle",
+    series: "Serier",
+    film: "Film",
+    sort: "Sortér",
+    recent: "Nyligt",
+    alpha: "A–Å",
+    year: "År",
+    allGenres: "Alle genrer",
+    from: "Fra",
+    to: "Til",
+    reset: "Nulstil",
+    noExclusions: "Ingen ekskluderinger",
+    exclusionsDesc: "Titler du ekskluderer vises ikke i anbefalinger.",
+    libraryEmpty: "Biblioteket er tomt",
+    libraryEmptyDesc: "Start med at logge noget du har set, eller importér din seerhistorik fra Netflix.",
+    searchForTitles: "Søg efter titler",
+    importFromNetflix: "Importér fra Netflix",
+    removeExclusion: "Fjern ekskludering",
+    excludedAction: "Ekskluderet",
+    exclude: "Ekskludér",
+    remove: "Fjern",
+    forYou: "For dig",
+    basedOnTaste: "Baseret på din smag",
+    seeAll: "Se alle",
+  },
+  se: {
+    watched: "Sett",
+    watchingNow: "Ser nu",
+    wantToSee: "Vill se",
+    lists: "Listor",
+    myLibrary: "Mitt Bibliotek",
+    title: "titel",
+    titles: "titlar",
+    inYourCollection: "i din samling",
+    all: "Alla",
+    favorites: "★ Favoriter",
+    liked: "Gillade",
+    neutral: "Neutral",
+    disliked: "Ogillade",
+    excluded: "Exkluderade",
+    type: "Typ",
+    allType: "Alla",
+    series: "Serier",
+    film: "Film",
+    sort: "Sortera",
+    recent: "Senaste",
+    alpha: "A–Ö",
+    year: "År",
+    allGenres: "Alla genrer",
+    from: "Från",
+    to: "Till",
+    reset: "Återställ",
+    noExclusions: "Inga exkluderingar",
+    exclusionsDesc: "Titlar du exkluderar visas inte i rekommendationer.",
+    libraryEmpty: "Biblioteket är tomt",
+    libraryEmptyDesc: "Börja med att logga något du har sett, eller importera din tittarhistorik från Netflix.",
+    searchForTitles: "Sök efter titlar",
+    importFromNetflix: "Importera från Netflix",
+    removeExclusion: "Ta bort exkludering",
+    excludedAction: "Exkluderad",
+    exclude: "Exkludera",
+    remove: "Ta bort",
+    forYou: "För dig",
+    basedOnTaste: "Baserat på din smak",
+    seeAll: "Se alla",
+  },
+  fi: {
+    watched: "Katsotut",
+    watchingNow: "Katselen nyt",
+    wantToSee: "Haluan nähdä",
+    lists: "Listat",
+    myLibrary: "Kirjastoni",
+    title: "nimike",
+    titles: "nimikettä",
+    inYourCollection: "kokoelmassasi",
+    all: "Kaikki",
+    favorites: "★ Suosikit",
+    liked: "Pidetyt",
+    neutral: "Neutraali",
+    disliked: "Ei-pidetyt",
+    excluded: "Poissuljetut",
+    type: "Tyyppi",
+    allType: "Kaikki",
+    series: "Sarjat",
+    film: "Elokuva",
+    sort: "Järjestä",
+    recent: "Viimeisimmät",
+    alpha: "A–Ö",
+    year: "Vuosi",
+    allGenres: "Kaikki genret",
+    from: "Alkaen",
+    to: "Asti",
+    reset: "Nollaa",
+    noExclusions: "Ei poissulkuja",
+    exclusionsDesc: "Poissulkemasi nimikkeet eivät näy suosituksissa.",
+    libraryEmpty: "Kirjasto on tyhjä",
+    libraryEmptyDesc: "Aloita kirjaamalla jotain mitä olet katsonut, tai tuo katseluhistoriasi Netflixistä.",
+    searchForTitles: "Etsi nimikkeitä",
+    importFromNetflix: "Tuo Netflixistä",
+    removeExclusion: "Poista poissulku",
+    excludedAction: "Poissuljettu",
+    exclude: "Sulje pois",
+    remove: "Poista",
+    forYou: "Sinulle",
+    basedOnTaste: "Makusi perusteella",
+    seeAll: "Näytä kaikki",
+  },
+} as const;
 
 export default function LibraryPage() {
   const pathname = usePathname();
+  const locale = useLocale();
+  const s = strings[locale] ?? strings.en;
   const [titles, setTitles] = useState<(UserTitle & { cache?: TitleCache })[]>([]);
   const [exclusions, setExclusions] = useState<{ tmdb_id: number; type: string; reason: string | null; cache?: TitleCache }[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
@@ -42,6 +246,13 @@ export default function LibraryPage() {
   const [recsLoading, setRecsLoading] = useState(false);
   const [friendOverlaps, setFriendOverlaps] = useState<Record<string, FriendOverlap[]>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const libraryTabs = [
+    { href: "/library", label: s.watched },
+    { href: "/watch-bank", label: s.watchingNow },
+    { href: "/watchlist", label: s.wantToSee },
+    { href: "/lists", label: s.lists },
+  ];
 
   useEffect(() => {
     loadData();
@@ -181,19 +392,19 @@ export default function LibraryPage() {
   );
 
   const filterTabs: { id: Filter; label: string; count: number }[] = [
-    { id: "all", label: "Alle", count: titles.length },
-    { id: "favorites", label: "★ Favoritter", count: titles.filter((t) => t.favorite).length },
-    { id: "liked", label: "Likte", count: titles.filter((t) => t.sentiment === "liked").length },
-    { id: "neutral", label: "Nøytral", count: titles.filter((t) => t.sentiment === "neutral").length },
-    { id: "disliked", label: "Mislikte", count: titles.filter((t) => t.sentiment === "disliked").length },
-    { id: "excluded", label: "Ekskluderte", count: exclusions.length },
+    { id: "all", label: s.all, count: titles.length },
+    { id: "favorites", label: s.favorites, count: titles.filter((t) => t.favorite).length },
+    { id: "liked", label: s.liked, count: titles.filter((t) => t.sentiment === "liked").length },
+    { id: "neutral", label: s.neutral, count: titles.filter((t) => t.sentiment === "neutral").length },
+    { id: "disliked", label: s.disliked, count: titles.filter((t) => t.sentiment === "disliked").length },
+    { id: "excluded", label: s.excluded, count: exclusions.length },
   ];
 
   return (
     <div className="animate-fade-in-up">
       {/* Library sub-nav */}
       <div className="mb-6 flex border-b border-white/[0.06]">
-        {LIBRARY_TABS.map(({ href, label }) => {
+        {libraryTabs.map(({ href, label }) => {
           const active = pathname === href;
           return (
             <Link
@@ -214,10 +425,10 @@ export default function LibraryPage() {
       {/* Hero header */}
       <div className="mb-8">
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)]">
-          Mitt Bibliotek
+          {s.myLibrary}
         </h1>
         <p className="text-sm text-[var(--text-tertiary)] mt-1.5">
-          {titles.length} {titles.length === 1 ? "tittel" : "titler"} i samlingen din
+          {titles.length} {titles.length === 1 ? s.title : s.titles} {s.inYourCollection}
         </p>
       </div>
 
@@ -255,8 +466,8 @@ export default function LibraryPage() {
       {filter !== "excluded" && titles.length > 0 && (
         <div className="flex flex-wrap items-center gap-4 mb-5">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">Type</span>
-            {([["all", "Alle"], ["tv", "Serier"], ["movie", "Film"]] as [TypeFilter, string][]).map(([key, label]) => (
+            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">{s.type}</span>
+            {([["all", s.allType], ["tv", s.series], ["movie", s.film]] as [TypeFilter, string][]).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setTypeFilter(key)}
@@ -272,8 +483,8 @@ export default function LibraryPage() {
           </div>
           {filtered.length > 1 && (
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">Sorter</span>
-              {([["recent", "Nylig"], ["alpha", "A–Å"], ["year", "År"]] as [SortKey, string][]).map(([key, label]) => (
+              <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">{s.sort}</span>
+              {([["recent", s.recent], ["alpha", s.alpha], ["year", s.year]] as [SortKey, string][]).map(([key, label]) => (
                 <button
                   key={key}
                   onClick={() => setSort(key)}
@@ -299,16 +510,16 @@ export default function LibraryPage() {
             onChange={(e) => setGenreFilter(e.target.value ? parseInt(e.target.value, 10) : null)}
             className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#111627] border border-white/[0.08] text-white/70 focus:outline-none focus:border-white/20 transition-all [color-scheme:dark]"
           >
-            <option value="" className="bg-[#111627] text-white/70">Alle sjangere</option>
+            <option value="" className="bg-[#111627] text-white/70">{s.allGenres}</option>
             {allGenres.map((g) => (
               <option key={g.id} value={g.id} className="bg-[#111627] text-white/70">{g.name}</option>
             ))}
           </select>
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold">År</span>
+            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold">{s.year}</span>
             <input
               type="number"
-              placeholder="Fra"
+              placeholder={s.from}
               value={yearFrom}
               onChange={(e) => setYearFrom(e.target.value)}
               className="w-16 px-2 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 placeholder-white/25 focus:outline-none focus:border-white/20 transition-all"
@@ -316,7 +527,7 @@ export default function LibraryPage() {
             <span className="text-white/20">–</span>
             <input
               type="number"
-              placeholder="Til"
+              placeholder={s.to}
               value={yearTo}
               onChange={(e) => setYearTo(e.target.value)}
               className="w-16 px-2 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 placeholder-white/25 focus:outline-none focus:border-white/20 transition-all"
@@ -327,7 +538,7 @@ export default function LibraryPage() {
               onClick={() => { setTypeFilter("all"); setGenreFilter(null); setYearFrom(""); setYearTo(""); }}
               className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--red)] bg-[var(--red-glow)] hover:bg-[var(--red)]/15 transition-all"
             >
-              Nullstill
+              {s.reset}
             </button>
           )}
         </div>
@@ -336,7 +547,7 @@ export default function LibraryPage() {
       {/* Library grid */}
       {filter === "excluded" ? (
         exclusions.length === 0 ? (
-          <EmptyState title="Ingen ekskluderinger" description="Titler du ekskluderer vises ikke i anbefalinger." />
+          <EmptyState title={s.noExclusions} description={s.exclusionsDesc} />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5 stagger">
             {exclusions.map((e) => (
@@ -354,7 +565,7 @@ export default function LibraryPage() {
                   }
                 }}
                 actions={[
-                  { label: "Fjern ekskludering", action: "unexclude", variant: "red" },
+                  { label: s.removeExclusion, action: "unexclude", variant: "red" },
                 ]}
               />
             ))}
@@ -362,15 +573,15 @@ export default function LibraryPage() {
         )
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Biblioteket er tomt"
-          description="Start med å logge noe du har sett, eller importer seerhistorikken din fra Netflix."
+          title={s.libraryEmpty}
+          description={s.libraryEmptyDesc}
           action={
             <div className="flex flex-wrap gap-3 justify-center">
               <Link href="/search">
-                <GlowButton>Søk etter titler</GlowButton>
+                <GlowButton>{s.searchForTitles}</GlowButton>
               </Link>
               <Link href="/timemachine" className="px-4 py-2 rounded-[var(--radius-md)] text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--glass-border)] hover:border-[var(--glass-hover)] transition-colors">
-                Importer fra Netflix
+                {s.importFromNetflix}
               </Link>
             </div>
           }
@@ -398,9 +609,9 @@ export default function LibraryPage() {
               actions={[
                 { label: "List+", action: "add-to-list", variant: "accent" as const },
                 ...(excludedSet.has(`${t.tmdb_id}:${t.type}`)
-                  ? [{ label: "Ekskludert", action: "excluded", variant: "red" as const }]
-                  : [{ label: "Ekskluder", action: "exclude", variant: "red" as const }]),
-                { label: "Fjern", action: "remove", variant: "default" as const },
+                  ? [{ label: s.excludedAction, action: "excluded", variant: "red" as const }]
+                  : [{ label: s.exclude, action: "exclude", variant: "red" as const }]),
+                { label: s.remove, action: "remove", variant: "default" as const },
               ]}
             />
           ))}
@@ -414,14 +625,14 @@ export default function LibraryPage() {
           <div className="flex items-end justify-between mb-5">
             <div>
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">
-                For deg
+                {s.forYou}
               </h2>
               <p className="text-sm text-[var(--text-tertiary)] mt-1">
-                Basert på din smak
+                {s.basedOnTaste}
               </p>
             </div>
             <Link href="/recommendations">
-              <GlowButton variant="ghost" size="sm">Se alle</GlowButton>
+              <GlowButton variant="ghost" size="sm">{s.seeAll}</GlowButton>
             </Link>
           </div>
 
@@ -502,8 +713,8 @@ export default function LibraryPage() {
       {/* Recs loading placeholder */}
       {recsLoading && titles.length >= 3 && (
         <div className="mt-12">
-          <h2 className="text-2xl font-extrabold tracking-tight text-[var(--text-primary)] mb-2">For deg</h2>
-          <p className="text-sm text-[var(--text-tertiary)] mb-5">Basert på din smak</p>
+          <h2 className="text-2xl font-extrabold tracking-tight text-[var(--text-primary)] mb-2">{s.forYou}</h2>
+          <p className="text-sm text-[var(--text-tertiary)] mb-5">{s.basedOnTaste}</p>
           <div className="flex gap-4 overflow-hidden">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="flex-shrink-0 w-[140px] sm:w-[160px]">
@@ -540,9 +751,9 @@ export default function LibraryPage() {
             actions={[
               { label: "List+", action: "add-to-list", variant: "accent" },
               ...(excludedSet.has(`${selectedItem.id}:${selectedItem.type}`)
-                ? [{ label: "Ekskludert", action: "excluded", variant: "red" as const }]
-                : [{ label: "Ekskluder", action: "exclude", variant: "red" as const }]),
-              { label: "Fjern", action: "remove", variant: "default" },
+                ? [{ label: s.excludedAction, action: "excluded", variant: "red" as const }]
+                : [{ label: s.exclude, action: "exclude", variant: "red" as const }]),
+              { label: s.remove, action: "remove", variant: "default" },
             ]}
             onAction={(action) => {
               if (action === "remove") handleRemove(selectedItem.id, selectedItem.type);

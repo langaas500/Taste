@@ -1,6 +1,9 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from "react";
+import { useLocale } from "@/hooks/useLocale";
+
+const undoLabel = { no: "Angre", en: "Undo", dk: "Fortryd", se: "Ångra", fi: "Kumoa" } as const;
 
 type ToastType = "success" | "error" | "info";
 
@@ -22,6 +25,7 @@ export function useToast() {
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const locale = useLocale();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const idRef = useRef(0);
 
@@ -73,7 +77,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 }}
                 className="text-xs font-semibold text-[var(--accent-light)] hover:text-[var(--accent)] transition-colors whitespace-nowrap"
               >
-                Angre
+                {undoLabel[locale] ?? undoLabel.en}
               </button>
             )}
           </div>

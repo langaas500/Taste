@@ -9,6 +9,7 @@ import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-brows
 import { prefetchNetflixIds } from "@/lib/prefetch-netflix-ids";
 import type { UserTitle, TitleCache, MediaType, Recommendation } from "@/lib/types";
 import { track } from "@/lib/posthog";
+import { getLocale, type Locale } from "@/lib/i18n";
 
 /* ── locale strings ─────────────────────────────────────── */
 
@@ -59,13 +60,76 @@ const strings = {
     disliked: "Disliked",
     watchlistAction: "Watchlist",
   },
+  dk: {
+    title: "Hjem",
+    titlesInCollection: "titler i din samling",
+    titleSingular: "titel",
+    togetherLabel: "Se Sammen",
+    togetherHeadline: "Find noget at se i aften",
+    togetherSub: "Match med en ven på under 3 minutter",
+    togetherFree: "✓ Gratis",
+    togetherTime: "✓ Under 3 min",
+    togetherCta: "Find et match",
+    importTitle: "Importer seerhistorik",
+    importSub: "Hent det du allerede har set fra Netflix og andre tjenester",
+    continueWatching: "Fortsæt med at se",
+    forDeg: "For dig",
+    recentlyLogged: "Nyligt logget",
+    trending: "Populært nu",
+    seeAll: "Se alle",
+    watched: "Set og kunne lide",
+    watchlist: "Tilføj til se-liste",
+    liked: "Set",
+    disliked: "Kunne ikke lide",
+    watchlistAction: "Se-liste",
+  },
+  se: {
+    title: "Hem",
+    titlesInCollection: "titlar i din samling",
+    titleSingular: "titel",
+    togetherLabel: "Se Tillsammans",
+    togetherHeadline: "Hitta något att se ikväll",
+    togetherSub: "Matcha med en vän på under 3 minuter",
+    togetherFree: "✓ Gratis",
+    togetherTime: "✓ Under 3 min",
+    togetherCta: "Hitta en match",
+    importTitle: "Importera tittarhistorik",
+    importSub: "Hämta det du redan har sett från Netflix och andra tjänster",
+    continueWatching: "Fortsätt titta",
+    forDeg: "För dig",
+    recentlyLogged: "Nyligen loggat",
+    trending: "Populärt nu",
+    seeAll: "Se alla",
+    watched: "Sett och gillade",
+    watchlist: "Lägg i listan",
+    liked: "Sett",
+    disliked: "Ogillade",
+    watchlistAction: "Se-lista",
+  },
+  fi: {
+    title: "Koti",
+    titlesInCollection: "nimikettä kokoelmassasi",
+    titleSingular: "nimike",
+    togetherLabel: "Katsotaan Yhdessä",
+    togetherHeadline: "Löydä jotain katsottavaa tänä iltana",
+    togetherSub: "Matchaa ystävän kanssa alle 3 minuutissa",
+    togetherFree: "✓ Ilmainen",
+    togetherTime: "✓ Alle 3 min",
+    togetherCta: "Löydä match",
+    importTitle: "Tuo katseluhistoria",
+    importSub: "Tuo jo katsomasi Netflixistä ja muista palveluista",
+    continueWatching: "Jatka katsomista",
+    forDeg: "Sinulle",
+    recentlyLogged: "Äskettäin kirjattu",
+    trending: "Suosittua nyt",
+    seeAll: "Näytä kaikki",
+    watched: "Katsottu ja pidetty",
+    watchlist: "Lisää katselulistalle",
+    liked: "Katsottu",
+    disliked: "Ei pitänyt",
+    watchlistAction: "Katselulista",
+  },
 } as const;
-
-type Locale = "no" | "en";
-
-function getLocale(region: string): Locale {
-  return region === "NO" ? "no" : "en";
-}
 
 /* ── types ─────────────────────────────────────────────── */
 
@@ -81,7 +145,7 @@ export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
-  const [locale, setLocale] = useState<Locale>("no");
+  const [locale, setLocale] = useState<Locale>("en");
 
   useEffect(() => {
     loadDashboard();
@@ -96,7 +160,7 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
-  const s = strings[locale];
+  const s = strings[locale] ?? strings.en;
 
   async function loadDashboard() {
     const supabase = createSupabaseBrowser();

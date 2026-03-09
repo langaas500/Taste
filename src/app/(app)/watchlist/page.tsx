@@ -9,13 +9,119 @@ import StreamingModal from "@/components/StreamingModal";
 import AddToListModal from "@/components/AddToListModal";
 import { logTitle, removeTitle, toggleFavorite, fetchFriendOverlaps } from "@/lib/api";
 import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-browser";
+import { useLocale } from "@/hooks/useLocale";
 import Link from "next/link";
 import type { UserTitle, TitleCache, MediaType, FriendOverlap } from "@/lib/types";
+
+const strings = {
+  no: {
+    watchlist: "Se-liste",
+    titles: "titler",
+    watchlistEmpty: "Se-listen er tom",
+    watchlistEmptyDesc: "Legg til filmer og serier du vil se senere. Finn noe nytt via søk eller la oss anbefale noe for deg.",
+    search: "Søk",
+    recommendations: "Anbefalinger",
+    type: "Type",
+    all: "Alle",
+    series: "Serier",
+    film: "Film",
+    sort: "Sorter",
+    recent: "Nylig",
+    alpha: "A–Å",
+    year: "År",
+    allGenres: "Alle sjangere",
+    from: "Fra",
+    to: "Til",
+    reset: "Nullstill",
+  },
+  en: {
+    watchlist: "Watchlist",
+    titles: "titles",
+    watchlistEmpty: "Your watchlist is empty",
+    watchlistEmptyDesc: "Add movies and shows you want to watch later. Discover something new via search or let us recommend something for you.",
+    search: "Search",
+    recommendations: "Recommendations",
+    type: "Type",
+    all: "All",
+    series: "Series",
+    film: "Film",
+    sort: "Sort",
+    recent: "Recent",
+    alpha: "A–Z",
+    year: "Year",
+    allGenres: "All genres",
+    from: "From",
+    to: "To",
+    reset: "Reset",
+  },
+  dk: {
+    watchlist: "Se-liste",
+    titles: "titler",
+    watchlistEmpty: "Se-listen er tom",
+    watchlistEmptyDesc: "Tilføj film og serier du vil se senere. Find noget nyt via søgning eller lad os anbefale noget til dig.",
+    search: "Søg",
+    recommendations: "Anbefalinger",
+    type: "Type",
+    all: "Alle",
+    series: "Serier",
+    film: "Film",
+    sort: "Sorter",
+    recent: "Seneste",
+    alpha: "A–Å",
+    year: "År",
+    allGenres: "Alle genrer",
+    from: "Fra",
+    to: "Til",
+    reset: "Nulstil",
+  },
+  se: {
+    watchlist: "Att se-lista",
+    titles: "titlar",
+    watchlistEmpty: "Din att se-lista är tom",
+    watchlistEmptyDesc: "Lägg till filmer och serier du vill se senare. Hitta något nytt via sökning eller låt oss rekommendera något åt dig.",
+    search: "Sök",
+    recommendations: "Rekommendationer",
+    type: "Typ",
+    all: "Alla",
+    series: "Serier",
+    film: "Film",
+    sort: "Sortera",
+    recent: "Senaste",
+    alpha: "A–Ö",
+    year: "År",
+    allGenres: "Alla genrer",
+    from: "Från",
+    to: "Till",
+    reset: "Återställ",
+  },
+  fi: {
+    watchlist: "Katselulista",
+    titles: "nimikettä",
+    watchlistEmpty: "Katselulistasi on tyhjä",
+    watchlistEmptyDesc: "Lisää elokuvia ja sarjoja joita haluat katsoa myöhemmin. Löydä jotain uutta haulla tai anna meidän suositella sinulle.",
+    search: "Haku",
+    recommendations: "Suositukset",
+    type: "Tyyppi",
+    all: "Kaikki",
+    series: "Sarjat",
+    film: "Elokuva",
+    sort: "Järjestä",
+    recent: "Viimeisimmät",
+    alpha: "A–Ö",
+    year: "Vuosi",
+    allGenres: "Kaikki genret",
+    from: "Alkaen",
+    to: "Asti",
+    reset: "Nollaa",
+  },
+} as const;
 
 type SortKey = "recent" | "alpha" | "year";
 type TypeFilter = "all" | "tv" | "movie";
 
 export default function WatchlistPage() {
+  const locale = useLocale();
+  const s = strings[locale] ?? strings.en;
   const [titles, setTitles] = useState<(UserTitle & { cache?: TitleCache })[]>([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<SortKey>("recent");
@@ -134,23 +240,23 @@ export default function WatchlistPage() {
   return (
     <div className="animate-fade-in-up">
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-bold text-[var(--text-primary)]">Se-liste</h2>
+        <h2 className="text-xl font-bold text-[var(--text-primary)]">{s.watchlist}</h2>
         {titles.length > 0 && (
-          <span className="text-sm text-[var(--text-tertiary)] font-medium">{titles.length} titler</span>
+          <span className="text-sm text-[var(--text-tertiary)] font-medium">{titles.length} {s.titles}</span>
         )}
       </div>
 
       {titles.length === 0 ? (
         <EmptyState
-          title="Se-listen er tom"
-          description="Legg til filmer og serier du vil se senere. Finn noe nytt via søk eller la oss anbefale noe for deg."
+          title={s.watchlistEmpty}
+          description={s.watchlistEmptyDesc}
           action={
             <div className="flex flex-wrap gap-3 justify-center">
               <Link href="/search">
-                <GlowButton>Søk</GlowButton>
+                <GlowButton>{s.search}</GlowButton>
               </Link>
               <Link href="/recommendations" className="px-4 py-2 rounded-[var(--radius-md)] text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--glass-border)] hover:border-[var(--glass-hover)] transition-colors">
-                Anbefalinger
+                {s.recommendations}
               </Link>
             </div>
           }
@@ -158,8 +264,8 @@ export default function WatchlistPage() {
       ) : (<>
         <div className="flex flex-wrap items-center gap-4 mb-5">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">Type</span>
-            {([["all", "Alle"], ["tv", "Serier"], ["movie", "Film"]] as [TypeFilter, string][]).map(([key, label]) => (
+            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">{s.type}</span>
+            {([["all", s.all], ["tv", s.series], ["movie", s.film]] as [TypeFilter, string][]).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setTypeFilter(key)}
@@ -175,8 +281,8 @@ export default function WatchlistPage() {
           </div>
           {sorted.length > 1 && (
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">Sorter</span>
-              {([["recent", "Nylig"], ["alpha", "A–Å"], ["year", "År"]] as [SortKey, string][]).map(([key, label]) => (
+              <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">{s.sort}</span>
+              {([["recent", s.recent], ["alpha", s.alpha], ["year", s.year]] as [SortKey, string][]).map(([key, label]) => (
                 <button
                   key={key}
                   onClick={() => setSort(key)}
@@ -199,16 +305,16 @@ export default function WatchlistPage() {
             onChange={(e) => setGenreFilter(e.target.value ? parseInt(e.target.value, 10) : null)}
             className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#111627] border border-white/[0.08] text-white/70 focus:outline-none focus:border-white/20 transition-all [color-scheme:dark]"
           >
-            <option value="" className="bg-[#111627] text-white/70">Alle sjangere</option>
+            <option value="" className="bg-[#111627] text-white/70">{s.allGenres}</option>
             {allGenres.map((g) => (
               <option key={g.id} value={g.id} className="bg-[#111627] text-white/70">{g.name}</option>
             ))}
           </select>
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold">År</span>
+            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold">{s.year}</span>
             <input
               type="number"
-              placeholder="Fra"
+              placeholder={s.from}
               value={yearFrom}
               onChange={(e) => setYearFrom(e.target.value)}
               className="w-16 px-2 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 placeholder-white/25 focus:outline-none focus:border-white/20 transition-all"
@@ -216,7 +322,7 @@ export default function WatchlistPage() {
             <span className="text-white/20">–</span>
             <input
               type="number"
-              placeholder="Til"
+              placeholder={s.to}
               value={yearTo}
               onChange={(e) => setYearTo(e.target.value)}
               className="w-16 px-2 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 placeholder-white/25 focus:outline-none focus:border-white/20 transition-all"
@@ -227,7 +333,7 @@ export default function WatchlistPage() {
               onClick={() => { setTypeFilter("all"); setGenreFilter(null); setYearFrom(""); setYearTo(""); }}
               className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--red)] bg-[var(--red-glow)] hover:bg-[var(--red)]/15 transition-all"
             >
-              Nullstill
+              {s.reset}
             </button>
           )}
         </div>

@@ -2,6 +2,71 @@
 
 import { useEffect, useState } from "react";
 import { track } from "@/lib/posthog";
+import { useLocale } from "@/hooks/useLocale";
+
+/* ── locale strings ──────────────────────────────────────── */
+const strings = {
+  no: {
+    heading: "Logflix Premium",
+    foundingBadge: "Founding Member-pris — eksklusivt for de første 500",
+    lockPrice: "Lås inn 29,-/mnd for alltid",
+    price: "29 kr",
+    perMonth: "/mnd",
+    features: ["Ubegrensede AI-anbefalinger", "Personlig smaksprofil (refresh når du vil)"],
+    error: "Noe gikk galt, prøv igjen",
+    loading: "Venter...",
+    cta: "Bli Premium-medlem",
+    footer: "Avslutt når som helst. Betaling via Stripe.",
+  },
+  en: {
+    heading: "Logflix Premium",
+    foundingBadge: "Founding Member price — exclusive for the first 500",
+    lockPrice: "Lock in 29 kr/mo forever",
+    price: "29 kr",
+    perMonth: "/mo",
+    features: ["Unlimited AI recommendations", "Personal taste profile (refresh anytime)"],
+    error: "Something went wrong, try again",
+    loading: "Please wait...",
+    cta: "Become a Premium member",
+    footer: "Cancel anytime. Payment via Stripe.",
+  },
+  dk: {
+    heading: "Logflix Premium",
+    foundingBadge: "Founding Member-pris — eksklusivt for de første 500",
+    lockPrice: "Lås 29,-/mnd for altid",
+    price: "29 kr",
+    perMonth: "/mnd",
+    features: ["Ubegrænsede AI-anbefalinger", "Personlig smagsprofil (opdater når du vil)"],
+    error: "Noget gik galt, prøv igen",
+    loading: "Vent venligst...",
+    cta: "Bliv Premium-medlem",
+    footer: "Opsig når som helst. Betaling via Stripe.",
+  },
+  se: {
+    heading: "Logflix Premium",
+    foundingBadge: "Founding Member-pris — exklusivt för de första 500",
+    lockPrice: "Lås in 29 kr/mån för alltid",
+    price: "29 kr",
+    perMonth: "/mån",
+    features: ["Obegränsade AI-rekommendationer", "Personlig smakprofil (uppdatera när du vill)"],
+    error: "Något gick fel, försök igen",
+    loading: "Vänta...",
+    cta: "Bli Premium-medlem",
+    footer: "Avsluta när som helst. Betalning via Stripe.",
+  },
+  fi: {
+    heading: "Logflix Premium",
+    foundingBadge: "Founding Member -hinta — eksklusiivinen ensimmäisille 500:lle",
+    lockPrice: "Lukitse 29 kr/kk ikuisesti",
+    price: "29 kr",
+    perMonth: "/kk",
+    features: ["Rajattomat AI-suositukset", "Henkilökohtainen makuprofiili (päivitä milloin vain)"],
+    error: "Jokin meni pieleen, yritä uudelleen",
+    loading: "Odota...",
+    cta: "Liity Premium-jäseneksi",
+    footer: "Peru milloin tahansa. Maksu Stripen kautta.",
+  },
+} as const;
 
 interface PremiumModalProps {
   isOpen: boolean;
@@ -12,6 +77,8 @@ interface PremiumModalProps {
 export default function PremiumModal({ isOpen, onClose, source }: PremiumModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const locale = useLocale();
+  const s = strings[locale] ?? strings.en;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -33,20 +100,17 @@ export default function PremiumModal({ isOpen, onClose, source }: PremiumModalPr
       if (data.url) {
         window.location.href = data.url;
       } else {
-        setError("Noe gikk galt, prøv igjen");
+        setError(s.error);
       }
     } catch {
-      setError("Noe gikk galt, prøv igjen");
+      setError(s.error);
     }
     setLoading(false);
   }
 
   if (!isOpen) return null;
 
-  const features = [
-    "Ubegrensede AI-anbefalinger",
-    "Personlig smaksprofil (refresh når du vil)",
-  ];
+  const features = s.features;
 
   return (
     <div
@@ -91,7 +155,7 @@ export default function PremiumModal({ isOpen, onClose, source }: PremiumModalPr
         </button>
 
         {/* Heading */}
-        <h2 className="text-lg font-bold text-white mb-3">Logflix Premium</h2>
+        <h2 className="text-lg font-bold text-white mb-3">{s.heading}</h2>
 
         {/* Founding member badge */}
         <div
@@ -102,21 +166,21 @@ export default function PremiumModal({ isOpen, onClose, source }: PremiumModalPr
           }}
         >
           <p className="text-sm font-semibold text-white/90 mb-0.5">
-            Founding Member-pris — eksklusivt for de første 500
+            {s.foundingBadge}
           </p>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
-            Lås inn 29,-/mnd for alltid
+            {s.lockPrice}
           </p>
         </div>
 
         {/* Price */}
         <div className="mb-4">
-          <span className="text-2xl font-bold text-white">29 kr</span>
+          <span className="text-2xl font-bold text-white">{s.price}</span>
           <span
             className="text-sm ml-1"
             style={{ color: "rgba(255,255,255,0.4)" }}
           >
-            /mnd
+            {s.perMonth}
           </span>
         </div>
 
@@ -157,7 +221,7 @@ export default function PremiumModal({ isOpen, onClose, source }: PremiumModalPr
           <svg width={14} height={14} fill="none" viewBox="0 0 24 24" stroke="#FFD700" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-          {loading ? "Venter..." : "Bli Premium-medlem"}
+          {loading ? s.loading : s.cta}
         </button>
 
         {/* Subtext */}
@@ -165,7 +229,7 @@ export default function PremiumModal({ isOpen, onClose, source }: PremiumModalPr
           className="text-xs text-center mt-3"
           style={{ color: "rgba(255,255,255,0.3)" }}
         >
-          Avslutt når som helst. Betaling via Stripe.
+          {s.footer}
         </p>
       </div>
     </div>

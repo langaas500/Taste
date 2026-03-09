@@ -4,6 +4,51 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import PremiumModal from "@/components/PremiumModal";
 import { track } from "@/lib/posthog";
+import { useLocale } from "@/hooks/useLocale";
+
+/* ── locale strings ──────────────────────────────────────── */
+const strings = {
+  no: {
+    upgradePremium: "Oppgrader til Premium",
+    saveTaste: "Lagre smaken din",
+    premiumDesc: "Få ubegrenset tilgang til AI-anbefalinger, smaksprofil-oppdateringer og mer.",
+    signupDesc: "Du har allerede begynt å forme anbefalingene dine. Opprett gratis konto for å lagre fremgangen og få bedre treff.",
+    createAccount: "Opprett gratis konto",
+    login: "Logg inn",
+  },
+  en: {
+    upgradePremium: "Upgrade to Premium",
+    saveTaste: "Save your taste",
+    premiumDesc: "Get unlimited access to AI recommendations, taste profile updates and more.",
+    signupDesc: "You've already started shaping your recommendations. Create a free account to save your progress and get better matches.",
+    createAccount: "Create free account",
+    login: "Log in",
+  },
+  dk: {
+    upgradePremium: "Opgrader til Premium",
+    saveTaste: "Gem din smag",
+    premiumDesc: "Få ubegrænset adgang til AI-anbefalinger, smagsprofil-opdateringer og mere.",
+    signupDesc: "Du er allerede begyndt at forme dine anbefalinger. Opret gratis konto for at gemme din fremgang og få bedre matches.",
+    createAccount: "Opret gratis konto",
+    login: "Log ind",
+  },
+  se: {
+    upgradePremium: "Uppgradera till Premium",
+    saveTaste: "Spara din smak",
+    premiumDesc: "Få obegränsad tillgång till AI-rekommendationer, smakprofiluppdateringar och mer.",
+    signupDesc: "Du har redan börjat forma dina rekommendationer. Skapa gratis konto för att spara dina framsteg och få bättre matchningar.",
+    createAccount: "Skapa gratis konto",
+    login: "Logga in",
+  },
+  fi: {
+    upgradePremium: "Päivitä Premiumiin",
+    saveTaste: "Tallenna makusi",
+    premiumDesc: "Saa rajaton pääsy AI-suosituksiin, makuprofiilipäivityksiin ja muuhun.",
+    signupDesc: "Olet jo alkanut muokata suosituksiasi. Luo ilmainen tili tallentaaksesi edistymisesi ja saadaksesi parempia osumia.",
+    createAccount: "Luo ilmainen tili",
+    login: "Kirjaudu",
+  },
+} as const;
 
 interface ConversionWallProps {
   open: boolean;
@@ -14,6 +59,8 @@ interface ConversionWallProps {
 
 export default function ConversionWall({ open, onClose, premium }: ConversionWallProps) {
   const [showPremium, setShowPremium] = useState(false);
+  const locale = useLocale();
+  const s = strings[locale] ?? strings.en;
 
   useEffect(() => {
     if (!open) return;
@@ -63,12 +110,10 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
           </div>
 
           <h2 className="text-lg font-bold text-white mb-2">
-            {premium ? "Oppgrader til Premium" : "Lagre smaken din"}
+            {premium ? s.upgradePremium : s.saveTaste}
           </h2>
           <p className="text-sm leading-relaxed mb-6" style={{ color: "rgba(255,255,255,0.5)" }}>
-            {premium
-              ? "Få ubegrenset tilgang til AI-anbefalinger, smaksprofil-oppdateringer og mer."
-              : "Du har allerede begynt å forme anbefalingene dine. Opprett gratis konto for å lagre fremgangen og få bedre treff."}
+            {premium ? s.premiumDesc : s.signupDesc}
           </p>
 
           <div className="flex flex-col gap-2.5">
@@ -81,7 +126,7 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
                 <svg width={14} height={14} fill="none" viewBox="0 0 24 24" stroke="#FFD700" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                Oppgrader til Premium
+                {s.upgradePremium}
               </button>
             ) : (
               <>
@@ -91,7 +136,7 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
                   className="w-full py-2.5 rounded-xl text-sm font-semibold text-white text-center transition-opacity hover:opacity-90"
                   style={{ background: "#ff2a2a", minHeight: 44 }}
                 >
-                  Opprett gratis konto
+                  {s.createAccount}
                 </Link>
                 <Link
                   href="/login"
@@ -104,7 +149,7 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
                     minHeight: 44,
                   }}
                 >
-                  Logg inn
+                  {s.login}
                 </Link>
               </>
             )}

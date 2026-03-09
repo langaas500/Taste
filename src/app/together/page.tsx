@@ -210,7 +210,10 @@ function getGenreName(genre_ids: number[], locale: Locale = "no"): string {
   for (const id of genre_ids) {
     if (GENRE_MAP[id]) return GENRE_MAP[id].name;
   }
-  return locale === "no" ? "Film/Serie" : "Movie/Series";
+  if (locale === "no" || locale === "dk") return "Film/Serie";
+  if (locale === "se") return "Film/Serie";
+  if (locale === "fi") return "Elokuva/Sarja";
+  return "Movie/Series";
 }
 
 function generateMockPartner(titles: WTTitle[]): { liked: number[] } {
@@ -497,7 +500,7 @@ export default function WTBetaPage() {
         if (data.region) setUserRegion(data.region as string);
         const params = new URLSearchParams(window.location.search);
         const langParam = params.get("lang");
-        if (langParam === "no" || langParam === "en") {
+        if (langParam === "no" || langParam === "en" || langParam === "dk" || langParam === "se" || langParam === "fi") {
           setLocale(langParam as Locale);
         } else if (data.region) {
           setLocale(getLocale(data.region as string));
@@ -1547,7 +1550,7 @@ export default function WTBetaPage() {
               {/* Subtext */}
               <div style={{ marginBottom: "4px" }}>
                 <p style={{ fontSize: "0.875rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: "0 auto", maxWidth: "20rem", textAlign: "center" }}>
-                  {locale === "no" ? "Ingen diskusjon. Bare match." : "No debate. Just match."}
+                  {t(locale, "intro", "subtext")}
                 </p>
               </div>
 
@@ -1571,10 +1574,10 @@ export default function WTBetaPage() {
                 }}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
-                {titlesLoading ? t(locale, "intro", "loading") : (locale === "no" ? "Start swiping" : "Start swiping")}
+                {titlesLoading ? t(locale, "intro", "loading") : t(locale, "intro", "startSwiping")}
               </button>
               <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.60)", margin: "6px 0 0", textAlign: "center" }}>
-                {locale === "no" ? "Swipe alene — inviter partner når du er klar" : "Swipe solo — invite partner when ready"}
+                {t(locale, "intro", "soloInviteHint")}
               </p>
               {!authUser && (
                 <p className="text-xs text-white/60 text-center" style={{ margin: "4px 0 0" }}>
@@ -1585,7 +1588,7 @@ export default function WTBetaPage() {
               {/* ── Divider ── */}
               <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "10px 0 4px" }}>
                 <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.10)" }} />
-                <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.30)", fontWeight: 400 }}>{locale === "no" ? "eller" : "or"}</span>
+                <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.30)", fontWeight: 400 }}>{t(locale, "intro", "or")}</span>
                 <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.10)" }} />
               </div>
 
@@ -1614,12 +1617,12 @@ export default function WTBetaPage() {
                 }}
               >
                 <svg width="28" height="20" viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="7" cy="6" r="3"/><path d="M12 21v-1.5a3.5 3.5 0 0 0-3.5-3.5h-3A3.5 3.5 0 0 0 2 19.5V21"/><line x1="16" y1="10" x2="16" y2="14"/><line x1="14" y1="12" x2="18" y2="12"/><circle cx="25" cy="6" r="3"/><path d="M30 21v-1.5a3.5 3.5 0 0 0-3.5-3.5h-3A3.5 3.5 0 0 0 20 19.5V21"/></svg>
-                <span>{locale === "no" ? "Swipe med partner" : "Swipe with partner"}</span>
+                <span>{t(locale, "intro", "swipeWithPartner")}</span>
               </button>
 
               {/* ── Social proof ── */}
               <p style={{ fontSize: "0.7rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", margin: "6px auto 0", textAlign: "center" }}>
-                {locale === "no" ? <>Hundrevis av par har allerede testet <span style={{ color: "rgba(255,255,255,0.60)" }}>Log</span><span style={{ color: "rgba(229,9,20,0.50)" }}>flix</span></> : <>Hundreds of couples have already tried <span style={{ color: "rgba(255,255,255,0.60)" }}>Log</span><span style={{ color: "rgba(229,9,20,0.50)" }}>flix</span></>}
+                {t(locale, "intro", "socialProof")} <span style={{ color: "rgba(255,255,255,0.60)" }}>Log</span><span style={{ color: "rgba(229,9,20,0.50)" }}>flix</span>
               </p>
 
               {/* ── Code + Group — side by side buttons ── */}
@@ -1682,14 +1685,12 @@ export default function WTBetaPage() {
 
               {/* ── SEO crawlable text ── */}
               <p style={{ fontSize: "0.8rem", fontWeight: 400, color: "rgba(255,255,255,0.60)", lineHeight: 1.5, margin: "16px auto 0", maxWidth: "28rem", textAlign: "center" }}>
-                {locale === "no"
-                  ? "Begge swiper hver for seg på filmer og serier. Når dere matcher, har dere funnet noe dere begge faktisk vil se."
-                  : "Each of you swipes on movies and shows separately. When you match, you have found something you both actually want to watch."}{" "}
+                {t(locale, "intro", "seoText")}{" "}
                 <a
-                  href={locale === "no" ? "/no/film-a-se-med-kjaeresten" : "/en/what-should-we-watch-tonight"}
+                  href={locale === "no" ? "/no/film-a-se-med-kjaeresten" : locale === "dk" ? "/dk/film-a-se-med-kjaeresten" : locale === "se" ? "/se/film-att-se-med-partnern" : locale === "fi" ? "/fi/elokuvia-katsottavaksi-yhdessa" : "/en/what-should-we-watch-tonight"}
                   style={{ color: "rgba(255,255,255,0.60)", textDecoration: "underline", textUnderlineOffset: 2 }}
                 >
-                  {locale === "no" ? "Tips til filmkveld" : "Movie night tips"}
+                  {t(locale, "intro", "movieNightTips")}
                 </a>
               </p>
 
@@ -1761,9 +1762,7 @@ export default function WTBetaPage() {
               <button
                 onClick={() => {
                   const shareUrl = `https://logflix.app/together?code=${sessionCode}`;
-                  const shareText = locale === "no"
-                    ? "Swipe filmer med meg og se hva vi matcher på \u{1F3AC}"
-                    : "Swipe movies with me and see what we match on \u{1F3AC}";
+                  const shareText = t(locale, "waiting", "shareText");
                   if (navigator.share) {
                     navigator.share({ title: "Logflix", text: shareText, url: shareUrl })
                       .then(() => { track("invite_shared", { session_id: sessionId, method: "native_share" }); })
@@ -2016,33 +2015,12 @@ export default function WTBetaPage() {
               <div style={{ height: "100%", width: `${timerPct}%`, background: "#7a1010", transition: "width 1s linear" }} />
             </div>
 
-            {/* Floating invite partner button — solo only, after 5 swipes */}
-            {mode === "solo" && deckIndex >= 5 && roundPhase === "swiping" && (
-              <button
-                onClick={handleInviteMidSolo}
-                disabled={titlesLoading}
-                className="fixed top-3 left-3 z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[0.7rem] font-medium transition-all duration-300 cursor-pointer border border-white/10 backdrop-blur-md animate-fade-in-up"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  color: "rgba(255,255,255,0.65)",
-                  opacity: titlesLoading ? 0.4 : 1,
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="8.5" cy="7" r="4" />
-                  <line x1="20" y1="8" x2="20" y2="14" />
-                  <line x1="23" y1="11" x2="17" y2="11" />
-                </svg>
-                {locale === "no" ? "Inviter partner" : "Invite partner"}
-              </button>
-            )}
 
             {/* Swipe queue status indicator */}
             {swipeQueueStatus !== "idle" && (
               <div
                 className="fixed top-4 right-4 z-50"
-                aria-label={swipeQueueStatus === "stuck" ? "Tilkobling svak" : "Sender swipes"}
+                aria-label={swipeQueueStatus === "stuck" ? t(locale, "together", "connectionWeak") : t(locale, "together", "sendingSwipes")}
               >
                 <div className={`w-2 h-2 rounded-full ${
                   swipeQueueStatus === "stuck"
@@ -2055,7 +2033,7 @@ export default function WTBetaPage() {
             {/* Syncing overlay — shown while endRound waits for queue drain */}
             {syncingBeforeEnd && (
               <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                <p className="text-white/80 text-sm">Synker…</p>
+                <p className="text-white/80 text-sm">{t(locale, "together", "syncing")}</p>
               </div>
             )}
 
@@ -2305,7 +2283,7 @@ export default function WTBetaPage() {
                         <input
                           type="email"
                           required
-                          placeholder="din@epost.no"
+                          placeholder={t(locale, "emailCapture", "placeholder")}
                           value={emailValue}
                           onChange={(e) => setEmailValue(e.target.value)}
                           className="flex-1 min-w-0 px-3 py-2 rounded-lg text-sm"
@@ -2316,18 +2294,18 @@ export default function WTBetaPage() {
                           className="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
                           style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.85)", cursor: "pointer" }}
                         >
-                          Send meg påminnelse
+                          {t(locale, "emailCapture", "submit")}
                         </button>
                       </form>
                     )}
                     {!emailCaptured && !(authUser?.email) && (
                       <p className="text-xs mb-3 -mt-1" style={{ color: "rgba(255,255,255,0.32)" }}>
-                        Få påminnelse om å se den i kveld?
+                        {t(locale, "emailCapture", "prompt")}
                       </p>
                     )}
                     {emailCaptured && (
                       <p className="text-xs mb-3" style={{ color: "rgba(255,200,100,0.7)" }}>
-                        ✓ Vi sender deg en påminnelse!
+                        {t(locale, "emailCapture", "confirmed")}
                       </p>
                     )}
                     <button
@@ -2546,7 +2524,7 @@ export default function WTBetaPage() {
                       {excludeToast && (
                         <div className="absolute inset-0 z-30 flex items-end justify-center pointer-events-none" style={{ paddingBottom: 24 }}>
                           <span style={{ background: "rgba(0,0,0,0.8)", color: "rgba(255,255,255,0.7)", fontSize: 12, padding: "6px 14px", borderRadius: 8 }}>
-                            Skjult — vises ikke igjen
+                            {t(locale, "together", "hiddenToast")}
                           </span>
                         </div>
                       )}
@@ -2693,7 +2671,7 @@ export default function WTBetaPage() {
                       opacity: 0.3;
                     }
                   `}} />
-                  <div className="flex items-center justify-center gap-3 sm:gap-5" style={{ paddingBottom: "12px" }}>
+                  <div className="flex items-center justify-center gap-3 sm:gap-5" style={{ paddingTop: "8px", paddingBottom: "12px" }}>
                   {/* Dislike */}
                   <button
                     onClick={() => endSwipe("nope")}
@@ -2723,6 +2701,39 @@ export default function WTBetaPage() {
                   </button>
                   </div>
 
+                  {/* Invite partner — solo only, after 3 swipes */}
+                  {mode === "solo" && deckIndex >= 3 && (
+                    <div className="flex justify-center animate-fade-in-up" style={{ marginTop: 6 }}>
+                      <button
+                        onClick={handleInviteMidSolo}
+                        disabled={titlesLoading}
+                        style={{
+                          background: "none",
+                          border: "1px solid rgba(255,255,255,0.15)",
+                          borderRadius: 20,
+                          color: "rgba(255,255,255,0.70)",
+                          fontSize: 12,
+                          fontWeight: 500,
+                          cursor: "pointer",
+                          padding: "8px 16px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          opacity: titlesLoading ? 0.4 : 1,
+                          transition: "all 0.2s ease",
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                          <circle cx="8.5" cy="7" r="4" />
+                          <line x1="20" y1="8" x2="20" y2="14" />
+                          <line x1="23" y1="11" x2="17" y2="11" />
+                        </svg>
+                        {t(locale, "together", "invitePartner")}
+                      </button>
+                    </div>
+                  )}
+
                   {/* Ikke for oss — logged-in only */}
                   {authUser && (
                     <div className="flex justify-center" style={{ marginTop: 4 }}>
@@ -2739,7 +2750,7 @@ export default function WTBetaPage() {
                           lineHeight: "24px",
                         }}
                       >
-                        Ikke for oss
+                        {t(locale, "together", "notForUs")}
                       </button>
                     </div>
                   )}
