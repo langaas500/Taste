@@ -368,6 +368,7 @@ export default function WTBetaPage() {
   roundRef.current = round;
   const extendingRef = useRef(false);
   const partnerRef = useRef<{ liked: number[] } | null>(null);
+  const savedSoloSwipes = useRef<Record<number, { type: "movie" | "tv"; action: SwipeAction }>>({});
   const guestIdRef = useRef<string>("");
   const audioCtxRef = useRef<AudioContext | null>(null);
 
@@ -1133,6 +1134,21 @@ export default function WTBetaPage() {
     setTitlesLoading(false);
   }
 
+  /* ── solo → duo: invite partner mid-swipe ── */
+  async function handleInviteMidSolo() {
+    if (mode !== "solo" || titlesLoading) return;
+    setTimerRunning(false);
+    // Snapshot current solo swipes with type info
+    const snap: Record<number, { type: "movie" | "tv"; action: SwipeAction }> = {};
+    for (const [id, action] of Object.entries(sessionSwipes.current)) {
+      const t = deck.find((d) => d.tmdb_id === Number(id));
+      if (t) snap[Number(id)] = { type: t.type, action };
+    }
+    savedSoloSwipes.current = snap;
+    track("solo_to_duo_invite", { swipes_saved: Object.keys(snap).length, locale });
+    await createSession();
+  }
+
   /* ── paired: join session ── */
   async function joinSession(codeOverride?: string) {
     const code = (codeOverride ?? joinCode).trim();
@@ -1170,7 +1186,27 @@ export default function WTBetaPage() {
           setPartnerJoined(true);
           track("partner_joined", { is_guest: !authUser });
           if (screen === "waiting") {
-            setDeck([...titles]); setDeckIndex(0);
+            const newDeck = [...titles];
+            setDeck(newDeck);
+            // Replay saved solo swipes into the new paired session
+            const saved = savedSoloSwipes.current;
+            const savedIds = Object.keys(saved).map(Number);
+            if (savedIds.length > 0) {
+              let skipCount = 0;
+              for (const t of newDeck) {
+                const s = saved[t.tmdb_id];
+                if (!s) break; // stop at first un-swiped title
+                const apiAction = s.action === "meh" ? "nope" : s.action;
+                enqueueSwipe(t.tmdb_id, t.type, apiAction as "like" | "nope" | "superlike");
+                sessionSwipes.current[t.tmdb_id] = s.action;
+                skipCount++;
+              }
+              setDeckIndex(skipCount);
+              track("solo_swipes_replayed", { replayed: skipCount, saved: savedIds.length });
+              savedSoloSwipes.current = {};
+            } else {
+              setDeckIndex(0);
+            }
             setScreen("together"); setTimer(ROUND1_DURATION); setTimerRunning(true);
           }
         }
@@ -1412,7 +1448,7 @@ export default function WTBetaPage() {
               @media (min-width: 768px) {
                 .intro-ribbon { height: 180px !important; clip-path: ellipse(70% 100% at 50% 0%); }
                 .intro-ribbon img { height: 160px !important; }
-                .intro-logo { height: 34px !important; }
+                .intro-logo { height: 51px !important; }
                 .intro-headline { font-size: 3rem !important; }
                 .intro-content { max-width: 600px !important; margin-top: -20px !important; }
                 .intro-card { min-height: 160px !important; }
@@ -1435,12 +1471,12 @@ export default function WTBetaPage() {
             />
 
             {/* ── Logo — top center, in flow ── */}
-            <div style={{ display: "flex", justifyContent: "center", paddingTop: 16, paddingBottom: 2, flexShrink: 0, position: "relative", zIndex: 1 }}>
+            <div style={{ display: "flex", justifyContent: "center", paddingTop: 10, paddingBottom: 0, flexShrink: 0, position: "relative", zIndex: 1 }}>
               <img
                 src="/logo.png"
                 alt="Logflix"
                 className="intro-logo"
-                style={{ height: 28, width: "auto", opacity: 0.85 }}
+                style={{ height: 51, width: "auto", opacity: 0.85 }}
               />
             </div>
 
@@ -1451,9 +1487,9 @@ export default function WTBetaPage() {
                 flexShrink: 0,
                 position: "relative",
                 zIndex: 1,
-                marginTop: 10,
+                marginTop: 6,
                 overflow: "hidden",
-                height: 90,
+                height: 70,
                 WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
                 maskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
                 pointerEvents: "none",
@@ -1463,7 +1499,7 @@ export default function WTBetaPage() {
               {ribbonPosters.length > 0 ? (
                 <div
                   className="ribbon-track"
-                  style={{ display: "flex", gap: 13, width: "max-content", paddingTop: 6, paddingBottom: 6, filter: "blur(1.5px)" }}
+                  style={{ display: "flex", gap: 13, width: "max-content", paddingTop: 6, paddingBottom: 6, filter: "blur(1.5px) brightness(0.6)" }}
                 >
                   {[...ribbonPosters, ...ribbonPosters].map((poster, i) => (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -1471,7 +1507,7 @@ export default function WTBetaPage() {
                       key={i}
                       src={`https://image.tmdb.org/t/p/w185${poster}`}
                       alt=""
-                      style={{ height: 80, width: "auto", borderRadius: 12, opacity: 0.65, flexShrink: 0, display: "block", objectFit: "cover" }}
+                      style={{ height: 62, width: "auto", borderRadius: 10, opacity: 0.65, flexShrink: 0, display: "block", objectFit: "cover" }}
                     />
                   ))}
                 </div>
@@ -1484,7 +1520,7 @@ export default function WTBetaPage() {
                   {[...RIBBON_COLORS, ...RIBBON_COLORS].map(([from, to], i) => (
                     <div
                       key={i}
-                      style={{ height: 80, width: 54, borderRadius: 12, background: `linear-gradient(160deg, ${from} 0%, ${to} 100%)`, opacity: 0.18, flexShrink: 0 }}
+                      style={{ height: 62, width: 42, borderRadius: 10, background: `linear-gradient(160deg, ${from} 0%, ${to} 100%)`, opacity: 0.18, flexShrink: 0 }}
                     />
                   ))}
                 </div>
@@ -1492,7 +1528,7 @@ export default function WTBetaPage() {
             </div>
 
             {/* ── Hero block — flex-1, no scroll ── */}
-            <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "12px 24px 10px", position: "relative", zIndex: 1, overflow: "hidden" }}>
+            <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "18px 24px 4px", position: "relative", zIndex: 1, overflow: "hidden" }}>
             <div className="intro-content" style={{ width: "100%", maxWidth: 340, textAlign: "center" }}>
 
               {/* Headline */}
@@ -1502,227 +1538,161 @@ export default function WTBetaPage() {
                 letterSpacing: "-0.02em",
                 color: "#ffffff",
                 lineHeight: 1.1,
-                margin: "0 auto 8px",
+                margin: "0 auto 4px",
                 maxWidth: "85%",
               }}>
                 {t(locale, "intro", "headline")}
               </h1>
 
               {/* Subtext */}
-              <div style={{ marginBottom: "10px" }}>
+              <div style={{ marginBottom: "4px" }}>
                 <p style={{ fontSize: "0.875rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: "0 auto", maxWidth: "20rem", textAlign: "center" }}>
                   {locale === "no" ? "Ingen diskusjon. Bare match." : "No debate. Just match."}
                 </p>
               </div>
 
-              {/* Duo card */}
-              <div
-                className="intro-card"
+              {/* ── Solo CTA — primary big red button ── */}
+              <button
+                className="cta-btn button"
+                onClick={() => {
+                  if (titlesLoading || ritualState !== "idle") return;
+                  startRitual(() => { setMode("solo"); setSelectedProviders([]); setScreen("providers"); });
+                }}
+                disabled={titlesLoading || ritualState !== "idle"}
                 style={{
                   width: "100%",
-                  position: "relative",
+                  marginTop: 4,
+                  cursor: titlesLoading ? "default" : "pointer",
+                  opacity: titlesLoading ? 0.55 : 1,
                   display: "flex",
-                  flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 6,
-                  padding: "14px 14px 10px",
-                  borderRadius: 16,
-                  border: "1px solid rgba(255,42,42,0.3)",
-                  background: "rgba(255,255,255,0.06)",
-                  boxShadow: "0 0 40px rgba(255,0,0,0.2)",
-                  marginBottom: 10,
+                  gap: 8,
                 }}
               >
-                <span style={{
-                  position: "absolute", top: 6, right: 6,
-                  fontSize: "0.625rem", fontWeight: 600,
-                  color: "rgba(255,255,255,0.9)",
-                  backgroundColor: "rgba(255,42,42,0.8)",
-                  padding: "2px 6px", borderRadius: 6,
-                  letterSpacing: "0.02em", textTransform: "uppercase",
-                }}>
-                  {t(locale, "intro", "recommended")}
-                </span>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/two-phones.svg"
-                  alt={t(locale, "intro", "pairedLabel")}
-                  className="intro-card-icon"
-                  style={{ height: 36, width: "auto", opacity: 1 }}
-                />
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                  <span className="intro-card-label" style={{ fontSize: "0.875rem", fontWeight: 600, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.01em" }}>
-                    {t(locale, "intro", "pairedLabel")}
-                  </span>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "rgba(255,255,255,0.45)", lineHeight: 1.3 }}>
-                    {locale === "no" ? "Begge swiper. Kun felles liker matcher." : "Both swipe. Only mutual likes match."}
-                  </span>
-                  <span style={{ fontSize: "0.7rem", fontWeight: 400, color: "rgba(255,255,255,0.30)", lineHeight: 1.3 }}>
-                    {locale === "no" ? "Ingen diskusjon nødvendig." : "No discussion needed."}
-                  </span>
-                </div>
-                <button
-                  className="cta-btn button"
-                  onClick={() => {
-                    if (titlesLoading || ritualState !== "idle") return;
-                    startRitual(() => { setMode("paired"); setSelectedProviders([]); setScreen("providers"); });
-                  }}
-                  disabled={titlesLoading || ritualState !== "idle"}
-                  style={{
-                    width: "100%",
-                    marginTop: 4,
-                    cursor: titlesLoading ? "default" : "pointer",
-                    opacity: titlesLoading ? 0.55 : 1,
-                  }}
-                >
-                  {titlesLoading ? t(locale, "intro", "loading") : t(locale, "intro", "startPaired")}
-                </button>
-                {!authUser && (
-                  <p className="text-xs text-white/40 text-center" style={{ margin: 0 }}>
-                    {t(locale, "intro", "noAccountNeeded")}
-                  </p>
-                )}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+                {titlesLoading ? t(locale, "intro", "loading") : (locale === "no" ? "Start swiping" : "Start swiping")}
+              </button>
+              <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.60)", margin: "6px 0 0", textAlign: "center" }}>
+                {locale === "no" ? "Swipe alene — inviter partner når du er klar" : "Swipe solo — invite partner when ready"}
+              </p>
+              {!authUser && (
+                <p className="text-xs text-white/60 text-center" style={{ margin: "4px 0 0" }}>
+                  {t(locale, "intro", "noAccountNeeded")}
+                </p>
+              )}
+
+              {/* ── Divider ── */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "10px 0 4px" }}>
+                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.10)" }} />
+                <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.30)", fontWeight: 400 }}>{locale === "no" ? "eller" : "or"}</span>
+                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.10)" }} />
               </div>
 
-              {/* I have a code */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 10 }}>
+              {/* ── Duo — secondary button ── */}
+              <button
+                onClick={() => {
+                  if (titlesLoading || ritualState !== "idle") return;
+                  startRitual(() => { setMode("paired"); setSelectedProviders([]); setScreen("providers"); });
+                }}
+                disabled={titlesLoading || ritualState !== "idle"}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  padding: "10px 16px",
+                  borderRadius: 12,
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  background: "rgba(255,255,255,0.04)",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  color: "rgba(255,255,255,0.70)",
+                  fontSize: "0.85rem",
+                  fontWeight: 500,
+                }}
+              >
+                <svg width="28" height="20" viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="7" cy="6" r="3"/><path d="M12 21v-1.5a3.5 3.5 0 0 0-3.5-3.5h-3A3.5 3.5 0 0 0 2 19.5V21"/><line x1="16" y1="10" x2="16" y2="14"/><line x1="14" y1="12" x2="18" y2="12"/><circle cx="25" cy="6" r="3"/><path d="M30 21v-1.5a3.5 3.5 0 0 0-3.5-3.5h-3A3.5 3.5 0 0 0 20 19.5V21"/></svg>
+                <span>{locale === "no" ? "Swipe med partner" : "Swipe with partner"}</span>
+              </button>
+
+              {/* ── Social proof ── */}
+              <p style={{ fontSize: "0.7rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", margin: "6px auto 0", textAlign: "center" }}>
+                {locale === "no" ? <>Hundrevis av par har allerede testet <span style={{ color: "rgba(255,255,255,0.60)" }}>Log</span><span style={{ color: "rgba(229,9,20,0.50)" }}>flix</span></> : <>Hundreds of couples have already tried <span style={{ color: "rgba(255,255,255,0.60)" }}>Log</span><span style={{ color: "rgba(229,9,20,0.50)" }}>flix</span></>}
+              </p>
+
+              {/* ── Code + Group — side by side buttons ── */}
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                 <button
                   onClick={() => setScreen("join")}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 py-2 px-4 text-sm font-medium text-white/80 hover:bg-white/10 active:bg-white/10 transition-colors cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <span>{t(locale, "intro", "hasCode")}</span>
-                  <span className="text-[0.65rem] font-normal text-white/25">Enter 6 characters</span>
-                </button>
-                {sessionError && <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: "0.25rem" }}>{sessionError}</p>}
-              </div>
-
-              {/* Other ways: Solo + Group */}
-              <p className="text-xs text-white/50 uppercase tracking-wide" style={{ textAlign: "center", marginTop: 12, marginBottom: 6 }}>
-                {t(locale, "intro", "otherWays")}
-              </p>
-              <div style={{ display: "flex", gap: 8 }}>
-                {/* Solo card */}
-                <button
-                  className="intro-card"
-                  onClick={() => {
-                    if (titlesLoading || ritualState !== "idle") return;
-                    startRitual(() => { setMode("solo"); setSelectedProviders([]); setScreen("providers"); });
+                  style={{
+                    flex: 1,
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    background: "rgba(255,255,255,0.04)",
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    fontWeight: 500,
+                    color: "rgba(255,255,255,0.55)",
+                    transition: "all 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
                   }}
-                  disabled={titlesLoading || ritualState !== "idle"}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg>
+                  {t(locale, "intro", "hasCode")}
+                </button>
+                <button
+                  onClick={() => router.push("/group")}
                   style={{
                     flex: 1,
                     position: "relative",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    background: "rgba(255,255,255,0.04)",
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    fontWeight: 500,
+                    color: "rgba(255,255,255,0.55)",
+                    transition: "all 0.2s ease",
                     display: "flex",
-                    flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: 4,
-                    padding: "10px 8px",
-                    borderRadius: 14,
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    background: "rgba(255,255,255,0.03)",
-                    opacity: 0.55,
-                    cursor: "pointer",
-                    transition: "all 0.3s ease",
+                    gap: 6,
                   }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/one-phone.svg"
-                    alt={t(locale, "intro", "soloLabel")}
-                    className="intro-card-icon"
-                    style={{ height: 24, width: "auto", opacity: 0.45, transition: "opacity 160ms ease" }}
-                  />
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                    <span className="intro-card-label" style={{
-                      fontSize: "0.8rem",
-                      fontWeight: 400,
-                      color: "rgba(255,255,255,0.38)",
-                      letterSpacing: "-0.01em",
-                    }}>
-                      {t(locale, "intro", "soloLabel")}
-                    </span>
-                    <span style={{
-                      fontSize: "0.7rem",
-                      fontWeight: 400,
-                      color: "rgba(255,255,255,0.20)",
-                      letterSpacing: "-0.005em",
-                      lineHeight: 1.3,
-                    }}>
-                      {t(locale, "intro", "soloDesc")}
-                    </span>
-                  </div>
+                  <svg width="28" height="20" viewBox="0 0 36 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="7" r="3"/><path d="M10 21v-1.5a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3V21"/><circle cx="15" cy="7" r="3"/><path d="M19 21v-1.5a3 3 0 0 0-3-3h-2a3 3 0 0 0-3 3V21"/><circle cx="24" cy="7" r="3"/><path d="M28 21v-1.5a3 3 0 0 0-3-3h-2a3 3 0 0 0-3 3V21"/><line x1="33" y1="9" x2="33" y2="15"/><line x1="30" y1="12" x2="36" y2="12"/></svg>
+                  <span>{t(locale, "intro", "groupLabel")}</span>
+                  <span style={{
+                    fontSize: "0.5rem", fontWeight: 600,
+                    padding: "1px 4px", borderRadius: 3,
+                    background: "rgba(74,222,128,0.15)",
+                    border: "1px solid rgba(74,222,128,0.25)",
+                    color: "#4ade80",
+                    letterSpacing: "0.04em",
+                  }}>{t(locale, "intro", "soon")}</span>
                 </button>
-
-                {/* Group card */}
-                <div className="intro-card" style={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4,
-                  padding: "10px 8px",
-                  borderRadius: 14,
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  background: "rgba(255,255,255,0.03)",
-                  cursor: "pointer",
-                  position: "relative",
-                  opacity: 0.55,
-                }}
-                onClick={() => router.push("/group")}
-                >
-                  <div style={{ position: "absolute", top: 6, right: 6, display: "flex", gap: 4 }}>
-                    <div style={{
-                      fontSize: "0.55rem", fontWeight: 600,
-                      padding: "2px 5px", borderRadius: 4,
-                      background: "rgba(255,42,42,0.2)",
-                      border: "1px solid rgba(255,42,42,0.3)",
-                      color: "rgba(255,255,255,0.8)",
-                      letterSpacing: "0.06em",
-                    }}>NEW</div>
-                    <div style={{
-                      fontSize: "0.55rem", fontWeight: 600,
-                      padding: "2px 5px", borderRadius: 4,
-                      background: "rgba(74,222,128,0.15)",
-                      border: "1px solid rgba(74,222,128,0.3)",
-                      color: "#4ade80",
-                      letterSpacing: "0.06em",
-                    }}>{t(locale, "intro", "soon")}</div>
-                  </div>
-                  <span style={{ fontSize: 18, lineHeight: 1 }}>👥</span>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                    <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "rgba(255,255,255,0.50)", letterSpacing: "-0.01em" }}>
-                      {t(locale, "intro", "groupLabel")}
-                    </span>
-                    <span style={{ fontSize: "0.7rem", fontWeight: 400, color: "rgba(255,255,255,0.22)", letterSpacing: "-0.005em", lineHeight: 1.3 }}>
-                      {t(locale, "intro", "groupDesc")}
-                    </span>
-                  </div>
-                </div>
               </div>
+              {sessionError && <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: 4, textAlign: "center" }}>{sessionError}</p>}
 
               {/* ── SEO crawlable text ── */}
-              <div style={{
-                marginTop: 18,
-                padding: "12px 14px",
-                borderRadius: 12,
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.04)",
-              }}>
-                <p style={{ fontSize: "0.7rem", fontWeight: 400, color: "rgba(255,255,255,0.25)", lineHeight: 1.6, margin: 0 }}>
-                  {locale === "no"
-                    ? "Begge swiper hver for seg på filmer og serier. Når dere matcher, har dere funnet noe dere begge faktisk vil se."
-                    : "Each of you swipes on movies and shows separately. When you match, you have found something you both actually want to watch."}
-                </p>
+              <p style={{ fontSize: "0.8rem", fontWeight: 400, color: "rgba(255,255,255,0.60)", lineHeight: 1.5, margin: "16px auto 0", maxWidth: "28rem", textAlign: "center" }}>
+                {locale === "no"
+                  ? "Begge swiper hver for seg på filmer og serier. Når dere matcher, har dere funnet noe dere begge faktisk vil se."
+                  : "Each of you swipes on movies and shows separately. When you match, you have found something you both actually want to watch."}{" "}
                 <a
                   href={locale === "no" ? "/no/film-a-se-med-kjaeresten" : "/en/what-should-we-watch-tonight"}
-                  style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.20)", marginTop: 6, display: "inline-block", textDecoration: "underline", textUnderlineOffset: 2 }}
+                  style={{ color: "rgba(255,255,255,0.60)", textDecoration: "underline", textUnderlineOffset: 2 }}
                 >
-                  {locale === "no" ? "Tips til filmkveld med kjæresten" : "What should we watch tonight?"}
+                  {locale === "no" ? "Tips til filmkveld" : "Movie night tips"}
                 </a>
-              </div>
+              </p>
+
 
             </div>
             </div>
@@ -2045,6 +2015,28 @@ export default function WTBetaPage() {
             <div className="fixed top-0 left-0 right-0 z-50" style={{ height: "2px", background: "rgba(255,255,255,0.07)" }}>
               <div style={{ height: "100%", width: `${timerPct}%`, background: "#7a1010", transition: "width 1s linear" }} />
             </div>
+
+            {/* Floating invite partner button — solo only, after 5 swipes */}
+            {mode === "solo" && deckIndex >= 5 && roundPhase === "swiping" && (
+              <button
+                onClick={handleInviteMidSolo}
+                disabled={titlesLoading}
+                className="fixed top-3 left-3 z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[0.7rem] font-medium transition-all duration-300 cursor-pointer border border-white/10 backdrop-blur-md animate-fade-in-up"
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  color: "rgba(255,255,255,0.65)",
+                  opacity: titlesLoading ? 0.4 : 1,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="8.5" cy="7" r="4" />
+                  <line x1="20" y1="8" x2="20" y2="14" />
+                  <line x1="23" y1="11" x2="17" y2="11" />
+                </svg>
+                {locale === "no" ? "Inviter partner" : "Invite partner"}
+              </button>
+            )}
 
             {/* Swipe queue status indicator */}
             {swipeQueueStatus !== "idle" && (
