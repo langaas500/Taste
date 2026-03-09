@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { WatchProviderData, WatchProvider } from "@/lib/types";
+import SeoPageTracker from "@/components/SeoPageTracker";
 
 /* ── Types ────────────────────────────────────────────── */
 
@@ -375,6 +376,7 @@ export default function TitlePageContent(props: TitlePageProps) {
 
   return (
     <>
+      <SeoPageTracker tmdbId={props.tmdbId} slug={slug} region={region} type={type} />
       {/* JSON-LD FAQPage */}
       <script
         type="application/ld+json"
