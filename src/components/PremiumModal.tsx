@@ -7,64 +7,69 @@ import { useLocale } from "@/hooks/useLocale";
 /* ── locale strings ──────────────────────────────────────── */
 const strings = {
   no: {
-    heading: "Logflix Premium",
-    foundingBadge: "Founding Member-pris — eksklusivt for de første 500",
-    lockPrice: "Lås inn 29,-/mnd for alltid",
-    price: "29 kr",
-    perMonth: "/mnd",
-    features: ["Ubegrensede AI-anbefalinger", "Personlig smaksprofil (refresh når du vil)"],
+    heading: "Bli en Founding Member",
+    sub: "Finn neste serie dere skal binge – uten diskusjonen. Kun for de første 500.",
+    features: [
+      "Match på tvers av serier og filmer på alle strømmetjenester",
+      "Se nøyaktig hvilken sjanger som dominerer i deres stue",
+      "Full tilgang til AI-Curator for både film og serier",
+    ],
+    cta: "Sikre din plass — 29 kr",
+    footer: "Ingen binding. Avslutt når du vil med ett klikk.",
     error: "Noe gikk galt, prøv igjen",
     loading: "Venter...",
-    cta: "Bli Premium-medlem",
-    footer: "Avslutt når som helst. Betaling via Stripe.",
   },
   en: {
-    heading: "Logflix Premium",
-    foundingBadge: "Founding Member price — exclusive for the first 500",
-    lockPrice: "Lock in 29 kr/mo forever",
-    price: "29 kr",
-    perMonth: "/mo",
-    features: ["Unlimited AI recommendations", "Personal taste profile (refresh anytime)"],
+    heading: "Become a Founding Member",
+    sub: "Find your next binge-worthy show – without the debate. First 500 only.",
+    features: [
+      "Match across shows and movies on all streaming services",
+      "See exactly which genre dominates your watch habits",
+      "Full access to AI Curator for both movies and shows",
+    ],
+    cta: "Secure your spot — 29 kr",
+    footer: "No commitment. Cancel anytime with one click.",
     error: "Something went wrong, try again",
     loading: "Please wait...",
-    cta: "Become a Premium member",
-    footer: "Cancel anytime. Payment via Stripe.",
   },
   dk: {
-    heading: "Logflix Premium",
-    foundingBadge: "Founding Member-pris — eksklusivt for de første 500",
-    lockPrice: "Lås 29,-/mnd for altid",
-    price: "29 kr",
-    perMonth: "/mnd",
-    features: ["Ubegrænsede AI-anbefalinger", "Personlig smagsprofil (opdater når du vil)"],
+    heading: "Bliv Founding Member",
+    sub: "Find jeres næste serie at binge – uden diskussionen. Kun for de første 500.",
+    features: [
+      "Match på tværs af serier og film på alle streamingtjenester",
+      "Se præcis hvilken genre der dominerer i jeres stue",
+      "Fuld adgang til AI-Curator for både film og serier",
+    ],
+    cta: "Sikr din plads — 29 kr",
+    footer: "Ingen binding. Opsig når du vil med ét klik.",
     error: "Noget gik galt, prøv igen",
     loading: "Vent venligst...",
-    cta: "Bliv Premium-medlem",
-    footer: "Opsig når som helst. Betaling via Stripe.",
   },
   se: {
-    heading: "Logflix Premium",
-    foundingBadge: "Founding Member-pris — exklusivt för de första 500",
-    lockPrice: "Lås in 29 kr/mån för alltid",
-    price: "29 kr",
-    perMonth: "/mån",
-    features: ["Obegränsade AI-rekommendationer", "Personlig smakprofil (uppdatera när du vill)"],
+    heading: "Bli en Founding Member",
+    sub: "Hitta nästa serie ni ska binga – utan diskussionen. Bara för de första 500.",
+    features: [
+      "Matcha serier och filmer på alla streamingtjänster",
+      "Se exakt vilken genre som dominerar i ert vardagsrum",
+      "Full tillgång till AI-Curator för både film och serier",
+    ],
+    cta: "Säkra din plats — 29 kr",
+    footer: "Ingen bindningstid. Avsluta när du vill med ett klick.",
     error: "Något gick fel, försök igen",
     loading: "Vänta...",
-    cta: "Bli Premium-medlem",
-    footer: "Avsluta när som helst. Betalning via Stripe.",
   },
   fi: {
-    heading: "Logflix Premium",
-    foundingBadge: "Founding Member -hinta — eksklusiivinen ensimmäisille 500:lle",
-    lockPrice: "Lukitse 29 kr/kk ikuisesti",
-    price: "29 kr",
-    perMonth: "/kk",
-    features: ["Rajattomat AI-suositukset", "Henkilökohtainen makuprofiili (päivitä milloin vain)"],
+    heading: "Liity Founding Memberiksi",
+    sub: "Löydä seuraava sarjanne – ilman väittelyä. Vain ensimmäisille 500:lle.",
+    features: [
+      "Yhdistä sarjat ja elokuvat kaikista suoratoistopalveluista",
+      "Näe tarkalleen mikä genre hallitsee katselutottumuksianne",
+      "Täysi pääsy AI-kuraattoriin elokuville ja sarjoille",
+    ],
+    cta: "Varaa paikkasi — 29 kr",
+    footer: "Ei sitoutumista. Peru milloin vain yhdellä klikkauksella.",
     error: "Jokin meni pieleen, yritä uudelleen",
     loading: "Odota...",
-    cta: "Liity Premium-jäseneksi",
-    footer: "Peru milloin tahansa. Maksu Stripen kautta.",
   },
 } as const;
 
@@ -110,8 +115,6 @@ export default function PremiumModal({ isOpen, onClose, source }: PremiumModalPr
 
   if (!isOpen) return null;
 
-  const features = s.features;
-
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center px-4"
@@ -154,39 +157,15 @@ export default function PremiumModal({ isOpen, onClose, source }: PremiumModalPr
           </svg>
         </button>
 
-        {/* Heading */}
-        <h2 className="text-lg font-bold text-white mb-3">{s.heading}</h2>
-
-        {/* Founding member badge */}
-        <div
-          className="rounded-xl px-3.5 py-2.5 mb-4"
-          style={{
-            background: "rgba(255,42,42,0.08)",
-            border: "1px solid rgba(255,42,42,0.15)",
-          }}
-        >
-          <p className="text-sm font-semibold text-white/90 mb-0.5">
-            {s.foundingBadge}
-          </p>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
-            {s.lockPrice}
-          </p>
-        </div>
-
-        {/* Price */}
-        <div className="mb-4">
-          <span className="text-2xl font-bold text-white">{s.price}</span>
-          <span
-            className="text-sm ml-1"
-            style={{ color: "rgba(255,255,255,0.4)" }}
-          >
-            {s.perMonth}
-          </span>
-        </div>
+        {/* Heading + sub */}
+        <h2 className="text-xl font-bold text-white mb-1.5">{s.heading}</h2>
+        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.5)" }}>
+          {s.sub}
+        </p>
 
         {/* Feature list */}
         <ul className="space-y-2 mb-5">
-          {features.map((f) => (
+          {s.features.map((f) => (
             <li key={f} className="flex items-center gap-2.5">
               <svg
                 className="w-4 h-4 shrink-0"
@@ -212,15 +191,17 @@ export default function PremiumModal({ isOpen, onClose, source }: PremiumModalPr
         )}
 
         {/* CTA */}
+        <style>{`@keyframes ctaGlow{0%,100%{box-shadow:0 0 20px rgba(229,9,20,0.35)}50%{box-shadow:0 0 32px rgba(229,9,20,0.55)}}`}</style>
         <button
           onClick={handleCheckout}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white text-center transition-all hover:opacity-90 hover:-translate-y-[2px] disabled:opacity-50"
-          style={{ background: "linear-gradient(#B00000, #E50914)", minHeight: 44 }}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white text-center transition-all hover:opacity-90 hover:-translate-y-[2px] disabled:opacity-50"
+          style={{
+            background: "linear-gradient(135deg, #B00000, #E50914)",
+            minHeight: 44,
+            animation: "ctaGlow 2s ease-in-out infinite",
+          }}
         >
-          <svg width={14} height={14} fill="none" viewBox="0 0 24 24" stroke="#FFD700" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
           {loading ? s.loading : s.cta}
         </button>
 

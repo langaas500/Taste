@@ -451,6 +451,8 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
     }
 
     // Apply availability filtering if requested (batch DB lookup, NO N+1)
+    const FREE_REC_LIMIT = 5;
+    const isPremium = profile?.is_premium === true;
     let top20: ScoredCandidate[];
 
     if (availabilityMode !== "all") {
@@ -520,6 +522,11 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
       }
     } else {
       top20 = pick7030(scored);
+    }
+
+    // Server-side premium limit — avoid generating AI explanations for titles free users can't see
+    if (!isPremium) {
+      top20 = top20.slice(0, FREE_REC_LIMIT);
     }
 
     // Cache titles and build response
