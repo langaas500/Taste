@@ -1,3 +1,5 @@
+import { MOOD_GUIDES, REGIONS, REGION_HREFLANG } from "@/config/seo-guides";
+
 export const revalidate = 3600;
 
 const base = "https://logflix.app";
@@ -11,6 +13,7 @@ const pairs: [string, string][] = [
   ["/no/filmer-a-se-med-familien", "/en/movies-to-watch-with-the-family"],
 ];
 
+/* ── Legacy påskekrim entries (separate slug per region) ── */
 const paskekrim: Record<string, string> = {
   "nb-NO": "/no/guides/paskekrim-2026",
   "sv-SE": "/se/guides/paskkrim-2026",
@@ -20,6 +23,19 @@ const paskekrim: Record<string, string> = {
 
 export function GET() {
   const lastmod = new Date().toISOString();
+
+  /* ── MOOD_GUIDES → sitemap entries ── */
+  const guideUrls = MOOD_GUIDES.flatMap((guide) => {
+    const alternates: Record<string, string> = {
+      "x-default": `${base}/no/guides/${guide.slug}`,
+    };
+    for (const r of REGIONS) {
+      alternates[REGION_HREFLANG[r]] = `${base}/${r}/guides/${guide.slug}`;
+    }
+    return REGIONS.map((r) =>
+      entry(`${base}/${r}/guides/${guide.slug}`, lastmod, "weekly", "0.7", alternates),
+    );
+  });
 
   const urls = [
     entry(`${base}/`, lastmod, "weekly", "1", { nb: `${base}/`, en: `${base}/`, "x-default": `${base}/` }),
@@ -37,6 +53,7 @@ export function GET() {
         "x-default": `${base}${paskekrim["nb-NO"]}`,
       }),
     ),
+    ...guideUrls,
   ];
 
   const xml = [
