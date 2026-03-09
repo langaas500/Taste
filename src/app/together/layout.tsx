@@ -14,14 +14,14 @@ export const metadata: Metadata = {
     url: "https://logflix.app/together",
     siteName: "Logflix",
     type: "website",
-    images: ["/og-image.png"],
+    images: ["/og-v2.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Se Sammen — Finn noe å se sammen | Logflix",
     description:
       "Sveip hver for dere, match på det begge vil se. Gratis verktøy som løser «hva skal vi se i kveld?» på under 3 minutter.",
-    images: ["/og-image.png"],
+    images: ["/og-v2.png"],
   },
 };
 

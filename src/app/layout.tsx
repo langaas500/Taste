@@ -21,14 +21,14 @@ export const metadata: Metadata = {
   openGraph: {
     siteName: "Logflix",
     type: "website",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Logflix" }],
+    images: [{ url: "/og-v2.png", width: 1200, height: 630, alt: "Logflix" }],
   },
   facebook: {
     appId: "1502002261429610",
   },
   twitter: {
     card: "summary_large_image",
-    images: ["/og-image.png"],
+    images: ["/og-v2.png"],
   },
 };
 

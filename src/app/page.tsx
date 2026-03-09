@@ -32,7 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "Logflix",
       images: [
         {
-          url: "https://logflix.app/og-image.png",
+          url: "https://logflix.app/og-v2.png",
           width: 1200,
           height: 630,
           alt: "Logflix — Watch Together",
@@ -44,7 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title,
       description,
-      images: ["https://logflix.app/og-image.png"],
+      images: ["https://logflix.app/og-v2.png"],
     },
   };
 }
