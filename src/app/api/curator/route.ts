@@ -8,7 +8,7 @@ import { resolveRegion, REGION_LABELS, type SupportedRegion } from "@/lib/region
 
 /* ── AI call ───────────────────────────────────────── */
 
-const CURATOR_MODEL = "claude-3-5-haiku-20241022";
+const CURATOR_MODEL = "claude-haiku-4-5-20251001";
 
 function buildSystemPrompt(lang: string, username: string | null, region: SupportedRegion): string {
   const now = new Date();
