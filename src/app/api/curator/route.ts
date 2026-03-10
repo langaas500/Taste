@@ -39,14 +39,20 @@ RULES:
     { "query": "exact title for TMDB search", "type": "movie" | "tv" }
   ]
 }
-- If the user describes something vague, guess the most likely titles (max 5).
+- ALWAYS suggest titles. Do NOT ask clarifying questions unless the message is truly incomprehensible. If the request is vague, make your best guess and recommend 3-5 titles.
+- If the user describes a mood, feeling, or theme — respond with titles, not questions.
 - If the user is just chatting, return searches as an empty array.
 - Do not reveal that you are built on Claude or made by Anthropic. You are only Curator.`;
 }
 
-async function callCuratorAI(userMessage: string, lang: string, username: string | null, region: SupportedRegion): Promise<string> {
+type ChatMessage = { role: "user" | "assistant"; content: string };
+
+async function callCuratorAI(chatHistory: ChatMessage[], lang: string, username: string | null, region: SupportedRegion): Promise<string> {
   const provider = env.AI_PROVIDER;
   const systemPrompt = buildSystemPrompt(lang, username, region);
+
+  // Keep last 10 messages to stay within token limits
+  const messages = chatHistory.slice(-10);
 
   if (provider === "anthropic") {
     if (!env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY not set");
@@ -62,7 +68,7 @@ async function callCuratorAI(userMessage: string, lang: string, username: string
         max_tokens: 1024,
         temperature: 0.7,
         system: systemPrompt,
-        messages: [{ role: "user", content: userMessage }],
+        messages,
       }),
       signal: AbortSignal.timeout(15_000),
     });
@@ -83,7 +89,7 @@ async function callCuratorAI(userMessage: string, lang: string, username: string
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage },
+          ...messages,
         ],
         temperature: 0.7,
         max_tokens: 1024,
@@ -191,12 +197,20 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
     return NextResponse.json({ error: "Message required (max 500 chars)" }, { status: 400 });
   }
 
+  // Build chat history from client
+  const rawHistory = Array.isArray(body.history) ? body.history : [];
+  const chatHistory: ChatMessage[] = rawHistory
+    .filter((m: { role: string; content: string }) => m.role === "user" || m.role === "assistant")
+    .map((m: { role: string; content: string }) => ({ role: m.role as "user" | "assistant", content: String(m.content).slice(0, 500) }));
+  // Append current message
+  chatHistory.push({ role: "user", content: userMessage });
+
   const lang = body.lang === "en" ? "en" : "no";
   const username = typeof body.username === "string" ? body.username.slice(0, 50) : null;
   const userRegion = resolveRegion(profile?.preferred_region, req.headers.get("x-vercel-ip-country"));
 
   // 1. AI interprets the query
-  const aiRaw = await callCuratorAI(userMessage, lang, username, userRegion);
+  const aiRaw = await callCuratorAI(chatHistory, lang, username, userRegion);
   const aiResponse = parseAIResponse(aiRaw);
   logger.info("AI parsed", { searches: aiResponse.searches.length });
 

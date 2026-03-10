@@ -335,10 +335,16 @@ export default function CuratorPage() {
     setMessages((prev) => [...prev, { role: "user", text }, loadingMsg]);
 
     try {
+      // Build chat history for API (exclude loading messages and greeting)
+      const history = messages
+        .filter((m) => !m.loading)
+        .slice(1) // skip greeting
+        .map((m) => ({ role: m.role === "user" ? "user" : "assistant", content: m.text }));
+
       const res = await fetch("/api/curator", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, lang, username, messageCount: userMessageCount }),
+        body: JSON.stringify({ message: text, lang, username, messageCount: userMessageCount, history }),
       });
       const data = await res.json();
 
