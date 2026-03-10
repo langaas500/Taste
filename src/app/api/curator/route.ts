@@ -109,9 +109,21 @@ function parseAIResponse(raw: string): CuratorAIResponse {
   const cleaned = raw.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
   try {
     const parsed = JSON.parse(cleaned);
+    const rawSearches = Array.isArray(parsed.searches) ? parsed.searches.slice(0, 5) : [];
+    // Normalize: handle both {query,type} objects and plain strings
+    const searches = rawSearches
+      .map((s: unknown) => {
+        if (typeof s === "string") return { query: s, type: "movie" as const };
+        if (s && typeof s === "object" && "query" in s) {
+          const obj = s as { query: string; type?: string };
+          return { query: String(obj.query), type: obj.type === "tv" ? "tv" as const : "movie" as const };
+        }
+        return null;
+      })
+      .filter((s: { query: string; type: "movie" | "tv" } | null): s is { query: string; type: "movie" | "tv" } => s !== null && s.query.length > 0);
     return {
       message: typeof parsed.message === "string" ? parsed.message : "Hmm, something went wrong...",
-      searches: Array.isArray(parsed.searches) ? parsed.searches.slice(0, 5) : [],
+      searches,
     };
   } catch {
     return { message: raw.slice(0, 500), searches: [] };
