@@ -228,7 +228,8 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
     try {
       const type = search.type === "tv" ? "tv" : "movie";
       const results = await tmdbSearch(search.query, type);
-      const top = results?.results?.[0];
+      // tmdbSearch returns a filtered array directly, not {results: [...]}
+      const top = Array.isArray(results) ? results[0] : results?.results?.[0];
       if (!top) continue;
 
       const key = `${top.id}:${type}`;
