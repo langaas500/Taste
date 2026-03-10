@@ -23,6 +23,7 @@ interface CuratorMovie {
   overview: string;
   vote_average: number;
   providers: WatchProvider[];
+  reason: string;
 }
 
 interface Message {
@@ -424,7 +425,7 @@ export default function CuratorPage() {
               {msg.movies && msg.movies.length > 0 && (
                 <div className="flex flex-col gap-3.5 mt-4 pl-11">
                   {msg.movies.map((movie) => (
-                    <MovieCard key={`${movie.tmdb_id}:${movie.type}`} movie={movie} lang={lang} />
+                    <MovieCard key={`${movie.tmdb_id}:${movie.type}`} movie={movie} />
                   ))}
                 </div>
               )}
@@ -504,7 +505,7 @@ export default function CuratorPage() {
 
 /* ── MovieCard ───────────────────────────────────────── */
 
-function MovieCard({ movie, lang }: { movie: CuratorMovie; lang: Locale }) {
+function MovieCard({ movie }: { movie: CuratorMovie }) {
   const imgSrc = movie.poster_path ? `https://image.tmdb.org/t/p/w154${movie.poster_path}` : null;
   const flatrate = movie.providers.filter((p) => p.type === "flatrate");
   const rentBuy = movie.providers.filter((p) => p.type === "rent" || p.type === "buy");
@@ -517,26 +518,21 @@ function MovieCard({ movie, lang }: { movie: CuratorMovie; lang: Locale }) {
         </div>
       )}
       <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
           <span className="text-base font-bold text-white/90">{movie.title}</span>
-          {movie.year && <span className="text-xs text-white/30 font-medium">({movie.year})</span>}
-          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/[0.08] text-white/50 border border-white/5">
-            {movie.type === "tv" ? "Serie" : "Film"}
-          </span>
+          {movie.vote_average > 0 && (
+            <span className="text-xs text-yellow-500 flex items-center gap-1">
+              ★ <span className="text-white/40 font-semibold">{movie.vote_average.toFixed(1)}</span>
+            </span>
+          )}
         </div>
-        {movie.vote_average > 0 && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-yellow-500">★</span>
-            <span className="text-xs font-semibold text-white/40">{movie.vote_average.toFixed(1)}</span>
-          </div>
-        )}
-        {movie.overview && (
-          <p className="text-[13px] leading-relaxed text-white/45 m-0 line-clamp-2 italic">
-            "{movie.overview}"
+        {movie.reason && (
+          <p className="text-sm leading-relaxed text-white/60 m-0 italic">
+            {movie.reason}
           </p>
         )}
         {(flatrate.length > 0 || rentBuy.length > 0) && (
-          <div className="flex flex-wrap gap-2 mt-1.5">
+          <div className="flex flex-wrap gap-2 mt-1">
             {flatrate.map((p) => <ProviderBadge key={p.name} provider={p} highlight />)}
             {rentBuy.map((p) => <ProviderBadge key={p.name} provider={p} />)}
           </div>

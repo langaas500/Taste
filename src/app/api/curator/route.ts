@@ -31,7 +31,8 @@ The user is located in ${regionName} (${region}). When mentioning streaming avai
 
 You MUST return raw JSON (no markdown fences). The JSON has exactly two keys:
 - "message": a warm 2-sentence response. Do NOT list title names here — the app shows title cards automatically.
-- "searches": array of objects like {"query":"The Sopranos","type":"tv"}. Use exact English TMDB titles. "type" is "movie" or "tv".
+- "searches": array of objects like {"query":"The Sopranos","type":"tv","reason":"Mørk maktspill med uforglemmelige karakterer"}. Use exact English TMDB titles. "type" is "movie" or "tv".
+Each search MUST include a "reason": one sentence (max 12 words) explaining why this title matches the user's request. Be specific, not generic. Reference what the user asked for.
 
 When the user wants recommendations, describes a mood, names genres, or mentions shows/movies they like: "searches" MUST have 3-5 items. NEVER empty.
 When the user is just chatting (hi, thanks, haha): "searches" can be empty [].
@@ -102,7 +103,7 @@ async function callCuratorAI(chatHistory: ChatMessage[], lang: string, username:
 
 interface CuratorAIResponse {
   message: string;
-  searches: { query: string; type: "movie" | "tv" }[];
+  searches: { query: string; type: "movie" | "tv"; reason: string }[];
 }
 
 function parseAIResponse(raw: string): CuratorAIResponse {
@@ -110,17 +111,17 @@ function parseAIResponse(raw: string): CuratorAIResponse {
   try {
     const parsed = JSON.parse(cleaned);
     const rawSearches = Array.isArray(parsed.searches) ? parsed.searches.slice(0, 5) : [];
-    // Normalize: handle both {query,type} objects and plain strings
+    // Normalize: handle both {query,type,reason} objects and plain strings
     const searches = rawSearches
       .map((s: unknown) => {
-        if (typeof s === "string") return { query: s, type: "movie" as const };
+        if (typeof s === "string") return { query: s, type: "movie" as const, reason: "" };
         if (s && typeof s === "object" && "query" in s) {
-          const obj = s as { query: string; type?: string };
-          return { query: String(obj.query), type: obj.type === "tv" ? "tv" as const : "movie" as const };
+          const obj = s as { query: string; type?: string; reason?: string };
+          return { query: String(obj.query), type: obj.type === "tv" ? "tv" as const : "movie" as const, reason: typeof obj.reason === "string" ? obj.reason : "" };
         }
         return null;
       })
-      .filter((s: { query: string; type: "movie" | "tv" } | null): s is { query: string; type: "movie" | "tv" } => s !== null && s.query.length > 0);
+      .filter((s: { query: string; type: "movie" | "tv"; reason: string } | null): s is { query: string; type: "movie" | "tv"; reason: string } => s !== null && s.query.length > 0);
     return {
       message: typeof parsed.message === "string" ? parsed.message : "Hmm, something went wrong...",
       searches,
@@ -171,6 +172,7 @@ interface CuratorMovie {
   overview: string;
   vote_average: number;
   providers: WatchProvider[];
+  reason: string;
 }
 
 /* ── Route handler ───────────────────────────────────── */
@@ -251,6 +253,7 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
         overview: top.overview || "",
         vote_average: top.vote_average || 0,
         providers,
+        reason: search.reason || "",
       });
     } catch (e) {
       logger.warn(`TMDB search failed for "${search.query}"`, {
