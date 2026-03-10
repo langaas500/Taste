@@ -54,7 +54,7 @@ async function callCuratorAI(userMessage: string, lang: string, username: string
       method: "POST",
       headers: {
         "x-api-key": env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2025-04-01",
+        "anthropic-version": "2023-06-01",
         "content-type": "application/json",
       },
       body: JSON.stringify({
