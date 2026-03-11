@@ -51,10 +51,7 @@ async function sitemapIndex() {
   const entries: string[] = [];
 
   for (const region of REGIONS) {
-    const country = region.toUpperCase();
-
     for (const type of TYPES) {
-      // Count titles with slugs that have providers in this region
       const { count } = await admin
         .from("titles_cache")
         .select("*", { count: "exact", head: true })

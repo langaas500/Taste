@@ -262,10 +262,12 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
     }
   }
 
-  logger.info("Curator response", { movies: movies.length, elapsed: logger.elapsed() });
+  // Only return titles that have at least one streaming provider in the user's region
+  const available = movies.filter((m) => m.providers.length > 0);
+  logger.info("Curator response", { movies: movies.length, available: available.length, elapsed: logger.elapsed() });
 
   return NextResponse.json({
     message: aiResponse.message,
-    movies,
+    movies: available,
   });
 });

@@ -17,8 +17,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Rewrite /no/(movie|tv)/slug → /_titles/no/... to avoid static /no/ folder collision
-  if (/^\/no\/(movie|tv)\/[a-z0-9-]+$/.test(request.nextUrl.pathname)) {
+  // Rewrite /{region}/(movie|tv)/slug → /seo-titles/... to avoid static folder collision
+  if (/^\/(?:no|dk|fi|se)\/(movie|tv)\/[a-z0-9-]+$/.test(request.nextUrl.pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = `/seo-titles${request.nextUrl.pathname}`;
     return NextResponse.rewrite(url);
@@ -73,7 +73,10 @@ export async function middleware(request: NextRequest) {
   // SEO guide pages — public, no auth required
   const isSeoPage =
     pathname.startsWith("/no/") ||
-    pathname.startsWith("/en/");
+    pathname.startsWith("/en/") ||
+    pathname.startsWith("/se/") ||
+    pathname.startsWith("/dk/") ||
+    pathname.startsWith("/fi/");
 
   // SEO title pages — /no/movie/dune-123, /se/tv/breaking-bad-456 etc.
   const isTitlePage = /^\/(?:no|dk|fi|se)\/(movie|tv)\/[a-z0-9-]+$/.test(pathname);
