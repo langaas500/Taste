@@ -49,22 +49,26 @@ export async function GET(req: NextRequest) {
 async function sitemapIndex() {
   const admin = createSupabaseAdmin();
   const entries: string[] = [];
+  const lastmod = new Date().toISOString();
+
+  // Count once per type — same titles exist across all regions
+  const pageCounts: Record<string, number> = {};
+  for (const type of TYPES) {
+    const { count } = await admin
+      .from("titles_cache")
+      .select("*", { count: "exact", head: true })
+      .eq("type", type)
+      .not("slug", "is", null);
+    pageCounts[type] = Math.max(Math.ceil((count || 0) / PER_PAGE), 1);
+  }
 
   for (const region of REGIONS) {
     for (const type of TYPES) {
-      const { count } = await admin
-        .from("titles_cache")
-        .select("*", { count: "exact", head: true })
-        .eq("type", type)
-        .not("slug", "is", null);
-
-      const totalPages = Math.ceil((count || 0) / PER_PAGE);
-
-      for (let p = 1; p <= Math.max(totalPages, 1); p++) {
+      for (let p = 1; p <= pageCounts[type]; p++) {
         entries.push(
           `  <sitemap>
     <loc>${BASE}/api/sitemap/titles?region=${region}&amp;type=${type}&amp;page=${p}</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
+    <lastmod>${lastmod}</lastmod>
   </sitemap>`,
         );
       }
