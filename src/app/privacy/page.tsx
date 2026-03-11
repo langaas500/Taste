@@ -183,12 +183,12 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-white mb-3">7. Hva vi ikke gjør</h2>
             <p className="mb-1">Logflix:</p>
             <ul className="list-disc pl-5 space-y-0.5 mb-3">
-              <li>Bruker ingen analyseverktøy (ingen Google Analytics, PostHog, Mixpanel e.l.)</li>
+              <li>Bruker PostHog for anonym produktanalyse (sidevisninger og funksjonsbruk) — ingen personlig identifisering, ingen annonsesporing</li>
               <li>Har ingen annonser</li>
               <li>Selger ikke data</li>
               <li>Sender ingen markedsførings-e-post</li>
-              <li>Sporer ikke IP-adresser eller enhetsinformasjon</li>
-              <li>Bruker ingen tracking cookies</li>
+              <li>Sporer ikke IP-adresser eller enhetsinformasjon utover det PostHog samler anonymt</li>
+              <li>Bruker ingen tracking cookies utover autentisering</li>
               <li>Bruker ingen feilrapporteringstjenester (ingen Sentry, Datadog e.l.)</li>
             </ul>
             <p>Kun autentiseringscookies fra Supabase brukes for innlogging.</p>

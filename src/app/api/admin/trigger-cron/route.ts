@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
 import { env } from "@/lib/env";
 
-const ADMIN_EMAILS = ["martinrlangaas@protonmail.com"];
+const ADMIN_EMAILS = env.ADMIN_EMAILS;
 
 export async function POST() {
   try {

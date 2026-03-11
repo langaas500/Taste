@@ -79,4 +79,7 @@ export const env = {
   STRIPE_FOUNDING_PRICE_ID,
   STRIPE_STANDARD_PRICE_ID,
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+
+  // Admin
+  ADMIN_EMAILS: (process.env.ADMIN_EMAILS || "martinrlangaas@protonmail.com").split(",").map(e => e.trim()),
 } as const;

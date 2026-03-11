@@ -6,7 +6,7 @@ import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 /* ── Admin email check ────────────────────────────────── */
-const ADMIN_EMAILS = ["martinrlangaas@protonmail.com"];
+const ADMIN_EMAILS = ["martinrlangaas@protonmail.com"]; // Client-side — env.ts not available here
 
 /* ── Shared glass card style (matches settings page) ──── */
 const glassCard = "rounded-2xl border border-white/[0.06] p-5 transition-all duration-200 hover:border-white/[0.1]";

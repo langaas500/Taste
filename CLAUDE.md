@@ -234,3 +234,114 @@ Hvis en endring:
 - eller endrer auth-modellen
 
 → STOPP og forklar før implementering.
+
+---
+
+## Logflix — Produktoversikt for samarbeidspartnere (11.03.2026)
+
+**logflix.app** — Nordisk plattform for filmlogging, AI-anbefalinger og sosial filmoppdagelse.
+
+### 1. Se Sammen (Watch Together)
+- **URL:** /together — Krever ikke innlogging
+- Tinder-stil sveipematch for par og venner
+- Opprett sesjon → del QR/lenke → sveip uavhengig → gjensidig like = match
+- Runde 1: 25 titler (2 min), Runde 2: 15 titler (1 min), 3 superlikes per runde
+- Filtrer på strømmetjeneste (Netflix, HBO Max, Disney+, Viaplay, TV 2 Play m.fl.)
+- **Solo → Duo:** Start alene, sveip solo, inviter partner underveis (CTA etter 3 swipes). Solo-swipes overføres automatisk til par-sesjonen.
+- **Gratis:** Ubegrenset, ingen konto nødvendig
+
+### 2. Gruppevalg (Group Watch)
+- **URL:** /group — Krever ikke innlogging
+- Samme konsept som Se Sammen, men for 3+ personer med flere avstemningsrunder
+- **Gratis**
+
+### 3. Bibliotek & Logg
+- **URL:** /library — Krever innlogging
+- Sett (med sentiment ★/likt/nøytral/mislikt), Filmebank (episode-tracking), Watchlist, Lister
+- Filtrering: genre, år, type, sortering
+- **Gratis**
+
+### 4. Søk & Oppdagelse
+- **URL:** /search — Gjest-tilgang (begrenset)
+- Tekstsøk mot TMDB (800 000+ titler)
+- Avansert: genre, strømmetjeneste, årstall, skuespiller-filmografi
+- Discovery-rader (trending, populært)
+- **Gratis**
+
+### 5. AI-anbefalinger
+- **URL:** /recommendations — Krever innlogging
+- Personaliserte AI-anbefalinger basert på bibliotek, sveip-gjennom
+- **Gratis: 5 stk (server-side enforced) | Premium: Ubegrenset**
+
+### 6. Curator (AI Film-rådgiver)
+- **URL:** /curator — Krever innlogging
+- Chat-basert AI-filmekspert med filmkort, personlig grunn, strømmeinfo per land
+- Filtrerer bort titler uten tilgjengelig strømmetjeneste i brukerens region
+- **Gratis: 5 meldinger | Premium: Ubegrenset**
+
+### 7. Smaksprofil
+- **URL:** /taste — Krever innlogging
+- AI-generert analyse: "Du liker", "Du unngår", "Tempo & Tone"
+- **Gratis: Forhåndsvisning (blurret) | Premium: Full profil**
+
+### 8. Import
+- **URL:** /timemachine — Krever innlogging
+- Netflix CSV, Trakt.tv OAuth — bulk-import til bibliotek
+- **Gratis**
+
+### 9. Wrapped (Månedsrapport)
+- **URL:** /wrapped — Offentlig, delbar
+- Månedlig oppsummering: titler, genre, sentiment, skuespiller/regissør
+- **Gratis**
+
+### 10. Venner & Sosialt
+- Aktivitetsstrøm (/activity), Sammenlign smak (/compare), Delte lister (/shared)
+- Vennekoblinger via /settings
+- **Gratis**
+
+### 11. Statistikk
+- **URL:** /stats — Krever innlogging
+- Totalt sett, film vs. serie, sentiment, topp genre, gjennomsnittsvurdering
+- **Gratis**
+
+### 12. Strømmetjeneste-info
+- Integrert overalt: søk, bibliotek, Curator, SEO-sider
+- Viser hvor du kan se hver tittel per nordisk land
+- Netflix, HBO Max, Disney+, Apple TV+, Prime Video, Viaplay, TV 2 Play, Paramount+
+- **Gratis**
+
+### 13. SEO-titelsider (Nordisk)
+- **URL:** /no/movie/[slug], /se/tv/[slug], /dk/..., /fi/...
+- Offentlige, ISR (24t), fullt lokalisert (nb/sv/da/fi)
+- Handling, cast, strømmetjenester, mood tags, FAQ-schema, curator-hooks
+- **PostHog-tracking:** SeoPageTracker sender `seo_page_view` med tittel-ID, slug, region og referrer
+- **Gratis**
+
+### 14. Stemningsguider (21 guider × 4 regioner = 84 sider)
+- **URL:** /no/guides/[slug] (+ /se/, /dk/, /fi/)
+- Perfekt for fredagskveld, Se alene i mørket, Filmkveld for to, Krever full oppmerksomhet, Lett og morsom, Tung og tankevekkende, Bra for hele familien, Sen kveld alene, Imponér gjestene, Hyttekveld, Sommerkveld, Reisefilm, Halloweenkveld, Grøssere, Familiekos, Barnefilm, Basert på en sann historie, Kort og konsist, Visuelt mesterverk, Nostalgisk perle, Skjult skatt, Påskekrim
+- **Gratis**
+
+### 15. Premium-modell
+- **Pris:** 29 kr/mnd (Founding Member) via Stripe
+- Alt gratis unntatt: AI-anbefalinger (5 → ubegrenset), Curator (5 → ubegrenset), Smaksprofil (blurret → full)
+
+### 16. Tech Stack
+- Next.js 16 + React 19 + TypeScript + Tailwind
+- Supabase (PostgreSQL + RLS + Auth)
+- TMDB API, Anthropic Claude Sonnet, Trakt.tv OAuth, Stripe
+- Vercel hosting, PostHog analytics
+- 5 språk (no, se, dk, fi, en), 4 nordiske regioner
+
+---
+
+## BRIEFING.md — Rapport til Claude.ai
+
+BRIEFING.md er en kontekstfil i rooten som holdes oppdatert for bruk i Claude.ai-samtaler.
+Claude Code skal IKKE lese denne filen selv — den er kun for ekstern bruk.
+
+### Regler:
+- Oppdater BRIEFING.md automatisk etter hver arbeidsøkt
+- Oppdater den også etter hver commit og hver push
+- Filen skal alltid reflektere faktisk tilstand — ikke planer eller antagelser
+- Skill tydelig mellom hva som er live (pushet) og hva som er committed men ikke pushet

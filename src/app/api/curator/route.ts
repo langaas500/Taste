@@ -5,6 +5,7 @@ import { withLogger } from "@/lib/logger";
 import { tmdbSearch, tmdbWatchProviders } from "@/lib/tmdb";
 import { env } from "@/lib/env";
 import { resolveRegion, REGION_LABELS, type SupportedRegion } from "@/lib/region";
+import { applyRateLimit } from "@/lib/rate-limit";
 
 /* ── AI call ───────────────────────────────────────── */
 
@@ -180,6 +181,9 @@ interface CuratorMovie {
 export const POST = withLogger("/api/curator", async (req: NextRequest, { logger }) => {
   const user = await requireUser();
   logger.setUserId(user.id);
+
+  const limited = await applyRateLimit("curator", user.id);
+  if (limited) return limited;
 
   let body;
   try { body = await req.json(); } catch {
