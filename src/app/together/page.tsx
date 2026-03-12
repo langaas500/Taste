@@ -949,16 +949,24 @@ export default function WTBetaPage() {
   }
 
   async function handleShare(titleName: string) {
-    const shareUrl = "https://logflix.app/together";
+    // Build SEO title page URL for the matched title (has rich OG images)
+    const fw = finalWinner;
+    let shareUrl = "https://logflix.app/together";
+    if (fw) {
+      const slugBase = titleName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").replace(/-{2,}/g, "-");
+      const slug = slugBase ? `${slugBase}-${fw.tmdb_id}` : `${fw.tmdb_id}`;
+      const mediaType = fw.type === "tv" ? "tv" : "movie";
+      shareUrl = `https://logflix.app/no/${mediaType}/${slug}`;
+    }
     const shareText = `${t(locale, "winner", "shareText")} ${titleName}`;
     if (typeof navigator !== "undefined" && navigator.share) {
-      try { await navigator.share({ title: titleName, text: shareText, url: shareUrl }); track("invite_shared", { session_id: sessionId, method: "native_share" }); } catch { /* cancelled */ }
+      try { await navigator.share({ title: titleName, text: shareText, url: shareUrl }); track("match_shared", { session_id: sessionId, tmdb_id: fw?.tmdb_id, method: "native_share" }); } catch { /* cancelled */ }
     } else {
       try {
         await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
         setShareState("copied");
         setTimeout(() => setShareState("idle"), 2000);
-        track("invite_copy_link", { session_id: sessionId, method: "copy" });
+        track("match_shared", { session_id: sessionId, tmdb_id: fw?.tmdb_id, method: "copy" });
       } catch { /* ignore */ }
     }
   }
