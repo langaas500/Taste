@@ -27,6 +27,14 @@ const REGION_COUNTRY: Record<string, string> = {
 
 type Params = { region: string; slug: string };
 
+function buildOgImageUrl(title: string, posterPath: string | null, year: number | null, type: "movie" | "tv", rating: number | null): string {
+  const params = new URLSearchParams({ title, type });
+  if (posterPath) params.set("poster", `https://image.tmdb.org/t/p/w780${posterPath}`);
+  if (year) params.set("year", String(year));
+  if (rating && rating > 0) params.set("rating", rating.toFixed(1));
+  return `https://logflix.app/api/og/title?${params}`;
+}
+
 /* ── Data fetching ────────────────────────────────────── */
 
 async function fetchTitleData(slug: string) {
@@ -140,14 +148,13 @@ export async function generateMetadata({
       description,
       url: canonical,
       type: "video.movie",
-      images: title.poster_path
-        ? [`https://image.tmdb.org/t/p/w780${title.poster_path}`]
-        : undefined,
+      images: [{ url: buildOgImageUrl(title.title, title.poster_path, title.year, "movie", title.vote_average), width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
       title: displayTitle,
       description: description.slice(0, 200),
+      images: [buildOgImageUrl(title.title, title.poster_path, title.year, "movie", title.vote_average)],
     },
   };
 }
