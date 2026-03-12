@@ -230,6 +230,7 @@ export default async function TvPage({
       backdropPath={title.backdrop_path}
       genres={genres}
       voteAverage={title.vote_average}
+      voteCount={title.vote_count ?? null}
       type="tv"
       tmdbId={title.tmdb_id}
       slug={title.slug || slug}

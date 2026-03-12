@@ -24,6 +24,7 @@ export interface TitlePageProps {
   curatorBody: string | null;
   curatorVerdict: string | null;
   moodTags: string[] | null;
+  voteCount: number | null;
   similarTitles?: { tmdb_id: number; type: string; title: string; poster_path: string | null; slug: string; year: number | null }[];
 }
 
@@ -301,6 +302,50 @@ function buildFaqSchema(props: TitlePageProps) {
   };
 }
 
+function buildWatchActionSchema(props: TitlePageProps) {
+  const { title, year, overview, posterPath, voteAverage, voteCount, type, providers } = props;
+  const flatrate = providers?.flatrate || [];
+
+  const schema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": type === "movie" ? "Movie" : "TVSeries",
+    name: title,
+    ...(year && { datePublished: String(year) }),
+    ...(overview && { description: overview }),
+    ...(posterPath && { image: `https://image.tmdb.org/t/p/w500${posterPath}` }),
+  };
+
+  if (voteAverage != null && voteAverage > 0 && voteCount != null && voteCount > 0) {
+    schema.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: voteAverage.toFixed(1),
+      bestRating: "10",
+      ratingCount: String(voteCount),
+    };
+  }
+
+  if (flatrate.length > 0) {
+    schema.potentialAction = {
+      "@type": "WatchAction",
+      target: flatrate.map((p) => ({
+        "@type": "EntryPoint",
+        urlTemplate: providers?.link || "https://logflix.app",
+        actionPlatform: "http://schema.org/DesktopWebPlatform",
+      })),
+      expectsAcceptanceOf: flatrate.map((p) => ({
+        "@type": "Offer",
+        availableAtOrFrom: {
+          "@type": "ServiceChannel",
+          name: p.provider_name,
+          ...(p.logo_path && { image: `https://image.tmdb.org/t/p/w92${p.logo_path}` }),
+        },
+      })),
+    };
+  }
+
+  return schema;
+}
+
 /* ── Provider Card ────────────────────────────────────── */
 
 function ProviderLogo({ provider }: { provider: WatchProvider }) {
@@ -397,6 +442,12 @@ export default function TitlePageContent(props: TitlePageProps) {
             ],
           }),
         }}
+      />
+
+      {/* JSON-LD Movie/TVSeries + WatchAction */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildWatchActionSchema(props)) }}
       />
 
       <div className="mx-auto max-w-5xl px-4 pb-20 pt-8">
