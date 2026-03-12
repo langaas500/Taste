@@ -6,14 +6,15 @@
 **12.03.2026**
 
 ## Git-status
-- **Siste push:** `9291355 feat: dynamisk OG-image og forbedret deling for Se Sammen match` (12.03.2026)
+- **Siste push:** `374ea76 fix: improve title OG image layout and provider text` (12.03.2026)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 
 ## Hva er gjort nylig (siste 10 endringer)
 
-1. [pushet] **Dynamisk OG-image + deling for Se Sammen match** — Ny edge API-route `/api/og/match` genererer 1200x630 OG-bilde med poster-bakgrunn, "Det er en match!"-heading, tittel og Logflix-branding. Del-knappen peker nå til tittelens SEO-side (med rik OG) istedenfor generisk /together-lenke.
-2. [pushet] **Dynamisk OG-image for tittelsider** — Ny edge API-route `/api/og/title` genererer 1200x630 OG-bilde med poster-bakgrunn, mørk overlay, tittel, år, TMDB-rating og Logflix-branding. Movie + TV page metadata peker nå hit istedenfor rå TMDB-poster.
+1. [pushet] **Forbedret OG-image layout for tittelsider** — Tittel flyttet til bunn-venstre, provider-tekst vises kun når `?provider=` er satt, Logflix-logo fra public/ nederst høyre.
+2. [pushet] **Dynamisk OG-image + deling for Se Sammen match** — Ny edge API-route `/api/og/match` genererer 1200x630 OG-bilde med poster-bakgrunn, "Det er en match!"-heading, tittel og Logflix-branding. Del-knappen peker nå til tittelens SEO-side (med rik OG) istedenfor generisk /together-lenke.
+3. [pushet] **Dynamisk OG-image for tittelsider** — Ny edge API-route `/api/og/title` genererer 1200x630 OG-bilde med poster-bakgrunn, mørk overlay, tittel, år, TMDB-rating og Logflix-branding. Movie + TV page metadata peker nå hit istedenfor rå TMDB-poster.
 2. [pushet] **Dynamisk OG-image for Wrapped** — Ny edge API-route `/api/og/wrapped` genererer 1200x630 OG-bilde med @vercel/og. Viser antall filmer, topp-sjanger, måned/år og brukernavn. Mørkt design med rød glow. layout.tsx injiserer og:image metadata for alle wrapped/[month]-sider.
 2. [pushet] **WatchAction JSON-LD schema** — Alle tittelsider (movie + TV) har nå Movie/TVSeries schema med AggregateRating og WatchAction. Strømmetjenester mappes til availableChannel. Utelater potentialAction hvis ingen flatrate-providers. Gir potensielt Watch-knapp i Google-søkeresultater.
 2. [pushet] **Personvern, curator rate limit, admin-email** — Personvernsiden nevner nå PostHog. Curator har rate limiting (10 req/60s). ADMIN_EMAILS i env.ts for API-ruter.
@@ -24,7 +25,6 @@
 7. [pushet] **Curator filtrerer utilgjengelige titler** — Kun titler med strømmetjeneste i brukerens region vises.
 8. [pushet] **Påskekrim-guider i sitemap** — Full hreflang for alle 4 regioner.
 9. [pushet] **tmdbSearch-fix** — Returnerte objekt istedenfor array, Curator filmkort krasjet.
-10. [pushet] **Curator-modell oppdatert** — `claude-haiku-4-5-20251001` med korrekt anthropic-version header.
 
 ## Tilstand per modul
 
