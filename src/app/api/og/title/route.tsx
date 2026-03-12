@@ -16,6 +16,8 @@ export async function GET(req: NextRequest) {
   const typeLabel = type === "tv" ? "Serie" : "Film";
   const hasPoster = poster.length > 0;
 
+  const logoUrl = "https://logflix.app/logo.png";
+
   return new ImageResponse(
     (
       <div
@@ -141,83 +143,62 @@ export async function GET(req: NextRequest) {
             )}
           </div>
 
-          {/* Middle: Title */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div
-              style={{
-                fontSize: title.length > 30 ? 48 : 60,
-                fontWeight: 900,
-                color: "#fff",
-                lineHeight: 1.1,
-                maxWidth: 900,
-                textShadow: "0 2px 20px rgba(0,0,0,0.5)",
-              }}
-            >
-              {title}
-            </div>
-
-            {provider && (
+          {/* Bottom section: title + provider on left, logo on right */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+            {/* Left: Title + provider */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 850 }}>
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  marginTop: 4,
+                  fontSize: title.length > 30 ? 48 : 60,
+                  fontWeight: 900,
+                  color: "#fff",
+                  lineHeight: 1.1,
+                  textShadow: "0 2px 20px rgba(0,0,0,0.5)",
                 }}
               >
+                {title}
+              </div>
+
+              {provider && (
                 <div
                   style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: "#22c55e",
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 600,
-                    color: "rgba(255,255,255,0.7)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginTop: 4,
                   }}
                 >
-                  Tilgjengelig på {provider}
-                </span>
-              </div>
-            )}
-          </div>
+                  <div
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: "#22c55e",
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 600,
+                      color: "rgba(255,255,255,0.7)",
+                    }}
+                  >
+                    Tilgjengelig på {provider}
+                  </span>
+                </div>
+              )}
+            </div>
 
-          {/* Bottom: Logflix branding */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-            <div
+            {/* Right: Logo */}
+            <img
+              src={logoUrl}
+              alt=""
               style={{
-                fontSize: 15,
-                fontWeight: 500,
-                color: "rgba(255,255,255,0.2)",
-                letterSpacing: "0.05em",
+                height: 44,
+                objectFit: "contain",
+                flexShrink: 0,
               }}
-            >
-              Se hvor du kan strømme denne tittelen
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div
-                style={{
-                  width: 40,
-                  height: 3,
-                  borderRadius: 2,
-                  background: "#E50914",
-                }}
-              />
-              <div
-                style={{
-                  fontSize: 22,
-                  fontWeight: 800,
-                  letterSpacing: "0.08em",
-                  color: "#E50914",
-                }}
-              >
-                LOGFLIX
-              </div>
-            </div>
+            />
           </div>
         </div>
       </div>
