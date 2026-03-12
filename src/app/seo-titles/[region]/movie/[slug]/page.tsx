@@ -27,11 +27,12 @@ const REGION_COUNTRY: Record<string, string> = {
 
 type Params = { region: string; slug: string };
 
-function buildOgImageUrl(title: string, posterPath: string | null, year: number | null, type: "movie" | "tv", rating: number | null): string {
+function buildOgImageUrl(title: string, posterPath: string | null, year: number | null, type: "movie" | "tv", rating: number | null, provider?: string | null): string {
   const params = new URLSearchParams({ title, type });
   if (posterPath) params.set("poster", `https://image.tmdb.org/t/p/w780${posterPath}`);
   if (year) params.set("year", String(year));
   if (rating && rating > 0) params.set("rating", rating.toFixed(1));
+  if (provider) params.set("provider", provider);
   return `https://logflix.app/api/og/title?${params}`;
 }
 
@@ -128,6 +129,10 @@ export async function generateMetadata({
     ? `${t.metaDesc(title.title, regionName)} ${title.overview.slice(0, 140)}...`
     : t.metaDescFallback(title.title, regionName);
 
+  const country = REGION_COUNTRY[region] || "NO";
+  const providers = await fetchProviders(title.tmdb_id, country);
+  const providerName = providers?.flatrate?.[0]?.provider_name ?? null;
+
   const canonical = `https://logflix.app/${region}/movie/${title.slug || slug}`;
 
   const alternates: Record<string, string> = {};
@@ -135,6 +140,8 @@ export async function generateMetadata({
     alternates[REGION_HREFLANG[r]] = `https://logflix.app/${r}/movie/${title.slug || slug}`;
   }
   alternates["x-default"] = `https://logflix.app/no/movie/${title.slug || slug}`;
+
+  const ogImage = buildOgImageUrl(title.title, title.poster_path, title.year, "movie", title.vote_average, providerName);
 
   return {
     title: pageTitle,
@@ -148,13 +155,13 @@ export async function generateMetadata({
       description,
       url: canonical,
       type: "video.movie",
-      images: [{ url: buildOgImageUrl(title.title, title.poster_path, title.year, "movie", title.vote_average), width: 1200, height: 630 }],
+      images: [{ url: ogImage, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
       title: displayTitle,
       description: description.slice(0, 200),
-      images: [buildOgImageUrl(title.title, title.poster_path, title.year, "movie", title.vote_average)],
+      images: [ogImage],
     },
   };
 }
