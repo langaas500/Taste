@@ -6,13 +6,14 @@
 **12.03.2026**
 
 ## Git-status
-- **Siste push:** `374ea76 fix: improve title OG image layout and provider text` (12.03.2026)
+- **Siste push:** `593be0a feat: OG-image inkluderer provider-navn automatisk` (12.03.2026)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 
 ## Hva er gjort nylig (siste 10 endringer)
 
-1. [pushet] **Forbedret OG-image layout for tittelsider** — Tittel flyttet til bunn-venstre, provider-tekst vises kun når `?provider=` er satt, Logflix-logo fra public/ nederst høyre.
+1. [pushet] **OG-image viser provider automatisk** — generateMetadata henter providers og sender første flatrate provider_name til OG-bildet. Vises som "Tilgjengelig på X". Gjelder movie + TV.
+2. [pushet] **Forbedret OG-image layout for tittelsider** — Tittel flyttet til bunn-venstre, provider-tekst vises kun når `?provider=` er satt, Logflix-logo fra public/ nederst høyre.
 2. [pushet] **Dynamisk OG-image + deling for Se Sammen match** — Ny edge API-route `/api/og/match` genererer 1200x630 OG-bilde med poster-bakgrunn, "Det er en match!"-heading, tittel og Logflix-branding. Del-knappen peker nå til tittelens SEO-side (med rik OG) istedenfor generisk /together-lenke.
 3. [pushet] **Dynamisk OG-image for tittelsider** — Ny edge API-route `/api/og/title` genererer 1200x630 OG-bilde med poster-bakgrunn, mørk overlay, tittel, år, TMDB-rating og Logflix-branding. Movie + TV page metadata peker nå hit istedenfor rå TMDB-poster.
 2. [pushet] **Dynamisk OG-image for Wrapped** — Ny edge API-route `/api/og/wrapped` genererer 1200x630 OG-bilde med @vercel/og. Viser antall filmer, topp-sjanger, måned/år og brukernavn. Mørkt design med rød glow. layout.tsx injiserer og:image metadata for alle wrapped/[month]-sider.
@@ -24,7 +25,7 @@
 6. [pushet] **Curator viser personlig grunn** — Hver anbefaling inkluderer personlig grunn tilpasset smak. Filmkortene forenklet.
 7. [pushet] **Curator filtrerer utilgjengelige titler** — Kun titler med strømmetjeneste i brukerens region vises.
 8. [pushet] **Påskekrim-guider i sitemap** — Full hreflang for alle 4 regioner.
-9. [pushet] **tmdbSearch-fix** — Returnerte objekt istedenfor array, Curator filmkort krasjet.
+9. [pushet] **Curator-modell oppdatert** — `claude-haiku-4-5-20251001` med korrekt anthropic-version header.
 
 ## Tilstand per modul
 
