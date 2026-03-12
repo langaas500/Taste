@@ -6,13 +6,14 @@
 **12.03.2026**
 
 ## Git-status
-- **Siste push:** `31faba3 feat: dynamisk OG-image for tittelsider via @vercel/og` (12.03.2026)
+- **Siste push:** `9291355 feat: dynamisk OG-image og forbedret deling for Se Sammen match` (12.03.2026)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 
 ## Hva er gjort nylig (siste 10 endringer)
 
-1. [pushet] **Dynamisk OG-image for tittelsider** — Ny edge API-route `/api/og/title` genererer 1200x630 OG-bilde med poster-bakgrunn, mørk overlay, tittel, år, TMDB-rating og Logflix-branding. Movie + TV page metadata peker nå hit istedenfor rå TMDB-poster.
+1. [pushet] **Dynamisk OG-image + deling for Se Sammen match** — Ny edge API-route `/api/og/match` genererer 1200x630 OG-bilde med poster-bakgrunn, "Det er en match!"-heading, tittel og Logflix-branding. Del-knappen peker nå til tittelens SEO-side (med rik OG) istedenfor generisk /together-lenke.
+2. [pushet] **Dynamisk OG-image for tittelsider** — Ny edge API-route `/api/og/title` genererer 1200x630 OG-bilde med poster-bakgrunn, mørk overlay, tittel, år, TMDB-rating og Logflix-branding. Movie + TV page metadata peker nå hit istedenfor rå TMDB-poster.
 2. [pushet] **Dynamisk OG-image for Wrapped** — Ny edge API-route `/api/og/wrapped` genererer 1200x630 OG-bilde med @vercel/og. Viser antall filmer, topp-sjanger, måned/år og brukernavn. Mørkt design med rød glow. layout.tsx injiserer og:image metadata for alle wrapped/[month]-sider.
 2. [pushet] **WatchAction JSON-LD schema** — Alle tittelsider (movie + TV) har nå Movie/TVSeries schema med AggregateRating og WatchAction. Strømmetjenester mappes til availableChannel. Utelater potentialAction hvis ingen flatrate-providers. Gir potensielt Watch-knapp i Google-søkeresultater.
 2. [pushet] **Personvern, curator rate limit, admin-email** — Personvernsiden nevner nå PostHog. Curator har rate limiting (10 req/60s). ADMIN_EMAILS i env.ts for API-ruter.
@@ -27,7 +28,7 @@
 
 ## Tilstand per modul
 
-- **/together (Se Sammen):** ✅ Stabil. Tinder-sveip for par, Solo→Duo upgrade (CTA etter 3 swipes, solo-swipes replayed til par-sesjon), QR-deling, provider-filtrering. Ingen konto nødvendig.
+- **/together (Se Sammen):** ✅ Stabil. Tinder-sveip for par, Solo→Duo upgrade (CTA etter 3 swipes, solo-swipes replayed til par-sesjon), QR-deling, provider-filtrering, match-deling med rik OG-image. Ingen konto nødvendig.
 - **/group:** ✅ Stabil. Multi-person avstemning (3+), flere runder.
 - **/api:** ✅ Fungerer. Alle ruter har feilhåndtering. Backfill-endepunkter beskyttet med `BACKFILL_SECRET`.
 - **/api/curator:** ✅ Fungerer. Rate limiting lagt til (10 req/60s).
