@@ -6,7 +6,7 @@
 **13.03.2026**
 
 ## Git-status
-- **Siste push:** (oppdateres etter push)
+- **Siste push:** `7ad7e37 fix: force index,follow on sitemap.xml to fix GSC noindex issue` (13.03.2026)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 
