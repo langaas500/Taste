@@ -18,6 +18,10 @@ export function GET() {
 </sitemapindex>`;
 
   return new Response(xml, {
-    headers: { "Content-Type": "application/xml; charset=utf-8" },
+    headers: {
+      "Content-Type": "application/xml; charset=utf-8",
+      "X-Robots-Tag": "index, follow",
+      "Cache-Control": "public, s-maxage=86400, stale-while-revalidate",
+    },
   });
 }

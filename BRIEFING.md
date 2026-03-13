@@ -3,16 +3,17 @@
 > Denne filen er IKKE for kode-agenten (se CLAUDE.md). Den er kun til ekstern AI-assistent for rask kontekst uten kodebase-tilgang.
 
 ## Sist oppdatert
-**12.03.2026**
+**13.03.2026**
 
 ## Git-status
-- **Siste push:** `593be0a feat: OG-image inkluderer provider-navn automatisk` (12.03.2026)
+- **Siste push:** (oppdateres etter push)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 
 ## Hva er gjort nylig (siste 10 endringer)
 
-1. [pushet] **OG-image viser provider automatisk** — generateMetadata henter providers og sender første flatrate provider_name til OG-bildet. Vises som "Tilgjengelig på X". Gjelder movie + TV.
+1. [pushet] **Sitemap noindex-fix** — Alle sitemap-ruter (index, guides, titles) returnerer nå `X-Robots-Tag: index, follow` og `Cache-Control: public, s-maxage=86400`. Fikser GSC noindex-problem.
+2. [pushet] **OG-image viser provider automatisk** — generateMetadata henter providers og sender første flatrate provider_name til OG-bildet. Vises som "Tilgjengelig på X". Gjelder movie + TV.
 2. [pushet] **Forbedret OG-image layout for tittelsider** — Tittel flyttet til bunn-venstre, provider-tekst vises kun når `?provider=` er satt, Logflix-logo fra public/ nederst høyre.
 2. [pushet] **Dynamisk OG-image + deling for Se Sammen match** — Ny edge API-route `/api/og/match` genererer 1200x630 OG-bilde med poster-bakgrunn, "Det er en match!"-heading, tittel og Logflix-branding. Del-knappen peker nå til tittelens SEO-side (med rik OG) istedenfor generisk /together-lenke.
 3. [pushet] **Dynamisk OG-image for tittelsider** — Ny edge API-route `/api/og/title` genererer 1200x630 OG-bilde med poster-bakgrunn, mørk overlay, tittel, år, TMDB-rating og Logflix-branding. Movie + TV page metadata peker nå hit istedenfor rå TMDB-poster.

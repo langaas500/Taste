@@ -81,7 +81,11 @@ ${entries.join("\n")}
 </sitemapindex>`;
 
   return new Response(xml, {
-    headers: { "Content-Type": "application/xml; charset=utf-8" },
+    headers: {
+      "Content-Type": "application/xml; charset=utf-8",
+      "X-Robots-Tag": "index, follow",
+      "Cache-Control": "public, s-maxage=86400, stale-while-revalidate",
+    },
   });
 }
 
@@ -106,7 +110,11 @@ async function titleSitemap(region: string, type: "movie" | "tv", page: number) 
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 </urlset>`;
     return new Response(xml, {
-      headers: { "Content-Type": "application/xml; charset=utf-8" },
+      headers: {
+        "Content-Type": "application/xml; charset=utf-8",
+        "X-Robots-Tag": "index, follow",
+        "Cache-Control": "public, s-maxage=86400, stale-while-revalidate",
+      },
     });
   }
 
@@ -138,6 +146,10 @@ ${urls.join("\n")}
 </urlset>`;
 
   return new Response(xml, {
-    headers: { "Content-Type": "application/xml; charset=utf-8" },
+    headers: {
+      "Content-Type": "application/xml; charset=utf-8",
+      "X-Robots-Tag": "index, follow",
+      "Cache-Control": "public, s-maxage=86400, stale-while-revalidate",
+    },
   });
 }
