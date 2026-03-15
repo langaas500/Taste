@@ -6,13 +6,14 @@
 **13.03.2026**
 
 ## Git-status
-- **Siste push:** `7ad7e37 fix: force index,follow on sitemap.xml to fix GSC noindex issue` (13.03.2026)
+- **Siste push:** `feat: fix sitemap pagination to expose all titles` (13.03.2026)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 
 ## Hva er gjort nylig (siste 10 endringer)
 
-1. [pushet] **Sitemap noindex-fix** — Alle sitemap-ruter (index, guides, titles) returnerer nå `X-Robots-Tag: index, follow` og `Cache-Control: public, s-maxage=86400`. Fikser GSC noindex-problem.
+1. [pushet] **Sitemap paginering fikset** — Hovednivå sitemapindex (`/api/sitemap`) genererer nå dynamisk alle pages per region×type direkte fra DB-count istedenfor å peke til nested sitemapindex. Google ser nå alle titler.
+2. [pushet] **Sitemap noindex-fix** — Alle sitemap-ruter (index, guides, titles) returnerer nå `X-Robots-Tag: index, follow` og `Cache-Control: public, s-maxage=86400`. Fikser GSC noindex-problem.
 2. [pushet] **OG-image viser provider automatisk** — generateMetadata henter providers og sender første flatrate provider_name til OG-bildet. Vises som "Tilgjengelig på X". Gjelder movie + TV.
 2. [pushet] **Forbedret OG-image layout for tittelsider** — Tittel flyttet til bunn-venstre, provider-tekst vises kun når `?provider=` er satt, Logflix-logo fra public/ nederst høyre.
 2. [pushet] **Dynamisk OG-image + deling for Se Sammen match** — Ny edge API-route `/api/og/match` genererer 1200x630 OG-bilde med poster-bakgrunn, "Det er en match!"-heading, tittel og Logflix-branding. Del-knappen peker nå til tittelens SEO-side (med rik OG) istedenfor generisk /together-lenke.
