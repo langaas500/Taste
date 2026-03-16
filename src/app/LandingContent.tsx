@@ -613,12 +613,14 @@ export default function LandingContent({ locale }: { locale: Locale }) {
               className="landing-fade-5 landing-login-link"
               style={{
                 fontSize: 13,
-                fontWeight: 400,
-                color: "rgba(255,255,255,0.24)",
+                fontWeight: 500,
+                color: "rgba(255,255,255,0.50)",
                 marginTop: 18,
                 textDecoration: "none",
-                padding: "6px 0",
+                padding: "8px 20px",
                 display: "inline-block",
+                border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: 8,
               }}
             >
               {s.login}
