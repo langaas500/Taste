@@ -600,6 +600,7 @@ export default function SwipeMatchDemo({
         }}
       >
         {/* Person 1 */}
+        <div style={{ transform: "rotate(-18deg)", transformOrigin: "bottom center" }}>
         <div
           style={{
             borderRadius: 26,
@@ -624,6 +625,7 @@ export default function SwipeMatchDemo({
             </div>
             <ActionButtons showLike={p1BtnLike} showNope={p1BtnNope} />
           </PhoneFrame>
+        </div>
         </div>
 
         {/* Match indicator between phones */}
@@ -684,6 +686,7 @@ export default function SwipeMatchDemo({
         </div>
 
         {/* Person 2 */}
+        <div style={{ transform: "rotate(18deg)", transformOrigin: "bottom center" }}>
         <div
           style={{
             borderRadius: 26,
@@ -708,6 +711,7 @@ export default function SwipeMatchDemo({
             </div>
             <ActionButtons showLike={p2BtnLike} showNope={p2BtnNope} />
           </PhoneFrame>
+        </div>
         </div>
       </div>
 
