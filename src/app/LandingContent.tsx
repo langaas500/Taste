@@ -82,6 +82,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         alignItems: "center",
         position: "relative",
         overflow: "hidden",
+        background: "radial-gradient(ellipse 60% 50% at 50% 30%, rgba(255,42,42,0.08) 0%, transparent 70%) #0a0a0a",
       }}
     >
       <style
@@ -141,6 +142,15 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         .landing-cta-v2:active {
           transform: translateY(0);
           box-shadow: none;
+        }
+
+        @keyframes landing-cta-pulse {
+          0%, 100% { box-shadow: 0 0 20px rgba(255,42,42,0.4); }
+          50% { box-shadow: 0 0 30px rgba(255,42,42,0.6); }
+        }
+        .landing-cta-v2 {
+          box-shadow: 0 0 20px rgba(255,42,42,0.4);
+          animation: landing-cta-pulse 2s ease-in-out infinite;
         }
 
         .landing-warm-spot {
@@ -436,7 +446,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           src="/logo.png"
           alt="Logflix"
           className="landing-logo-img"
-          style={{ height: 128, width: "auto", opacity: 0.9, position: "relative", zIndex: 1, filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.6))" }}
+          style={{ height: 102, width: "auto", opacity: 0.9, position: "relative", zIndex: 1, filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.6))" }}
         />
         <p className="hidden lg:block" style={{
           fontSize: 11,
@@ -551,7 +561,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             </p>
 
             {/* ── SWIPE DEMO (mobile only) ── */}
-            <div className="lg:hidden landing-mobile-demo-clip landing-fade-3">
+            <div className="lg:hidden landing-mobile-demo-clip landing-fade-3" style={{ filter: "brightness(1.2) contrast(1.1)" }}>
               <div className="demo-scaler">
                 <SwipeMatchDemo locale={locale} />
               </div>
@@ -587,49 +597,15 @@ export default function LandingContent({ locale }: { locale: Locale }) {
                 fontWeight: 400,
                 color: "rgba(255,255,255,0.45)",
                 marginTop: 10,
+                lineHeight: 1.6,
+                textAlign: "center",
               }}
             >
               {s.trust}
-            </p>
-
-            <p
-              className="landing-fade-4 hidden lg:block"
-              style={{
-                fontSize: 13,
-                fontWeight: 500,
-                fontStyle: "italic",
-                color: "rgba(255,200,150,0.50)",
-                marginTop: 14,
-              }}
-            >
-              {s.social}
-            </p>
-
-            <p
-              className="landing-fade-4 hidden lg:block"
-              style={{
-                fontSize: 13,
-                fontWeight: 400,
-                color: "rgba(255,255,255,0.50)",
-                marginTop: 12,
-                lineHeight: 1.55,
-                maxWidth: 560,
-              }}
-            >
-              {s.support}
-            </p>
-
-            <p
-              className="landing-fade-5 hidden lg:block"
-              style={{
-                fontSize: 12,
-                fontWeight: 500,
-                color: "rgba(255,255,255,0.40)",
-                letterSpacing: "0.04em",
-                marginTop: 10,
-              }}
-            >
-              {s.steps}
+              <br />
+              {locale === "no"
+                ? "Fungerer på Netflix, Prime Video, Disney+ og mer."
+                : "Works with Netflix, Prime Video, Disney+ and more."}
             </p>
 
             <Link
@@ -673,7 +649,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           </div>
 
           {/* ── SWIPE DEMO (desktop only) ── */}
-          <div className="hidden lg:flex landing-fade-6" style={{ alignSelf: "center", justifyContent: "center", transform: "scale(1.15)", transformOrigin: "center center" }}>
+          <div className="hidden lg:flex landing-fade-6" style={{ alignSelf: "center", justifyContent: "center", transform: "scale(1.15)", transformOrigin: "center center", filter: "brightness(1.2) contrast(1.1)" }}>
             <SwipeMatchDemo locale={locale} />
           </div>
         </div>
