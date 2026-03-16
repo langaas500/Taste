@@ -3,16 +3,17 @@
 > Denne filen er IKKE for kode-agenten (se CLAUDE.md). Den er kun til ekstern AI-assistent for rask kontekst uten kodebase-tilgang.
 
 ## Sist oppdatert
-**13.03.2026**
+**16.03.2026**
 
 ## Git-status
-- **Siste push:** `feat: fix sitemap pagination to expose all titles` (13.03.2026)
+- **Siste push:** `feat: guide hub pages per region` (16.03.2026)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 
 ## Hva er gjort nylig (siste 10 endringer)
 
-1. [pushet] **Sitemap paginering fikset** — Hovednivå sitemapindex (`/api/sitemap`) genererer nå dynamisk alle pages per region×type direkte fra DB-count istedenfor å peke til nested sitemapindex. Google ser nå alle titler.
+1. [pushet] **Guide hub-sider** — Ny `/[region]/guides` side som lister alle 22 guider gruppert i 4 kategorier (For to, Alene, Familie & venner, Stemning & sjanger). Glassmorphism-kort, lokalisert metadata+hreflang, BreadcrumbList JSON-LD. Forbedrer intern oppdagelse av guider.
+2. [pushet] **Sitemap paginering fikset** — Hovednivå sitemapindex (`/api/sitemap`) genererer nå dynamisk alle pages per region×type direkte fra DB-count istedenfor å peke til nested sitemapindex. Google ser nå alle titler.
 2. [pushet] **Sitemap noindex-fix** — Alle sitemap-ruter (index, guides, titles) returnerer nå `X-Robots-Tag: index, follow` og `Cache-Control: public, s-maxage=86400`. Fikser GSC noindex-problem.
 2. [pushet] **OG-image viser provider automatisk** — generateMetadata henter providers og sender første flatrate provider_name til OG-bildet. Vises som "Tilgjengelig på X". Gjelder movie + TV.
 2. [pushet] **Forbedret OG-image layout for tittelsider** — Tittel flyttet til bunn-venstre, provider-tekst vises kun når `?provider=` er satt, Logflix-logo fra public/ nederst høyre.
@@ -37,7 +38,7 @@
 - **/api/curator:** ✅ Fungerer. Rate limiting lagt til (10 req/60s).
 - **SEO / middleware:** ✅ Fikset. Alle 4 regioner rewritet korrekt. ISR 24t. 3 JSON-LD schemas (FAQPage, BreadcrumbList, Movie/TVSeries+WatchAction). SeoPageTracker sender `seo_page_view` til PostHog.
 - **Premium / Stripe:** ✅ Stabil. 29 kr/mnd Founding Member. Server-side enforcement: `FREE_REC_LIMIT = 5` i recommendations/route.ts, 5 Curator-meldinger, blurret smaksprofil.
-- **Lokalisering:** ✅ 5 språk (no, se, dk, fi, en). 21 stemningsguider × 4 regioner = 84 lokaliserte guide-sider.
+- **Lokalisering:** ✅ 5 språk (no, se, dk, fi, en). 22 stemningsguider × 4 regioner = 88 lokaliserte guide-sider + 4 hub-sider.
 - **Analytics / PostHog:** ✅ Integrert app-wide via PostHogProvider i root layout. SeoPageTracker på alle titelsider. Personvernsiden oppdatert til å nevne PostHog.
 - **Settings:** ✅ Stabil. Vennekoblinger, region, strømmetjenester, eksport, Trakt-kobling.
 
