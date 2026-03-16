@@ -44,19 +44,19 @@ const FILMS: Film[] = [
    Film 2: P1 Nope, P2 Like
    Film 3: Both Like → MATCH (holds indefinitely) */
 const STEP_TIMINGS = [
-  1200, // Step 0  – both browsing same title
-  600,  // Step 1  – P1 drags right (considering)
-  400,  // Step 2  – P1 Like + fly out
-  700,  // Step 3  – P2 drags left (disagrees)
-  500,  // Step 4  – P2 Nope + fly out
-  600,  // Step 5  – new title loads
-  600,  // Step 6  – P1 drags left
-  500,  // Step 7  – P1 Nope + fly out
-  400,  // Step 8  – P2 drags right
-  500,  // Step 9  – P2 Like + fly out
-  300,  // Step 10 – instant new title
-  400,  // Step 11 – both drag right together
-  400,  // Step 12 – BOTH Like + fly
+  1400, // Step 0  – both browsing same title
+  800,  // Step 1  – P1 drags right (considering)
+  500,  // Step 2  – P1 Like + fly out
+  900,  // Step 3  – P2 drags left (disagrees)
+  600,  // Step 4  – P2 Nope + fly out
+  800,  // Step 5  – new title loads
+  800,  // Step 6  – P1 drags left
+  600,  // Step 7  – P1 Nope + fly out
+  500,  // Step 8  – P2 drags right
+  600,  // Step 9  – P2 Like + fly out
+  500,  // Step 10 – instant new title
+  600,  // Step 11 – both drag right together
+  500,  // Step 12 – BOTH Like + fly
   0,    // Step 13 – MATCH (frozen — holds indefinitely)
 ];
 
@@ -112,10 +112,10 @@ function SwipeCard({
   const isDragging = swipeX !== 0 && !isFlying;
 
   const transition = isFlying
-    ? "transform 0.22s cubic-bezier(.2,.9,.2,1), opacity 0.22s ease"
+    ? "transform 0.35s cubic-bezier(.25,.8,.25,1), opacity 0.3s ease"
     : isDragging
-    ? "transform 0.45s ease-out"
-    : "transform 0.3s ease";
+    ? "transform 0.6s cubic-bezier(.25,.8,.25,1)"
+    : "transform 0.4s cubic-bezier(.25,.8,.25,1)";
 
   const transform = isFlying
     ? `translateX(${flyOut}px) rotate(${flyOut > 0 ? 16 : -16}deg)`
@@ -130,9 +130,10 @@ function SwipeCard({
         overflow: "hidden",
         background: film.genreColor,
         boxShadow: "0 12px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35)",
-        transform,
+        transform: `${transform} translateZ(0)`,
         transition,
         opacity: isFlying ? 0 : 1,
+        willChange: "transform, opacity",
         userSelect: "none",
       }}
     >
@@ -369,9 +370,7 @@ function MatchOverlay({ film }: { film: Film }) {
         style={{
           position: "absolute",
           inset: 0,
-          background: "rgba(0,0,0,0.50)",
-          backdropFilter: "blur(2px)",
-          WebkitBackdropFilter: "blur(2px)",
+          background: "rgba(0,0,0,0.55)",
           boxShadow: "inset 0 0 16px rgba(255,42,42,0.18)",
         }}
       />
