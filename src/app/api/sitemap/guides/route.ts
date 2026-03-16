@@ -37,9 +37,21 @@ export function GET() {
     );
   });
 
+  /* ── Guide hub pages (one per region) ── */
+  const hubAlternates: Record<string, string> = {
+    "x-default": `${base}/no/guides`,
+  };
+  for (const r of REGIONS) {
+    hubAlternates[REGION_HREFLANG[r]] = `${base}/${r}/guides`;
+  }
+  const hubUrls = REGIONS.map((r) =>
+    entry(`${base}/${r}/guides`, lastmod, "weekly", "0.9", hubAlternates),
+  );
+
   const urls = [
     entry(`${base}/`, lastmod, "weekly", "1", { nb: `${base}/`, en: `${base}/`, "x-default": `${base}/` }),
     entry(`${base}/together`, lastmod, "weekly", "0.9", { nb: `${base}/together`, en: `${base}/together`, "x-default": `${base}/together` }),
+    ...hubUrls,
     ...pairs.flatMap(([no, en]) => [
       entry(`${base}${no}`, lastmod, "weekly", "0.85", { nb: `${base}${no}`, en: `${base}${en}`, "x-default": `${base}${no}` }),
       entry(`${base}${en}`, lastmod, "weekly", "0.85", { nb: `${base}${no}`, en: `${base}${en}`, "x-default": `${base}${no}` }),
