@@ -647,14 +647,16 @@ export default function SwipeMatchDemo({
                 alignItems: "center",
                 gap: 5,
                 animation: "match-pop 0.22s cubic-bezier(.2,.9,.2,1) forwards",
+                filter: "drop-shadow(0 0 12px rgba(212,175,55,0.35))",
               }}
             >
               <div
                 style={{
                   fontSize: 32,
                   fontWeight: 900,
-                  color: RED,
+                  color: "#d4af37",
                   lineHeight: 1,
+                  textShadow: "0 0 16px rgba(212,175,55,0.4)",
                 }}
               >
                 {"\u2713"}
@@ -664,8 +666,9 @@ export default function SwipeMatchDemo({
                   fontSize: 11,
                   fontWeight: 800,
                   letterSpacing: "0.14em",
-                  color: RED,
+                  color: "#d4af37",
                   textTransform: "uppercase" as const,
+                  textShadow: "0 0 12px rgba(212,175,55,0.3)",
                 }}
               >
                 MATCH
