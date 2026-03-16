@@ -237,23 +237,27 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           .landing-mobile-demo-clip {
             display: flex;
           }
+          .demo-scaler {
+            transform: scale(0.72);
+            margin-bottom: -70px;
+          }
         }
         @media (max-width: 460px) {
           .demo-scaler {
-            transform: scale(0.85);
-            margin-bottom: -50px;
+            transform: scale(0.65);
+            margin-bottom: -90px;
           }
         }
         @media (max-width: 400px) {
           .demo-scaler {
-            transform: scale(0.75);
-            margin-bottom: -80px;
+            transform: scale(0.58);
+            margin-bottom: -110px;
           }
         }
         @media (max-width: 360px) {
           .demo-scaler {
-            transform: scale(0.68);
-            margin-bottom: -100px;
+            transform: scale(0.52);
+            margin-bottom: -130px;
           }
         }
 
