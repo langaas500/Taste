@@ -33,6 +33,7 @@ const strings = {
     togetherCta: "Se sammen",
     logout: "Logg ut",
     connected: "Koblet til",
+    guides: "Utforsk guider",
   },
   en: {
     home: "Home",
@@ -53,6 +54,7 @@ const strings = {
     togetherCta: "Watch Together",
     logout: "Log out",
     connected: "Connected",
+    guides: "Explore guides",
   },
   dk: {
     home: "Hjem",
@@ -73,6 +75,7 @@ const strings = {
     togetherCta: "Se sammen",
     logout: "Log ud",
     connected: "Forbundet",
+    guides: "Udforsk guider",
   },
   se: {
     home: "Hem",
@@ -93,6 +96,7 @@ const strings = {
     togetherCta: "Se tillsammans",
     logout: "Logga ut",
     connected: "Ansluten",
+    guides: "Utforska guider",
   },
   fi: {
     home: "Koti",
@@ -113,6 +117,7 @@ const strings = {
     togetherCta: "Katsotaan yhdessä",
     logout: "Kirjaudu ulos",
     connected: "Yhdistetty",
+    guides: "Tutustu oppaisiin",
   },
 } as const;
 
@@ -126,6 +131,7 @@ export default function Nav() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
   const [locale, setLocale] = useState<Locale>("en");
+  const [region, setRegion] = useState<string>("no");
 
   useEffect(() => {
     (async () => {
@@ -146,7 +152,11 @@ export default function Nav() {
     fetch("/api/together/ribbon")
       .then((r) => r.json())
       .then((data) => {
-        if (data.region) setLocale(getLocale(data.region));
+        if (data.region) {
+          setLocale(getLocale(data.region));
+          const r = data.region as string;
+          setRegion(["no", "se", "dk", "fi"].includes(r) ? r : "no");
+        }
       })
       .catch(() => {});
   }, []);
@@ -556,6 +566,18 @@ export default function Nav() {
                   <span>{s.connected}</span>
                 </div>
               </div>
+
+              {/* Guides link */}
+              <Link
+                href={`/${region}/guides`}
+                className="group flex items-center gap-2 w-full mt-1.5 px-3 py-[9px] rounded-[10px] text-[12px] font-medium transition-all duration-200 ease-out hover:bg-white/[0.04]"
+                style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none", minHeight: 44 }}
+              >
+                <svg className="w-[16px] h-[16px] flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+                <span className="transition-colors duration-200 group-hover:text-white/50">{s.guides}</span>
+              </Link>
 
               {/* Logout button */}
               {!isGuest && (
