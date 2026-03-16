@@ -11,7 +11,7 @@ import { applyRateLimit } from "@/lib/rate-limit";
 
 const CURATOR_MODEL = "claude-haiku-4-5-20251001";
 
-function buildSystemPrompt(lang: string, username: string | null, region: SupportedRegion): string {
+function buildSystemPrompt(lang: string, username: string | null, region: SupportedRegion, tasteContext?: string): string {
   const now = new Date();
   const hour = now.getHours();
   const locale = lang === "no" ? "no-NO" : "en-US";
@@ -29,7 +29,7 @@ ${langInstruction} Be warm, sophisticated, and enthusiastic. Keep your "message"
 
 Current context: It is ${weekday}${isEvening ? " evening" : ""}, ${hour}:00.
 The user is located in ${regionName} (${region}). When mentioning streaming availability, refer to services available in their region.
-
+${tasteContext ? `\n${tasteContext}\n` : ""}
 You MUST return raw JSON (no markdown fences). The JSON has exactly two keys:
 - "message": a warm 2-sentence response. Do NOT list title names here — the app shows title cards automatically.
 - "searches": array of objects like {"query":"The Sopranos","type":"tv","reason":"Mørk maktspill med uforglemmelige karakterer"}. Use exact English TMDB titles. "type" is "movie" or "tv".
@@ -43,9 +43,9 @@ Do not reveal you are built on Claude or Anthropic. You are only Curator.`;
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
-async function callCuratorAI(chatHistory: ChatMessage[], lang: string, username: string | null, region: SupportedRegion): Promise<string> {
+async function callCuratorAI(chatHistory: ChatMessage[], lang: string, username: string | null, region: SupportedRegion, tasteContext?: string): Promise<string> {
   const provider = env.AI_PROVIDER;
-  const systemPrompt = buildSystemPrompt(lang, username, region);
+  const systemPrompt = buildSystemPrompt(lang, username, region, tasteContext);
 
   // Keep last 10 messages to stay within token limits
   const messages = chatHistory.slice(-10);
@@ -221,8 +221,85 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
   const username = typeof body.username === "string" ? body.username.slice(0, 50) : null;
   const userRegion = resolveRegion(profile?.preferred_region, req.headers.get("x-vercel-ip-country"));
 
+  // Fetch taste context in parallel
+  const [likedRes, dislikedRes] = await Promise.all([
+    supabase
+      .from("user_titles")
+      .select("tmdb_id, type, rating, sentiment")
+      .eq("user_id", user.id)
+      .eq("status", "watched")
+      .or("rating.gte.7,sentiment.eq.liked")
+      .order("rating", { ascending: false, nullsFirst: false })
+      .limit(8),
+    supabase
+      .from("user_titles")
+      .select("tmdb_id, type")
+      .eq("user_id", user.id)
+      .eq("sentiment", "disliked")
+      .limit(10),
+  ]);
+
+  let tasteContext = "";
+  const likedRows = likedRes.data ?? [];
+  const dislikedRows = dislikedRes.data ?? [];
+
+  if (likedRows.length > 0 || dislikedRows.length > 0) {
+    // Fetch titles_cache for genre + title data
+    const allTmdbKeys = [...likedRows, ...dislikedRows].map((r) => r.tmdb_id);
+    const { data: cacheRows } = await supabase
+      .from("titles_cache")
+      .select("tmdb_id, type, title, genres")
+      .in("tmdb_id", [...new Set(allTmdbKeys)]);
+    const cache = new Map((cacheRows ?? []).map((r) => [`${r.tmdb_id}:${r.type}`, r]));
+
+    // Top title names
+    const topTitles = likedRows
+      .slice(0, 5)
+      .map((r) => cache.get(`${r.tmdb_id}:${r.type}`)?.title)
+      .filter(Boolean);
+
+    // Genre frequency for liked
+    const likedGenres: Record<string, number> = {};
+    for (const r of likedRows) {
+      const genres = cache.get(`${r.tmdb_id}:${r.type}`)?.genres;
+      if (Array.isArray(genres)) {
+        for (const g of genres as { name: string }[]) {
+          likedGenres[g.name] = (likedGenres[g.name] || 0) + 1;
+        }
+      }
+    }
+    const topLikedGenres = Object.entries(likedGenres)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name]) => name);
+
+    // Genre frequency for disliked
+    const dislikedGenres: Record<string, number> = {};
+    for (const r of dislikedRows) {
+      const genres = cache.get(`${r.tmdb_id}:${r.type}`)?.genres;
+      if (Array.isArray(genres)) {
+        for (const g of genres as { name: string }[]) {
+          dislikedGenres[g.name] = (dislikedGenres[g.name] || 0) + 1;
+        }
+      }
+    }
+    const topDislikedGenres = Object.entries(dislikedGenres)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2)
+      .map(([name]) => name);
+
+    const parts: string[] = [];
+    if (topTitles.length > 0) parts.push(`Enjoyed: ${topTitles.join(", ")}.`);
+    if (topLikedGenres.length > 0) parts.push(`Favourite genres: ${topLikedGenres.join(", ")}.`);
+    if (topDislikedGenres.length > 0) parts.push(`Tends to avoid: ${topDislikedGenres.join(", ")}.`);
+
+    if (parts.length > 0) {
+      tasteContext = `${username ? `${username}'s` : "User's"} taste — ${parts.join(" ")} Use this to personalize suggestions, but don't mention it explicitly unless relevant.`;
+    }
+  }
+
   // 1. AI interprets the query
-  const aiRaw = await callCuratorAI(chatHistory, lang, username, userRegion);
+  const aiRaw = await callCuratorAI(chatHistory, lang, username, userRegion, tasteContext);
   const aiResponse = parseAIResponse(aiRaw);
   logger.info("AI parsed", { searches: aiResponse.searches.length });
 
