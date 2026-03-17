@@ -57,7 +57,7 @@ export const env = {
   ANTHROPIC_API_KEY,
   OPENAI_API_KEY,
   AI_PROVIDER: (process.env.AI_PROVIDER || "anthropic") as "anthropic" | "openai",
-  ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
+  ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250514",
 
   // Observability
   NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
