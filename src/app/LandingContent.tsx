@@ -191,10 +191,10 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         background: "#0a0a0a",
       }}
     >
-    {/* Hero wrapper — keeps 100dvh for first screen */}
+    {/* Hero wrapper — 100dvh on mobile, auto on desktop */}
     <div
+      className="landing-hero-section"
       style={{
-        minHeight: "100dvh",
         width: "100%",
         display: "flex",
         flexDirection: "column",
@@ -329,6 +329,15 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           padding: 0 32px;
         }
 
+        .landing-hero-section {
+          min-height: 100dvh;
+        }
+        @media (min-width: 1024px) {
+          .landing-hero-section {
+            min-height: auto;
+          }
+        }
+
         @keyframes landing-arrow-bounce {
           0%, 100% { transform: translateY(0); opacity: 0.4; }
           50% { transform: translateY(6px); opacity: 0.6; }
@@ -342,7 +351,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           width: 100%;
           max-width: 1200px;
           margin: 0 auto;
-          padding: 80px 24px;
+          padding: 40px 24px;
         }
         .landing-features-grid {
           display: grid;
@@ -351,7 +360,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         }
         @media (min-width: 768px) {
           .landing-features {
-            padding: 100px 32px;
+            padding: 48px 32px;
           }
           .landing-features-grid {
             grid-template-columns: repeat(4, 1fr);
