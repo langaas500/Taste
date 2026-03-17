@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
+import { getLocale } from "@/lib/i18n";
 
 export async function middleware(request: NextRequest) {
   // Bypass all auth for crawlable endpoints
@@ -124,6 +125,16 @@ export async function middleware(request: NextRequest) {
     url.pathname = "/home";
     return NextResponse.redirect(url);
   }
+
+  // Set locale cookie from IP country for client-side useLocale hook
+  const country = request.headers.get("x-vercel-ip-country") || "";
+  const locale = getLocale(country);
+  supabaseResponse.cookies.set("x-locale", locale, {
+    path: "/",
+    sameSite: "lax",
+    httpOnly: false,
+    maxAge: 86400,
+  });
 
   return supabaseResponse;
 }
