@@ -150,16 +150,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
 
   const pool: Scored[] = [];
 
-  // ── PARAMS LOG ────────────────────────────────────────────
-  console.log("[buildWtDeck] params", {
-    mood: mood ?? "none",
-    seedLiked: seedLiked.length,
-    providerIds: providerIds.length > 0 ? providerIds : "none",
-    region,
-    preference,
-    limit,
-    excludeIds: excludeIds.size,
-  });
+
 
   /* ── addItems: hard gates first, then score ── */
   const addItems = (
@@ -257,8 +248,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
       addItems(results, type, `Ligner på «${seedTitle}»`, 4);
     }
   }
-  const similar_count = pool.length;
-  console.log(`[buildWtDeck] step1_similar=${similar_count}`);
+
 
   // ── 2. Mood-matched discover — score +3 ───────────────────────────
   if (mood) {
@@ -294,8 +284,6 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
     if (wantMovie) addItems(moodMovies.results, "movie", `${moodLabel}-stemning`, 3);
     if (wantTv) addItems(moodTv.results, "tv", `${moodLabel}-stemning`, 3);
   }
-  const discover_count = pool.length - similar_count;
-  console.log(`[buildWtDeck] step2_mood_discover=${discover_count} (pool=${pool.length})`);
 
   // ── 3. Trending this week — score +2 ──
   // When providers are selected, use discover(popularity.desc) with provider filter
@@ -335,8 +323,7 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
     if (wantMovie) addItems(trendMovieResults, "movie", "Populær akkurat nå", 2);
     if (wantTv) addItems(trendTvResults, "tv", "Populær akkurat nå", 2);
   }
-  const trending_count = pool.length - similar_count - discover_count;
-  console.log(`[buildWtDeck] step3_trending=${trending_count} (pool=${pool.length})`);
+
 
   // ── 4. Popular discover — score +2 ────────────────────────────────
   const fetchPopularDiscover = async (page = 1) => {
@@ -369,11 +356,8 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
   // Randomized start page — vary results across sessions even with large excludeIds
   const startPage = Math.floor(Math.random() * 10) + 1;
   await fetchPopularDiscover(startPage);
-  const popular_count = pool.length - similar_count - discover_count - trending_count;
-  console.log(`[buildWtDeck] step4_popular_p1=${popular_count} (pool=${pool.length}, startPage=${startPage})`);
 
   // ── 5. Deep pagination — parallel batches of 3 pages until pool >= limit ──
-  const poolBeforeFallback = pool.length;
   const BATCH_SIZE = 3;
   const MAX_EXTRA_PAGES = 6; // cap at ~15 total TMDB calls per deck build
   let nextPage = startPage + 1;
@@ -391,13 +375,6 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
     else emptyPageCount = 0;
   }
 
-  const fallback_count = pool.length - poolBeforeFallback;
-  console.log(`[buildWtDeck] step5_deep_pagination: pages=${startPage + 1}-${nextPage - 1} added=${fallback_count} (pool=${pool.length})`);
-
-
-  const total_raw = pool.length;
-  console.log(`[buildWtDeck] total_raw(=after_dedup)=${total_raw}`);
-
   // ── 6. 3-pass quality filter — try successively relaxed vote thresholds ──
   let filtered: Scored[] = [];
   let usedPass: typeof VOTE_PASSES[number] = VOTE_PASSES[0];
@@ -407,15 +384,6 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
     usedPass = pass;
     if (filtered.length >= MIN_FILTERED_POOL) break;
   }
-
-  // ── quality filter diagnostics ────────────────────────────────────
-  const droppedByVotes = pool.filter((i) => i.voteCount < (i.type === "movie" ? usedPass.minVoteMovie : usedPass.minVoteTv)).length;
-  const droppedByRating = pool.filter((i) => (i.vote_average || 0) < QUALITY.minRating).length;
-  const droppedByLang = pool.filter((i) => !MAINSTREAM_LANGS.has(i.lang)).length;
-  console.log(`[buildWtDeck] step6_quality(${usedPass.label}): after_quality=${filtered.length} dropped=${total_raw - filtered.length}`, {
-    droppedByVotes, droppedByRating, droppedByLang,
-    thresholds: `movie≥${usedPass.minVoteMovie}/tv≥${usedPass.minVoteTv}`,
-  });
 
   // ── 7. Separate TV and Movie pools, apply preference weighting ───
   const tvPool = filtered.filter((i) => i.type === "tv");
@@ -472,12 +440,6 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
     ({ score: _s, lang: _l, countries: _c, voteCount: _v, popularity: _p, ...t }) => t
   );
 
-  const after_ratio = tvSlice.length + movieSlice.length;
-  console.log(`[buildWtDeck] step7_ratio: after_ratio=${after_ratio} (tv=${tvSlice.length} movie=${movieSlice.length} target=${tvTarget}tv/${movieTarget}movie)`);
-  console.log(`[buildWtDeck] final_deck=${titles.length}`, {
-    similar_count, discover_count, trending_count, popular_count, fallback_count,
-    total_raw, after_quality: filtered.length, after_ratio, final_deck: titles.length,
-  });
   if (titles.length < 20) {
     console.warn(`[buildWtDeck] WARNING: small deck (${titles.length} titles) — providerIds=${JSON.stringify(providerIds)} region=${region}`);
   }
