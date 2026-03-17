@@ -14,6 +14,7 @@ const strings = {
     tabLogin: "Logg inn",
     tabSignup: "Opprett gratis konto",
     continueGoogle: "Fortsett med Google",
+    connectingGoogle: "Kobler til...",
     or: "eller",
     emailLabel: "E-post",
     emailPlaceholder: "din@epost.no",
@@ -74,6 +75,7 @@ const strings = {
     tabLogin: "Log in",
     tabSignup: "Create free account",
     continueGoogle: "Continue with Google",
+    connectingGoogle: "Connecting...",
     or: "or",
     emailLabel: "Email",
     emailPlaceholder: "your@email.com",
@@ -134,6 +136,7 @@ const strings = {
     tabLogin: "Log ind",
     tabSignup: "Opret gratis konto",
     continueGoogle: "Fortsæt med Google",
+    connectingGoogle: "Forbinder...",
     or: "eller",
     emailLabel: "E-mail",
     emailPlaceholder: "din@email.dk",
@@ -194,6 +197,7 @@ const strings = {
     tabLogin: "Logga in",
     tabSignup: "Skapa gratis konto",
     continueGoogle: "Fortsätt med Google",
+    connectingGoogle: "Ansluter...",
     or: "eller",
     emailLabel: "E-post",
     emailPlaceholder: "din@epost.se",
@@ -254,6 +258,7 @@ const strings = {
     tabLogin: "Kirjaudu",
     tabSignup: "Luo ilmainen tili",
     continueGoogle: "Jatka Googlella",
+    connectingGoogle: "Yhdistetään...",
     or: "tai",
     emailLabel: "Sähköposti",
     emailPlaceholder: "sinun@sposti.fi",
@@ -694,7 +699,7 @@ function LoginContent() {
                 {oauthLoading ? (
                   <>
                     <span className="w-4 h-4 border-2 border-gray-400/30 border-t-gray-600 rounded-full animate-spin" />
-                    Kobler til...
+                    {s.connectingGoogle}
                   </>
                 ) : (
                   <>
