@@ -146,6 +146,22 @@ const strings = {
     privacy: "Personvern",
     terms: "Vilkår",
     contact: "Kontakt",
+    changeEmail: "Endre e-post",
+    changeEmailDesc: "Oppdater e-postadressen knyttet til kontoen din.",
+    newEmail: "Ny e-postadresse",
+    saveEmail: "Lagre e-post",
+    savingEmail: "Lagrer...",
+    emailConfirmSent: "Bekreftelseslenke sendt til begge adresser.",
+    emailInvalid: "Ugyldig e-postformat.",
+    changePassword: "Endre passord",
+    changePasswordDesc: "Oppdater passordet ditt. Minimum 8 tegn.",
+    newPassword: "Nytt passord",
+    confirmPassword: "Bekreft passord",
+    savePassword: "Lagre passord",
+    savingPassword: "Lagrer...",
+    passwordUpdated: "Passord oppdatert.",
+    passwordTooShort: "Passordet må være minst 8 tegn.",
+    passwordMismatch: "Passordene stemmer ikke overens.",
     dangerZone: "Faresone",
     dangerZoneDesc: "Logg ut av kontoen din. Du kan logge inn igjen når som helst.",
     signOut: "Logg ut",
@@ -208,6 +224,22 @@ const strings = {
     privacy: "Privacy",
     terms: "Terms",
     contact: "Contact",
+    changeEmail: "Change email",
+    changeEmailDesc: "Update the email address linked to your account.",
+    newEmail: "New email address",
+    saveEmail: "Save email",
+    savingEmail: "Saving...",
+    emailConfirmSent: "Confirmation link sent to both addresses.",
+    emailInvalid: "Invalid email format.",
+    changePassword: "Change password",
+    changePasswordDesc: "Update your password. Minimum 8 characters.",
+    newPassword: "New password",
+    confirmPassword: "Confirm password",
+    savePassword: "Save password",
+    savingPassword: "Saving...",
+    passwordUpdated: "Password updated.",
+    passwordTooShort: "Password must be at least 8 characters.",
+    passwordMismatch: "Passwords do not match.",
     dangerZone: "Danger zone",
     dangerZoneDesc: "Sign out of your account. You can sign back in anytime.",
     signOut: "Sign out",
@@ -270,6 +302,22 @@ const strings = {
     privacy: "Privatlivspolitik",
     terms: "Vilkår",
     contact: "Kontakt",
+    changeEmail: "Skift e-mail",
+    changeEmailDesc: "Opdater den e-mailadresse, der er knyttet til din konto.",
+    newEmail: "Ny e-mailadresse",
+    saveEmail: "Gem e-mail",
+    savingEmail: "Gemmer...",
+    emailConfirmSent: "Bekræftelseslink sendt til begge adresser.",
+    emailInvalid: "Ugyldigt e-mailformat.",
+    changePassword: "Skift adgangskode",
+    changePasswordDesc: "Opdater din adgangskode. Minimum 8 tegn.",
+    newPassword: "Ny adgangskode",
+    confirmPassword: "Bekræft adgangskode",
+    savePassword: "Gem adgangskode",
+    savingPassword: "Gemmer...",
+    passwordUpdated: "Adgangskode opdateret.",
+    passwordTooShort: "Adgangskoden skal være mindst 8 tegn.",
+    passwordMismatch: "Adgangskoderne stemmer ikke overens.",
     dangerZone: "Farezone",
     dangerZoneDesc: "Log ud af din konto. Du kan logge ind igen når som helst.",
     signOut: "Log ud",
@@ -332,6 +380,22 @@ const strings = {
     privacy: "Integritet",
     terms: "Villkor",
     contact: "Kontakt",
+    changeEmail: "Ändra e-post",
+    changeEmailDesc: "Uppdatera e-postadressen kopplad till ditt konto.",
+    newEmail: "Ny e-postadress",
+    saveEmail: "Spara e-post",
+    savingEmail: "Sparar...",
+    emailConfirmSent: "Bekräftelselänk skickad till båda adresserna.",
+    emailInvalid: "Ogiltigt e-postformat.",
+    changePassword: "Ändra lösenord",
+    changePasswordDesc: "Uppdatera ditt lösenord. Minst 8 tecken.",
+    newPassword: "Nytt lösenord",
+    confirmPassword: "Bekräfta lösenord",
+    savePassword: "Spara lösenord",
+    savingPassword: "Sparar...",
+    passwordUpdated: "Lösenord uppdaterat.",
+    passwordTooShort: "Lösenordet måste vara minst 8 tecken.",
+    passwordMismatch: "Lösenorden stämmer inte överens.",
     dangerZone: "Farozon",
     dangerZoneDesc: "Logga ut från ditt konto. Du kan logga in igen när som helst.",
     signOut: "Logga ut",
@@ -394,6 +458,22 @@ const strings = {
     privacy: "Tietosuoja",
     terms: "Ehdot",
     contact: "Yhteystiedot",
+    changeEmail: "Vaihda sähköposti",
+    changeEmailDesc: "Päivitä tiliisi liitetty sähköpostiosoite.",
+    newEmail: "Uusi sähköpostiosoite",
+    saveEmail: "Tallenna sähköposti",
+    savingEmail: "Tallennetaan...",
+    emailConfirmSent: "Vahvistuslinkki lähetetty molempiin osoitteisiin.",
+    emailInvalid: "Virheellinen sähköpostimuoto.",
+    changePassword: "Vaihda salasana",
+    changePasswordDesc: "Päivitä salasanasi. Vähintään 8 merkkiä.",
+    newPassword: "Uusi salasana",
+    confirmPassword: "Vahvista salasana",
+    savePassword: "Tallenna salasana",
+    savingPassword: "Tallennetaan...",
+    passwordUpdated: "Salasana päivitetty.",
+    passwordTooShort: "Salasanan on oltava vähintään 8 merkkiä.",
+    passwordMismatch: "Salasanat eivät täsmää.",
     dangerZone: "Vaaravyöhyke",
     dangerZoneDesc: "Kirjaudu ulos tililtäsi. Voit kirjautua takaisin milloin tahansa.",
     signOut: "Kirjaudu ulos",
@@ -429,6 +509,14 @@ function SettingsContent() {
   const [selectedRegion, setSelectedRegion] = useState<SupportedRegion>("US");
   const [savingRegion, setSavingRegion] = useState(false);
   const [showSliderInfo, setShowSliderInfo] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailMsg, setEmailMsg] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordMsg, setPasswordMsg] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [authProvider, setAuthProvider] = useState<string | null>(null);
 
   const traktMsg = searchParams.get("trakt");
   const errorMsg = searchParams.get("error");
@@ -438,6 +526,13 @@ function SettingsContent() {
   }, []);
 
   async function loadProfile() {
+    try {
+      const supabase = createSupabaseBrowser();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.app_metadata?.provider) {
+        setAuthProvider(session.user.app_metadata.provider);
+      }
+    } catch {}
     try {
       const res = await fetch("/api/profile");
       const data = await res.json();
@@ -579,6 +674,50 @@ function SettingsContent() {
     } catch {}
   }
 
+  async function handleChangeEmail() {
+    setEmailMsg("");
+    const trimmed = newEmail.trim();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setEmailMsg(s.emailInvalid);
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      const supabase = createSupabaseBrowser();
+      const { error } = await supabase.auth.updateUser({ email: trimmed });
+      if (error) throw error;
+      setEmailMsg(s.emailConfirmSent);
+      setNewEmail("");
+    } catch (e: unknown) {
+      setEmailMsg(e instanceof Error ? e.message : "Error");
+    }
+    setSavingEmail(false);
+  }
+
+  async function handleChangePassword() {
+    setPasswordMsg("");
+    if (newPassword.length < 8) {
+      setPasswordMsg(s.passwordTooShort);
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMsg(s.passwordMismatch);
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      const supabase = createSupabaseBrowser();
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setPasswordMsg(s.passwordUpdated);
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (e: unknown) {
+      setPasswordMsg(e instanceof Error ? e.message : "Error");
+    }
+    setSavingPassword(false);
+  }
+
   async function handleSignOut() {
     const supabase = createSupabaseBrowser();
     await supabase.auth.signOut();
@@ -656,6 +795,66 @@ function SettingsContent() {
             </button>
           )}
         </div>
+      </div>
+
+      {/* ── Email & Password (side by side) ─────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        {/* Change email */}
+        <div className={glassCard} style={glassCardStyle}>
+          <p className={sectionLabel}>{s.changeEmail}</p>
+          <p className={sectionDesc}>{s.changeEmailDesc}</p>
+          <div className="flex items-center gap-2">
+            <input
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleChangeEmail(); }}
+              placeholder={s.newEmail}
+              className="flex-1 px-3 py-2 bg-white/[0.04] border border-white/[0.1] rounded-xl text-sm text-white placeholder-white/25 focus:outline-none focus:border-[rgba(229,9,20,0.4)] transition-all duration-200"
+            />
+            <GhostButton onClick={handleChangeEmail} disabled={savingEmail}>
+              {savingEmail ? s.savingEmail : s.saveEmail}
+            </GhostButton>
+          </div>
+          {emailMsg && (
+            <p className={`text-xs mt-2 ${emailMsg === s.emailConfirmSent ? "text-emerald-400/70" : "text-red-400/70"}`}>
+              {emailMsg}
+            </p>
+          )}
+        </div>
+
+        {/* Change password — hidden for OAuth users */}
+        {authProvider !== "google" && (
+          <div className={glassCard} style={glassCardStyle}>
+            <p className={sectionLabel}>{s.changePassword}</p>
+            <p className={sectionDesc}>{s.changePasswordDesc}</p>
+            <div className="flex flex-col gap-2">
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder={s.newPassword}
+                className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.1] rounded-xl text-sm text-white placeholder-white/25 focus:outline-none focus:border-[rgba(229,9,20,0.4)] transition-all duration-200"
+              />
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleChangePassword(); }}
+                placeholder={s.confirmPassword}
+                className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.1] rounded-xl text-sm text-white placeholder-white/25 focus:outline-none focus:border-[rgba(229,9,20,0.4)] transition-all duration-200"
+              />
+              <GhostButton onClick={handleChangePassword} disabled={savingPassword} className="self-start mt-1">
+                {savingPassword ? s.savingPassword : s.savePassword}
+              </GhostButton>
+            </div>
+            {passwordMsg && (
+              <p className={`text-xs mt-2 ${passwordMsg === s.passwordUpdated ? "text-emerald-400/70" : "text-red-400/70"}`}>
+                {passwordMsg}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── 2-column grid ─────────────────────────────── */}
