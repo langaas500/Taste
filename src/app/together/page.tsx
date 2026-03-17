@@ -30,6 +30,7 @@ import useSwipeQueue from "./hooks/useSwipeQueue";
 import useCountdown from "./hooks/useCountdown";
 import useRibbon from "./hooks/useRibbon";
 import useKeyboardSwipe from "./hooks/useKeyboardSwipe";
+import useMatchReveal from "./hooks/useMatchReveal";
 
 /* ── input mode detection ─────────────────────────────── */
 
@@ -63,7 +64,6 @@ export default function WTBetaPage() {
   const [preferenceMode, setPreferenceMode] = useState<"series" | "movies" | "mix">("series");
   const [selectedProviders, setSelectedProviders] = useState<number[]>([]);
   const [locale, setLocale] = useState<Locale>("en");
-  const [matchRevealPhase, setMatchRevealPhase] = useState<0 | 1 | 2 | 3>(0);
   const introChoice = "paired"; // default mode for tracking
   const [introFading, setIntroFading] = useState(false);
   const [ritualState, setRitualState] = useState<RitualState>("idle");
@@ -117,7 +117,6 @@ export default function WTBetaPage() {
   const partnerRef = useRef<{ liked: number[] } | null>(null);
   const savedSoloSwipes = useRef<Record<number, { type: "movie" | "tv"; action: SwipeAction }>>({});
   const guestIdRef = useRef<string>("");
-  const audioCtxRef = useRef<AudioContext | null>(null);
 
   const [swipe, setSwipe] = useState<{ x: number; y: number; rot: number; dragging: boolean }>({ x: 0, y: 0, rot: 0, dragging: false });
   const [fly, setFly] = useState<{ active: boolean; x: number; rot: number }>({ active: false, x: 0, rot: 0 });
@@ -132,6 +131,16 @@ export default function WTBetaPage() {
 
   const { isTouch } = useInputMode();
   const { qrDataUrl } = useQrCode(sessionCode || null);
+  const { matchRevealPhase, resetReveal, warmAudio } = useMatchReveal(
+    roundPhase === "winner",
+    () => {
+      if (finalWinner) {
+        track("together_match_found", { mode, tmdb_id: finalWinner.tmdb_id, title: finalWinner.title, type: finalWinner.type, round });
+        track("match_created", { session_id: sessionId, title_id: finalWinner.tmdb_id, match_type: "like_like" });
+      }
+      try { localStorage.removeItem("wt_session_resume"); } catch {}
+    },
+  );
   const isDesktop = mounted && !isTouch;
   const router = useRouter();
 
@@ -502,38 +511,6 @@ export default function WTBetaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckIndex]);
 
-  /* ── match moment reveal sequence ── */
-  useEffect(() => {
-    if (roundPhase !== "winner") { setMatchRevealPhase(0); return; }
-    if (finalWinner) {
-      track("together_match_found", { mode, tmdb_id: finalWinner.tmdb_id, title: finalWinner.title, type: finalWinner.type, round });
-      track("match_created", { session_id: sessionId, title_id: finalWinner.tmdb_id, match_type: "like_like" });
-    }
-    try { localStorage.removeItem("wt_session_resume"); } catch {}
-    const t1 = window.setTimeout(() => setMatchRevealPhase(1), 400);
-    const t2 = window.setTimeout(() => setMatchRevealPhase(2), 700);
-    const t3 = window.setTimeout(() => setMatchRevealPhase(3), 1000);
-    const t4 = window.setTimeout(() => {
-      navigator.vibrate?.([100, 50, 200]);
-      try {
-        const ctx = audioCtxRef.current ?? new AudioContext();
-        if (ctx.state === "suspended") ctx.resume();
-        audioCtxRef.current = ctx;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = 880;
-        osc.type = "sine";
-        gain.gain.value = 0.15;
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.5);
-      } catch { /* ignore */ }
-    }, 600);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
-  }, [roundPhase]);
-
   /* ── message rotation: waiting-for-join screen + iAmDone overlay ── */
   useEffect(() => {
     if (screen !== "waiting" && !iAmDone) return;
@@ -638,7 +615,7 @@ export default function WTBetaPage() {
     setCompromiseTitle(null);
     setIsFallbackCompromise(false);
     setFinalWinner(null);
-    setMatchRevealPhase(0);
+    resetReveal();
     setMode("solo");
     setSessionId(null);
     setSessionCode("");
@@ -704,9 +681,7 @@ export default function WTBetaPage() {
   /* ── commit choice ── */
   function commitChoice(t: WTTitle, action: SwipeAction) {
     // Warm up AudioContext on first user gesture (Safari requires this)
-    if (!audioCtxRef.current) {
-      try { audioCtxRef.current = new AudioContext(); } catch { /* ignore */ }
-    }
+    warmAudio();
     if (!firstSwipeTrackedRef.current) {
       firstSwipeTrackedRef.current = true;
       track("swipe_started", { session_id: sessionId, is_guest: !authUser });
