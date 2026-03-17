@@ -10,5 +10,11 @@
     { "source": "/movie-to-watch-with-your-girlfriend", "destination": "/en/movie-to-watch-with-your-girlfriend", "permanent": true },
     { "source": "/movies-to-watch-with-friends", "destination": "/en/movies-to-watch-with-friends", "permanent": true },
     { "source": "/tv-shows-to-watch-together", "destination": "/en/tv-shows-to-watch-together", "permanent": true }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/weekly-digest",
+      "schedule": "0 10 * * 5"
+    }
   ]
 }
