@@ -2012,6 +2012,25 @@ export default function WTBetaPage() {
                         </button>
                       </div>
                     )}
+                    {!authUser && (
+                      <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px", marginBottom: 12, textAlign: "center" }}>
+                        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.5, marginBottom: 10 }}>
+                          {t(locale, "winner", "guestSignupText")}
+                        </p>
+                        <a
+                          href={`/login?from=together&mode=signup${sessionCode ? `&wt_code=${sessionCode}` : ""}`}
+                          style={{ display: "block", padding: "10px 0", background: "#ff2a2a", color: "#fff", borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: "none", marginBottom: 6 }}
+                        >
+                          {t(locale, "winner", "guestSignupBtn")}
+                        </a>
+                        <a
+                          href={`/login?from=together&mode=login${sessionCode ? `&wt_code=${sessionCode}` : ""}`}
+                          style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", textDecoration: "underline", textUnderlineOffset: 2 }}
+                        >
+                          {t(locale, "winner", "guestLoginBtn")}
+                        </a>
+                      </div>
+                    )}
                     <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>
                       {t(locale, "winner", "playAgain")}
                     </button>

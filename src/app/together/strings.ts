@@ -177,6 +177,9 @@ const strings = {
     addedWatchlist: { no: "✓ Lagt til watchlist", en: "✓ Added to watchlist", dk: "✓ Tilføjet til watchlist", se: "✓ Tillagd i watchlist", fi: "✓ Lisätty katselulistalle" },
     markWatched: { no: "Vi har sett den", en: "We've watched it", dk: "Vi har set den", se: "Vi har sett den", fi: "Olemme katsoneet sen" },
     markedWatched: { no: "✓ Logget", en: "✓ Logged", dk: "✓ Logget", se: "✓ Loggad", fi: "✓ Kirjattu" },
+    guestSignupText: { no: "Lag gratis konto for å lagre matchen, bygge watchlist og få personlige anbefalinger", en: "Create a free account to save this match, build a watchlist and get personal recommendations", dk: "Opret gratis konto for at gemme matchet, bygge watchlist og få personlige anbefalinger", se: "Skapa gratis konto för att spara matchen, bygga watchlist och få personliga rekommendationer", fi: "Luo ilmainen tili tallentaaksesi matchin, rakentaaksesi katselulistan ja saadaksesi henkilökohtaisia suosituksia" },
+    guestSignupBtn: { no: "Lag konto gratis", en: "Create free account", dk: "Opret gratis konto", se: "Skapa gratis konto", fi: "Luo ilmainen tili" },
+    guestLoginBtn: { no: "Logg inn", en: "Log in", dk: "Log ind", se: "Logga in", fi: "Kirjaudu" },
   },
 
   // ============================================
