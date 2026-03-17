@@ -48,7 +48,7 @@ export const POST = withLogger("/api/together/session", async (req, { logger }) 
     // Paired sessions: only apply explicit exclusions — not full rating history.
     // Both users discover together, so previously rated titles are fair game.
     const [{ data: userTitles }, { data: exclusions }] = await Promise.all([
-      admin.from("user_titles").select("tmdb_id, type, sentiment, favorite").eq("user_id", userId),
+      admin.from("user_titles").select("tmdb_id, type, sentiment, favorite").eq("user_id", userId).order("updated_at", { ascending: false }).limit(500),
       admin.from("user_exclusions").select("tmdb_id, type").eq("user_id", userId),
     ]);
 
