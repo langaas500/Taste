@@ -8,6 +8,59 @@ import type { Locale } from "@/lib/i18n";
 
 /* ── locale strings ──────────────────────────────────── */
 
+const partnerStrings = {
+  no: {
+    title: "Inviter partneren din \u{1F491}",
+    desc: "Du har betalt \u2014 n\u00e5 kan partneren din ogs\u00e5 f\u00e5 premium gratis. Del lenken:",
+    imessage: "Send iMessage",
+    whatsapp: "Send WhatsApp",
+    copy: "Kopier lenke",
+    copied: "Kopiert!",
+    dismiss: "Gj\u00f8r dette senere",
+    loading: "Genererer lenke...",
+  },
+  en: {
+    title: "Invite your partner \u{1F491}",
+    desc: "You\u2019ve paid \u2014 now your partner can get premium for free too. Share the link:",
+    imessage: "Send iMessage",
+    whatsapp: "Send WhatsApp",
+    copy: "Copy link",
+    copied: "Copied!",
+    dismiss: "Do this later",
+    loading: "Generating link...",
+  },
+  dk: {
+    title: "Inviter din partner \u{1F491}",
+    desc: "Du har betalt \u2014 nu kan din partner ogs\u00e5 f\u00e5 premium gratis. Del linket:",
+    imessage: "Send iMessage",
+    whatsapp: "Send WhatsApp",
+    copy: "Kopier link",
+    copied: "Kopieret!",
+    dismiss: "G\u00f8r dette senere",
+    loading: "Genererer link...",
+  },
+  se: {
+    title: "Bjud in din partner \u{1F491}",
+    desc: "Du har betalat \u2014 nu kan din partner ocks\u00e5 f\u00e5 premium gratis. Dela l\u00e4nken:",
+    imessage: "Skicka iMessage",
+    whatsapp: "Skicka WhatsApp",
+    copy: "Kopiera l\u00e4nk",
+    copied: "Kopierad!",
+    dismiss: "G\u00f6r detta senare",
+    loading: "Genererar l\u00e4nk...",
+  },
+  fi: {
+    title: "Kutsu kumppanisi \u{1F491}",
+    desc: "Olet maksanut \u2014 nyt kumppanisi voi saada premiumin ilmaiseksi. Jaa linkki:",
+    imessage: "L\u00e4het\u00e4 iMessage",
+    whatsapp: "L\u00e4het\u00e4 WhatsApp",
+    copy: "Kopioi linkki",
+    copied: "Kopioitu!",
+    dismiss: "Tee t\u00e4m\u00e4 my\u00f6hemmin",
+    loading: "Luodaan linkki\u00e4...",
+  },
+} as const;
+
 const strings = {
   no: {
     foundingLabel: "Founding Member",
@@ -206,15 +259,40 @@ function FeatureCard({ href, title, description, icon, badge, openLabel }: Featu
 export default function PremiumHubPage() {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showPartnerInvite, setShowPartnerInvite] = useState(false);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const locale = useLocale();
   const s = strings[locale as keyof typeof strings] ?? strings.en;
+  const ps = partnerStrings[locale as keyof typeof partnerStrings] ?? partnerStrings.en;
 
   useEffect(() => {
     fetch("/api/profile")
       .then((r) => r.json())
-      .then((d) => setIsPremium(!!d.profile?.is_premium))
+      .then((d) => {
+        const premium = !!d.profile?.is_premium;
+        setIsPremium(premium);
+        if (premium && !localStorage.getItem("logflix_partner_invite_shown")) {
+          setShowPartnerInvite(true);
+          localStorage.setItem("logflix_partner_invite_shown", "1");
+        }
+      })
       .catch(() => setIsPremium(false));
   }, []);
+
+  // Generate invite code when partner invite is shown
+  useEffect(() => {
+    if (!showPartnerInvite || inviteCode) return;
+    setInviteLoading(true);
+    fetch("/api/links", { method: "POST" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.link?.invite_code) setInviteCode(d.link.invite_code);
+      })
+      .catch(() => {})
+      .finally(() => setInviteLoading(false));
+  }, [showPartnerInvite, inviteCode]);
 
   return (
     <div className="animate-fade-in-up max-w-3xl mx-auto relative">
@@ -407,6 +485,87 @@ export default function PremiumHubPage() {
       `}</style>
 
       <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} source="premium_hub" />
+
+      {/* ── Partner Invite Modal ──────────────────────── */}
+      {showPartnerInvite && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowPartnerInvite(false)} />
+          <div
+            className="relative w-full max-w-sm rounded-2xl p-6 text-center"
+            style={{
+              background: "rgba(20,20,20,0.95)",
+              backdropFilter: "blur(30px)",
+              WebkitBackdropFilter: "blur(30px)",
+              border: "0.5px solid rgba(229,9,20,0.3)",
+              boxShadow: "0 0 60px rgba(229,9,20,0.15)",
+            }}
+          >
+            <h3 className="text-lg font-bold text-white mb-2">{ps.title}</h3>
+            <p className="text-sm text-white/50 mb-6">{ps.desc}</p>
+
+            {inviteLoading ? (
+              <p className="text-xs text-white/30 mb-6">{ps.loading}</p>
+            ) : inviteCode ? (
+              <div className="flex flex-col gap-3 mb-6">
+                {(() => {
+                  const inviteUrl = `https://logflix.app/settings?invite=${inviteCode}`;
+                  const shareText = locale === "no"
+                    ? `Jeg har Logflix Premium! Bruk denne lenken for å koble kontoen din og få premium gratis: ${inviteUrl}`
+                    : locale === "dk"
+                    ? `Jeg har Logflix Premium! Brug dette link for at tilslutte din konto og få premium gratis: ${inviteUrl}`
+                    : locale === "se"
+                    ? `Jag har Logflix Premium! Använd denna länk för att koppla ditt konto och få premium gratis: ${inviteUrl}`
+                    : locale === "fi"
+                    ? `Minulla on Logflix Premium! Käytä tätä linkkiä yhdistääksesi tilisi ja saadaksesi premiumin ilmaiseksi: ${inviteUrl}`
+                    : `I have Logflix Premium! Use this link to connect your account and get premium for free: ${inviteUrl}`;
+
+                  return (
+                    <>
+                      <a
+                        href={`sms:?body=${encodeURIComponent(shareText)}`}
+                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:brightness-110"
+                        style={{ background: "linear-gradient(135deg, #34C759, #28a745)" }}
+                      >
+                        <svg width={16} height={16} fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                        {ps.imessage}
+                      </a>
+                      <a
+                        href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:brightness-110"
+                        style={{ background: "linear-gradient(135deg, #25D366, #128C7E)" }}
+                      >
+                        <svg width={16} height={16} fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.613.613l4.458-1.495A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.35 0-4.514-.807-6.228-2.157l-.355-.293-3.68 1.233 1.233-3.68-.293-.355A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                        {ps.whatsapp}
+                      </a>
+                      <button
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(inviteUrl);
+                          setLinkCopied(true);
+                          setTimeout(() => setLinkCopied(false), 2000);
+                        }}
+                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white/80 border border-white/10 hover:border-white/20 transition-all"
+                        style={{ background: "rgba(255,255,255,0.05)" }}
+                      >
+                        <svg width={14} height={14} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"/></svg>
+                        {linkCopied ? ps.copied : ps.copy}
+                      </button>
+                    </>
+                  );
+                })()}
+              </div>
+            ) : null}
+
+            <button
+              onClick={() => setShowPartnerInvite(false)}
+              className="text-xs text-white/30 hover:text-white/50 transition-colors"
+            >
+              {ps.dismiss}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
