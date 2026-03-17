@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { cacheTitleIfNeeded } from "@/lib/cache-title";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -59,6 +60,11 @@ export async function POST(req: NextRequest) {
     if (profileError) {
       // Non-fatal: onboarding titles are already saved — log and continue
       console.error("onboarding profile update failed:", profileError.message);
+    }
+
+    // Send welcome email for email/password signups (OAuth handled in auth/callback)
+    if (user.app_metadata?.provider === "email") {
+      sendWelcomeEmail(user.email ?? "", body.display_name).catch(console.error);
     }
 
     // Trigger taste summary generation in background
