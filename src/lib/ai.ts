@@ -108,6 +108,26 @@ function stripMarkdownFences(text: string): string {
   return text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
 }
 
+/* ── language instruction for locale-aware AI output ─── */
+
+const LANGUAGE_INSTRUCTION: Record<string, string> = {
+  nb: "Respond in Norwegian Bokmål.",
+  sv: "Respond in Swedish.",
+  da: "Respond in Danish.",
+  fi: "Respond in Finnish.",
+  en: "Respond in English.",
+};
+
+/** Map region code (NO/SE/DK/FI) to locale key for AI prompts. */
+export function regionToAILocale(region: string): string {
+  const map: Record<string, string> = { NO: "nb", SE: "sv", DK: "da", FI: "fi" };
+  return map[region?.toUpperCase()] ?? "en";
+}
+
+function langInstruction(locale: string): string {
+  return LANGUAGE_INSTRUCTION[locale] ?? LANGUAGE_INSTRUCTION.en;
+}
+
 /** Safe JSON.parse wrapper — never throws. */
 export function safeParseJson<T>(
   raw: string
@@ -133,7 +153,7 @@ export interface TasteSummary {
   error?: string;
 }
 
-export async function generateTasteSummary(input: TasteInput): Promise<TasteSummary> {
+export async function generateTasteSummary(input: TasteInput, locale: string = "en"): Promise<TasteSummary> {
   try {
     const prompt = `Analyze this user's viewing taste and return a JSON object with exactly these keys:
 - "youLike": 2-3 sentences about what they enjoy (themes, genres, tones, storytelling styles)
@@ -148,7 +168,7 @@ Rejected recommendations: ${JSON.stringify(input.feedbackNotForMe)}
 Return ONLY valid JSON, no markdown fences.`;
 
     const result = await callAI([
-      { role: "system", content: "You are a film/TV taste analyst. Return only valid JSON." },
+      { role: "system", content: `You are a film/TV taste analyst. ${langInstruction(locale)} Return only valid JSON.` },
       { role: "user", content: prompt },
     ], 0.3);
 
@@ -163,7 +183,8 @@ Return ONLY valid JSON, no markdown fences.`;
 
 export async function explainRecommendations(
   userTaste: { youLike: string; avoid: string },
-  titles: { title: string; type: string; year: number | null; overview: string; genres: string[] }[]
+  titles: { title: string; type: string; year: number | null; overview: string; genres: string[] }[],
+  locale: string = "en",
 ): Promise<{ title: string; why: string; tags: string[] }[]> {
   try {
     const prompt = `Given this user's taste:
@@ -181,7 +202,7 @@ Return a JSON array of objects with keys: "title", "why", "tags" (array of 3 str
 Return ONLY valid JSON, no markdown fences.`;
 
     const result = await callAI([
-      { role: "system", content: "You are a personalized recommendation explainer. Return only valid JSON array." },
+      { role: "system", content: `You are a personalized recommendation explainer. ${langInstruction(locale)} Return only valid JSON array.` },
       { role: "user", content: prompt },
     ], 0.3);
 

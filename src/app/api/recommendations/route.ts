@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase-server";
 import { tmdbDiscover, tmdbTrending, tmdbSimilar, parseTitleFromTMDB } from "@/lib/tmdb";
-import { explainRecommendations } from "@/lib/ai";
+import { explainRecommendations, regionToAILocale } from "@/lib/ai";
 import type { UserTitle, TitleCache, Recommendation, ContentFilters } from "@/lib/types";
 import { getWatchProvidersCachedBatch } from "@/lib/watch-providers-cache";
 import { withLogger } from "@/lib/logger";
@@ -631,7 +631,8 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
         }));
         const aiExplanations = await explainRecommendations(
           { youLike: tasteSummary.youLike, avoid: tasteSummary.avoid },
-          aiTitles
+          aiTitles,
+          regionToAILocale(userRegion),
         );
         for (const aiExp of aiExplanations) {
           const rec = recommendations.find((r) => r.title === aiExp.title);

@@ -14,14 +14,20 @@ const CURATOR_MODEL = "claude-haiku-4-5-20251001";
 function buildSystemPrompt(lang: string, username: string | null, region: SupportedRegion, tasteContext?: string): string {
   const now = new Date();
   const hour = now.getHours();
-  const locale = lang === "no" ? "no-NO" : "en-US";
-  const weekday = now.toLocaleDateString(locale, { weekday: "long" });
+  const localeMap: Record<string, string> = { no: "no-NO", sv: "sv-SE", da: "da-DK", fi: "fi-FI" };
+  const dateLocale = localeMap[lang] ?? "en-US";
+  const weekday = now.toLocaleDateString(dateLocale, { weekday: "long" });
   const isEvening = hour >= 18;
   const regionName = REGION_LABELS[region] || region;
 
-  const langInstruction = lang === "no"
-    ? "Svar alltid pa norsk (bokmal)."
-    : "Always respond in English.";
+  const LANG_INSTRUCTION: Record<string, string> = {
+    no: "Svar alltid på norsk (bokmål).",
+    sv: "Svara alltid på svenska.",
+    da: "Svar altid på dansk.",
+    fi: "Vastaa aina suomeksi.",
+    en: "Always respond in English.",
+  };
+  const langInstruction = LANG_INSTRUCTION[lang] ?? LANG_INSTRUCTION.en;
 
   return `You are Curator — the exclusive AI film expert for Logflix.${username ? ` You are speaking with "${username}". Use their name naturally but sparingly.` : ""}
 
@@ -217,7 +223,8 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
   // Append current message
   chatHistory.push({ role: "user", content: userMessage });
 
-  const lang = body.lang === "en" ? "en" : "no";
+  const validLangs = ["no", "en", "sv", "da", "fi"];
+  const lang = validLangs.includes(body.lang) ? body.lang : "no";
   const username = typeof body.username === "string" ? body.username.slice(0, 50) : null;
   const userRegion = resolveRegion(profile?.preferred_region, req.headers.get("x-vercel-ip-country"));
 
