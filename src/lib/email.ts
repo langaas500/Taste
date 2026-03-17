@@ -139,7 +139,128 @@ export async function sendMatchReminderEmail(
   }
 }
 
-/* ── 3. Weekly Digest ───────────────────────────────────── */
+/* ── 3. Friday Pick ────────────────────────────────────── */
+
+const fridayStrings: Record<string, {
+  subject: string;
+  heading: (partner: string) => string;
+  movieLabel: string;
+  seriesLabel: string;
+  cta: string;
+  footer: string;
+}> = {
+  no: {
+    subject: "🍿 Fredagsfilmen deres er klar",
+    heading: (p) => `Tonight's Pick for deg & ${p}`,
+    movieLabel: "Film i kveld",
+    seriesLabel: "Serie i kveld",
+    cta: "Start Se Sammen",
+    footer: "Du mottar denne fordi du har en koblet partner på logflix.app.",
+  },
+  en: {
+    subject: "🍿 Your Friday pick is ready",
+    heading: (p) => `Tonight's Pick for you & ${p}`,
+    movieLabel: "Movie tonight",
+    seriesLabel: "Series tonight",
+    cta: "Start Watch Together",
+    footer: "You're receiving this because you have a linked partner on logflix.app.",
+  },
+  dk: {
+    subject: "🍿 Jeres fredagsfilm er klar",
+    heading: (p) => `Tonight's Pick for dig & ${p}`,
+    movieLabel: "Film i aften",
+    seriesLabel: "Serie i aften",
+    cta: "Start Se Sammen",
+    footer: "Du modtager denne fordi du har en forbundet partner på logflix.app.",
+  },
+  se: {
+    subject: "🍿 Er fredagsfilm är redo",
+    heading: (p) => `Tonight's Pick för dig & ${p}`,
+    movieLabel: "Film ikväll",
+    seriesLabel: "Serie ikväll",
+    cta: "Starta Se Tillsammans",
+    footer: "Du får detta för att du har en kopplad partner på logflix.app.",
+  },
+  fi: {
+    subject: "🍿 Perjantain elokuvavalintanne on valmis",
+    heading: (p) => `Tonight's Pick sinulle & ${p}`,
+    movieLabel: "Elokuva tänään",
+    seriesLabel: "Sarja tänään",
+    cta: "Aloita Katsotaan Yhdessä",
+    footer: "Saat tämän koska sinulla on yhdistetty kumppani logflix.app-sivustolla.",
+  },
+};
+
+function posterCard(label: string, title: string, posterUrl: string): string {
+  return `<td width="50%" valign="top" style="padding:0 4px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:${BG};border-radius:12px;border:1px solid ${BORDER};overflow:hidden;">
+      <tr><td style="padding:12px 12px 6px;">
+        <p style="margin:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:${TEXT_DIM};">${label}</p>
+      </td></tr>
+      <tr><td align="center" style="padding:0 12px;">
+        <img src="${posterUrl}" alt="${title}" width="120" style="border-radius:8px;display:block;max-width:100%;" />
+      </td></tr>
+      <tr><td style="padding:8px 12px 12px;">
+        <p style="margin:0;font-size:14px;font-weight:600;color:#ffffff;line-height:1.3;">${title}</p>
+      </td></tr>
+    </table>
+  </td>`;
+}
+
+export async function sendFridayPickEmail(
+  email: string,
+  partnerName: string,
+  movieTitle: string,
+  seriesTitle: string,
+  moviePoster: string,
+  seriesPoster: string,
+  locale: string,
+): Promise<void> {
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set — skipping friday pick email");
+    return;
+  }
+
+  const t = fridayStrings[locale] || fridayStrings.en;
+  const moviePosterUrl = moviePoster ? `https://image.tmdb.org/t/p/w300${moviePoster}` : "";
+  const seriesPosterUrl = seriesPoster ? `https://image.tmdb.org/t/p/w300${seriesPoster}` : "";
+
+  let cardsHtml = "";
+  if (movieTitle || seriesTitle) {
+    cardsHtml = `<tr><td style="padding-bottom:24px;">
+      <table width="100%" cellpadding="0" cellspacing="0"><tr>
+        ${movieTitle ? posterCard(`🎬 ${t.movieLabel}`, movieTitle, moviePosterUrl) : ""}
+        ${seriesTitle ? posterCard(`📺 ${t.seriesLabel}`, seriesTitle, seriesPosterUrl) : ""}
+      </tr></table>
+    </td></tr>`;
+  }
+
+  try {
+    await resend.emails.send({
+      from: "Logflix <hei@logflix.app>",
+      to: email,
+      subject: t.subject,
+      html: wrap(`
+        <tr><td align="center" style="padding-bottom:8px;">
+          <p style="margin:0;font-size:11px;font-weight:700;color:${RED};letter-spacing:1.5px;text-transform:uppercase;">FRIDAY MOVIE NIGHT</p>
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:24px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:700;">${t.heading(partnerName)}</h1>
+        </td></tr>
+        ${cardsHtml}
+        ${ctaButton(t.cta, "https://logflix.app/together")}
+        ${footer(
+          t.footer,
+          '<a href="https://logflix.app/settings" style="color:' + TEXT_DIM + ';text-decoration:underline;">Innstillinger</a>'
+        )}
+      `),
+    });
+  } catch (err) {
+    console.error("Failed to send friday pick email:", err);
+  }
+}
+
+/* ── 4. Weekly Digest ───────────────────────────────────── */
 
 export async function sendWeeklyDigestEmail(
   email: string,
