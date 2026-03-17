@@ -158,6 +158,10 @@ const strings = {
     shareText: { no: "Vi fant noe å se! 🎬", en: "We found something to watch! 🎬", dk: "Vi fandt noget at se! 🎬", se: "Vi hittade något att se! 🎬", fi: "Löysimme jotain katsottavaa! 🎬" },
     copied: { no: "Kopiert!", en: "Copied!", dk: "Kopieret!", se: "Kopierat!", fi: "Kopioitu!" },
     soloInviteCta: { no: "Matchen er bedre med noen! Inviter en venn →", en: "Matches are better together! Invite a friend →", dk: "Matchet er bedre med nogen! Inviter en ven →", se: "Matchen är bättre med någon! Bjud in en vän →", fi: "Match on parempi yhdessä! Kutsu ystävä →" },
+    addWatchlist: { no: "Legg til watchlist", en: "Add to watchlist", dk: "Tilføj til watchlist", se: "Lägg till i watchlist", fi: "Lisää katselulistalle" },
+    addedWatchlist: { no: "✓ Lagt til watchlist", en: "✓ Added to watchlist", dk: "✓ Tilføjet til watchlist", se: "✓ Tillagd i watchlist", fi: "✓ Lisätty katselulistalle" },
+    markWatched: { no: "Vi har sett den", en: "We've watched it", dk: "Vi har set den", se: "Vi har sett den", fi: "Olemme katsoneet sen" },
+    markedWatched: { no: "✓ Logget", en: "✓ Logged", dk: "✓ Logget", se: "✓ Loggad", fi: "✓ Kirjattu" },
   },
 
   // ============================================

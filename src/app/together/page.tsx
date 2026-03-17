@@ -88,6 +88,10 @@ export default function WTBetaPage() {
   const [finalWinner, setFinalWinner] = useState<WTTitle | null>(null);
   const [winnerProviderIds, setWinnerProviderIds] = useState<number[]>([]);
   const [emailCaptured, setEmailCaptured] = useState(false);
+  const [watchlistAdded, setWatchlistAdded] = useState(false);
+  const [watchedLogged, setWatchedLogged] = useState(false);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
+  const [watchedLoading, setWatchedLoading] = useState(false);
   const [emailValue, setEmailValue] = useState("");
   const [superLikesUsed, setSuperLikesUsed] = useState(0);
   const [iAmDone, setIAmDone] = useState(false);
@@ -615,6 +619,8 @@ export default function WTBetaPage() {
     setCompromiseTitle(null);
     setIsFallbackCompromise(false);
     setFinalWinner(null);
+    setWatchlistAdded(false);
+    setWatchedLogged(false);
     resetReveal();
     setMode("solo");
     setSessionId(null);
@@ -657,6 +663,28 @@ export default function WTBetaPage() {
         track("match_shared", { session_id: sessionId, tmdb_id: fw?.tmdb_id, method: "copy" });
       } catch { /* ignore */ }
     }
+  }
+
+  async function handleAddWatchlist() {
+    if (!finalWinner || !authUser || watchlistAdded || watchlistLoading) return;
+    setWatchlistLoading(true);
+    try {
+      await logTitle({ tmdb_id: finalWinner.tmdb_id, type: finalWinner.type, status: "watchlist" });
+      setWatchlistAdded(true);
+      track("match_watchlist_added", { tmdb_id: finalWinner.tmdb_id });
+    } catch { /* silent */ }
+    setWatchlistLoading(false);
+  }
+
+  async function handleMarkWatched() {
+    if (!finalWinner || !authUser || watchedLogged || watchedLoading) return;
+    setWatchedLoading(true);
+    try {
+      await logTitle({ tmdb_id: finalWinner.tmdb_id, type: finalWinner.type, status: "watched", sentiment: "liked" });
+      setWatchedLogged(true);
+      track("match_marked_watched", { tmdb_id: finalWinner.tmdb_id });
+    } catch { /* silent */ }
+    setWatchedLoading(false);
   }
 
   /* ── ritual start sequence ── */
@@ -1636,6 +1664,26 @@ export default function WTBetaPage() {
                   >
                     {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "share")}
                   </button>
+                  {authUser && (
+                    <div className="flex gap-2 mb-2 w-full">
+                      <button
+                        onClick={handleAddWatchlist}
+                        disabled={watchlistAdded || watchlistLoading}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-60"
+                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: watchlistAdded ? "rgba(52,211,153,0.8)" : "rgba(255,255,255,0.5)" }}
+                      >
+                        {watchlistLoading ? "..." : watchlistAdded ? t(locale, "winner", "addedWatchlist") : t(locale, "winner", "addWatchlist")}
+                      </button>
+                      <button
+                        onClick={handleMarkWatched}
+                        disabled={watchedLogged || watchedLoading}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-60"
+                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: watchedLogged ? "rgba(52,211,153,0.8)" : "rgba(255,255,255,0.5)" }}
+                      >
+                        {watchedLoading ? "..." : watchedLogged ? t(locale, "winner", "markedWatched") : t(locale, "winner", "markWatched")}
+                      </button>
+                    </div>
+                  )}
                   <button
                     onClick={() => { setFinalWinner(null); setRoundPhase("swiping"); setSuperLikesUsed(0); superLikedIdRef.current = null; endedRoundRef.current = 0; endingRoundRef.current = false; setTimerRunning(true); }}
                     className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer"
@@ -1881,6 +1929,26 @@ export default function WTBetaPage() {
                     >
                       {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "share")}
                     </button>
+                    {authUser && (
+                      <div className="flex gap-2 mb-3 w-full">
+                        <button
+                          onClick={handleAddWatchlist}
+                          disabled={watchlistAdded || watchlistLoading}
+                          className="flex-1 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-60"
+                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: watchlistAdded ? "rgba(52,211,153,0.8)" : "rgba(255,255,255,0.5)" }}
+                        >
+                          {watchlistLoading ? "..." : watchlistAdded ? t(locale, "winner", "addedWatchlist") : t(locale, "winner", "addWatchlist")}
+                        </button>
+                        <button
+                          onClick={handleMarkWatched}
+                          disabled={watchedLogged || watchedLoading}
+                          className="flex-1 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-60"
+                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: watchedLogged ? "rgba(52,211,153,0.8)" : "rgba(255,255,255,0.5)" }}
+                        >
+                          {watchedLoading ? "..." : watchedLogged ? t(locale, "winner", "markedWatched") : t(locale, "winner", "markWatched")}
+                        </button>
+                      </div>
+                    )}
                     <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>
                       {t(locale, "winner", "playAgain")}
                     </button>
