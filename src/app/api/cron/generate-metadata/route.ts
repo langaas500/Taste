@@ -100,6 +100,54 @@ function validateResult(raw: CuratorResult): CuratorResult | null {
 
 // ── i18n (sv/da/fi) generation ─────────────────────────────────────
 
+const MOOD_TAGS_SV = [
+  // Stämning och tid
+  "Perfekt för fredagskvällen", "Se ensam i mörkret", "Filmkväll för två",
+  "Kräver full uppmärksamhet", "Lätt och rolig", "Tung och tankeväckande",
+  "Bra för hela familjen", "Sen kväll ensam", "Imponera gästerna",
+  // Säsong
+  "Påskdeckare", "Stugkväll", "Sommarkväll", "Resefilm",
+  "Halloweenkväll", "Skräckfilm", "Perfekt julfilm", "Familjemys",
+  "Julkalender", "Barnfilm",
+  // SEO och nisch
+  "Baserad på en sann historia", "Nordic Noir", "Kort och koncis",
+  "Visuellt mästerverk", "Nostalgisk pärla", "Gömd skatt",
+] as const;
+
+const MOOD_TAGS_DA = [
+  // Stemning og tid
+  "Perfekt til fredagsaften", "Se alene i mørket", "Filmaften for to",
+  "Kræver fuld opmærksomhed", "Let og morsom", "Tung og tankevækkende",
+  "God for hele familien", "Sen aften alene", "Imponér gæsterne",
+  // Sæson
+  "Påskekrími", "Hyggeaften", "Sommeraften", "Rejsefilm",
+  "Halloweenaften", "Gyser", "Perfekt julefilm", "Familiehygge",
+  "Julekalender", "Børnefilm",
+  // SEO og niche
+  "Baseret på en sand historie", "Nordic Noir", "Kort og kontant",
+  "Visuelt mesterværk", "Nostalgisk perle", "Skjult skat",
+] as const;
+
+const MOOD_TAGS_FI = [
+  // Tunnelma ja aika
+  "Täydellinen perjantai-iltaan", "Katso yksin pimeässä", "Leffailta kahdelle",
+  "Vaatii täyden huomion", "Kevyt ja hauska", "Raskas ja ajatuksia herättävä",
+  "Sopii koko perheelle", "Myöhäinen ilta yksin", "Vaikuta vieraisiin",
+  // Kausi
+  "Pääsiäistrilleri", "Mökkiilta", "Kesäilta", "Matkaelokuva",
+  "Halloween-ilta", "Kauhuelokuva", "Täydellinen joulufilmi", "Perheen yhteinen hetki",
+  "Joulukalenteri", "Lastenelokuva",
+  // SEO ja niche
+  "Perustuu tositarinaan", "Nordic Noir", "Lyhyt ja ytimekäs",
+  "Visuaalinen mestariteos", "Nostalginen helmi", "Kätketty aarre",
+] as const;
+
+const MOOD_TAGS_BY_LOCALE: Record<string, readonly string[]> = {
+  sv: MOOD_TAGS_SV,
+  da: MOOD_TAGS_DA,
+  fi: MOOD_TAGS_FI,
+};
+
 const I18N_SYSTEM_PROMPT = `You are a film critic writing short, engaging descriptions.
 Respond ONLY with valid JSON, no markdown, no preamble.`;
 
@@ -107,6 +155,7 @@ interface I18nLocaleEntry {
   hook: string;
   body: string;
   verdict: string;
+  mood_tags: string[];
 }
 
 interface I18nResult {
@@ -137,38 +186,51 @@ Generate for exactly these 3 languages:
 
 Respond with this exact JSON structure:
 {
-  "sv": { "hook": "...", "body": "...", "verdict": "..." },
-  "da": { "hook": "...", "body": "...", "verdict": "..." },
-  "fi": { "hook": "...", "body": "...", "verdict": "..." }
+  "sv": { "hook": "...", "body": "...", "verdict": "...", "mood_tags": ["...", "..."] },
+  "da": { "hook": "...", "body": "...", "verdict": "...", "mood_tags": ["...", "..."] },
+  "fi": { "hook": "...", "body": "...", "verdict": "...", "mood_tags": ["...", "..."] }
 }
 
 Rules:
 - hook: max 20 words, one sentence
 - body: 2-3 sentences about mood and themes
 - verdict: max 15 words, one punchy line
+- mood_tags: choose 3-5 tags ONLY from these lists (do not invent new tags):
+  sv: ${JSON.stringify(MOOD_TAGS_SV)}
+  da: ${JSON.stringify(MOOD_TAGS_DA)}
+  fi: ${JSON.stringify(MOOD_TAGS_FI)}
 - Write naturally in each language, not translated from Norwegian`;
 }
 
-function validateI18nLocale(entry: unknown): I18nLocaleEntry | null {
+function validateI18nLocale(entry: unknown, locale: string): I18nLocaleEntry | null {
+  const e = entry as Record<string, unknown>;
   if (
     typeof entry !== "object" || entry === null ||
-    typeof (entry as I18nLocaleEntry).hook !== "string" || !(entry as I18nLocaleEntry).hook ||
-    typeof (entry as I18nLocaleEntry).body !== "string" || !(entry as I18nLocaleEntry).body ||
-    typeof (entry as I18nLocaleEntry).verdict !== "string" || !(entry as I18nLocaleEntry).verdict
+    typeof e.hook !== "string" || !e.hook ||
+    typeof e.body !== "string" || !e.body ||
+    typeof e.verdict !== "string" || !e.verdict
   ) {
     return null;
   }
+
+  const whitelist = MOOD_TAGS_BY_LOCALE[locale];
+  const rawTags = Array.isArray(e.mood_tags) ? (e.mood_tags as string[]) : [];
+  const validTags = whitelist
+    ? rawTags.filter((t) => whitelist.includes(t)).slice(0, 5)
+    : [];
+
   return {
-    hook: (entry as I18nLocaleEntry).hook.slice(0, 200),
-    body: (entry as I18nLocaleEntry).body.slice(0, 1000),
-    verdict: (entry as I18nLocaleEntry).verdict.slice(0, 200),
+    hook: (e.hook as string).slice(0, 200),
+    body: (e.body as string).slice(0, 1000),
+    verdict: (e.verdict as string).slice(0, 200),
+    mood_tags: validTags,
   };
 }
 
 function validateI18nResult(raw: I18nResult): I18nResult | null {
-  const sv = validateI18nLocale(raw.sv);
-  const da = validateI18nLocale(raw.da);
-  const fi = validateI18nLocale(raw.fi);
+  const sv = validateI18nLocale(raw.sv, "sv");
+  const da = validateI18nLocale(raw.da, "da");
+  const fi = validateI18nLocale(raw.fi, "fi");
   if (!sv || !da || !fi) return null;
   return { sv, da, fi };
 }
@@ -334,6 +396,7 @@ export async function POST(req: NextRequest) {
               curator_hook: i18nValidated[locale].hook,
               curator_body: i18nValidated[locale].body,
               curator_verdict: i18nValidated[locale].verdict,
+              mood_tags: i18nValidated[locale].mood_tags,
               updated_at: new Date().toISOString(),
             }));
             await admin
