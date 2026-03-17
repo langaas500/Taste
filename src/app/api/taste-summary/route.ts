@@ -82,8 +82,6 @@ function buildEnrichment(titles: UserTitle[], cacheMap: Map<number, TitleCache>)
     dominant_genres: dominantGenres,
     like_examples: likeExamples,
     avoid_examples: avoidExamples,
-    // TODO: generate real recommendations from TMDB similar titles
-    recommendations: [],
     // TODO: compute dynamically from aggregate user data
     percentiles: { darker_than: 72, less_romance_than: 88, faster_tempo_than: 65 },
     // TODO: derive from AI summary or genre analysis
@@ -91,6 +89,46 @@ function buildEnrichment(titles: UserTitle[], cacheMap: Map<number, TitleCache>)
     tone: ["Mørk", "Psykologisk"],
     themes: ["Makt", "Identitet"],
   };
+}
+
+/** Find recommendations from titles_cache that user hasn't watched, matching top genres */
+async function buildRecommendations(
+  userTmdbIds: Set<number>,
+  dominantGenres: string[],
+): Promise<{ tmdb_id: number; title: string; poster_path: string; match_score: number }[]> {
+  if (dominantGenres.length === 0) return [];
+  const admin = createSupabaseAdmin();
+
+  // Fetch popular cached titles the user hasn't seen, with poster
+  const { data: candidates } = await admin
+    .from("titles_cache")
+    .select("tmdb_id, title, poster_path, genres, vote_average")
+    .not("poster_path", "is", null)
+    .order("vote_average", { ascending: false })
+    .limit(200);
+
+  if (!candidates || candidates.length === 0) return [];
+
+  // Score and filter
+  const scored = (candidates as TitleCache[])
+    .filter((c) => !userTmdbIds.has(c.tmdb_id) && c.poster_path)
+    .map((c) => {
+      const genres = (c.genres || []) as { id: number; name: string }[];
+      const genreNames = genres.map((g) => g.name);
+      const overlap = genreNames.filter((g) => dominantGenres.includes(g)).length;
+      if (overlap === 0) return null;
+      return {
+        tmdb_id: c.tmdb_id,
+        title: c.title,
+        poster_path: c.poster_path!,
+        match_score: Math.min(98, Math.round((overlap / dominantGenres.length) * 85 + (c.vote_average || 0) * 1.5)),
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b!.match_score - a!.match_score)
+    .slice(0, 3) as { tmdb_id: number; title: string; poster_path: string; match_score: number }[];
+
+  return scored;
 }
 
 async function loadUserTitlesAndCache(supabase: ReturnType<typeof createSupabaseAdmin>, userId: string) {
@@ -137,16 +175,18 @@ export const GET = withLogger("/api/taste-summary", async (req, { logger }) => {
     // Load titles + cache for enrichment
     const { titles, cacheMap } = await loadUserTitlesAndCache(supabase, user.id);
     const enrichment = buildEnrichment(titles, cacheMap);
+    const userTmdbIds = new Set(titles.map((t) => t.tmdb_id));
+    const recommendations = await buildRecommendations(userTmdbIds, enrichment.dominant_genres);
 
     const ts = profile?.taste_summary;
     if (ts && (ts.youLike || ts.avoid || ts.pacing)) {
       const summary = isPremium
         ? ts
         : { youLike: ts.youLike ?? null, avoid: null, pacing: null };
-      return NextResponse.json({ summary, cached: true, is_premium: isPremium, ...enrichment });
+      return NextResponse.json({ summary, cached: true, is_premium: isPremium, ...enrichment, recommendations });
     }
 
-    return NextResponse.json({ summary: null, cached: false, is_premium: isPremium, ...enrichment });
+    return NextResponse.json({ summary: null, cached: false, is_premium: isPremium, ...enrichment, recommendations });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
@@ -264,7 +304,9 @@ export const POST = withLogger("/api/taste-summary", async (req, { logger }) => 
       ? summary
       : { youLike: summary.youLike ?? null, avoid: null, pacing: null };
     const enrichment = buildEnrichment(titles, cacheMap);
-    return NextResponse.json({ summary: gatedSummary, cached: false, is_premium: isPremium, ...enrichment });
+    const userTmdbIds = new Set(titles.map((t) => t.tmdb_id));
+    const recommendations = await buildRecommendations(userTmdbIds, enrichment.dominant_genres);
+    return NextResponse.json({ summary: gatedSummary, cached: false, is_premium: isPremium, ...enrichment, recommendations });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
