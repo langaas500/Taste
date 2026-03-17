@@ -4,6 +4,51 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
+/* ── shared ─────────────────────────────────────────────── */
+
+const BG = "#0a0a0f";
+const CARD_BG = "#111118";
+const BORDER = "#1e1e2a";
+const RED = "#ff2a2a";
+const TEXT = "#e0e0e8";
+const TEXT_DIM = "#8888a0";
+const FONT = "Arial, Helvetica, sans-serif";
+
+function wrap(body: string): string {
+  return `<!DOCTYPE html>
+<html lang="no">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:${BG};font-family:${FONT};-webkit-text-size-adjust:100%;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:${BG};padding:32px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:${CARD_BG};border-radius:16px;border:1px solid ${BORDER};padding:40px 32px;">
+        <tr><td align="center" style="padding-bottom:28px;">
+          <span style="font-size:24px;font-weight:800;color:${RED};letter-spacing:2px;">LOGFLIX</span>
+        </td></tr>
+        ${body}
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+function ctaButton(text: string, href: string): string {
+  return `<tr><td align="center" style="padding-bottom:24px;">
+  <a href="${href}" style="display:inline-block;background:${RED};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:10px;letter-spacing:0.3px;">
+    ${text}
+  </a>
+</td></tr>`;
+}
+
+function footer(text: string, extra?: string): string {
+  return `<tr><td align="center" style="border-top:1px solid ${BORDER};padding-top:20px;color:${TEXT_DIM};font-size:11px;line-height:1.6;">
+  ${text}${extra ? `<br>${extra}` : ""}
+</td></tr>`;
+}
+
+/* ── 1. Welcome ─────────────────────────────────────────── */
+
 export async function sendWelcomeEmail(
   email: string,
   name?: string
@@ -19,47 +64,40 @@ export async function sendWelcomeEmail(
     await resend.emails.send({
       from: "Logflix <hei@logflix.app>",
       to: email,
-      subject: "Velkommen til Logflix 🎬",
-      html: `
-<!DOCTYPE html>
-<html lang="no">
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#0f1428;font-family:Arial,Helvetica,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1428;padding:40px 0;">
-    <tr><td align="center">
-      <table width="520" cellpadding="0" cellspacing="0" style="background:#1a1f3d;border-radius:12px;padding:40px;">
-        <tr><td align="center" style="padding-bottom:24px;">
-          <span style="font-size:28px;font-weight:bold;color:#ff2a2a;letter-spacing:1px;">LOGFLIX</span>
-        </td></tr>
-        <tr><td align="center" style="padding-bottom:16px;">
-          <h1 style="margin:0;font-size:22px;color:#ffffff;">${greeting}</h1>
-        </td></tr>
+      subject: "Velkommen til Logflix \uD83C\uDFAC",
+      html: wrap(`
         <tr><td align="center" style="padding-bottom:8px;">
-          <h2 style="margin:0;font-size:18px;color:#ffffff;font-weight:normal;">Velkommen til Logflix</h2>
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:700;">${greeting}</h1>
         </td></tr>
-        <tr><td style="padding-bottom:32px;color:#c0c4d8;font-size:15px;line-height:1.6;text-align:center;">
-          Du er nå klar til å finne filmer og serier du elsker.<br><br>
-          Start med å prøve <strong style="color:#ffffff;">Se Sammen</strong> — sveip deg frem til enighet med noen du vil se med.
+        <tr><td align="center" style="padding-bottom:24px;">
+          <p style="margin:0;font-size:16px;color:${TEXT};line-height:1.5;">Du er nå klar til å finne noe å se.</p>
         </td></tr>
-        <tr><td align="center" style="padding-bottom:32px;">
-          <a href="https://logflix.app/together"
-             style="display:inline-block;background:#ff2a2a;color:#ffffff;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 32px;border-radius:8px;">
-            Gå til Se Sammen
-          </a>
+        <tr><td style="padding-bottom:28px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="padding:10px 0;color:${TEXT};font-size:14px;line-height:1.6;">
+              \uD83C\uDCCF&nbsp;&nbsp;<strong style="color:#fff;">Se Sammen</strong> — sveip og match med noen
+            </td></tr>
+            <tr><td style="padding:10px 0;color:${TEXT};font-size:14px;line-height:1.6;border-top:1px solid ${BORDER};">
+              \uD83E\uDD16&nbsp;&nbsp;<strong style="color:#fff;">AI-anbefalinger</strong> — basert på din smak
+            </td></tr>
+            <tr><td style="padding:10px 0;color:${TEXT};font-size:14px;line-height:1.6;border-top:1px solid ${BORDER};">
+              \uD83D\uDCDA&nbsp;&nbsp;<strong style="color:#fff;">Logg filmer</strong> — bygg biblioteket ditt
+            </td></tr>
+          </table>
         </td></tr>
-        <tr><td align="center" style="border-top:1px solid #2a2f4d;padding-top:20px;color:#6b7094;font-size:12px;">
-          Du mottar denne e-posten fordi du registrerte deg på logflix.app
+        ${ctaButton("Start Se Sammen", "https://logflix.app/together")}
+        <tr><td align="center" style="padding-bottom:20px;">
+          <p style="margin:0;font-size:12px;color:${TEXT_DIM};font-style:italic;">Tips: inviter noen og prøv Se Sammen i kveld</p>
         </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`.trim(),
+        ${footer("Du mottar denne e-posten fordi du registrerte deg på logflix.app")}
+      `),
     });
   } catch (err) {
     console.error("Failed to send welcome email:", err);
   }
 }
+
+/* ── 2. Match Reminder ──────────────────────────────────── */
 
 export async function sendMatchReminderEmail(
   email: string,
@@ -71,100 +109,104 @@ export async function sendMatchReminderEmail(
     return;
   }
 
-  const searchUrl = `https://www.justwatch.com/no/search?q=${encodeURIComponent(title)}`;
+  const slug = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const titleUrl = `https://logflix.app/no/${type}/${slug}`;
 
   try {
     await resend.emails.send({
       from: "Logflix <hei@logflix.app>",
       to: email,
-      subject: `Dere skal se ${title} i kveld 🎬`,
-      html: `
-<!DOCTYPE html>
-<html lang="no">
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#0f1428;font-family:Arial,Helvetica,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1428;padding:40px 0;">
-    <tr><td align="center">
-      <table width="520" cellpadding="0" cellspacing="0" style="background:#1a1f3d;border-radius:12px;padding:40px;">
-        <tr><td align="center" style="padding-bottom:24px;">
-          <span style="font-size:28px;font-weight:bold;color:#ff2a2a;letter-spacing:1px;">LOGFLIX</span>
+      subject: `Dere matchet på ${title}! \uD83C\uDF89`,
+      html: wrap(`
+        <tr><td align="center" style="padding-bottom:12px;">
+          <p style="margin:0;font-size:13px;font-weight:600;color:${RED};letter-spacing:1.5px;text-transform:uppercase;">Det er en match!</p>
         </td></tr>
-        <tr><td align="center" style="padding-bottom:16px;">
-          <h1 style="margin:0;font-size:22px;color:#ffffff;">Ikke glem å se den i kveld!</h1>
+        <tr><td align="center" style="padding-bottom:12px;">
+          <h1 style="margin:0;font-size:26px;color:#ffffff;font-weight:700;">${title}</h1>
         </td></tr>
-        <tr><td style="padding-bottom:32px;color:#c0c4d8;font-size:15px;line-height:1.6;text-align:center;">
-          Dere matchet på <strong style="color:#ffffff;">${title}</strong>.<br><br>
-          Sett deg ned, finn fjernkontrollen, og trykk play.
+        <tr><td align="center" style="padding-bottom:28px;">
+          <p style="margin:0;font-size:15px;color:${TEXT};line-height:1.6;">Nå gjenstår bare én ting — finn ut hvor dere kan se den.</p>
         </td></tr>
-        <tr><td align="center" style="padding-bottom:32px;">
-          <a href="${searchUrl}"
-             style="display:inline-block;background:#ff2a2a;color:#ffffff;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 32px;border-radius:8px;">
-            Finn ${title}
-          </a>
+        ${ctaButton("Finn hvor du kan streame", titleUrl)}
+        <tr><td align="center" style="padding-bottom:20px;">
+          <a href="https://logflix.app/together" style="color:${RED};font-size:13px;text-decoration:underline;">Prøv Se Sammen igjen</a>
         </td></tr>
-        <tr><td align="center" style="border-top:1px solid #2a2f4d;padding-top:20px;color:#6b7094;font-size:12px;">
-          Du ba om denne påminnelsen på logflix.app
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`.trim(),
+        ${footer("Du ba om denne påminnelsen på logflix.app")}
+      `),
     });
   } catch (err) {
     console.error("Failed to send match reminder email:", err);
   }
 }
 
-export async function sendWeeklyDigestEmail(email: string): Promise<void> {
+/* ── 3. Weekly Digest ───────────────────────────────────── */
+
+export async function sendWeeklyDigestEmail(
+  email: string,
+  name?: string,
+  data?: {
+    watchlistCount?: number;
+    friendsActivity?: number;
+    recommendations?: Array<{ title: string; reason: string }>;
+  }
+): Promise<void> {
   if (!resend) {
     console.warn("RESEND_API_KEY not set — skipping weekly digest email");
     return;
   }
 
+  const greeting = name ? `Hei, ${name}! God helg.` : "Hei! God helg.";
+
+  let dynamicRows = "";
+
+  if (data?.watchlistCount && data.watchlistCount > 0) {
+    dynamicRows += `<tr><td style="padding:10px 0;color:${TEXT};font-size:14px;line-height:1.6;">
+      \uD83D\uDCCB&nbsp;&nbsp;Du har <strong style="color:#fff;">${data.watchlistCount} titler</strong> i watchlisten — kanskje en av dem i helgen?
+    </td></tr>`;
+  }
+
+  if (data?.friendsActivity && data.friendsActivity > 0) {
+    dynamicRows += `<tr><td style="padding:10px 0;color:${TEXT};font-size:14px;line-height:1.6;${dynamicRows ? `border-top:1px solid ${BORDER};` : ""}">
+      \uD83D\uDC65&nbsp;&nbsp;Vennene dine logget <strong style="color:#fff;">${data.friendsActivity} nye filmer</strong> denne uken.
+    </td></tr>`;
+  }
+
+  if (data?.recommendations && data.recommendations.length > 0) {
+    const recs = data.recommendations.slice(0, 2);
+    let recsHtml = `<tr><td style="padding:10px 0;color:${TEXT};font-size:14px;line-height:1.6;${dynamicRows ? `border-top:1px solid ${BORDER};` : ""}">
+      \uD83C\uDFAF&nbsp;&nbsp;<strong style="color:#fff;">Basert på smaken din:</strong>
+    </td></tr>`;
+    for (const rec of recs) {
+      recsHtml += `<tr><td style="padding:6px 0 6px 28px;color:${TEXT};font-size:13px;line-height:1.5;">
+        <strong style="color:#fff;">${rec.title}</strong><br>
+        <span style="color:${TEXT_DIM};font-size:12px;">${rec.reason}</span>
+      </td></tr>`;
+    }
+    dynamicRows += recsHtml;
+  }
+
+  const hasDynamic = dynamicRows.length > 0;
+
   try {
     await resend.emails.send({
       from: "Logflix <hei@logflix.app>",
       to: email,
-      subject: "🎬 Hva skal dere se i helgen?",
-      html: `
-<!DOCTYPE html>
-<html lang="no">
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#0f1428;font-family:Arial,Helvetica,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1428;padding:40px 0;">
-    <tr><td align="center">
-      <table width="520" cellpadding="0" cellspacing="0" style="background:#1a1f3d;border-radius:12px;padding:40px;">
-        <tr><td align="center" style="padding-bottom:24px;">
-          <span style="font-size:28px;font-weight:bold;color:#ff2a2a;letter-spacing:1px;">LOGFLIX</span>
+      subject: "God helg — hva skal dere se? \uD83C\uDF7F",
+      html: wrap(`
+        <tr><td align="center" style="padding-bottom:20px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:700;">${greeting}</h1>
         </td></tr>
-        <tr><td align="center" style="padding-bottom:16px;">
-          <h1 style="margin:0;font-size:22px;color:#ffffff;">Helgen nærmer seg</h1>
-        </td></tr>
-        <tr><td style="padding-bottom:32px;color:#c0c4d8;font-size:15px;line-height:1.6;text-align:center;">
-          Finn noe å se sammen. Åpne Se Sammen og sveip dere frem til enighet — det tar bare noen minutter.
-        </td></tr>
-        <tr><td align="center" style="padding-bottom:16px;">
-          <a href="https://logflix.app/together"
-             style="display:inline-block;background:#ff2a2a;color:#ffffff;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 32px;border-radius:8px;">
-            Start Se Sammen
-          </a>
-        </td></tr>
-        <tr><td align="center" style="padding-bottom:32px;">
-          <a href="https://logflix.app/home"
-             style="color:#ff2a2a;font-size:14px;text-decoration:underline;">
-            Se anbefalinger
-          </a>
-        </td></tr>
-        <tr><td align="center" style="border-top:1px solid #2a2f4d;padding-top:20px;color:#6b7094;font-size:12px;">
-          Du mottar denne e-posten fordi du er registrert på logflix.app.<br>
-          <a href="https://logflix.app/settings" style="color:#6b7094;text-decoration:underline;">Endre e-postinnstillinger</a>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`.trim(),
+        ${hasDynamic ? `<tr><td style="padding-bottom:24px;">
+          <table width="100%" cellpadding="0" cellspacing="0">${dynamicRows}</table>
+        </td></tr>` : `<tr><td align="center" style="padding-bottom:24px;">
+          <p style="margin:0;font-size:15px;color:${TEXT};line-height:1.6;">Finn noe å se sammen — åpne Se Sammen og sveip dere frem til enighet.</p>
+        </td></tr>`}
+        ${ctaButton("Start Se Sammen i helgen", "https://logflix.app/together")}
+        ${footer(
+          'Du mottar denne e-posten fordi du er registrert på logflix.app.',
+          '<a href="https://logflix.app/settings" style="color:' + TEXT_DIM + ';text-decoration:underline;">Avslutt ukentlig digest</a>'
+        )}
+      `),
     });
   } catch (err) {
     console.error("Failed to send weekly digest email:", err);
