@@ -60,6 +60,9 @@ const strings = {
     forYou: "For deg",
     basedOnTaste: "Basert på din smak",
     seeAll: "Se alle",
+    tasteReady: "Du har logget {count} titler — smaksprofilen din er klar",
+    seeTaste: "Se smaksprofilen din",
+    getRecs: "Få AI-anbefalinger",
   },
   en: {
     watched: "Watched",
@@ -101,6 +104,9 @@ const strings = {
     forYou: "For you",
     basedOnTaste: "Based on your taste",
     seeAll: "See all",
+    tasteReady: "You've logged {count} titles — your taste profile is ready",
+    seeTaste: "See your taste profile",
+    getRecs: "Get AI recommendations",
   },
   dk: {
     watched: "Set",
@@ -142,6 +148,9 @@ const strings = {
     forYou: "For dig",
     basedOnTaste: "Baseret på din smag",
     seeAll: "Se alle",
+    tasteReady: "Du har logget {count} titler — din smagsprofil er klar",
+    seeTaste: "Se din smagsprofil",
+    getRecs: "Få AI-anbefalinger",
   },
   se: {
     watched: "Sett",
@@ -183,6 +192,9 @@ const strings = {
     forYou: "För dig",
     basedOnTaste: "Baserat på din smak",
     seeAll: "Se alla",
+    tasteReady: "Du har loggat {count} titlar — din smakprofil är klar",
+    seeTaste: "Se din smakprofil",
+    getRecs: "Få AI-rekommendationer",
   },
   fi: {
     watched: "Katsotut",
@@ -224,6 +236,9 @@ const strings = {
     forYou: "Sinulle",
     basedOnTaste: "Makusi perusteella",
     seeAll: "Näytä kaikki",
+    tasteReady: "Olet kirjannut {count} nimikettä — makuprofiilisi on valmis",
+    seeTaste: "Katso makuprofiilisi",
+    getRecs: "Hanki AI-suosituksia",
   },
 } as const;
 
@@ -258,6 +273,9 @@ export default function LibraryPage() {
 
   useEffect(() => {
     loadData();
+    if (typeof window !== "undefined" && localStorage.getItem("library_taste_banner_dismissed")) {
+      setBannerDismissed(true);
+    }
   }, []);
 
   async function loadData() {
@@ -265,10 +283,12 @@ export default function LibraryPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const [{ data: ut }, { data: exc }] = await Promise.all([
+    const [{ data: ut }, { data: exc }, { data: profile }] = await Promise.all([
       supabase.from("user_titles").select("*").eq("user_id", user.id).eq("status", "watched").order("updated_at", { ascending: false }),
       supabase.from("user_exclusions").select("*").eq("user_id", user.id),
+      supabase.from("profiles").select("is_premium").eq("id", user.id).single(),
     ]);
+    setIsPremium(!!profile?.is_premium);
 
     const allKeys = [
       ...((ut || []) as UserTitle[]).map((t) => ({ tmdb_id: t.tmdb_id, type: t.type })),

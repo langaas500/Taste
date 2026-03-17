@@ -8,6 +8,24 @@ import GlowButton from "@/components/GlowButton";
 import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-browser";
 import Link from "next/link";
 import type { UserTitle, TitleCache } from "@/lib/types";
+import { useLocale } from "@/hooks/useLocale";
+import type { Locale } from "@/lib/i18n";
+
+const DATE_LOCALE: Record<Locale, string> = { no: "nb-NO", en: "en-US", dk: "da-DK", se: "sv-SE", fi: "fi-FI" };
+
+const strings: Record<Locale, {
+  loading: string; pageTitle: string; emptyTitle: string; emptyDesc: string;
+  search: string; importNetflix: string; watched: string; watchlist: string;
+  movies: string; tvShows: string; sentiment: string; liked: string;
+  neutral: string; disliked: string; unrated: string; avgRating: string;
+  topGenres: string; recentlyWatched: string;
+}> = {
+  no: { loading: "Knuser tall...", pageTitle: "Statistikk", emptyTitle: "Ingen statistikk ennå", emptyDesc: "Logg filmer og serier for å se visningsstatistikken din. Du kan også importere seerhistorikk fra Netflix.", search: "Søk etter titler", importNetflix: "Importer fra Netflix", watched: "Sett", watchlist: "Se-liste", movies: "Filmer", tvShows: "Serier", sentiment: "Vurdering", liked: "Likte", neutral: "Nøytral", disliked: "Mislikte", unrated: "Uvurdert", avgRating: "Gjennomsnittlig vurdering", topGenres: "Toppsjangre", recentlyWatched: "Nylig sett" },
+  en: { loading: "Crunching numbers...", pageTitle: "Statistics", emptyTitle: "No statistics yet", emptyDesc: "Log movies and shows to see your viewing statistics. You can also import watch history from Netflix.", search: "Search titles", importNetflix: "Import from Netflix", watched: "Watched", watchlist: "Watchlist", movies: "Movies", tvShows: "Shows", sentiment: "Sentiment", liked: "Liked", neutral: "Neutral", disliked: "Disliked", unrated: "Unrated", avgRating: "Average rating", topGenres: "Top genres", recentlyWatched: "Recently watched" },
+  dk: { loading: "Knuser tal...", pageTitle: "Statistik", emptyTitle: "Ingen statistik endnu", emptyDesc: "Log film og serier for at se din visningsstatistik. Du kan også importere seerhistorik fra Netflix.", search: "Søg efter titler", importNetflix: "Importer fra Netflix", watched: "Set", watchlist: "Se-liste", movies: "Film", tvShows: "Serier", sentiment: "Vurdering", liked: "Kunne lide", neutral: "Neutral", disliked: "Kunne ikke lide", unrated: "Uvurderet", avgRating: "Gennemsnitlig vurdering", topGenres: "Topgenrer", recentlyWatched: "Senest set" },
+  se: { loading: "Krossar siffror...", pageTitle: "Statistik", emptyTitle: "Ingen statistik ännu", emptyDesc: "Logga filmer och serier för att se din visningsstatistik. Du kan också importera tittarhistorik från Netflix.", search: "Sök efter titlar", importNetflix: "Importera från Netflix", watched: "Sett", watchlist: "Att se", movies: "Filmer", tvShows: "Serier", sentiment: "Omdöme", liked: "Gillade", neutral: "Neutral", disliked: "Ogillade", unrated: "Ej bedömd", avgRating: "Genomsnittligt betyg", topGenres: "Toppgenrer", recentlyWatched: "Nyligen sett" },
+  fi: { loading: "Murskataan lukuja...", pageTitle: "Tilastot", emptyTitle: "Ei tilastoja vielä", emptyDesc: "Kirjaa elokuvia ja sarjoja nähdäksesi katselutilastosi. Voit myös tuoda katseluhistorian Netflixistä.", search: "Etsi nimikkeitä", importNetflix: "Tuo Netflixistä", watched: "Katsottu", watchlist: "Katselulista", movies: "Elokuvat", tvShows: "Sarjat", sentiment: "Arvio", liked: "Pidin", neutral: "Neutraali", disliked: "En pitänyt", unrated: "Arvioimaton", avgRating: "Keskimääräinen arvio", topGenres: "Suosituimmat genret", recentlyWatched: "Äskettäin katsottu" },
+};
 
 interface Stats {
   totalWatched: number;

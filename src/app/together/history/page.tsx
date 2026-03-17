@@ -68,10 +68,13 @@ export default function HistoryPage() {
     }
   }
 
+  const regionMap: Record<string, string> = { no: "no", se: "se", dk: "dk", fi: "fi", en: "no" };
+  const region = regionMap[locale] ?? "no";
+
   function buildTitleUrl(match: MatchItem): string {
-    if (match.slug) return `/no/${match.type}/${match.slug}`;
+    if (match.slug) return `/${region}/${match.type}/${match.slug}`;
     const slug = match.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-    return `/no/${match.type}/${slug}-${match.tmdb_id}`;
+    return `/${region}/${match.type}/${slug}-${match.tmdb_id}`;
   }
 
   return (
