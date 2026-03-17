@@ -52,6 +52,7 @@ const WRAPPED_TEXT = {
     prev: "Forrige",
     next: "Neste",
     logflix: "logflix.app",
+    wrappedTeaser: "Logflix Wrapped 2026 kommer i desember. Logg filmer gjennom året for å få din personlige årsoppsummering.",
   },
   dk: {
     loading: "Genererer din Wrapped...",
@@ -96,6 +97,7 @@ const WRAPPED_TEXT = {
     prev: "Forrige",
     next: "Næste",
     logflix: "logflix.app",
+    wrappedTeaser: "Logflix Wrapped 2026 kommer i december. Bliv ved med at logge for dit årsresumé.",
   },
   fi: {
     loading: "Luodaan Wrapped-yhteenvetoa...",
@@ -140,6 +142,7 @@ const WRAPPED_TEXT = {
     prev: "Edellinen",
     next: "Seuraava",
     logflix: "logflix.app",
+    wrappedTeaser: "Logflix Wrapped 2026 tulee joulukuussa. Jatka kirjaamista vuosikatsaustasi varten.",
   },
   se: {
     loading: "Genererar din Wrapped...",
@@ -184,6 +187,7 @@ const WRAPPED_TEXT = {
     prev: "Föregående",
     next: "Nästa",
     logflix: "logflix.app",
+    wrappedTeaser: "Logflix Wrapped 2026 kommer i december. Fortsätt logga för din årssammanfattning.",
   },
 } as const;
 
@@ -894,6 +898,17 @@ export default function WrappedMonthPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Wrapped 2026 teaser */}
+      <div
+        className="mx-auto max-w-md rounded-2xl border border-white/[0.06] p-4 text-center"
+        style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+      >
+        <span className="text-2xl">🎬</span>
+        <p className="mt-2 text-sm leading-relaxed text-white/50">
+          {t.wrappedTeaser}
+        </p>
       </div>
 
       {/* Hidden share card for image export */}
