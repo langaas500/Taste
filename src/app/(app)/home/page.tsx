@@ -45,6 +45,14 @@ const strings = {
     inviteSecondary: "Inviter noen",
     curatorText: "Ikke sikker på hva du vil se? Spør Curator",
     curatorCta: "Åpne Curator",
+    tpTitle: (name: string) => `Tonight's Pick for deg og ${name}`,
+    tpMovie: "Film i kveld",
+    tpSeries: "Serie i kveld",
+    tpMatch: "match",
+    tpReroll: "Ny pick",
+    tpNoPartner: "Koble til en partner for å få Tonight's Pick",
+    tpConnect: "Koble til partner",
+    tpSeTogether: "Se Sammen",
   },
   en: {
     title: "Home",
@@ -77,6 +85,14 @@ const strings = {
     inviteSecondary: "Invite someone",
     curatorText: "Not sure what to watch? Ask Curator",
     curatorCta: "Open Curator",
+    tpTitle: (name: string) => `Tonight's Pick for you and ${name}`,
+    tpMovie: "Movie tonight",
+    tpSeries: "Series tonight",
+    tpMatch: "match",
+    tpReroll: "New pick",
+    tpNoPartner: "Link a partner to get Tonight's Pick",
+    tpConnect: "Connect partner",
+    tpSeTogether: "Watch Together",
   },
   dk: {
     title: "Hjem",
@@ -109,6 +125,14 @@ const strings = {
     inviteSecondary: "Inviter nogen",
     curatorText: "Ikke sikker på hvad du vil se? Spørg Curator",
     curatorCta: "Åbn Curator",
+    tpTitle: (name: string) => `Tonight's Pick for dig og ${name}`,
+    tpMovie: "Film i aften",
+    tpSeries: "Serie i aften",
+    tpMatch: "match",
+    tpReroll: "Nyt pick",
+    tpNoPartner: "Forbind en partner for at få Tonight's Pick",
+    tpConnect: "Forbind partner",
+    tpSeTogether: "Se Sammen",
   },
   se: {
     title: "Hem",
@@ -141,6 +165,14 @@ const strings = {
     inviteSecondary: "Bjud in någon",
     curatorText: "Inte säker på vad du vill se? Fråga Curator",
     curatorCta: "Öppna Curator",
+    tpTitle: (name: string) => `Tonight's Pick för dig och ${name}`,
+    tpMovie: "Film ikväll",
+    tpSeries: "Serie ikväll",
+    tpMatch: "match",
+    tpReroll: "Nytt pick",
+    tpNoPartner: "Koppla ihop med en partner för att få Tonight's Pick",
+    tpConnect: "Koppla partner",
+    tpSeTogether: "Se Tillsammans",
   },
   fi: {
     title: "Koti",
@@ -173,6 +205,14 @@ const strings = {
     inviteSecondary: "Kutsu joku",
     curatorText: "Etkö tiedä mitä katsoa? Kysy Curatorilta",
     curatorCta: "Avaa Curator",
+    tpTitle: (name: string) => `Tonight's Pick sinulle ja ${name}`,
+    tpMovie: "Elokuva tänään",
+    tpSeries: "Sarja tänään",
+    tpMatch: "osuma",
+    tpReroll: "Uusi valinta",
+    tpNoPartner: "Yhdistä kumppani saadaksesi Tonight's Pick",
+    tpConnect: "Yhdistä kumppani",
+    tpSeTogether: "Katsotaan Yhdessä",
   },
 } as const;
 
@@ -186,6 +226,20 @@ interface DashboardData {
   totalTitles: number;
 }
 
+interface TonightPickItem {
+  tmdb_id: number;
+  type: string;
+  title: string;
+  poster_path: string | null;
+  match_score: number | null;
+}
+
+interface TonightPickData {
+  movie: TonightPickItem | null;
+  series: TonightPickItem | null;
+  reroll_count: number;
+}
+
 export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -194,6 +248,11 @@ export default function HomePage() {
   const [hasTaste, setHasTaste] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const [homeRecs, setHomeRecs] = useState<Recommendation[]>([]);
+  const [tonightPick, setTonightPick] = useState<TonightPickData | null>(null);
+  const [tpLoading, setTpLoading] = useState(false);
+  const [tpRerolling, setTpRerolling] = useState(false);
+  const [partnerName, setPartnerName] = useState<string | null>(null);
+  const [hasPartner, setHasPartner] = useState<boolean | null>(null);
 
   useEffect(() => {
     loadDashboard();
@@ -229,7 +288,45 @@ export default function HomePage() {
           } catch { /* ignore */ }
         }
       }
+      // Load Tonight's Pick for premium users
+      if (premium) {
+        loadTonightPick();
+      }
     } catch { /* ignore */ }
+  }
+
+  async function loadTonightPick() {
+    setTpLoading(true);
+    try {
+      const res = await fetch("/api/tonight-pick");
+      if (res.status === 404) {
+        setHasPartner(false);
+        return;
+      }
+      if (!res.ok) return;
+      const data = await res.json();
+      setTonightPick(data);
+      setHasPartner(true);
+      // Fetch partner name
+      try {
+        const friendsRes = await fetch("/api/friends/titles");
+        const friendsData = await friendsRes.json();
+        if (friendsData.friendName) setPartnerName(friendsData.friendName);
+      } catch { /* ignore */ }
+    } catch { /* ignore */ }
+    setTpLoading(false);
+  }
+
+  async function handleReroll() {
+    setTpRerolling(true);
+    try {
+      const res = await fetch("/api/tonight-pick", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setTonightPick(data);
+      }
+    } catch { /* ignore */ }
+    setTpRerolling(false);
   }
 
   async function loadDashboard() {
@@ -331,6 +428,112 @@ export default function HomePage() {
           {data.totalTitles} {data.totalTitles === 1 ? s.titleSingular : s.titlesInCollection}
         </p>
       </div>
+
+      {/* Tonight's Pick — premium users with partner */}
+      {isPremium && hasPartner === false && (
+        <Link
+          href="/settings"
+          className="flex items-center gap-3 rounded-[var(--radius-lg)] p-4 border border-white/[0.06] hover:border-white/[0.12] transition-all"
+          style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+        >
+          <span className="text-xl flex-shrink-0">💑</span>
+          <p className="flex-1 text-sm text-white/50">{s.tpNoPartner}</p>
+          <span className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white/80 bg-white/[0.08]">
+            {s.tpConnect}
+          </span>
+        </Link>
+      )}
+
+      {isPremium && tpLoading && (
+        <section>
+          <div className="skeleton h-5 w-56 rounded mb-4" />
+          <div className="grid grid-cols-2 gap-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="rounded-2xl border border-white/[0.06] p-4" style={{ background: "rgba(255,255,255,0.025)" }}>
+                <div className="skeleton h-3 w-24 rounded mb-3" />
+                <div className="skeleton aspect-[2/3] w-full rounded-xl mb-3" />
+                <div className="skeleton h-3 w-32 rounded mb-2" />
+                <div className="skeleton h-3 w-20 rounded" />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {isPremium && tonightPick && hasPartner && (
+        <section>
+          <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-4">
+            {s.tpTitle(partnerName || "Partner")}
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            {tonightPick.movie && (
+              <div
+                className="rounded-2xl border border-white/[0.06] p-4 flex flex-col"
+                style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+              >
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-3">🎬 {s.tpMovie}</p>
+                {tonightPick.movie.poster_path && (
+                  <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden mb-3">
+                    <Image
+                      src={`https://image.tmdb.org/t/p/w342${tonightPick.movie.poster_path}`}
+                      alt={tonightPick.movie.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )}
+                <p className="text-sm font-semibold text-white/85 truncate">{tonightPick.movie.title}</p>
+                {tonightPick.movie.match_score != null && (
+                  <p className="text-xs text-[var(--accent-light)] mt-1">★ {tonightPick.movie.match_score}% {s.tpMatch}</p>
+                )}
+                <Link
+                  href="/together"
+                  className="mt-3 text-center py-1.5 rounded-lg text-[10px] font-semibold text-white/70 bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
+                >
+                  {s.tpSeTogether}
+                </Link>
+              </div>
+            )}
+            {tonightPick.series && (
+              <div
+                className="rounded-2xl border border-white/[0.06] p-4 flex flex-col"
+                style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+              >
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-3">📺 {s.tpSeries}</p>
+                {tonightPick.series.poster_path && (
+                  <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden mb-3">
+                    <Image
+                      src={`https://image.tmdb.org/t/p/w342${tonightPick.series.poster_path}`}
+                      alt={tonightPick.series.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )}
+                <p className="text-sm font-semibold text-white/85 truncate">{tonightPick.series.title}</p>
+                {tonightPick.series.match_score != null && (
+                  <p className="text-xs text-[var(--accent-light)] mt-1">★ {tonightPick.series.match_score}% {s.tpMatch}</p>
+                )}
+                <Link
+                  href="/together"
+                  className="mt-3 text-center py-1.5 rounded-lg text-[10px] font-semibold text-white/70 bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
+                >
+                  {s.tpSeTogether}
+                </Link>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-center mt-3">
+            <button
+              onClick={handleReroll}
+              disabled={tpRerolling}
+              className="px-4 py-1.5 rounded-lg text-xs font-medium text-white/40 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.08] transition-all disabled:opacity-40 cursor-pointer"
+            >
+              {tpRerolling ? "..." : `↻ ${s.tpReroll}`}
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Recommendations row — only if user has taste profile */}
       {hasTaste && (
