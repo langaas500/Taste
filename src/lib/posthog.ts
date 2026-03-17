@@ -13,7 +13,6 @@ export function initPostHog() {
     capture_pageview: true,
     capture_pageleave: true,
     persistence: "localStorage+cookie",
-    defaults: '2026-01-30',
   });
   initialized = true;
 }
