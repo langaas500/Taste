@@ -3,7 +3,9 @@ import { createHmac, timingSafeEqual, randomUUID } from "crypto";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function getSecret(): string {
-  return process.env.GUEST_TOKEN_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const secret = process.env.GUEST_TOKEN_SECRET || "";
+  if (!secret) throw new Error("GUEST_TOKEN_SECRET is not set. Add it to your environment variables.");
+  return secret;
 }
 
 function hmacSign(payload: string): string {
