@@ -53,6 +53,8 @@ const strings = {
     exploreRec: "Utforsk anbefalinger",
     goLibrary: "Gå til biblioteket",
     startTogether: "Start Se Sammen",
+    shareTaste: "Del smaksprofilen din",
+    copied: "Lenke kopiert!",
   },
   en: {
     headline: "Let's build your",
@@ -83,6 +85,8 @@ const strings = {
     exploreRec: "Explore recommendations",
     goLibrary: "Go to library",
     startTogether: "Start Watch Together",
+    shareTaste: "Share your taste profile",
+    copied: "Link copied!",
   },
   dk: {
     headline: "Lad os bygge din",
@@ -113,6 +117,8 @@ const strings = {
     exploreRec: "Udforsk anbefalinger",
     goLibrary: "Gå til biblioteket",
     startTogether: "Start Se Sammen",
+    shareTaste: "Del din smagsprofil",
+    copied: "Link kopieret!",
   },
   se: {
     headline: "Låt oss bygga din",
@@ -143,6 +149,8 @@ const strings = {
     exploreRec: "Utforska rekommendationer",
     goLibrary: "Gå till biblioteket",
     startTogether: "Starta Se Tillsammans",
+    shareTaste: "Dela din smakprofil",
+    copied: "Länk kopierad!",
   },
   fi: {
     headline: "Rakennetaan sinun",
@@ -173,6 +181,8 @@ const strings = {
     exploreRec: "Tutustu suosituksiin",
     goLibrary: "Siirry kirjastoon",
     startTogether: "Aloita Katsotaan Yhdessä",
+    shareTaste: "Jaa makuprofiilisi",
+    copied: "Linkki kopioitu!",
   },
 } as const;
 
@@ -220,6 +230,7 @@ function OnboardingContent() {
   const [saving, setSaving] = useState(false);
   const [tasteSummary, setTasteSummary] = useState<{ youLike: string; avoid: string; pacing: string } | null>(null);
   const [tasteLoading, setTasteLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [userRegion, setUserRegion] = useState("US");
   const [locale, setLocale] = useState<Locale>("en");
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -754,6 +765,36 @@ function OnboardingContent() {
                       </button>
                     </div>
                   </>
+                )}
+
+                {/* Share taste profile link */}
+                {tasteSummary && (
+                  <button
+                    onClick={async () => {
+                      const shareUrl = "https://logflix.app/taste";
+                      const firstSentence = tasteSummary.youLike?.split(/[.!]/).filter(Boolean)[0]?.trim() || "";
+                      const shareTitle = locale === "no" ? "Filmsmaken min på Logflix"
+                        : locale === "dk" ? "Min filmsmag på Logflix"
+                        : locale === "se" ? "Min filmsmak på Logflix"
+                        : locale === "fi" ? "Elokuvamakuni Logflixissä"
+                        : "My movie taste on Logflix";
+
+                      if (navigator.share) {
+                        try {
+                          await navigator.share({ title: shareTitle, text: firstSentence, url: shareUrl });
+                        } catch {
+                          // User cancelled share
+                        }
+                      } else {
+                        await navigator.clipboard.writeText(shareUrl);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }
+                    }}
+                    className="text-xs text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors mt-2"
+                  >
+                    {copied ? s.copied : s.shareTaste}
+                  </button>
                 )}
               </div>
             )}

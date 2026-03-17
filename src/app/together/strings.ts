@@ -180,6 +180,8 @@ const strings = {
     guestSignupText: { no: "Lag gratis konto for å lagre matchen, bygge watchlist og få personlige anbefalinger", en: "Create a free account to save this match, build a watchlist and get personal recommendations", dk: "Opret gratis konto for at gemme matchet, bygge watchlist og få personlige anbefalinger", se: "Skapa gratis konto för att spara matchen, bygga watchlist och få personliga rekommendationer", fi: "Luo ilmainen tili tallentaaksesi matchin, rakentaaksesi katselulistan ja saadaksesi henkilökohtaisia suosituksia" },
     guestSignupBtn: { no: "Lag konto gratis", en: "Create free account", dk: "Opret gratis konto", se: "Skapa gratis konto", fi: "Luo ilmainen tili" },
     guestLoginBtn: { no: "Logg inn", en: "Log in", dk: "Log ind", se: "Logga in", fi: "Kirjaudu" },
+    tryAnotherFriend: { no: "Prøv med en annen venn →", en: "Try with another friend →", dk: "Prøv med en anden ven →", se: "Testa med en annan vän →", fi: "Kokeile toisen ystävän kanssa →" },
+    tryAnotherFriendShareText: { no: "Jeg matchet på {title} — prøv du også!", en: "I matched on {title} — try it too!", dk: "Jeg matchede på {title} — prøv du også!", se: "Jag matchade på {title} — testa du också!", fi: "Matchasin elokuvaan {title} — kokeile sinäkin!" },
   },
 
   // ============================================

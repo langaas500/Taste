@@ -2031,6 +2031,23 @@ export default function WTBetaPage() {
                         </a>
                       </div>
                     )}
+                    <button
+                      onClick={() => {
+                        const titleName = finalWinner?.title ?? "en film";
+                        const text = t(locale, "winner", "tryAnotherFriendShareText").replace("{title}", titleName);
+                        const url = "https://logflix.app/together";
+                        if (navigator.share) {
+                          navigator.share({ title: "Logflix — Se Sammen", text, url }).then(() => { track("viral_try_another_friend", { session_id: sessionId, tmdb_id: finalWinner?.tmdb_id, method: "native_share" }); }).catch(() => {});
+                        } else {
+                          navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
+                          track("viral_try_another_friend", { session_id: sessionId, tmdb_id: finalWinner?.tmdb_id, method: "copy" });
+                        }
+                      }}
+                      className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer"
+                      style={{ color: "rgba(255,255,255,0.4)" }}
+                    >
+                      {t(locale, "winner", "tryAnotherFriend")}
+                    </button>
                     <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>
                       {t(locale, "winner", "playAgain")}
                     </button>
