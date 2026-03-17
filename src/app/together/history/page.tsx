@@ -15,6 +15,7 @@ const strings: Record<string, Record<Locale, string>> = {
   noMatches: { no: "Ingen matcher ennå", en: "No matches yet", dk: "Ingen matches endnu", se: "Inga matchningar ännu", fi: "Ei vielä matcheja" },
   noMatchesSub: { no: "Start en runde Se Sammen og finn noe å se!", en: "Start a Watch Together round and find something to watch!", dk: "Start en runde Se Sammen og find noget at se!", se: "Starta en runda Se Tillsammans och hitta något att se!", fi: "Aloita Katsotaan Yhdessä -kierros ja löydä jotain katsottavaa!" },
   startTogether: { no: "Start Se Sammen", en: "Start Watch Together", dk: "Start Se Sammen", se: "Starta Se Tillsammans", fi: "Aloita Katsotaan Yhdessä" },
+  foundingMember: { no: "⭐ Founding Member", en: "⭐ Founding Member", dk: "⭐ Founding Member", se: "⭐ Founding Member", fi: "⭐ Founding Member" },
   movie: { no: "Film", en: "Movie", dk: "Film", se: "Film", fi: "Elokuva" },
   tv: { no: "Serie", en: "Series", dk: "Serie", se: "Serie", fi: "Sarja" },
   loading: { no: "Laster...", en: "Loading...", dk: "Indlæser...", se: "Laddar...", fi: "Ladataan..." },
@@ -46,6 +47,7 @@ export default function HistoryPage() {
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFoundingMember, setIsFoundingMember] = useState(false);
 
   useEffect(() => {
     fetch("/api/together/history")
@@ -56,6 +58,15 @@ export default function HistoryPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+    import("@/lib/supabase-browser").then(({ createSupabaseBrowser }) => {
+      const sb = createSupabaseBrowser();
+      sb.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          sb.from("profiles").select("founding_member").eq("id", user.id).single()
+            .then(({ data }) => setIsFoundingMember(!!data?.founding_member));
+        }
+      });
+    });
   }, []);
 
   function formatDate(iso: string): string {
@@ -92,9 +103,14 @@ export default function HistoryPage() {
             {s("back", locale)}
           </Link>
         </div>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 20 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: isFoundingMember ? 4 : 20 }}>
           {s("title", locale)}
         </h1>
+        {isFoundingMember && (
+          <p style={{ fontSize: 11, color: "rgba(229,9,20,0.6)", fontWeight: 600, marginBottom: 16 }}>
+            {s("foundingMember", locale)}
+          </p>
+        )}
       </div>
 
       <div style={{ padding: "0 16px 32px", maxWidth: 560, margin: "0 auto" }}>

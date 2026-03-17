@@ -102,6 +102,7 @@ const strings = {
     notSet: "Ikke satt",
     edit: "Rediger",
     premiumMember: "Premium-medlem",
+    foundingMemberSince: (d: string) => `⭐ Founding Member — støtter Logflix siden ${d}`,
     upgradeToPremium: "Oppgrader til Premium",
     region: "Region",
     regionDesc: "Bestemmer strømmetilgjengelighet, trender og anbefalinger.",
@@ -180,6 +181,7 @@ const strings = {
     notSet: "Not set",
     edit: "Edit",
     premiumMember: "Premium member",
+    foundingMemberSince: (d: string) => `⭐ Founding Member — supporting Logflix since ${d}`,
     upgradeToPremium: "Upgrade to Premium",
     region: "Region",
     regionDesc: "Determines streaming availability, trends and recommendations.",
@@ -258,6 +260,7 @@ const strings = {
     notSet: "Ikke angivet",
     edit: "Rediger",
     premiumMember: "Premium-medlem",
+    foundingMemberSince: (d: string) => `⭐ Founding Member — støtter Logflix siden ${d}`,
     upgradeToPremium: "Opgrader til Premium",
     region: "Region",
     regionDesc: "Bestemmer streamingtilgængelighed, trends og anbefalinger.",
@@ -336,6 +339,7 @@ const strings = {
     notSet: "Inte angett",
     edit: "Redigera",
     premiumMember: "Premium-medlem",
+    foundingMemberSince: (d: string) => `⭐ Founding Member — stödjer Logflix sedan ${d}`,
     upgradeToPremium: "Uppgradera till Premium",
     region: "Region",
     regionDesc: "Bestämmer streamingtillgänglighet, trender och rekommendationer.",
@@ -414,6 +418,7 @@ const strings = {
     notSet: "Ei asetettu",
     edit: "Muokkaa",
     premiumMember: "Premium-jäsen",
+    foundingMemberSince: (d: string) => `⭐ Founding Member — tukee Logflixiä vuodesta ${d}`,
     upgradeToPremium: "Päivitä Premiumiin",
     region: "Alue",
     regionDesc: "Määrittää suoratoistosaatavuuden, trendit ja suositukset.",
@@ -505,6 +510,8 @@ function SettingsContent() {
   const [activePresets, setActivePresets] = useState<string[]>([]);
   const [savingFilters, setSavingFilters] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
+  const [isFoundingMember, setIsFoundingMember] = useState(false);
+  const [premiumSince, setPremiumSince] = useState<string | null>(null);
   const [showPremium, setShowPremium] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<SupportedRegion>("US");
   const [savingRegion, setSavingRegion] = useState(false);
@@ -540,6 +547,8 @@ function SettingsContent() {
         setExplorationSlider(data.profile.exploration_slider ?? 50);
         setDisplayName(data.profile.display_name || "");
         setIsPremium(!!data.profile.is_premium);
+        setIsFoundingMember(!!data.profile.founding_member);
+        setPremiumSince(data.profile.premium_since || null);
         if (data.profile.preferred_region) setSelectedRegion(data.profile.preferred_region);
         const filters = (data.profile.content_filters || {}) as ContentFilters;
         setActivePresets(filtersToPresets(filters));
@@ -782,9 +791,16 @@ function SettingsContent() {
         {/* Premium badge */}
         <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-between">
           {isPremium ? (
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
-              <span className="text-xs font-medium text-emerald-400">{s.premiumMember}</span>
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
+                <span className="text-xs font-medium text-emerald-400">{s.premiumMember}</span>
+              </div>
+              {isFoundingMember && premiumSince && (
+                <p className="text-[10px] mt-1.5" style={{ color: "rgba(229,9,20,0.6)" }}>
+                  {s.foundingMemberSince(new Date(premiumSince).toLocaleDateString(locale === "fi" ? "fi-FI" : locale === "se" ? "sv-SE" : locale === "dk" ? "da-DK" : locale === "en" ? "en-US" : "nb-NO", { month: "long", year: "numeric" }))}
+                </p>
+              )}
             </div>
           ) : (
             <button

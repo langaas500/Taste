@@ -19,6 +19,7 @@ const strings = {
     noTaste: "Ingen smaksprofil ennå",
     noTasteSub: "Legg til noen sette titler i biblioteket for å generere en analyse.",
     filmLover: "Filmelsker",
+    foundingMember: "⭐ Founding Member",
     generating: "Genererer...",
     vurdering: "Vurdering",
     toppsjangre: "Toppsjangre",
@@ -43,6 +44,7 @@ const strings = {
     noTaste: "Ingen smagsprofil endnu",
     noTasteSub: "Tilføj nogle sete titler til dit bibliotek for at generere en analyse.",
     filmLover: "Filmelsker",
+    foundingMember: "⭐ Founding Member",
     generating: "Genererer...",
     vurdering: "Vurdering",
     toppsjangre: "Topgenrer",
@@ -67,6 +69,7 @@ const strings = {
     noTaste: "Ei makuprofiilia vielä",
     noTasteSub: "Lisää katsottuja nimikkeitä kirjastoosi luodaksesi analyysin.",
     filmLover: "Elokuvarakastaja",
+    foundingMember: "⭐ Founding Member",
     generating: "Luodaan...",
     vurdering: "Arviointi",
     toppsjangre: "Suosikkilajityypit",
@@ -91,6 +94,7 @@ const strings = {
     noTaste: "Ingen smakprofil ännu",
     noTasteSub: "Lägg till några sedda titlar i ditt bibliotek för att generera en analys.",
     filmLover: "Filmälskare",
+    foundingMember: "⭐ Founding Member",
     generating: "Genererar...",
     vurdering: "Betyg",
     toppsjangre: "Toppgenrer",
@@ -115,6 +119,7 @@ const strings = {
     noTaste: "No taste profile yet",
     noTasteSub: "Add some watched titles to your library to generate an analysis.",
     filmLover: "Film lover",
+    foundingMember: "⭐ Founding Member",
     generating: "Generating...",
     vurdering: "Rating",
     toppsjangre: "Top Genres",
@@ -219,6 +224,8 @@ export default function ProfilePage() {
   const [generating, setGenerating] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [isFoundingMember, setIsFoundingMember] = useState(false);
+  const [premiumSince, setPremiumSince] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -239,8 +246,10 @@ export default function ProfilePage() {
       if (user) {
         setUserEmail(user.email ?? null);
         setAvatarUrl(user.user_metadata?.avatar_url || null);
-        const { data } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
+        const { data } = await supabase.from("profiles").select("display_name, founding_member, premium_since").eq("id", user.id).single();
         setDisplayName(data?.display_name || null);
+        setIsFoundingMember(!!data?.founding_member);
+        setPremiumSince(data?.premium_since || null);
       }
     })();
   }, []);
@@ -378,6 +387,9 @@ export default function ProfilePage() {
           </div>
           <div>
             <h1 className="text-xl font-extrabold tracking-tight text-[var(--text-primary)]">{userName}</h1>
+            {isFoundingMember && (
+              <p style={{ fontSize: 11, color: "rgba(229,9,20,0.7)", margin: "2px 0 0", fontWeight: 600 }}>{s.foundingMember}</p>
+            )}
             <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", margin: 0 }}>{s.filmLover}</p>
           </div>
         </div>

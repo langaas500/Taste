@@ -81,12 +81,25 @@ export default function ActivityPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalTitle, setModalTitle] = useState<{ tmdb_id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+  const [isFoundingMember, setIsFoundingMember] = useState(false);
 
   useEffect(() => {
     fetch("/api/activity/friends")
       .then((r) => r.json())
       .then((d) => setActivities(d.activities || []))
       .finally(() => setLoading(false));
+    // Fetch own profile for founding member badge
+    import("@/lib/supabase-browser").then(({ createSupabaseBrowser }) => {
+      const sb = createSupabaseBrowser();
+      sb.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          setMyUserId(user.id);
+          sb.from("profiles").select("founding_member").eq("id", user.id).single()
+            .then(({ data }) => setIsFoundingMember(!!data?.founding_member));
+        }
+      });
+    });
   }, []);
 
   if (loading) return <LoadingSpinner text={s.loading} />;
@@ -135,7 +148,7 @@ export default function ActivityPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-sm font-semibold text-[var(--text-primary)] truncate">
-                    {a.user_name}
+                    {a.user_name}{isFoundingMember && a.user_id === myUserId && <span style={{ color: "rgba(229,9,20,0.7)", marginLeft: 3, fontSize: 10 }}>⭐</span>}
                   </span>
                   <span className="text-xs text-[var(--text-tertiary)]">
                     {actionLabel(a.action, a.sentiment, s)}

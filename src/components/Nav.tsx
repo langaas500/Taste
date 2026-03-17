@@ -130,6 +130,7 @@ export default function Nav() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [isFoundingMember, setIsFoundingMember] = useState(false);
   const [locale, setLocale] = useState<Locale>("en");
   const [region, setRegion] = useState<string>("no");
 
@@ -140,8 +141,9 @@ export default function Nav() {
       if (user) {
         setUserEmail(user.email ?? null);
         setAvatarUrl(user.user_metadata?.avatar_url || null);
-        const { data } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
+        const { data } = await supabase.from("profiles").select("display_name, founding_member").eq("id", user.id).single();
         setDisplayName(data?.display_name || null);
+        setIsFoundingMember(!!data?.founding_member);
       } else {
         setIsGuest(true);
       }
@@ -381,7 +383,7 @@ export default function Nav() {
               {!collapsed && (
                 <div className="flex-1 min-w-0">
                   <p className="text-[12px] font-semibold truncate" style={{ color: "rgba(255,255,255,0.9)" }}>
-                    {userName}
+                    {userName}{isFoundingMember && <span style={{ color: "rgba(229,9,20,0.7)", marginLeft: 4 }}>⭐</span>}
                   </p>
                   <p className="text-[10px]" style={{ color: "rgba(255,42,42,0.4)" }}>
                     {isGuest ? s.login : userEmail === "martinlangaas@live.no" ? s.admin : s.filmelsker}
