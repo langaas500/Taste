@@ -29,6 +29,7 @@ import {
 import useSwipeQueue from "./hooks/useSwipeQueue";
 import useCountdown from "./hooks/useCountdown";
 import useRibbon from "./hooks/useRibbon";
+import useKeyboardSwipe from "./hooks/useKeyboardSwipe";
 
 /* ── input mode detection ─────────────────────────────── */
 
@@ -772,20 +773,13 @@ export default function WTBetaPage() {
   }
 
   /* ── keyboard (desktop) ── */
-  useEffect(() => {
-    if (!mounted || screen !== "together" || roundPhase !== "swiping" || chosen || !isDesktop) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.repeat) return;
-      const top = deckRef.current[deckIndex];
-      if (!top) return;
-      if (e.key === "ArrowLeft") { e.preventDefault(); commitChoice(top, "nope"); }
-      else if (e.key === "ArrowRight") { e.preventDefault(); commitChoice(top, "like"); }
-      else if (e.key === " ") { e.preventDefault(); handleSuperLike(); }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, screen, roundPhase, chosen, isDesktop, deckIndex]);
+  const kbEnabled = mounted && screen === "together" && roundPhase === "swiping" && !chosen && isDesktop && !!deckRef.current[deckIndex];
+  useKeyboardSwipe(
+    kbEnabled,
+    () => { const top = deckRef.current[deckIndex]; if (top) commitChoice(top, "nope"); },
+    () => { const top = deckRef.current[deckIndex]; if (top) commitChoice(top, "like"); },
+    handleSuperLike,
+  );
 
   /* ── pointer handlers ── */
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
