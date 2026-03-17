@@ -43,6 +43,8 @@ const strings = {
     inviteText: "Finn noe å se med noen i kveld",
     inviteCta: "Start Se Sammen",
     inviteSecondary: "Inviter noen",
+    curatorText: "Ikke sikker på hva du vil se? Spør Curator",
+    curatorCta: "Åpne Curator",
   },
   en: {
     title: "Home",
@@ -73,6 +75,8 @@ const strings = {
     inviteText: "Find something to watch with someone tonight",
     inviteCta: "Start Watch Together",
     inviteSecondary: "Invite someone",
+    curatorText: "Not sure what to watch? Ask Curator",
+    curatorCta: "Open Curator",
   },
   dk: {
     title: "Hjem",
@@ -103,6 +107,8 @@ const strings = {
     inviteText: "Find noget at se med nogen i aften",
     inviteCta: "Start Se Sammen",
     inviteSecondary: "Inviter nogen",
+    curatorText: "Ikke sikker på hvad du vil se? Spørg Curator",
+    curatorCta: "Åbn Curator",
   },
   se: {
     title: "Hem",
@@ -133,6 +139,8 @@ const strings = {
     inviteText: "Hitta något att se med någon ikväll",
     inviteCta: "Starta Se Tillsammans",
     inviteSecondary: "Bjud in någon",
+    curatorText: "Inte säker på vad du vill se? Fråga Curator",
+    curatorCta: "Öppna Curator",
   },
   fi: {
     title: "Koti",
@@ -163,6 +171,8 @@ const strings = {
     inviteText: "Löydä jotain katsottavaa jonkun kanssa tänä iltana",
     inviteCta: "Aloita Katsotaan Yhdessä",
     inviteSecondary: "Kutsu joku",
+    curatorText: "Etkö tiedä mitä katsoa? Kysy Curatorilta",
+    curatorCta: "Avaa Curator",
   },
 } as const;
 
@@ -402,6 +412,21 @@ export default function HomePage() {
           </Link>
         </div>
       </div>
+
+      {/* Curator promo — only for users with taste profile */}
+      {hasTaste && (
+        <Link
+          href="/curator"
+          className="flex items-center gap-3 rounded-[var(--radius-lg)] p-3.5 border border-white/[0.06] hover:border-white/[0.12] transition-all"
+          style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+        >
+          <span className="text-xl flex-shrink-0">🤖</span>
+          <p className="flex-1 text-sm text-white/60">{s.curatorText}</p>
+          <span className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white/80 bg-white/[0.08] hover:bg-white/[0.12] transition-colors">
+            {s.curatorCta}
+          </span>
+        </Link>
+      )}
 
       {/* Se Sammen */}
       <div className="relative flex flex-col md:flex-row md:items-center gap-6 md:gap-3">
