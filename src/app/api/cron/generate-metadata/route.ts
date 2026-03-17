@@ -98,6 +98,81 @@ function validateResult(raw: CuratorResult): CuratorResult | null {
   };
 }
 
+// ── i18n (sv/da/fi) generation ─────────────────────────────────────
+
+const I18N_SYSTEM_PROMPT = `You are a film critic writing short, engaging descriptions.
+Respond ONLY with valid JSON, no markdown, no preamble.`;
+
+interface I18nLocaleEntry {
+  hook: string;
+  body: string;
+  verdict: string;
+}
+
+interface I18nResult {
+  sv: I18nLocaleEntry;
+  da: I18nLocaleEntry;
+  fi: I18nLocaleEntry;
+}
+
+function buildI18nUserPrompt(
+  title: string,
+  year: number | null,
+  type: "movie" | "tv",
+  genres: string[],
+  overview: string | null,
+): string {
+  const typeLabel = type === "movie" ? "movie" : "TV series";
+  const genreStr = genres.length > 0 ? genres.join(", ") : "unknown genre";
+  const overviewStr = overview ? overview.slice(0, 300) : "No description available.";
+
+  return `Write curator text for the ${typeLabel}: "${title}" (${year || "unknown year"}, genres: ${genreStr}).
+
+Short description: ${overviewStr}
+
+Generate for exactly these 3 languages:
+- sv (Swedish)
+- da (Danish)
+- fi (Finnish)
+
+Respond with this exact JSON structure:
+{
+  "sv": { "hook": "...", "body": "...", "verdict": "..." },
+  "da": { "hook": "...", "body": "...", "verdict": "..." },
+  "fi": { "hook": "...", "body": "...", "verdict": "..." }
+}
+
+Rules:
+- hook: max 20 words, one sentence
+- body: 2-3 sentences about mood and themes
+- verdict: max 15 words, one punchy line
+- Write naturally in each language, not translated from Norwegian`;
+}
+
+function validateI18nLocale(entry: unknown): I18nLocaleEntry | null {
+  if (
+    typeof entry !== "object" || entry === null ||
+    typeof (entry as I18nLocaleEntry).hook !== "string" || !(entry as I18nLocaleEntry).hook ||
+    typeof (entry as I18nLocaleEntry).body !== "string" || !(entry as I18nLocaleEntry).body ||
+    typeof (entry as I18nLocaleEntry).verdict !== "string" || !(entry as I18nLocaleEntry).verdict
+  ) {
+    return null;
+  }
+  return {
+    hook: (entry as I18nLocaleEntry).hook.slice(0, 200),
+    body: (entry as I18nLocaleEntry).body.slice(0, 1000),
+    verdict: (entry as I18nLocaleEntry).verdict.slice(0, 200),
+  };
+}
+
+function validateI18nResult(raw: I18nResult): I18nResult | null {
+  const sv = validateI18nLocale(raw.sv);
+  const da = validateI18nLocale(raw.da);
+  const fi = validateI18nLocale(raw.fi);
+  if (!sv || !da || !fi) return null;
+  return { sv, da, fi };
+}
+
 async function callAI(systemPrompt: string, userPrompt: string): Promise<string> {
   if (!env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY not set");
 
@@ -182,6 +257,7 @@ export async function POST(req: NextRequest) {
 
   let processed = 0;
   let failed = 0;
+  let i18nGenerated = 0;
   const errors: string[] = [];
 
   // Process sequentially to respect Anthropic rate limits
@@ -221,6 +297,56 @@ export async function POST(req: NextRequest) {
         .eq("type", t.type);
 
       if (updateErr) throw new Error(updateErr.message);
+
+      // ── i18n: generate sv/da/fi + mirror nb to titles_cache_i18n ──
+      try {
+        // Mirror nb (Norwegian) text from titles_cache into i18n table
+        await admin
+          .from("titles_cache_i18n")
+          .upsert(
+            {
+              tmdb_id: t.tmdb_id,
+              type: t.type,
+              locale: "nb",
+              curator_hook: validated.curator_hook,
+              curator_body: validated.curator_body,
+              curator_verdict: validated.curator_verdict,
+              mood_tags: validated.mood_tags,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "tmdb_id,type,locale" },
+          );
+
+        // Generate sv/da/fi in a single AI call
+        const i18nResponse = await callAI(
+          I18N_SYSTEM_PROMPT,
+          buildI18nUserPrompt(t.title, t.year, t.type, genreNames, t.overview),
+        );
+
+        const i18nParsed = safeParseJson<I18nResult>(i18nResponse);
+        if (i18nParsed.ok) {
+          const i18nValidated = validateI18nResult(i18nParsed.data);
+          if (i18nValidated) {
+            const rows = (["sv", "da", "fi"] as const).map((locale) => ({
+              tmdb_id: t.tmdb_id,
+              type: t.type,
+              locale,
+              curator_hook: i18nValidated[locale].hook,
+              curator_body: i18nValidated[locale].body,
+              curator_verdict: i18nValidated[locale].verdict,
+              updated_at: new Date().toISOString(),
+            }));
+            await admin
+              .from("titles_cache_i18n")
+              .upsert(rows, { onConflict: "tmdb_id,type,locale" });
+            i18nGenerated++;
+          }
+        }
+      } catch (i18nErr: unknown) {
+        const i18nMsg = i18nErr instanceof Error ? i18nErr.message : String(i18nErr);
+        console.error(`[generate-metadata] i18n failed ${t.tmdb_id}:${t.type} "${t.title}": ${i18nMsg}`);
+      }
+
       processed++;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -241,6 +367,7 @@ export async function POST(req: NextRequest) {
     status: "completed",
     processed,
     failed,
+    i18n_generated: i18nGenerated,
     batch_size: titles.length,
     errors: errors.length > 0 ? errors : undefined,
   });
