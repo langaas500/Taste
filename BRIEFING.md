@@ -6,13 +6,14 @@
 **17.03.2026**
 
 ## Git-status
-- **Siste push:** `feat: add feature section to landing page for conversion` (17.03.2026)
+- **Siste push:** `feat: add try with another friend CTA on match screen` (17.03.2026)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 
 ## Hva er gjort nylig (siste 10 endringer)
 
-1. [pushet] **Feature-seksjon på landing** — Ny scrollbar seksjon under hero som viser verdien av gratis konto: 4 glassmorphism-kort (Logg, AI, Smaksprofil, Venner) i 2×2 grid (mobil) / 4×1 (desktop). Rød signup-CTA. Lokalisert no/en.
+1. [pushet] **Viral loop på match-skjerm** — "Prøv med en annen venn →" knapp på winner-skjermen. Åpner native share med "Jeg matchet på [tittel] — prøv du også!" + logflix.app/together. Lokalisert 5 språk. Kun synlig etter match.
+2. [pushet] **Feature-seksjon på landing** — Ny scrollbar seksjon under hero som viser verdien av gratis konto: 4 glassmorphism-kort (Logg, AI, Smaksprofil, Venner) i 2×2 grid (mobil) / 4×1 (desktop). Rød signup-CTA. Lokalisert no/en.
 2. [pushet] **Server-side premium gate på taste-summary** — `/api/taste-summary` returnerer nå kun `youLike` for gratisbrukere (avoid/pacing nulles ut server-side). Full data kun for premium. Respons inkluderer `is_premium` boolean. Full summary lagres fortsatt i DB slik at oppgradering gir umiddelbar tilgang.
 2. [pushet] **Guide hub-sider** — Ny `/[region]/guides` side som lister alle 22 guider gruppert i 4 kategorier (For to, Alene, Familie & venner, Stemning & sjanger). Glassmorphism-kort, lokalisert metadata+hreflang, BreadcrumbList JSON-LD. Forbedrer intern oppdagelse av guider.
 2. [pushet] **Sitemap paginering fikset** — Hovednivå sitemapindex (`/api/sitemap`) genererer nå dynamisk alle pages per region×type direkte fra DB-count istedenfor å peke til nested sitemapindex. Google ser nå alle titler.
