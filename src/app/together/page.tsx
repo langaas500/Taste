@@ -6,7 +6,7 @@ import { logTitle } from "@/lib/api";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { getMessages } from "./messages";
 import { getLocale, t, cardsLeft, type Locale } from "./strings";
-import QRCode from "qrcode";
+import useQrCode from "./hooks/useQrCode";
 import { track } from "@/lib/posthog";
 
 /* ── extracted modules ─────────────────────────────────── */
@@ -72,7 +72,6 @@ export default function WTBetaPage() {
   const [mode, setMode] = useState<Mode>("solo");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionCode, setSessionCode] = useState("");
-  const [qrDataUrl, setQrDataUrl] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [partnerJoined, setPartnerJoined] = useState(false);
   const [partnerSwipeCount, setPartnerSwipeCount] = useState(0);
@@ -133,6 +132,7 @@ export default function WTBetaPage() {
   const [syncingBeforeEnd, setSyncingBeforeEnd] = useState(false);
 
   const { isTouch } = useInputMode();
+  const { qrDataUrl } = useQrCode(sessionCode || null);
   const isDesktop = mounted && !isTouch;
   const router = useRouter();
 
@@ -580,15 +580,6 @@ export default function WTBetaPage() {
   useEffect(() => {
     if (iAmDone) setWaitingFactIndex(0);
   }, [iAmDone]);
-
-  /* ── QR-kode for waiting-skjerm ── */
-  useEffect(() => {
-    if (!sessionCode) { setQrDataUrl(""); return; }
-    const url = `${window.location.origin}/together?code=${sessionCode}`;
-    QRCode.toDataURL(url, { width: 180, margin: 1, color: { dark: "#ffffff", light: "#00000000" } })
-      .then(setQrDataUrl)
-      .catch(() => {});
-  }, [sessionCode]);
 
   /* ── enter together mode ── */
   async function goTogether() {
