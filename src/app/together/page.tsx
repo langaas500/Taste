@@ -9,278 +9,24 @@ import { getLocale, t, cardsLeft, type Locale } from "./strings";
 import QRCode from "qrcode";
 import { track } from "@/lib/posthog";
 
-/* ── constants ─────────────────────────────────────────── */
+/* ── extracted modules ─────────────────────────────────── */
 
-const RED = "#ff2a2a";
-const TITLES_CACHE_KEY = "wt_titles_v3";
-const GUEST_PROFILE_KEY = "wt_guest_profile_v1";
-const ROUND1_LIMIT = 25;
-const ROUND2_LIMIT = 15;
-const ROUND1_DURATION = 120;
-const ROUND2_DURATION = 60;
-const SUPERLIKES_PER_ROUND = 3;
-
-
-/* ── poster ribbon — static curated palette ─────────────── */
-
-// 12 distinct gradient pairs (genre moods). Tiles appear at low opacity for atmosphere.
-const RIBBON_COLORS: [string, string][] = [
-  ["#8b1a1a", "#4a0a0a"], // crimson       — action/thriller
-  ["#1a1a8b", "#0a0a4a"], // navy          — sci-fi/drama
-  ["#1a6b25", "#0a3d14"], // forest green  — adventure/nature
-  ["#6b1a8b", "#3d0a4a"], // violet        — fantasy/horror
-  ["#8b5a1a", "#4a300a"], // amber         — period/western
-  ["#1a8b6b", "#0a4a3d"], // teal          — crime/mystery
-  ["#8b3a1a", "#4a1e0a"], // sienna        — thriller
-  ["#1a3a8b", "#0a1e4a"], // midnight blue — drama
-  ["#4a8b1a", "#274a0a"], // olive         — war/history
-  ["#8b1a4a", "#4a0a27"], // rose          — romance
-  ["#1a8b8b", "#0a4a4a"], // cyan          — sci-fi
-  ["#5a3a8b", "#2d1e4a"], // indigo        — mystery
-];
-
-/* ── streaming providers ───────────────────────────────── */
-
-const VIAPLAY_REGIONS = new Set(["NO", "SE", "DK", "FI", "IS"]);
-
-interface Provider { id: number; name: string; }
-const NORDIC_ONLY_PROVIDERS = new Set([76, 439]); // Viaplay, TV 2 Play
-const US_ONLY_PROVIDERS = new Set([15, 386]);     // Hulu, Peacock
-
-const PROVIDERS: Provider[] = [
-  { id: 8,    name: "Netflix" },
-  { id: 9,    name: "Prime Video" },
-  { id: 337,  name: "Disney+" },
-  { id: 1899, name: "Max" },
-  { id: 350,  name: "Apple TV+" },
-  { id: 531,  name: "Paramount+" },
-  { id: 15,   name: "Hulu" },
-  { id: 386,  name: "Peacock" },
-  { id: 76,   name: "Viaplay" },
-  { id: 439,  name: "TV 2 Play" },
-];
-
-const PROVIDER_URLS: Record<string, string> = {
-  netflix:      "https://www.netflix.com/search?q={title}",
-  disney:       "https://www.disneyplus.com/search/{title}",
-  amazon:       "https://www.primevideo.com/search/ref=atv_nb_sr?phrase={title}",
-  prime:        "https://www.primevideo.com/search/ref=atv_nb_sr?phrase={title}",
-  viaplay:      "https://viaplay.com/no/search?query={title}",
-  max:          "https://www.max.com/search?q={title}",
-  hbo:          "https://www.max.com/search?q={title}",
-  apple:        "https://tv.apple.com/search?term={title}",
-  paramount:    "https://www.paramountplus.com/search/{title}",
-  tv2:          "https://tv2play.no/search?q={title}",
-};
-
-function getProviderUrl(providerName: string, title: string): string {
-  const key = providerName.toLowerCase();
-  const encoded = encodeURIComponent(title);
-  for (const [k, template] of Object.entries(PROVIDER_URLS)) {
-    if (key.includes(k)) return template.replace("{title}", encoded);
-  }
-  return `https://www.justwatch.com/search?q=${encoded}`;
-}
-
-function getWatchInfo(title: string, tmdbId: number, type: "movie" | "tv", selectedProviders: number[], actualProviderIds?: number[]): { url: string; providerName: string | null } {
-  // Resolve provider name and build direct link
-  if (actualProviderIds && actualProviderIds.length > 0) {
-    for (const id of selectedProviders) {
-      if (actualProviderIds.includes(id)) {
-        const provider = PROVIDERS.find((p) => p.id === id);
-        if (provider) return { url: getProviderUrl(provider.name, title), providerName: provider.name };
-      }
-    }
-    for (const id of actualProviderIds) {
-      const provider = PROVIDERS.find((p) => p.id === id);
-      if (provider) return { url: getProviderUrl(provider.name, title), providerName: provider.name };
-    }
-  }
-  for (const id of selectedProviders) {
-    const provider = PROVIDERS.find((p) => p.id === id);
-    if (provider) return { url: getProviderUrl(provider.name, title), providerName: provider.name };
-  }
-  return { url: getProviderUrl("", title), providerName: null };
-}
-
-async function fetchActualProviders(tmdbId: number, type: "movie" | "tv"): Promise<number[]> {
-  try {
-    const res = await fetch(`/api/tmdb/providers?tmdb_id=${tmdbId}&type=${type}`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    const providers = data.providers;
-    if (!providers) return [];
-    // flatrate = streaming, rent/buy are not what we want
-    const flatrate = (providers.flatrate || []) as { provider_id: number }[];
-    return flatrate.map((p) => p.provider_id);
-  } catch {
-    return [];
-  }
-}
-
-/* ── genre map ─────────────────────────────────────────── */
-
-const GENRE_MAP: Record<number, { name: string; color: string }> = {
-  28: { name: "Action", color: "#5a1a1a" },
-  12: { name: "Eventyr", color: "#2d5a27" },
-  16: { name: "Animasjon", color: "#4a2d5a" },
-  35: { name: "Komedie", color: "#5a4a2d" },
-  80: { name: "Krim", color: "#1a1a2d" },
-  99: { name: "Dokumentar", color: "#3d3d1a" },
-  18: { name: "Drama", color: "#2d2d5a" },
-  10751: { name: "Familie", color: "#5a2d4a" },
-  14: { name: "Fantasy", color: "#1a3d5a" },
-  36: { name: "Historie", color: "#3d2d1a" },
-  27: { name: "Skrekk", color: "#3d1a1a" },
-  10402: { name: "Musikk", color: "#5a1a4a" },
-  9648: { name: "Mysterium", color: "#1a2d4a" },
-  10749: { name: "Romantikk", color: "#5a2d4a" },
-  878: { name: "Sci-Fi", color: "#1a4a5a" },
-  53: { name: "Thriller", color: "#2d1a3d" },
-  10752: { name: "Krig", color: "#3d1a3d" },
-  37: { name: "Western", color: "#5a4a1a" },
-  10759: { name: "Action", color: "#5a1a1a" },
-  10762: { name: "Barn", color: "#5a2d4a" },
-  10763: { name: "Nyheter", color: "#3d3d1a" },
-  10764: { name: "Reality", color: "#5a4a2d" },
-  10765: { name: "Sci-Fi", color: "#1a4a5a" },
-  10766: { name: "Såpe", color: "#5a2d4a" },
-  10767: { name: "Prat", color: "#2d5a27" },
-  10768: { name: "Krig", color: "#1a1a2d" },
-};
-
-/* ── types ─────────────────────────────────────────────── */
-
-interface WTTitle {
-  tmdb_id: number;
-  title: string;
-  year: number | null;
-  type: "movie" | "tv";
-  genre_ids: number[];
-  overview: string;
-  poster_path: string | null;
-  vote_average: number | null;
-  reason?: string;
-}
-
-interface TitlesCacheEntry {
-  titles: WTTitle[];
-  mood: string;
-  ts: number;
-}
-
-interface GuestProfile {
-  liked: { tmdb_id: number; type: "movie" | "tv"; title: string; genre_ids: number[] }[];
-}
-
-type Screen = "intro" | "providers" | "together" | "waiting" | "join";
-type SwipeAction = "like" | "nope" | "meh"; // meh kept for API compat, not used in UI
-type Mode = "solo" | "paired";
-type RoundPhase = "swiping" | "results" | "no-match" | "winner" | "double-super";
-type RitualState = "idle" | "arming" | "countdown" | "done";
-
-interface RoundMatch {
-  title: WTTitle;
-  decisionTime: number; // ms — ranking signal only, never shown to user
-}
-
-interface QueuedSwipe {
-  clientSwipeId: string;
-  sessionId: string;
-  tmdbId: number;
-  type: "movie" | "tv";
-  action: "like" | "nope" | "superlike";
-  round: number;
-  createdAt: number;
-  attempt: number;
-  nextRetryAt: number;
-  status: "pending" | "inflight" | "ack" | "stuck";
-}
-
-/* ── helpers ─────────────────────────────────────────────── */
-
-function getGenreColor(genre_ids: number[]): string {
-  for (const id of genre_ids) {
-    if (GENRE_MAP[id]) return GENRE_MAP[id].color;
-  }
-  return "#2d2d5a";
-}
-
-function getGenreName(genre_ids: number[], locale: Locale = "no"): string {
-  for (const id of genre_ids) {
-    if (GENRE_MAP[id]) return GENRE_MAP[id].name;
-  }
-  if (locale === "no" || locale === "dk") return "Film/Serie";
-  if (locale === "se") return "Film/Serie";
-  if (locale === "fi") return "Elokuva/Sarja";
-  return "Movie/Series";
-}
-
-function generateMockPartner(titles: WTTitle[]): { liked: number[] } {
-  const ids = titles.map((t) => t.tmdb_id);
-  const shuffled = [...ids];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return { liked: shuffled.slice(0, Math.ceil(shuffled.length * 0.35)) };
-}
-
-function readTitlesCache(): WTTitle[] {
-  try {
-    const raw = localStorage.getItem(TITLES_CACHE_KEY);
-    if (!raw) return [];
-    const entry = JSON.parse(raw) as TitlesCacheEntry;
-    if (!Array.isArray(entry.titles)) return [];
-    if (Date.now() - (entry.ts || 0) > 24 * 60 * 60 * 1000) return [];
-    return entry.titles;
-  } catch {
-    return [];
-  }
-}
-
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n));
-}
-
-function saveGuestLike(t: WTTitle) {
-  try {
-    const raw = localStorage.getItem(GUEST_PROFILE_KEY);
-    const profile: GuestProfile = raw ? JSON.parse(raw) : { liked: [] };
-    if (!profile.liked.some((l) => l.tmdb_id === t.tmdb_id)) {
-      profile.liked.unshift({ tmdb_id: t.tmdb_id, type: t.type, title: t.title, genre_ids: t.genre_ids });
-      if (profile.liked.length > 50) profile.liked = profile.liked.slice(0, 50);
-    }
-    localStorage.setItem(GUEST_PROFILE_KEY, JSON.stringify(profile));
-  } catch { /* storage full */ }
-}
-
-function buildGuestParams(): string {
-  try {
-    const raw = localStorage.getItem(GUEST_PROFILE_KEY);
-    if (!raw) return "";
-    const profile: GuestProfile = JSON.parse(raw);
-    if (!profile.liked || profile.liked.length === 0) return "";
-    const seeds = profile.liked.slice(0, 5).map((l) => `${l.tmdb_id}:${l.type}`).join(",");
-    const genreCount: Record<number, number> = {};
-    for (const l of profile.liked) {
-      for (const gid of l.genre_ids) {
-        genreCount[gid] = (genreCount[gid] || 0) + 1;
-      }
-    }
-    const genres = Object.entries(genreCount)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([id]) => id)
-      .join(",");
-    const params = new URLSearchParams();
-    params.set("seed_liked", seeds);
-    if (genres) params.set("liked_genres", genres);
-    return params.toString();
-  } catch {
-    return "";
-  }
-}
+import {
+  RED, TITLES_CACHE_KEY, ROUND1_LIMIT, ROUND2_LIMIT,
+  ROUND1_DURATION, ROUND2_DURATION, SUPERLIKES_PER_ROUND,
+  RIBBON_COLORS, VIAPLAY_REGIONS, NORDIC_ONLY_PROVIDERS,
+  US_ONLY_PROVIDERS, PROVIDERS,
+} from "./lib/constants";
+import type {
+  WTTitle, Screen, SwipeAction, Mode, RoundPhase,
+  RitualState, RoundMatch,
+} from "./lib/constants";
+import {
+  getGenreColor, getGenreName, generateMockPartner,
+  readTitlesCache, clamp, saveGuestLike, buildGuestParams,
+  getProviderUrl, getWatchInfo, fetchActualProviders,
+} from "./lib/utils";
+import useSwipeQueue from "./hooks/useSwipeQueue";
 
 /* ── input mode detection ─────────────────────────────── */
 
@@ -382,11 +128,8 @@ export default function WTBetaPage() {
   const firstSwipeTrackedRef = useRef(false);
   const ptr = useRef<{ id: number | null; sx: number; sy: number; target: HTMLElement | null }>({ id: null, sx: 0, sy: 0, target: null });
 
-  // Swipe queue (offline-first reliability)
-  const swipeQueue = useRef<QueuedSwipe[]>([]);
-  const inFlight = useRef<Set<string>>(new Set());
-  const queueWorkerRunning = useRef(false);
-  const [, forceQueueRender] = useState(0);
+  // Swipe queue (offline-first reliability) — extracted hook
+  const { enqueue: enqueueSwipe, queueStatus: swipeQueueStatus, swipeQueue, inFlight, queueWorkerRunning, forceRender: forceQueueRender } = useSwipeQueue({ sessionId, round, guestId: guestIdRef.current });
   const [syncingBeforeEnd, setSyncingBeforeEnd] = useState(false);
 
   const { isTouch } = useInputMode();
@@ -1261,122 +1004,6 @@ export default function WTBetaPage() {
     return () => clearInterval(interval);
   }, [mode, sessionId, partnerJoined, screen, titles, chosen]);
 
-  /* ── paired: submit swipe (returns Promise for queue worker) ── */
-  function submitPairedSwipe(
-    sid: string, tmdbId: number, mediaType: "movie" | "tv", action: string
-  ): Promise<{ ok: boolean; data?: Record<string, unknown> }> {
-    const body = JSON.stringify({ session_id: sid, tmdb_id: tmdbId, type: mediaType, action });
-    const hdrs = { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current };
-    return fetch("/api/together/session/swipe", { method: "POST", headers: hdrs, body })
-      .then((r) => r.json().then((d) => ({ ok: r.ok, data: d as Record<string, unknown> })))
-      .catch(() => ({ ok: false }));
-  }
-
-  /* ── swipe queue helpers ── */
-
-  function generateSwipeId(): string {
-    return crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
-  }
-
-  function enqueueSwipe(
-    tmdbId: number,
-    type: "movie" | "tv",
-    action: "like" | "nope" | "superlike"
-  ) {
-    if (!sessionId) return;
-
-    // Dedupe: skip if same tmdbId + round already pending/inflight
-    const alreadyQueued = swipeQueue.current.some(
-      (s) => s.tmdbId === tmdbId && s.round === round && s.sessionId === sessionId && s.status !== "ack"
-    );
-    if (alreadyQueued) return;
-
-    const item: QueuedSwipe = {
-      clientSwipeId: generateSwipeId(),
-      sessionId,
-      tmdbId,
-      type,
-      action,
-      round,
-      createdAt: Date.now(),
-      attempt: 0,
-      nextRetryAt: Date.now(),
-      status: "pending",
-    };
-
-    swipeQueue.current = [...swipeQueue.current, item];
-    forceQueueRender((x) => x + 1);
-    startQueueWorker();
-  }
-
-  function requeueItem(item: QueuedSwipe) {
-    const attempt = item.attempt + 1;
-    const backoffMs = attempt <= 5 ? Math.pow(2, attempt - 1) * 1000 : 15000;
-    const status: QueuedSwipe["status"] = attempt >= 5 ? "stuck" : "pending";
-
-    swipeQueue.current = swipeQueue.current.map((s) =>
-      s.clientSwipeId === item.clientSwipeId
-        ? { ...s, status, attempt, nextRetryAt: Date.now() + backoffMs }
-        : s
-    );
-    forceQueueRender((x) => x + 1);
-
-    if (status === "stuck") {
-      queueWorkerRunning.current = false;
-      setTimeout(startQueueWorker, 15000);
-    }
-  }
-
-  function startQueueWorker() {
-    if (queueWorkerRunning.current) return;
-    queueWorkerRunning.current = true;
-
-    async function tick() {
-      const now = Date.now();
-      const pending = swipeQueue.current.filter(
-        (s) => s.status === "pending" && s.nextRetryAt <= now
-      );
-
-      for (const item of pending) {
-        if (inFlight.current.has(item.clientSwipeId)) continue;
-
-        inFlight.current.add(item.clientSwipeId);
-        swipeQueue.current = swipeQueue.current.map((s) =>
-          s.clientSwipeId === item.clientSwipeId ? { ...s, status: "inflight" as const } : s
-        );
-
-        submitPairedSwipe(item.sessionId, item.tmdbId, item.type, item.action)
-          .then((result) => {
-            inFlight.current.delete(item.clientSwipeId);
-            if (result?.ok) {
-              // ACK — remove from queue
-              swipeQueue.current = swipeQueue.current.filter(
-                (s) => s.clientSwipeId !== item.clientSwipeId
-              );
-            } else {
-              requeueItem(item);
-            }
-            forceQueueRender((x) => x + 1);
-          })
-          .catch(() => {
-            inFlight.current.delete(item.clientSwipeId);
-            requeueItem(item);
-          });
-      }
-
-      const hasActive = swipeQueue.current.some(
-        (s) => s.status === "pending" || s.status === "inflight" || s.status === "stuck"
-      );
-      if (hasActive) {
-        setTimeout(tick, 1000);
-      } else {
-        queueWorkerRunning.current = false;
-      }
-    }
-
-    tick();
-  }
-
   /* ── hydration guard ── */
   if (!mounted) return null;
 
@@ -1384,11 +1011,6 @@ export default function WTBetaPage() {
   const deckExhausted = deck.length > 0 && deckIndex >= deck.length;
   const maxTimer = round === 1 ? ROUND1_DURATION : ROUND2_DURATION;
   const timerPct = Math.round((timer / maxTimer) * 100);
-
-  const swipeQueueStatus =
-    swipeQueue.current.some((s) => s.status === "stuck") ? "stuck" :
-    swipeQueue.current.some((s) => s.status === "pending" || s.status === "inflight") ? "pending" :
-    "idle";
 
   /* ── shared card styles ── */
   const btnBase: React.CSSProperties = {
