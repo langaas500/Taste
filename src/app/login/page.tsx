@@ -64,6 +64,11 @@ const strings = {
     errNoPassword: "Du må oppgi et passord.",
     errRateLimit: "For mange forsøk. Vent litt og prøv igjen.",
     errSecurityLimit: "Av sikkerhetshensyn kan du bare be om dette en gang per minutt.",
+    forgotPassword: "Glemt passord?",
+    resetSendLink: "Send tilbakestillingslenke",
+    resetSending: "Sender...",
+    resetSent: "Sjekk innboksen din for en tilbakestillingslenke.",
+    resetCancel: "Avbryt",
   },
   en: {
     tabLogin: "Log in",
@@ -119,6 +124,11 @@ const strings = {
     errNoPassword: "You must enter a password.",
     errRateLimit: "Too many attempts. Wait a moment and try again.",
     errSecurityLimit: "For security, you can only request this once every 60 seconds.",
+    forgotPassword: "Forgot password?",
+    resetSendLink: "Send reset link",
+    resetSending: "Sending...",
+    resetSent: "Check your inbox for a reset link.",
+    resetCancel: "Cancel",
   },
   dk: {
     tabLogin: "Log ind",
@@ -174,6 +184,11 @@ const strings = {
     errNoPassword: "Du skal angive en adgangskode.",
     errRateLimit: "For mange forsøg. Vent lidt og prøv igen.",
     errSecurityLimit: "Af sikkerhedshensyn kan du kun anmode om dette en gang per minut.",
+    forgotPassword: "Glemt adgangskode?",
+    resetSendLink: "Send nulstillingslink",
+    resetSending: "Sender...",
+    resetSent: "Tjek din indbakke for et nulstillingslink.",
+    resetCancel: "Annuller",
   },
   se: {
     tabLogin: "Logga in",
@@ -229,6 +244,11 @@ const strings = {
     errNoPassword: "Du måste ange ett lösenord.",
     errRateLimit: "För många försök. Vänta en stund och försök igen.",
     errSecurityLimit: "Av säkerhetsskäl kan du bara begära detta en gång per minut.",
+    forgotPassword: "Glömt lösenord?",
+    resetSendLink: "Skicka återställningslänk",
+    resetSending: "Skickar...",
+    resetSent: "Kolla din inkorg efter en återställningslänk.",
+    resetCancel: "Avbryt",
   },
   fi: {
     tabLogin: "Kirjaudu",
@@ -284,6 +304,11 @@ const strings = {
     errNoPassword: "Sinun on annettava salasana.",
     errRateLimit: "Liian monta yritystä. Odota hetki ja yritä uudelleen.",
     errSecurityLimit: "Turvallisuussyistä voit pyytää tämän vain kerran minuutissa.",
+    forgotPassword: "Unohditko salasanan?",
+    resetSendLink: "Lähetä palautuslinkki",
+    resetSending: "Lähetetään...",
+    resetSent: "Tarkista saapuneet palautuslinkin varalta.",
+    resetCancel: "Peruuta",
   },
 } as const;
 
@@ -317,6 +342,11 @@ function LoginContent() {
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [locale, setLocale] = useState<Locale>("en");
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMsg, setResetMsg] = useState("");
+  const [resetError, setResetError] = useState("");
 
   useEffect(() => {
     fetch("/api/together/ribbon")
@@ -337,6 +367,31 @@ function LoginContent() {
       });
     }
   }, []);
+
+  async function handleResetPassword() {
+    setResetMsg("");
+    setResetError("");
+    const trimmed = resetEmail.trim();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setResetError(s.errInvalidEmail as string);
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const supabase = createSupabaseBrowser();
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
+        redirectTo: `${window.location.origin}/login?reset=true`,
+      });
+      if (error) {
+        setResetError(translateError(error.message, s));
+      } else {
+        setResetMsg(s.resetSent as string);
+      }
+    } catch (e: unknown) {
+      setResetError(e instanceof Error ? e.message : "Error");
+    }
+    setResetLoading(false);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -690,9 +745,59 @@ function LoginContent() {
                   {mode === "signup" && (
                     <p className="text-[11px] text-[var(--text-tertiary)] mt-1.5">{s.minChars}</p>
                   )}
+                  {mode === "login" && !showReset && (
+                    <button
+                      type="button"
+                      onClick={() => { setShowReset(true); setResetEmail(email); setResetMsg(""); setResetError(""); }}
+                      className="text-[11px] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors mt-1.5 cursor-pointer bg-transparent border-0 p-0"
+                    >
+                      {s.forgotPassword}
+                    </button>
+                  )}
                 </div>
 
-                {mode === "login" && (
+                {showReset && (
+                  <div className="rounded-[var(--radius-md)] border border-[var(--border)] p-3.5" style={{ background: "rgba(255,255,255,0.02)" }}>
+                    <input
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleResetPassword();
+                        }
+                      }}
+                      placeholder={s.emailPlaceholder as string}
+                      className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[var(--radius-md)] text-[var(--text-primary)] text-sm placeholder-[var(--text-tertiary)] input-glow transition-all duration-200 focus:outline-none mb-2.5"
+                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={resetLoading}
+                        onClick={handleResetPassword}
+                        className="btn-press flex-1 py-2 bg-[var(--accent)] hover:brightness-110 text-white rounded-[var(--radius-md)] font-medium text-xs transition-all duration-200 disabled:opacity-40 cursor-pointer border-0"
+                      >
+                        {resetLoading ? s.resetSending : s.resetSendLink}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setShowReset(false); setResetMsg(""); setResetError(""); }}
+                        className="px-3 py-2 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors cursor-pointer bg-transparent border-0"
+                      >
+                        {s.resetCancel}
+                      </button>
+                    </div>
+                    {resetMsg && (
+                      <p className="text-xs text-emerald-400/80 mt-2">{resetMsg}</p>
+                    )}
+                    {resetError && (
+                      <p className="text-xs text-[var(--red)] mt-2">{resetError}</p>
+                    )}
+                  </div>
+                )}
+
+                {mode === "login" && !showReset && (
                   <label className="flex items-center gap-2.5 cursor-pointer select-none">
                     <input
                       type="checkbox"
