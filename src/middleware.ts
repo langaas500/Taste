@@ -104,7 +104,17 @@ export async function middleware(request: NextRequest) {
 
   if (!user && !isPublic && !isGuestAllowed) {
     const url = request.nextUrl.clone();
+    const originalPath = request.nextUrl.pathname;
+    const originalSearch = request.nextUrl.search;
     url.pathname = "/login";
+    url.search = "";
+    url.searchParams.set("from", originalPath);
+    if (originalSearch) {
+      const originalParams = new URLSearchParams(originalSearch);
+      originalParams.forEach((value, key) => {
+        url.searchParams.set(key, value);
+      });
+    }
     return NextResponse.redirect(url);
   }
 
