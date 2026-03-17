@@ -208,7 +208,8 @@ function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isTogether = searchParams.get("from") === "together";
-  const [step, setStep] = useState(1);
+  const minTitles = isTogether ? 3 : 5;
+  const [step, setStep] = useState(1); // 1=titles, 2=services, 3=done
   const [titles, setTitles] = useState<OnboardingTitle[]>([]);
   const [loading, setLoading] = useState(false);
   const [selections, setSelections] = useState<Map<string, Selection>>(new Map());
@@ -218,6 +219,7 @@ function OnboardingContent() {
   const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [tasteSummary, setTasteSummary] = useState<{ youLike: string; avoid: string; pacing: string } | null>(null);
+  const [tasteLoading, setTasteLoading] = useState(false);
   const [userRegion, setUserRegion] = useState("US");
   const [locale, setLocale] = useState<Locale>("en");
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -243,9 +245,9 @@ function OnboardingContent() {
       .catch(() => {});
   }, []);
 
-  // Load curated titles when entering step 2
+  // Load curated titles when entering step 1 (title selection)
   useEffect(() => {
-    if (step === 2 && titles.length === 0) {
+    if (step === 1 && titles.length === 0) {
       setLoading(true);
       fetch("/api/onboarding/titles")
         .then((r) => r.json())
@@ -356,23 +358,24 @@ function OnboardingContent() {
         }),
       });
 
-      // Try to fetch taste summary for step 4
+      track("onboarding_completed", { selection_count: selections.size, services_count: selectedServices.size });
+      setStep(3);
+      setTasteLoading(true);
+
+      // Fetch taste summary in background after showing done screen
       try {
-        // Wait a moment for taste summary to generate
-        await new Promise((r) => setTimeout(r, 2000));
+        await new Promise((r) => setTimeout(r, 5000));
         const res = await fetch("/api/taste-summary");
         const data = await res.json();
         if (data.taste_summary) setTasteSummary(data.taste_summary);
       } catch {
         // Not critical
       }
-
-      track("onboarding_completed", { selection_count: selections.size, services_count: selectedServices.size });
-      setStep(4);
+      setTasteLoading(false);
     } catch {
-      // Still move forward
       track("onboarding_completed", { selection_count: selections.size, services_count: selectedServices.size });
-      setStep(4);
+      setStep(3);
+      setTasteLoading(false);
     }
     setSaving(false);
   }
@@ -400,49 +403,18 @@ function OnboardingContent() {
       />
 
       {/* Progress bar */}
-      {step > 1 && step < 4 && (
+      {step < 3 && (
         <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-[var(--bg-surface)]">
           <div
             className="h-full bg-[var(--accent)] transition-all duration-500"
-            style={{ width: `${((step - 1) / 3) * 100}%` }}
+            style={{ width: `${(step / 2) * 100}%` }}
           />
         </div>
       )}
 
       <div className="relative z-10 max-w-3xl mx-auto px-4">
-        {/* ───── STEP 1: Welcome ───── */}
+        {/* ───── STEP 1: Title Selection ───── */}
         {step === 1 && (
-          <div className="flex flex-col items-center justify-center min-h-dvh text-center animate-fade-in-up">
-            <Image
-              src="/logo.png"
-              alt="Logflix"
-              width={140}
-              height={44}
-              className="object-contain mb-8"
-              style={{ height: "auto" }}
-              priority
-            />
-
-            <h1 className="text-3xl sm:text-4xl font-bold text-[var(--text-primary)] mb-3">
-              {s.headline} <span className="gradient-text">{s.headlineGradient}</span>
-            </h1>
-            <p className="text-[var(--text-secondary)] text-sm sm:text-base max-w-md leading-relaxed mb-10">
-              {s.subtitle}
-            </p>
-
-            <button
-              onClick={() => { track("onboarding_started"); setStep(2); }}
-              className="btn-press px-8 py-3.5 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_30px_var(--accent-glow-strong)] text-white rounded-[var(--radius-lg)] font-semibold text-sm transition-all duration-200"
-            >
-              {s.cta}
-            </button>
-
-            <p className="text-xs text-[var(--text-tertiary)] mt-6">{s.timeHint}</p>
-          </div>
-        )}
-
-        {/* ───── STEP 2: Title Selection ───── */}
-        {step === 2 && (
           <div className="py-6 pb-28 animate-fade-in-up">
             <div className="text-center mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-1">
@@ -487,7 +459,7 @@ function OnboardingContent() {
                 )}
               </div>
               <span className="text-xs text-[var(--text-tertiary)]">
-                {selectionCount} {s.minSelected}
+                {selectionCount} / {minTitles}
               </span>
             </div>
 
@@ -496,8 +468,8 @@ function OnboardingContent() {
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{
-                  width: `${Math.min((selectionCount / 5) * 100, 100)}%`,
-                  background: selectionCount >= 5 ? "var(--green)" : "var(--accent)",
+                  width: `${Math.min((selectionCount / minTitles) * 100, 100)}%`,
+                  background: selectionCount >= minTitles ? "var(--green)" : "var(--accent)",
                 }}
               />
             </div>
@@ -586,27 +558,21 @@ function OnboardingContent() {
                 paddingBottom: "calc(var(--safe-bottom) + 16px)",
               }}
             >
-              <div className="max-w-3xl mx-auto flex gap-3">
+              <div className="max-w-3xl mx-auto">
                 <button
-                  onClick={() => setStep(1)}
-                  className="px-4 py-2.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+                  onClick={() => setStep(2)}
+                  disabled={selectionCount < minTitles}
+                  className="btn-press w-full py-3 bg-[var(--accent)] hover:brightness-110 text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all disabled:opacity-30 disabled:pointer-events-none"
                 >
-                  {s.back}
-                </button>
-                <button
-                  onClick={() => setStep(3)}
-                  disabled={selectionCount < 5}
-                  className="btn-press flex-1 py-3 bg-[var(--accent)] hover:brightness-110 text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all disabled:opacity-30 disabled:pointer-events-none"
-                >
-                  {s.continue} ({selectionCount}/5)
+                  {s.continue} ({selectionCount}/{minTitles})
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* ───── STEP 3: Streaming Services ───── */}
-        {step === 3 && (
+        {/* ───── STEP 2: Streaming Services ───── */}
+        {step === 2 && (
           <div className="flex flex-col items-center justify-center min-h-dvh py-10 animate-fade-in-up">
             <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-2 text-center">
               {s.step3Title}
@@ -650,68 +616,87 @@ function OnboardingContent() {
               })}
             </div>
 
-            <div className="flex gap-3 w-full max-w-lg">
-              <button
-                onClick={() => setStep(2)}
-                className="px-4 py-2.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
-              >
-                {s.back}
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="btn-press flex-1 py-3 bg-[var(--accent)] hover:brightness-110 text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all disabled:opacity-40"
-              >
-                {saving ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    {s.saving}
-                  </span>
-                ) : (
-                  s.finish
-                )}
-              </button>
-              {selectedServices.size === 0 && (
+            <div className="flex flex-col gap-3 w-full max-w-lg">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setStep(1)}
+                  className="px-4 py-2.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+                >
+                  {s.back}
+                </button>
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="px-4 py-2.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+                  className="btn-press flex-1 py-3 bg-[var(--accent)] hover:brightness-110 text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all disabled:opacity-40"
                 >
-                  {s.skip}
+                  {saving ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      {s.saving}
+                    </span>
+                  ) : (
+                    s.finish
+                  )}
+                </button>
+                {selectedServices.size === 0 && (
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="px-4 py-2.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+                  >
+                    {s.skip}
+                  </button>
+                )}
+              </div>
+              {isTogether && (
+                <button
+                  onClick={() => router.push("/together")}
+                  className="text-xs text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
+                >
+                  {s.skip} — {s.startTogether}
                 </button>
               )}
             </div>
           </div>
         )}
 
-        {/* ───── STEP 4: Done ───── */}
-        {step === 4 && (
+        {/* ───── STEP 3: Done ───── */}
+        {step === 3 && (
           <div className="flex flex-col items-center justify-center min-h-dvh py-10 text-center animate-fade-in-up">
-            {/* Celebration */}
+            {/* Celebration / Loading */}
             <div className="relative mb-6">
-              <div className="w-20 h-20 rounded-full bg-[var(--green-glow)] flex items-center justify-center">
-                <svg className="w-10 h-10 text-[var(--green)]" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-              </div>
-              {/* Sparkles */}
-              <div className="absolute -top-2 -right-2 text-xl animate-bounce" style={{ animationDelay: "0.2s" }}>
-                ✨
-              </div>
-              <div className="absolute -bottom-1 -left-3 text-lg animate-bounce" style={{ animationDelay: "0.5s" }}>
-                🎬
-              </div>
+              {tasteLoading ? (
+                <div className="w-20 h-20 rounded-full bg-[rgba(255,42,42,0.08)] flex items-center justify-center">
+                  <div className="w-10 h-10 border-3 border-[var(--border)] border-t-[var(--accent)] rounded-full animate-spin" />
+                </div>
+              ) : (
+                <>
+                  <div className="w-20 h-20 rounded-full bg-[var(--green-glow)] flex items-center justify-center">
+                    <svg className="w-10 h-10 text-[var(--green)]" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  </div>
+                  <div className="absolute -top-2 -right-2 text-xl animate-bounce" style={{ animationDelay: "0.2s" }}>
+                    &#x2728;
+                  </div>
+                  <div className="absolute -bottom-1 -left-3 text-lg animate-bounce" style={{ animationDelay: "0.5s" }}>
+                    &#x1F3AC;
+                  </div>
+                </>
+              )}
             </div>
 
             <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
-              {s.doneTitle}
+              {tasteLoading ? s.saving : s.doneTitle}
             </h2>
             <p className="text-sm text-[var(--text-secondary)] mb-8 max-w-sm">
-              {s.doneSubtitle(selectionCount)}
+              {tasteLoading
+                ? (locale === "no" ? "Bygger smaksprofilen din..." : locale === "dk" ? "Bygger din smagsprofil..." : locale === "se" ? "Bygger din smakprofil..." : locale === "fi" ? "Rakennetaan makuprofiiliasi..." : "Building your taste profile...")
+                : s.doneSubtitle(selectionCount)}
             </p>
 
             {/* Taste summary preview */}
-            {tasteSummary && (
+            {!tasteLoading && tasteSummary && (
               <div className="glass rounded-[var(--radius-lg)] p-5 mb-8 text-left w-full max-w-md">
                 <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">{s.tasteTitle}</h3>
                 <div className="space-y-2.5">
@@ -737,33 +722,41 @@ function OnboardingContent() {
               </div>
             )}
 
-            <div className="flex flex-col gap-3 w-full max-w-md">
-              {/* Primary CTA: Se Sammen if from=together, otherwise recommendations */}
-              <button
-                onClick={() => router.push(isTogether ? "/together" : "/recommendations")}
-                className="btn-press w-full py-3 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_24px_var(--accent-glow-strong)] text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all"
-              >
-                {isTogether ? s.startTogether : s.exploreRec}
-              </button>
-
-              {/* Secondary CTAs — smaller, less prominent */}
-              {!isTogether && (
-                <div className="flex gap-3">
+            {!tasteLoading && (
+              <div className="flex flex-col gap-3 w-full max-w-md">
+                {isTogether ? (
                   <button
                     onClick={() => router.push("/together")}
-                    className="btn-press flex-1 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-md)] font-medium text-xs transition-all"
+                    className="btn-press w-full py-3 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_24px_var(--accent-glow-strong)] text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all"
                   >
                     {s.startTogether}
                   </button>
-                  <button
-                    onClick={() => router.push("/library")}
-                    className="btn-press flex-1 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-md)] font-medium text-xs transition-all"
-                  >
-                    {s.goLibrary}
-                  </button>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => router.push("/recommendations")}
+                      className="btn-press w-full py-3 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_24px_var(--accent-glow-strong)] text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all"
+                    >
+                      {s.exploreRec}
+                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => router.push("/together")}
+                        className="btn-press flex-1 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-md)] font-medium text-xs transition-all"
+                      >
+                        {s.startTogether}
+                      </button>
+                      <button
+                        onClick={() => router.push("/library")}
+                        className="btn-press flex-1 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-md)] font-medium text-xs transition-all"
+                      >
+                        {s.goLibrary}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
