@@ -27,6 +27,7 @@ import {
   getProviderUrl, getWatchInfo, fetchActualProviders,
 } from "./lib/utils";
 import useSwipeQueue from "./hooks/useSwipeQueue";
+import useCountdown from "./hooks/useCountdown";
 
 /* ── input mode detection ─────────────────────────────── */
 
@@ -48,8 +49,7 @@ export default function WTBetaPage() {
   const [titles, setTitles] = useState<WTTitle[]>([]);
   const [titlesLoading, setTitlesLoading] = useState(false);
   const [screen, setScreen] = useState<Screen>("intro");
-  const [timer, setTimer] = useState(ROUND1_DURATION);
-  const [timerRunning, setTimerRunning] = useState(false);
+  const { timer, timerRunning, timerRef, setTimer, setTimerRunning } = useCountdown();
 
   const [deck, setDeck] = useState<WTTitle[]>([]);
   const [deckIndex, setDeckIndex] = useState(0);
@@ -108,11 +108,9 @@ export default function WTBetaPage() {
   // Reset to 0 in reset() and startFinalRound().
   const endedRoundRef = useRef(0);
   const iAmDoneRef = useRef(false);
-  const timerRef = useRef(ROUND1_DURATION);
   const roundRef = useRef<1 | 2>(1);
   const deckRef = useRef<WTTitle[]>([]);
   deckRef.current = deck;
-  timerRef.current = timer;
   roundRef.current = round;
   const extendingRef = useRef(false);
   const partnerRef = useRef<{ liked: number[] } | null>(null);
@@ -254,15 +252,6 @@ export default function WTBetaPage() {
       })
       .catch(() => {});
   }, []);
-
-  /* ── countdown ── */
-  useEffect(() => {
-    if (!timerRunning || timer <= 0) return;
-    const id = setInterval(() => {
-      setTimer((t) => { if (t <= 1) { setTimerRunning(false); return 0; } return t - 1; });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [timerRunning, timer]);
 
   /* ── card timing ── */
   useEffect(() => {
