@@ -205,7 +205,9 @@ export default function TastePage() {
     try {
       const res = await fetch("/api/taste-summary");
       const data = await res.json();
-      if (data.summary) setSummary(data.summary);
+      if (data.summary && (data.summary.youLike || data.summary.avoid || data.summary.pacing)) {
+      setSummary(data.summary);
+    }
     } catch {
       // ignore
     }
@@ -339,28 +341,34 @@ export default function TastePage() {
 
       {summary && (
         <div className="space-y-4 stagger">
-          <TasteCard
-            color="var(--green)"
-            label={s.youLike}
-            text={summary.youLike}
-            isPremium={isPremium}
-            blurHint={s.blurHint}
-          />
-          <TasteCard
-            color="var(--red)"
-            label={s.avoid}
-            text={summary.avoid}
-            isPremium={isPremium}
-            blurHint={s.blurHint}
-          />
-          <TasteCard
-            color="var(--accent)"
-            labelColor="var(--accent-light)"
-            label={s.pacing}
-            text={summary.pacing}
-            isPremium={isPremium}
-            blurHint={s.blurHint}
-          />
+          {summary.youLike && (
+            <TasteCard
+              color="var(--green)"
+              label={s.youLike}
+              text={summary.youLike}
+              isPremium={isPremium}
+              blurHint={s.blurHint}
+            />
+          )}
+          {summary.avoid && (
+            <TasteCard
+              color="var(--red)"
+              label={s.avoid}
+              text={summary.avoid}
+              isPremium={isPremium}
+              blurHint={s.blurHint}
+            />
+          )}
+          {summary.pacing && (
+            <TasteCard
+              color="var(--accent)"
+              labelColor="var(--accent-light)"
+              label={s.pacing}
+              text={summary.pacing}
+              isPremium={isPremium}
+              blurHint={s.blurHint}
+            />
+          )}
 
           {summary.updatedAt && (
             <p className="text-xs text-[var(--text-tertiary)] text-center pt-2">
