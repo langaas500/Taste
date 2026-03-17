@@ -221,7 +221,11 @@ export default function TastePage() {
       const res = await fetch("/api/taste-summary", { method: "POST" });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      setSummary(data.summary);
+      if (data.summary && (data.summary.youLike || data.summary.avoid || data.summary.pacing)) {
+        setSummary(data.summary);
+      } else {
+        setError("Smaksprofilen kunne ikke genereres. Prøv igjen.");
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to generate taste summary");
     }
