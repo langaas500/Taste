@@ -3,16 +3,17 @@
 > Denne filen er IKKE for kode-agenten (se CLAUDE.md). Den er kun til ekstern AI-assistent for rask kontekst uten kodebase-tilgang.
 
 ## Sist oppdatert
-**16.03.2026**
+**17.03.2026**
 
 ## Git-status
-- **Siste push:** `feat: guide hub pages per region` (16.03.2026)
+- **Siste push:** `fix: server-side premium gate on taste-summary API` (17.03.2026)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 
 ## Hva er gjort nylig (siste 10 endringer)
 
-1. [pushet] **Guide hub-sider** — Ny `/[region]/guides` side som lister alle 22 guider gruppert i 4 kategorier (For to, Alene, Familie & venner, Stemning & sjanger). Glassmorphism-kort, lokalisert metadata+hreflang, BreadcrumbList JSON-LD. Forbedrer intern oppdagelse av guider.
+1. [pushet] **Server-side premium gate på taste-summary** — `/api/taste-summary` returnerer nå kun `youLike` for gratisbrukere (avoid/pacing nulles ut server-side). Full data kun for premium. Respons inkluderer `is_premium` boolean. Full summary lagres fortsatt i DB slik at oppgradering gir umiddelbar tilgang.
+2. [pushet] **Guide hub-sider** — Ny `/[region]/guides` side som lister alle 22 guider gruppert i 4 kategorier (For to, Alene, Familie & venner, Stemning & sjanger). Glassmorphism-kort, lokalisert metadata+hreflang, BreadcrumbList JSON-LD. Forbedrer intern oppdagelse av guider.
 2. [pushet] **Sitemap paginering fikset** — Hovednivå sitemapindex (`/api/sitemap`) genererer nå dynamisk alle pages per region×type direkte fra DB-count istedenfor å peke til nested sitemapindex. Google ser nå alle titler.
 2. [pushet] **Sitemap noindex-fix** — Alle sitemap-ruter (index, guides, titles) returnerer nå `X-Robots-Tag: index, follow` og `Cache-Control: public, s-maxage=86400`. Fikser GSC noindex-problem.
 2. [pushet] **OG-image viser provider automatisk** — generateMetadata henter providers og sender første flatrate provider_name til OG-bildet. Vises som "Tilgjengelig på X". Gjelder movie + TV.
@@ -37,7 +38,7 @@
 - **/api:** ✅ Fungerer. Alle ruter har feilhåndtering. Backfill-endepunkter beskyttet med `BACKFILL_SECRET`.
 - **/api/curator:** ✅ Fungerer. Rate limiting lagt til (10 req/60s).
 - **SEO / middleware:** ✅ Fikset. Alle 4 regioner rewritet korrekt. ISR 24t. 3 JSON-LD schemas (FAQPage, BreadcrumbList, Movie/TVSeries+WatchAction). SeoPageTracker sender `seo_page_view` til PostHog.
-- **Premium / Stripe:** ✅ Stabil. 29 kr/mnd Founding Member. Server-side enforcement: `FREE_REC_LIMIT = 5` i recommendations/route.ts, 5 Curator-meldinger, blurret smaksprofil.
+- **Premium / Stripe:** ✅ Stabil. 29 kr/mnd Founding Member. Server-side enforcement: `FREE_REC_LIMIT = 5` i recommendations/route.ts, 5 Curator-meldinger, taste-summary gated server-side (kun youLike for gratis).
 - **Lokalisering:** ✅ 5 språk (no, se, dk, fi, en). 22 stemningsguider × 4 regioner = 88 lokaliserte guide-sider + 4 hub-sider.
 - **Analytics / PostHog:** ✅ Integrert app-wide via PostHogProvider i root layout. SeoPageTracker på alle titelsider. Personvernsiden oppdatert til å nevne PostHog.
 - **Settings:** ✅ Stabil. Vennekoblinger, region, strømmetjenester, eksport, Trakt-kobling.
