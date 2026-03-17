@@ -63,6 +63,9 @@ const i18n = {
     premiumPerks: ["Dypere emosjonell matching", "Smaksbaserte anbefalinger", "Tilgang til skjulte rariteter"],
     premiumBody: "Curator har mye mer å by på — dypere innsikt og anbefalinger du ikke finner ellers.",
     premiumCta: "Oppgrader til Premium →",
+    counterUsed: (n: number) => `${n} av 5 gratis meldinger brukt`,
+    counterWarning: (n: number) => `${n} meldinger igjen — oppgrader for ubegrenset`,
+    counterLast: "Siste gratis melding neste!",
   },
   en: {
     greeting: (name: string) => `Good evening, ${name}.\n\nThe theater lights have dimmed. What shall we fill the screen with tonight?`,
@@ -81,6 +84,9 @@ const i18n = {
     premiumPerks: ["Deeper emotional matching", "Taste-based recommendations", "Access to hidden rarities"],
     premiumBody: "Curator has much more to offer — deeper insights and recommendations you won't find elsewhere.",
     premiumCta: "Upgrade to Premium →",
+    counterUsed: (n: number) => `${n} of 5 free messages used`,
+    counterWarning: (n: number) => `${n} messages left — upgrade for unlimited`,
+    counterLast: "Last free message next!",
   },
   dk: {
     greeting: (name: string) => `God aften, ${name}.\n\nBiografmørket har sænket sig. Hvad skal vi fylde lærredet med i aften?`,
@@ -99,6 +105,9 @@ const i18n = {
     premiumPerks: ["Dybere følelsesmæssig matching", "Smagsbaserede anbefalinger", "Adgang til skjulte rariteter"],
     premiumBody: "Curator har meget mere at byde på — dybere indsigt og anbefalinger du ikke finder andre steder.",
     premiumCta: "Opgrader til Premium →",
+    counterUsed: (n: number) => `${n} af 5 gratis beskeder brugt`,
+    counterWarning: (n: number) => `${n} beskeder tilbage — opgrader for ubegrænset`,
+    counterLast: "Sidste gratis besked næste!",
   },
   se: {
     greeting: (name: string) => `God kväll, ${name}.\n\nBiomörkret har sänkt sig. Vad ska vi fylla duken med ikväll?`,
@@ -117,6 +126,9 @@ const i18n = {
     premiumPerks: ["Djupare emotionell matchning", "Smakbaserade rekommendationer", "Tillgång till dolda rariteter"],
     premiumBody: "Curator har mycket mer att erbjuda — djupare insikter och rekommendationer du inte hittar annars.",
     premiumCta: "Uppgradera till Premium →",
+    counterUsed: (n: number) => `${n} av 5 gratismeddelanden använda`,
+    counterWarning: (n: number) => `${n} meddelanden kvar — uppgradera för obegränsat`,
+    counterLast: "Sista gratismeddelandet härnäst!",
   },
   fi: {
     greeting: (name: string) => `Hyvää iltaa, ${name}.\n\nElokuvateatterin valot ovat himmenneet. Mitä täytämme valkokankaalle tänä iltana?`,
@@ -135,6 +147,9 @@ const i18n = {
     premiumPerks: ["Syvempi tunnepohjainen matchaus", "Makuun perustuvat suositukset", "Pääsy piilotettuihin harvinaisuuksiin"],
     premiumBody: "Curatorilla on paljon enemmän tarjottavaa — syvempiä oivalluksia ja suosituksia joita et löydä muualta.",
     premiumCta: "Päivitä Premiumiin →",
+    counterUsed: (n: number) => `${n} / 5 ilmaista viestiä käytetty`,
+    counterWarning: (n: number) => `${n} viestiä jäljellä — päivitä rajattomaksi`,
+    counterLast: "Viimeinen ilmainen viesti seuraavaksi!",
   },
 } as const;
 
@@ -459,6 +474,27 @@ export default function CuratorPage() {
 
           <div ref={bottomRef} />
         </div>
+
+        {/* Message counter */}
+        {isPremium === false && userMessageCount > 0 && userMessageCount < FREE_MESSAGE_LIMIT && (
+          <div className="px-6 pb-1 text-center">
+            <p style={{
+              fontSize: 11,
+              fontWeight: 500,
+              color: userMessageCount >= 4
+                ? "rgba(239,68,68,0.7)"
+                : userMessageCount >= 3
+                ? "rgba(250,204,21,0.6)"
+                : "rgba(255,255,255,0.25)",
+            }}>
+              {userMessageCount >= 4
+                ? t.counterLast
+                : userMessageCount >= 3
+                ? t.counterWarning(FREE_MESSAGE_LIMIT - userMessageCount)
+                : t.counterUsed(userMessageCount)}
+            </p>
+          </div>
+        )}
 
         {/* Input Area */}
         <div className="px-6 pt-3 bg-gradient-to-t from-black/40 to-transparent" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}>
