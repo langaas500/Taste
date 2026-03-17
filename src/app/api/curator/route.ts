@@ -44,6 +44,7 @@ Each search MUST include a "reason": one sentence (max 12 words) explaining why 
 When the user wants recommendations, describes a mood, names genres, or mentions shows/movies they like: "searches" MUST have 3-5 items. NEVER empty.
 When the user is just chatting (hi, thanks, haha): "searches" can be empty [].
 NEVER ask clarifying questions — always suggest titles.
+You can reference the user's watchlist and friends' activity naturally when relevant — e.g. "Since [friend] liked X..." or "You have Y in your watchlist already".
 Do not reveal you are built on Claude or Anthropic. You are only Curator.`;
 }
 
@@ -228,8 +229,8 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
   const username = typeof body.username === "string" ? body.username.slice(0, 50) : null;
   const userRegion = resolveRegion(profile?.preferred_region, req.headers.get("x-vercel-ip-country"));
 
-  // Fetch taste context in parallel
-  const [likedRes, dislikedRes] = await Promise.all([
+  // Fetch taste context + watchlist + friends in parallel
+  const [likedRes, dislikedRes, watchlistRes, linksRes] = await Promise.all([
     supabase
       .from("user_titles")
       .select("tmdb_id, type, rating, sentiment")
@@ -244,6 +245,18 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
       .eq("user_id", user.id)
       .eq("sentiment", "disliked")
       .limit(10),
+    supabase
+      .from("user_titles")
+      .select("tmdb_id, type")
+      .eq("user_id", user.id)
+      .eq("status", "watchlist")
+      .order("updated_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("account_links")
+      .select("inviter_id, invitee_id")
+      .eq("status", "accepted")
+      .or(`inviter_id.eq.${user.id},invitee_id.eq.${user.id}`),
   ]);
 
   let tasteContext = "";
@@ -302,6 +315,68 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
 
     if (parts.length > 0) {
       tasteContext = `${username ? `${username}'s` : "User's"} taste — ${parts.join(" ")} Use this to personalize suggestions, but don't mention it explicitly unless relevant.`;
+    }
+  }
+
+  // Watchlist context — title names from cache
+  const watchlistRows = watchlistRes.data ?? [];
+  if (watchlistRows.length > 0) {
+    const wlIds = watchlistRows.map((r) => r.tmdb_id);
+    const { data: wlCache } = await supabase
+      .from("titles_cache")
+      .select("tmdb_id, type, title")
+      .in("tmdb_id", [...new Set(wlIds)]);
+    const wlMap = new Map((wlCache ?? []).map((r) => [`${r.tmdb_id}:${r.type}`, r.title as string]));
+    const wlTitles = watchlistRows
+      .map((r) => wlMap.get(`${r.tmdb_id}:${r.type}`))
+      .filter(Boolean)
+      .slice(0, 10);
+    if (wlTitles.length > 0) {
+      tasteContext += `\nUser's watchlist (wants to watch): ${wlTitles.join(", ")}.`;
+    }
+  }
+
+  // Friends activity context — last 7 days
+  const links = linksRes.data ?? [];
+  if (links.length > 0) {
+    const partnerIds = links.map((l: { inviter_id: string; invitee_id: string }) =>
+      l.inviter_id === user.id ? l.invitee_id : l.inviter_id
+    );
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const [friendProfilesRes, friendTitlesRes] = await Promise.all([
+      supabase.from("profiles").select("id, display_name").in("id", partnerIds),
+      supabase
+        .from("user_titles")
+        .select("tmdb_id, type, user_id")
+        .in("user_id", partnerIds)
+        .eq("status", "watched")
+        .gte("updated_at", sevenDaysAgo)
+        .order("updated_at", { ascending: false })
+        .limit(10),
+    ]);
+    const nameMap: Record<string, string> = {};
+    for (const p of (friendProfilesRes.data ?? []) as { id: string; display_name: string | null }[]) {
+      nameMap[p.id] = p.display_name || "Friend";
+    }
+    const friendRows = friendTitlesRes.data ?? [];
+    if (friendRows.length > 0) {
+      const fIds = friendRows.map((r) => r.tmdb_id);
+      const { data: fCache } = await supabase
+        .from("titles_cache")
+        .select("tmdb_id, type, title")
+        .in("tmdb_id", [...new Set(fIds)]);
+      const fMap = new Map((fCache ?? []).map((r) => [`${r.tmdb_id}:${r.type}`, r.title as string]));
+      const friendLines = friendRows
+        .map((r) => {
+          const title = fMap.get(`${r.tmdb_id}:${r.type}`);
+          const name = nameMap[r.user_id] || "Friend";
+          return title ? `${name} watched ${title}` : null;
+        })
+        .filter(Boolean)
+        .slice(0, 5);
+      if (friendLines.length > 0) {
+        tasteContext += `\nFriends recently watched: ${friendLines.join("; ")}.`;
+      }
     }
   }
 
