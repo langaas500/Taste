@@ -951,12 +951,14 @@ export default function WTBetaPage() {
   async function handleShare(titleName: string) {
     // Build SEO title page URL for the matched title (has rich OG images)
     const fw = finalWinner;
+    const localeToRegion: Record<string, string> = { nb: "no", sv: "se", da: "dk", fi: "fi", en: "no" };
+    const shareRegion = localeToRegion[locale] ?? "no";
     let shareUrl = "https://logflix.app/together";
     if (fw) {
       const slugBase = titleName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").replace(/-{2,}/g, "-");
       const slug = slugBase ? `${slugBase}-${fw.tmdb_id}` : `${fw.tmdb_id}`;
       const mediaType = fw.type === "tv" ? "tv" : "movie";
-      shareUrl = `https://logflix.app/no/${mediaType}/${slug}`;
+      shareUrl = `https://logflix.app/${shareRegion}/${mediaType}/${slug}?match=1`;
     }
     const shareText = `${t(locale, "winner", "shareText")} ${titleName}`;
     if (typeof navigator !== "undefined" && navigator.share) {

@@ -44,6 +44,13 @@ function buildOgImageUrl(title: string, posterPath: string | null, year: number 
   return `https://logflix.app/api/og/title?${params}`;
 }
 
+function buildMatchOgImageUrl(title: string, posterPath: string | null, year: number | null, type: "movie" | "tv"): string {
+  const params = new URLSearchParams({ title, type });
+  if (posterPath) params.set("poster", `https://image.tmdb.org/t/p/w780${posterPath}`);
+  if (year) params.set("year", String(year));
+  return `https://logflix.app/api/og/match?${params}`;
+}
+
 /* ── Data fetching ────────────────────────────────────── */
 
 async function fetchTitleData(slug: string) {
@@ -120,10 +127,12 @@ async function fetchProviders(tmdbId: number, country: string): Promise<WatchPro
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<Params>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
-  const { region, slug } = await params;
+  const [{ region, slug }, sp] = await Promise.all([params, searchParams]);
   if (!(VALID_REGIONS as readonly string[]).includes(region)) return {};
 
   const title = await fetchTitleData(slug);
@@ -149,7 +158,10 @@ export async function generateMetadata({
   }
   alternates["x-default"] = `https://logflix.app/no/movie/${title.slug || slug}`;
 
-  const ogImage = buildOgImageUrl(title.title, title.poster_path, title.year, "movie", title.vote_average, providerName);
+  const isMatch = sp.match === "1";
+  const ogImage = isMatch
+    ? buildMatchOgImageUrl(title.title, title.poster_path, title.year, "movie")
+    : buildOgImageUrl(title.title, title.poster_path, title.year, "movie", title.vote_average, providerName);
 
   return {
     title: pageTitle,
