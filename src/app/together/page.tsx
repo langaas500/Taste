@@ -28,6 +28,7 @@ import {
 } from "./lib/utils";
 import useSwipeQueue from "./hooks/useSwipeQueue";
 import useCountdown from "./hooks/useCountdown";
+import useRibbon from "./hooks/useRibbon";
 
 /* ── input mode detection ─────────────────────────────── */
 
@@ -57,10 +58,9 @@ export default function WTBetaPage() {
 
   const [chosen, setChosen] = useState<WTTitle | null>(null); // paired polling compat
   const [mounted, setMounted] = useState(false);
-  const [ribbonPosters, setRibbonPosters] = useState<string[]>([]);
+  const { ribbonPosters, userRegion, ribbonLocale } = useRibbon();
   const [preferenceMode, setPreferenceMode] = useState<"series" | "movies" | "mix">("series");
   const [selectedProviders, setSelectedProviders] = useState<number[]>([]);
-  const [userRegion, setUserRegion] = useState("US");
   const [locale, setLocale] = useState<Locale>("en");
   const [matchRevealPhase, setMatchRevealPhase] = useState<0 | 1 | 2 | 3>(0);
   const introChoice = "paired"; // default mode for tracking
@@ -233,25 +233,10 @@ export default function WTBetaPage() {
     return () => { ritualTimers.current.forEach(clearTimeout); };
   }, []);
 
-  /* ── ribbon: fetch trending posters (TV 70 % / Movie 30 %) + capture region ── */
+  /* ── sync locale from ribbon hook ── */
   useEffect(() => {
-    fetch("/api/together/ribbon")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.region) setUserRegion(data.region as string);
-        const params = new URLSearchParams(window.location.search);
-        const langParam = params.get("lang");
-        if (langParam === "no" || langParam === "en" || langParam === "dk" || langParam === "se" || langParam === "fi") {
-          setLocale(langParam as Locale);
-        } else if (data.region) {
-          setLocale(getLocale(data.region as string));
-        }
-        if (Array.isArray(data.posters) && data.posters.length > 0) {
-          setRibbonPosters(data.posters as string[]);
-        }
-      })
-      .catch(() => {});
-  }, []);
+    if (ribbonLocale) setLocale(ribbonLocale);
+  }, [ribbonLocale]);
 
   /* ── card timing ── */
   useEffect(() => {
