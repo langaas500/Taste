@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { logTitle } from "@/lib/api";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { getMessages } from "./messages";
@@ -1291,6 +1292,14 @@ export default function WTBetaPage() {
                 </a>
               </p>
 
+              {authUser && (
+                <Link
+                  href="/together/history"
+                  style={{ display: "block", fontSize: "0.7rem", color: "rgba(255,255,255,0.28)", textDecoration: "none", marginTop: 12, textAlign: "center" }}
+                >
+                  {t(locale, "intro", "matchHistory")} →
+                </Link>
+              )}
 
             </div>
             </div>

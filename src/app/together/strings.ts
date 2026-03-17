@@ -42,6 +42,7 @@ const strings = {
     socialProof: { no: "Hundrevis av par har allerede testet", en: "Hundreds of couples have already tried", dk: "Hundredvis af par har allerede prøvet", se: "Hundratals par har redan testat", fi: "Sadat parit ovat jo kokeilleet" },
     seoText: { no: "Begge swiper hver for seg på filmer og serier. Når dere matcher, har dere funnet noe dere begge faktisk vil se.", en: "Each of you swipes on movies and shows separately. When you match, you have found something you both actually want to watch.", dk: "I swiper hver for sig på film og serier. Når I matcher, har I fundet noget, I begge faktisk vil se.", se: "Ni svajpar var för sig på filmer och serier. När ni matchar har ni hittat något ni båda faktiskt vill se.", fi: "Molemmat swaippaavat elokuvia ja sarjoja erikseen. Kun matchäätte, olette löytäneet jotain mitä molemmat haluavat katsoa." },
     movieNightTips: { no: "Tips til filmkveld", en: "Movie night tips", dk: "Tips til filmaften", se: "Tips till filmkväll", fi: "Vinkkejä leffailtaan" },
+    matchHistory: { no: "Se match-historikk", en: "View match history", dk: "Se match-historik", se: "Se match-historik", fi: "Näytä match-historia" },
   },
 
   // ============================================
