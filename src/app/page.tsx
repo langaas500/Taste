@@ -1,11 +1,34 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import LandingContent from "./LandingContent";
+import LandingContent, { type Locale } from "./LandingContent";
+
+const COUNTRY_TO_LOCALE: Record<string, Locale> = {
+  NO: "no",
+  SE: "sv",
+  DK: "da",
+  FI: "fi",
+};
+
+function resolveLocale(country: string): Locale {
+  return COUNTRY_TO_LOCALE[country.toUpperCase()] || "en";
+}
 
 const meta = {
   no: {
     title: "Logflix — Finn noe å se sammen",
     description: "Sveip på filmer og serier. Kun felles liker gir match.",
+  },
+  sv: {
+    title: "Logflix — Hitta något att se tillsammans",
+    description: "Swipa på filmer och serier. Bara gemensamma likes blir en match.",
+  },
+  da: {
+    title: "Logflix — Find noget at se sammen",
+    description: "Swipe på film og serier. Kun fælles likes giver match.",
+  },
+  fi: {
+    title: "Logflix — Löydä jotain katsottavaa yhdessä",
+    description: "Swaippaa elokuvia ja sarjoja. Vain yhteisistä tykkäyksistä tulee match.",
   },
   en: {
     title: "Logflix — Find something to watch together",
@@ -16,7 +39,7 @@ const meta = {
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers();
   const country = (h.get("x-vercel-ip-country") || "").toUpperCase();
-  const locale: "no" | "en" = country === "NO" ? "no" : "en";
+  const locale = resolveLocale(country);
   const { title, description } = meta[locale];
 
   return {
@@ -52,7 +75,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function Home() {
   const h = await headers();
   const country = h.get("x-vercel-ip-country") || "";
-  const locale: "no" | "en" = country === "NO" ? "no" : "en";
+  const locale = resolveLocale(country);
 
   return <LandingContent locale={locale} />;
 }

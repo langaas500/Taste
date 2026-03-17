@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import SwipeMatchDemo from "./SwipeMatchDemo";
 
-type Locale = "no" | "en";
+export type Locale = "no" | "en" | "sv" | "da" | "fi";
 
 const strings = {
   no: {
@@ -33,6 +33,7 @@ const strings = {
     featureFriendsDesc: "Sammenlign smak og se hva vennene dine ser",
     featureCta: "Opprett gratis konto",
     featureCtaSub: "Tar 30 sekunder. Ingen kredittkort.",
+    streamingWith: "Fungerer på Netflix, Prime Video, Disney+ og mer.",
   },
   en: {
     hero: "Find something to watch together. Instantly.",
@@ -60,6 +61,91 @@ const strings = {
     featureFriendsDesc: "Compare taste and see what your friends are watching",
     featureCta: "Create free account",
     featureCtaSub: "Takes 30 seconds. No credit card.",
+    streamingWith: "Works with Netflix, Prime Video, Disney+ and more.",
+  },
+  sv: {
+    hero: "Hitta något att se tillsammans. Direkt.",
+    sub: "Bestäm er på minuter, inte 30.",
+    cta: "Start Swiping",
+    trust: "Gratis. Inget konto behövs.",
+    support: "Byggt för två. Fungerar live på varsin telefon.",
+    steps: "Skapa rum · Swipa var för sig · Matcha direkt",
+    login: "Har du konto? Logga in",
+    streaming: "Fungerar med de största streamingtjänsterna",
+    cta2: "Gå med via kod",
+    cta2Helper: "Använd kod eller skanna QR",
+    social: "Perfekt för fredagskvällar.",
+    micro1: "Bestäm er snabbare",
+    micro2: "Swipa privat",
+    micro3: "Mindre diskussion. Mer filmkväll.",
+    featureTitle: "Med ett gratis konto får du också",
+    featureLog: "Logga vad du ser",
+    featureLogDesc: "Bygg ditt bibliotek och håll koll på vad du sett",
+    featureAI: "AI-rekommendationer",
+    featureAIDesc: "Få personliga rekommendationer baserade på din smak",
+    featureTaste: "Smakprofil",
+    featureTasteDesc: "Se vilken sorts filmsmak du egentligen har",
+    featureFriends: "Dela med vänner",
+    featureFriendsDesc: "Jämför smak och se vad dina vänner tittar på",
+    featureCta: "Skapa gratis konto",
+    featureCtaSub: "Tar 30 sekunder. Inget kreditkort.",
+    streamingWith: "Fungerar med Netflix, Prime Video, Disney+ och mer.",
+  },
+  da: {
+    hero: "Find noget at se sammen. Med det samme.",
+    sub: "Beslut jer på minutter, ikke 30.",
+    cta: "Start Swiping",
+    trust: "Gratis. Ingen konto nødvendig.",
+    support: "Lavet til to. Virker live på hver sin telefon.",
+    steps: "Opret rum · Swipe hver for sig · Match med det samme",
+    login: "Har du konto? Log ind",
+    streaming: "Virker på tværs af de største streamingtjenester",
+    cta2: "Deltag med kode",
+    cta2Helper: "Brug kode eller scan QR",
+    social: "Perfekt til fredagsaftener.",
+    micro1: "Beslut jer hurtigere",
+    micro2: "Swipe privat",
+    micro3: "Mindre diskussion. Mere filmaften.",
+    featureTitle: "Med en gratis konto får du også",
+    featureLog: "Log hvad du ser",
+    featureLogDesc: "Byg dit bibliotek og hold styr på hvad du har set",
+    featureAI: "AI-anbefalinger",
+    featureAIDesc: "Få personlige anbefalinger baseret på din smag",
+    featureTaste: "Smagsprofil",
+    featureTasteDesc: "Se hvilken slags filmsmag du egentlig har",
+    featureFriends: "Del med venner",
+    featureFriendsDesc: "Sammenlign smag og se hvad dine venner ser",
+    featureCta: "Opret gratis konto",
+    featureCtaSub: "Tager 30 sekunder. Intet kreditkort.",
+    streamingWith: "Virker med Netflix, Prime Video, Disney+ og mere.",
+  },
+  fi: {
+    hero: "Löydä jotain katsottavaa yhdessä. Heti.",
+    sub: "Päättäkää minuuteissa, ei 30:ssä.",
+    cta: "Start Swiping",
+    trust: "Ilmainen. Ei tiliä tarvita.",
+    support: "Tehty kahdelle. Toimii livenä omilla puhelimilla.",
+    steps: "Luo huone · Swaippaa erikseen · Match heti",
+    login: "Onko sinulla tili? Kirjaudu",
+    streaming: "Toimii suurimpien suoratoistopalvelujen kanssa",
+    cta2: "Liity koodilla",
+    cta2Helper: "Käytä koodia tai skannaa QR",
+    social: "Täydellinen perjantai-iltoihin.",
+    micro1: "Päättäkää nopeammin",
+    micro2: "Swaippaa yksityisesti",
+    micro3: "Vähemmän väittelyä. Enemmän leffailtaa.",
+    featureTitle: "Ilmaisella tilillä saat myös",
+    featureLog: "Kirjaa katsomasi",
+    featureLogDesc: "Rakenna kirjastosi ja seuraa mitä olet katsonut",
+    featureAI: "AI-suositukset",
+    featureAIDesc: "Saa henkilökohtaisia suosituksia makusi perusteella",
+    featureTaste: "Makuprofiili",
+    featureTasteDesc: "Katso millainen elokuvamaku sinulla oikeasti on",
+    featureFriends: "Jaa kavereiden kanssa",
+    featureFriendsDesc: "Vertaa makuja ja katso mitä kaverisi katsovat",
+    featureCta: "Luo ilmainen tili",
+    featureCtaSub: "Kestää 30 sekuntia. Ei luottokorttia.",
+    streamingWith: "Toimii Netflixin, Prime Videon, Disney+:n ja muiden kanssa.",
   },
 };
 
@@ -648,7 +734,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             {/* ── SWIPE DEMO (mobile only) ── */}
             <div className="lg:hidden landing-mobile-demo-clip landing-fade-3" style={{ filter: "brightness(1.2) contrast(1.1)" }}>
               <div className="demo-scaler">
-                <SwipeMatchDemo locale={locale} />
+                <SwipeMatchDemo locale={locale === "no" ? "no" : "en"} />
               </div>
             </div>
 
@@ -688,9 +774,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
             >
               {s.trust}
               <br />
-              {locale === "no"
-                ? "Fungerer på Netflix, Prime Video, Disney+ og mer."
-                : "Works with Netflix, Prime Video, Disney+ and more."}
+              {s.streamingWith}
             </p>
 
             <Link
@@ -737,7 +821,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
 
           {/* ── SWIPE DEMO (desktop only) ── */}
           <div className="hidden lg:flex landing-fade-6" style={{ alignSelf: "center", justifyContent: "center", transform: "scale(1.15)", transformOrigin: "center center", filter: "brightness(1.2) contrast(1.1)" }}>
-            <SwipeMatchDemo locale={locale} />
+            <SwipeMatchDemo locale={locale === "no" ? "no" : "en"} />
           </div>
         </div>
 
