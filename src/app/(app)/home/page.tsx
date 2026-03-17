@@ -36,6 +36,13 @@ const strings = {
     liked: "Sett",
     disliked: "Mislikte",
     watchlistAction: "Se-liste",
+    recTitle: "Anbefalt for deg",
+    recTitlePremium: "Anbefalt for deg i dag",
+    recBased: "Basert på filmsmaken din",
+    recCta: "Se dine anbefalinger",
+    inviteText: "Finn noe å se med noen i kveld",
+    inviteCta: "Start Se Sammen",
+    inviteSecondary: "Inviter noen",
   },
   en: {
     title: "Home",
@@ -59,6 +66,13 @@ const strings = {
     liked: "Watched",
     disliked: "Disliked",
     watchlistAction: "Watchlist",
+    recTitle: "Recommended for you",
+    recTitlePremium: "Recommended for you today",
+    recBased: "Based on your film taste",
+    recCta: "See your recommendations",
+    inviteText: "Find something to watch with someone tonight",
+    inviteCta: "Start Watch Together",
+    inviteSecondary: "Invite someone",
   },
   dk: {
     title: "Hjem",
@@ -82,6 +96,13 @@ const strings = {
     liked: "Set",
     disliked: "Kunne ikke lide",
     watchlistAction: "Se-liste",
+    recTitle: "Anbefalet til dig",
+    recTitlePremium: "Anbefalet til dig i dag",
+    recBased: "Baseret på din filmsmag",
+    recCta: "Se dine anbefalinger",
+    inviteText: "Find noget at se med nogen i aften",
+    inviteCta: "Start Se Sammen",
+    inviteSecondary: "Inviter nogen",
   },
   se: {
     title: "Hem",
@@ -105,6 +126,13 @@ const strings = {
     liked: "Sett",
     disliked: "Ogillade",
     watchlistAction: "Se-lista",
+    recTitle: "Rekommenderat för dig",
+    recTitlePremium: "Rekommenderat för dig idag",
+    recBased: "Baserat på din filmsmak",
+    recCta: "Se dina rekommendationer",
+    inviteText: "Hitta något att se med någon ikväll",
+    inviteCta: "Starta Se Tillsammans",
+    inviteSecondary: "Bjud in någon",
   },
   fi: {
     title: "Koti",
@@ -128,6 +156,13 @@ const strings = {
     liked: "Katsottu",
     disliked: "Ei pitänyt",
     watchlistAction: "Katselulista",
+    recTitle: "Suositeltu sinulle",
+    recTitlePremium: "Suositeltu sinulle tänään",
+    recBased: "Makusi perusteella",
+    recCta: "Katso suosituksesi",
+    inviteText: "Löydä jotain katsottavaa jonkun kanssa tänä iltana",
+    inviteCta: "Aloita Katsotaan Yhdessä",
+    inviteSecondary: "Kutsu joku",
   },
 } as const;
 
@@ -146,9 +181,13 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
   const [locale, setLocale] = useState<Locale>("en");
+  const [hasTaste, setHasTaste] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+  const [homeRecs, setHomeRecs] = useState<Recommendation[]>([]);
 
   useEffect(() => {
     loadDashboard();
+    loadTasteAndRecs();
   }, []);
 
   useEffect(() => {
@@ -161,6 +200,27 @@ export default function HomePage() {
   }, []);
 
   const s = strings[locale] ?? strings.en;
+
+  async function loadTasteAndRecs() {
+    try {
+      const [tasteRes, profileRes] = await Promise.all([
+        fetch("/api/taste-summary").then((r) => r.json()).catch(() => ({})),
+        fetch("/api/profile").then((r) => r.json()).catch(() => ({})),
+      ]);
+      const premium = !!profileRes?.profile?.is_premium;
+      setIsPremium(premium);
+      if (tasteRes?.summary) {
+        setHasTaste(true);
+        if (premium) {
+          try {
+            const recRes = await fetch("/api/recommendations");
+            const recData = await recRes.json();
+            if (recData.recommendations) setHomeRecs(recData.recommendations.slice(0, 3));
+          } catch { /* ignore */ }
+        }
+      }
+    } catch { /* ignore */ }
+  }
 
   async function loadDashboard() {
     const supabase = createSupabaseBrowser();
@@ -260,6 +320,87 @@ export default function HomePage() {
         <p className="text-sm text-[var(--text-tertiary)] mt-0.5">
           {data.totalTitles} {data.totalTitles === 1 ? s.titleSingular : s.titlesInCollection}
         </p>
+      </div>
+
+      {/* Recommendations row — only if user has taste profile */}
+      {hasTaste && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">
+              {isPremium && homeRecs.length > 0 ? s.recTitlePremium : s.recTitle}
+            </h2>
+            <Link
+              href="/recommendations"
+              className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] font-medium transition-colors"
+            >
+              {s.seeAll}
+            </Link>
+          </div>
+          {isPremium && homeRecs.length > 0 ? (
+            <HorizontalScroll>
+              {homeRecs.map((rec) => (
+                <PosterCard
+                  key={`hr-${rec.tmdb_id}:${rec.type}`}
+                  title={rec.title}
+                  posterPath={rec.poster_path || null}
+                  subtitle={rec.tags?.[0]}
+                  onClick={() => setSelectedItem({
+                    id: rec.tmdb_id,
+                    type: rec.type,
+                    title: rec.title,
+                    poster_path: rec.poster_path || null,
+                  })}
+                />
+              ))}
+            </HorizontalScroll>
+          ) : (
+            <div className="relative">
+              <div className="flex gap-3 overflow-hidden">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-[120px] sm:w-[140px]"
+                  >
+                    <div
+                      className="aspect-[2/3] w-full rounded-xl bg-white/[0.06]"
+                      style={{ filter: "blur(6px)", opacity: 0.5 }}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+                <p className="text-xs text-white/50 mb-2">{s.recBased}</p>
+                <Link
+                  href="/recommendations"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90"
+                  style={{ background: "#dc2626" }}
+                >
+                  {s.recCta}
+                </Link>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Invite friend CTA */}
+      <div
+        className="rounded-[var(--radius-lg)] p-4 flex items-center gap-3 border border-white/[0.08]"
+        style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+      >
+        <span className="text-2xl flex-shrink-0">🎬</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-white/80">{s.inviteText}</p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Link
+            href="/together"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90"
+            style={{ background: "#dc2626" }}
+          >
+            {s.inviteCta}
+          </Link>
+        </div>
       </div>
 
       {/* Se Sammen */}
