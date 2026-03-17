@@ -61,6 +61,20 @@ const strings = {
   },
 
   // ============================================
+  // MOOD SELECTOR
+  // ============================================
+  mood: {
+    headline: { no: "Stemning i kveld?", en: "What's the mood?", dk: "Stemning i aften?", se: "Stämning ikväll?", fi: "Mikä tunnelma?" },
+    light: { no: "Lett & morsomt", en: "Light & fun", dk: "Let & morsomt", se: "Lätt & roligt", fi: "Kevyt & hauska" },
+    dark: { no: "Mørkt & dypt", en: "Dark & deep", dk: "Mørkt & dybt", se: "Mörkt & djupt", fi: "Synkkä & syvä" },
+    thriller: { no: "Thriller", en: "Thriller", dk: "Thriller", se: "Thriller", fi: "Trilleri" },
+    action: { no: "Action", en: "Action", dk: "Action", se: "Action", fi: "Toiminta" },
+    romance: { no: "Romantisk", en: "Romance", dk: "Romantisk", se: "Romantiskt", fi: "Romanttinen" },
+    horror: { no: "Skrekk", en: "Horror", dk: "Gyser", se: "Skräck", fi: "Kauhu" },
+    noPreference: { no: "Alt", en: "All", dk: "Alt", se: "Allt", fi: "Kaikki" },
+  },
+
+  // ============================================
   // WAITING (host venter på partner)
   // ============================================
   waiting: {

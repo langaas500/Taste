@@ -63,6 +63,7 @@ export default function WTBetaPage() {
   const { ribbonPosters, userRegion, ribbonLocale } = useRibbon();
   const [preferenceMode, setPreferenceMode] = useState<"series" | "movies" | "mix">("series");
   const [selectedProviders, setSelectedProviders] = useState<number[]>([]);
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [locale, setLocale] = useState<Locale>("en");
   const introChoice = "paired"; // default mode for tracking
   const [introFading, setIntroFading] = useState(false);
@@ -286,6 +287,7 @@ export default function WTBetaPage() {
     const seenIds = new Set(deckRef.current.map((t) => t.tmdb_id));
     const extendParams = new URLSearchParams(buildGuestParams() || "");
     extendParams.set("preference", preferenceMode);
+    if (selectedMood) extendParams.set("mood", selectedMood);
     fetch(`/api/together/titles?${extendParams}`)
       .then((r) => r.json())
       .then((data) => {
@@ -552,6 +554,7 @@ export default function WTBetaPage() {
         params.set("region", userRegion);
       }
       params.set("preference", preferenceMode);
+      if (selectedMood) params.set("mood", selectedMood);
       const url = `/api/together/titles?${params}`;
       const res = await fetch(url);
       if (res.ok) {
@@ -833,7 +836,7 @@ export default function WTBetaPage() {
   async function createSession() {
     setSessionError(""); setTitlesLoading(true);
     try {
-      const res = await fetch("/api/together/session", { method: "POST", headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current }, body: JSON.stringify({ providerIds: selectedProviders, region: userRegion, preference: preferenceMode }) });
+      const res = await fetch("/api/together/session", { method: "POST", headers: { "Content-Type": "application/json", "X-WT-Guest-ID": guestIdRef.current }, body: JSON.stringify({ providerIds: selectedProviders, region: userRegion, preference: preferenceMode, ...(selectedMood ? { mood: selectedMood } : {}) }) });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setSessionId(data.session.id);
@@ -1569,6 +1572,57 @@ export default function WTBetaPage() {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Mood selector */}
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>
+                  {t(locale, "mood", "headline")}
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+                  {([
+                    { key: "light", emoji: "\uD83C\uDF1F" },
+                    { key: "dark", emoji: "\uD83C\uDF11" },
+                    { key: "thriller", emoji: "\uD83D\uDD2A" },
+                    { key: "action", emoji: "\uD83D\uDCA5" },
+                    { key: "romance", emoji: "\u2764\uFE0F" },
+                    { key: "horror", emoji: "\uD83D\uDC7B" },
+                  ] as const).map(({ key, emoji }) => {
+                    const active = selectedMood === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedMood(active ? null : key)}
+                        style={{
+                          padding: "8px 4px",
+                          borderRadius: 10,
+                          border: active ? "1px solid rgba(255,42,42,0.4)" : "1px solid rgba(255,255,255,0.06)",
+                          background: active ? "rgba(255,42,42,0.12)" : "rgba(255,255,255,0.03)",
+                          color: active ? "#fff" : "rgba(255,255,255,0.55)",
+                          fontSize: "0.7rem",
+                          fontWeight: active ? 600 : 400,
+                          cursor: "pointer",
+                          transition: "all 140ms ease",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 4,
+                        }}
+                      >
+                        <span style={{ fontSize: "0.85rem" }}>{emoji}</span>
+                        {t(locale, "mood", key)}
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedMood && (
+                  <button
+                    onClick={() => setSelectedMood(null)}
+                    style={{ marginTop: 6, fontSize: "0.65rem", color: "rgba(255,255,255,0.3)", background: "none", border: "none", cursor: "pointer", padding: "2px 0" }}
+                  >
+                    {t(locale, "mood", "noPreference")}
+                  </button>
+                )}
               </div>
 
               <button
