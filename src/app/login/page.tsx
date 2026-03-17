@@ -351,7 +351,7 @@ function LoginContent() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/api/auth/callback${isTogether ? "?from=together" : ""}`,
+          emailRedirectTo: `${window.location.origin}/api/auth/callback${isTogether ? `?from=together${searchParams.get("wt_code") ? `&wt_code=${searchParams.get("wt_code")}` : ""}` : ""}`,
           data: {
             terms_accepted_at: new Date().toISOString(),
             terms_version: "2025-02-15",
@@ -364,7 +364,8 @@ function LoginContent() {
         track("signup_submitted");
         if (rememberMe) localStorage.setItem("logflix_remember_me", "1");
         else localStorage.removeItem("logflix_remember_me");
-        window.location.href = isTogether ? "/onboarding?from=together" : "/onboarding";
+        const wtCode = searchParams.get("wt_code");
+        window.location.href = isTogether ? `/onboarding?from=together${wtCode ? `&wt_code=${wtCode}` : ""}` : "/onboarding";
         setLoading(false);
         return;
       }
@@ -388,7 +389,8 @@ function LoginContent() {
           if (count === 0) {
             if (rememberMe) localStorage.setItem("logflix_remember_me", "1");
             else localStorage.removeItem("logflix_remember_me");
-            window.location.href = isTogether ? "/onboarding?from=together" : "/onboarding";
+            const wtCode2 = searchParams.get("wt_code");
+            window.location.href = isTogether ? `/onboarding?from=together${wtCode2 ? `&wt_code=${wtCode2}` : ""}` : "/onboarding";
             setLoading(false);
             return;
           }
@@ -396,7 +398,8 @@ function LoginContent() {
 
         if (rememberMe) localStorage.setItem("logflix_remember_me", "1");
         else localStorage.removeItem("logflix_remember_me");
-        window.location.href = isTogether ? "/together" : (hasGuestData ? "/home?migrated=guest" : "/home");
+        const wtCode3 = searchParams.get("wt_code");
+        window.location.href = isTogether ? `/together${wtCode3 ? `?code=${wtCode3}` : ""}` : (hasGuestData ? "/home?migrated=guest" : "/home");
       }
     }
     setLoading(false);
@@ -620,7 +623,9 @@ function LoginContent() {
                     track("google_oauth_clicked");
                     const supabase = createSupabaseBrowser();
                     const from = searchParams.get("from");
-                    const callbackUrl = `${window.location.origin}/api/auth/callback${from ? `?from=${from}` : ""}`;
+                    const wtCode = searchParams.get("wt_code");
+                    const cbParams = [from && `from=${from}`, wtCode && `wt_code=${wtCode}`].filter(Boolean).join("&");
+                    const callbackUrl = `${window.location.origin}/api/auth/callback${cbParams ? `?${cbParams}` : ""}`;
                     await supabase.auth.signInWithOAuth({
                       provider: "google",
                       options: { redirectTo: callbackUrl },

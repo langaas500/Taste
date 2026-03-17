@@ -6,6 +6,7 @@ export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
   const next = req.nextUrl.searchParams.get("next") || "/home";
   const from = req.nextUrl.searchParams.get("from");
+  const wtCode = req.nextUrl.searchParams.get("wt_code");
 
   if (code) {
     const supabase = await createSupabaseServer();
@@ -25,10 +26,11 @@ export async function GET(req: NextRequest) {
       }
 
       let destination: string;
+      const wtParam = wtCode ? `&wt_code=${wtCode}` : "";
       if (count === 0) {
-        destination = from === "together" ? "/onboarding?from=together" : "/onboarding";
+        destination = from === "together" ? `/onboarding?from=together${wtParam}` : "/onboarding";
       } else {
-        destination = from === "together" ? "/together" : next;
+        destination = from === "together" ? `/together${wtCode ? `?code=${wtCode}` : ""}` : next;
       }
       return NextResponse.redirect(new URL(destination, req.url));
     }
