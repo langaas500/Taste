@@ -330,8 +330,8 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         }
 
         @keyframes landing-arrow-bounce {
-          0%, 100% { transform: translateY(0); opacity: 0.3; }
-          50% { transform: translateY(6px); opacity: 0.55; }
+          0%, 100% { transform: translateY(0); opacity: 0.4; }
+          50% { transform: translateY(6px); opacity: 0.6; }
         }
         .landing-scroll-arrow {
           animation: landing-arrow-bounce 2s ease-in-out infinite;
@@ -773,8 +773,6 @@ export default function LandingContent({ locale }: { locale: Locale }) {
               }}
             >
               {s.trust}
-              <br />
-              {s.streamingWith}
             </p>
 
             <Link
@@ -836,9 +834,9 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           }}
         />
 
-        {/* Scroll-down arrow */}
+        {/* Scroll-down arrow — mobile only */}
         <div
-          className="landing-scroll-arrow landing-fade-6"
+          className="landing-scroll-arrow landing-fade-6 lg:hidden"
           onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
           style={{
             display: "flex",
@@ -848,7 +846,7 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           }}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 7L10 13L16 7" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M4 7L10 13L16 7" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
 
