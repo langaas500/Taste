@@ -7,7 +7,7 @@ import AIThinkingScreen from "@/components/AIThinkingScreen";
 import GlassCard from "@/components/GlassCard";
 import GlowButton from "@/components/GlowButton";
 import PremiumModal from "@/components/PremiumModal";
-import { createSupabaseBrowser } from "@/lib/supabase-browser";
+
 import { useLocale } from "@/hooks/useLocale";
 import type { TasteSummary } from "@/lib/types";
 
@@ -168,6 +168,49 @@ function TasteCard({ color, labelColor, label, text, isPremium, blurHint }: {
 
 /* ── Page ────────────────────────────────────────────── */
 
+/* ── enrichment types ────────────────────────────────── */
+
+interface LikeExample {
+  tmdb_id: number;
+  title: string;
+  genre: string;
+  poster_path: string;
+  match_score: number;
+}
+
+interface AvoidExample {
+  tmdb_id: number;
+  title: string;
+  genre: string;
+  poster_path: string;
+}
+
+interface TasteEnrichment {
+  confidence_score: number;
+  title_count: number;
+  dominant_genres: string[];
+  like_examples: LikeExample[];
+  avoid_examples: AvoidExample[];
+  recommendations: { tmdb_id: number; title: string; poster_path: string; match_score: number }[];
+  percentiles: { darker_than: number; less_romance_than: number; faster_tempo_than: number };
+  tempo: string;
+  tone: string[];
+  themes: string[];
+}
+
+const EMPTY_ENRICHMENT: TasteEnrichment = {
+  confidence_score: 0,
+  title_count: 0,
+  dominant_genres: [],
+  like_examples: [],
+  avoid_examples: [],
+  recommendations: [],
+  percentiles: { darker_than: 50, less_romance_than: 50, faster_tempo_than: 50 },
+  tempo: "Medium",
+  tone: [],
+  themes: [],
+};
+
 export default function TastePage() {
   const [summary, setSummary] = useState<TasteSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -176,38 +219,39 @@ export default function TastePage() {
   const [isPremium, setIsPremium] = useState(true);
   const [showPremium, setShowPremium] = useState(false);
   const [titleCount, setTitleCount] = useState<number | null>(null);
+  const [enrichment, setEnrichment] = useState<TasteEnrichment>(EMPTY_ENRICHMENT);
   const locale = useLocale();
   const s = strings[locale] ?? strings.en;
 
-  useEffect(() => {
-    fetch("/api/profile")
-      .then((r) => r.json())
-      .then((d) => { if (d.profile) setIsPremium(!!d.profile.is_premium); })
-      .catch(() => {});
-    loadSummary();
-    loadTitleCount();
-  }, []);
-
-  async function loadTitleCount() {
-    try {
-      const supabase = createSupabaseBrowser();
-      const { count } = await supabase
-        .from("user_titles")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "watched");
-      setTitleCount(count ?? 0);
-    } catch {
-      setTitleCount(0);
-    }
+  function applyApiData(data: Record<string, unknown>) {
+    if (data.is_premium !== undefined) setIsPremium(!!data.is_premium);
+    if (data.title_count !== undefined) setTitleCount(data.title_count as number);
+    setEnrichment({
+      confidence_score: (data.confidence_score as number) ?? 0,
+      title_count: (data.title_count as number) ?? 0,
+      dominant_genres: (data.dominant_genres as string[]) ?? [],
+      like_examples: (data.like_examples as LikeExample[]) ?? [],
+      avoid_examples: (data.avoid_examples as AvoidExample[]) ?? [],
+      recommendations: (data.recommendations as TasteEnrichment["recommendations"]) ?? [],
+      percentiles: (data.percentiles as TasteEnrichment["percentiles"]) ?? EMPTY_ENRICHMENT.percentiles,
+      tempo: (data.tempo as string) ?? "Medium",
+      tone: (data.tone as string[]) ?? [],
+      themes: (data.themes as string[]) ?? [],
+    });
   }
+
+  useEffect(() => {
+    loadSummary();
+  }, []);
 
   async function loadSummary() {
     try {
       const res = await fetch("/api/taste-summary");
       const data = await res.json();
+      applyApiData(data);
       if (data.summary && (data.summary.youLike || data.summary.avoid || data.summary.pacing)) {
-      setSummary(data.summary);
-    }
+        setSummary(data.summary);
+      }
     } catch {
       // ignore
     }
@@ -221,6 +265,7 @@ export default function TastePage() {
       const res = await fetch("/api/taste-summary", { method: "POST" });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      applyApiData(data);
       if (data.summary && (data.summary.youLike || data.summary.avoid || data.summary.pacing)) {
         setSummary(data.summary);
       } else {
