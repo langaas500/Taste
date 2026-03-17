@@ -3,6 +3,108 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import PremiumModal from "@/components/PremiumModal";
+import { useLocale } from "@/hooks/useLocale";
+import type { Locale } from "@/lib/i18n";
+
+/* ── locale strings ──────────────────────────────────── */
+
+const strings = {
+  no: {
+    foundingLabel: "Founding Member",
+    priceLabel: "/ mnd",
+    heroSub: "Vær med fra starten. Founding Members låser inn 29 kr for alltid — prisen øker når vi åpner for alle.",
+    lockin: "\u{1F512} Du låser inn 29 kr for alltid. Prisen øker snart for nye medlemmer.",
+    premiumHeading: "Du er med.",
+    premiumSub: "Full tilgang til alle Pro-funksjoner. Takk for at du er en Founding Member.",
+    cta: "Bli Founding Member",
+    curatorTitle: "Din personlige AI-filmekspert",
+    curatorDesc: "Beskriv en stemning, en følelse eller en skuespiller — og få skreddersydde anbefalinger tilpasset deg. Curator kjenner smaken din og finner alltid noe nytt.",
+    openCurator: "Åpne Curator",
+    open: "Åpne",
+    tasteTitle: "Smaksprofil",
+    tasteDesc: "AI-generert analyse av filmsmaken din. Hva du liker, hva du unngår, og dine foretrukne temaer.",
+    recTitle: "For deg",
+    recDesc: "Personlige anbefalinger basert på biblioteket og smaksprofilen din.",
+    statsTitle: "Statistikk",
+    statsDesc: "Dyptgående statistikk over filmvanene dine. Sjangre, vurderinger og trender.",
+  },
+  en: {
+    foundingLabel: "Founding Member",
+    priceLabel: "/ mo",
+    heroSub: "Be part of it from the start. Founding Members lock in 29 NOK forever — price increases when we open to everyone.",
+    lockin: "\u{1F512} Lock in 29 NOK forever. Price increases soon for new members.",
+    premiumHeading: "You're in.",
+    premiumSub: "Full access to all Pro features. Thank you for being a Founding Member.",
+    cta: "Become a Founding Member",
+    curatorTitle: "Your personal AI film expert",
+    curatorDesc: "Describe a mood, a feeling or an actor — and get tailored recommendations just for you. Curator knows your taste and always finds something new.",
+    openCurator: "Open Curator",
+    open: "Open",
+    tasteTitle: "Taste Profile",
+    tasteDesc: "AI-generated analysis of your film taste. What you like, what you avoid, and your preferred themes.",
+    recTitle: "For You",
+    recDesc: "Personal recommendations based on your library and taste profile.",
+    statsTitle: "Statistics",
+    statsDesc: "In-depth statistics on your viewing habits. Genres, ratings and trends.",
+  },
+  dk: {
+    foundingLabel: "Founding Member",
+    priceLabel: "/ md",
+    heroSub: "Vær med fra starten. Founding Members låser 29 NOK for altid — prisen stiger når vi åbner for alle.",
+    lockin: "\u{1F512} Lås 29 NOK for altid. Prisen stiger snart for nye medlemmer.",
+    premiumHeading: "Du er med.",
+    premiumSub: "Fuld adgang til alle Pro-funktioner. Tak fordi du er en Founding Member.",
+    cta: "Bliv Founding Member",
+    curatorTitle: "Din personlige AI-filmekspert",
+    curatorDesc: "Beskriv en stemning, en følelse eller en skuespiller — og få skræddersyede anbefalinger tilpasset dig. Curator kender din smag og finder altid noget nyt.",
+    openCurator: "Åbn Curator",
+    open: "Åbn",
+    tasteTitle: "Smagsprofil",
+    tasteDesc: "AI-genereret analyse af din filmsmag. Hvad du kan lide, hvad du undgår, og dine foretrukne temaer.",
+    recTitle: "For dig",
+    recDesc: "Personlige anbefalinger baseret på dit bibliotek og din smagsprofil.",
+    statsTitle: "Statistik",
+    statsDesc: "Dybdegående statistik over dine filmvaner. Genrer, vurderinger og tendenser.",
+  },
+  se: {
+    foundingLabel: "Founding Member",
+    priceLabel: "/ mån",
+    heroSub: "Var med från början. Founding Members låser in 29 NOK för alltid — priset höjs när vi öppnar för alla.",
+    lockin: "\u{1F512} Lås in 29 NOK för alltid. Priset höjs snart för nya medlemmar.",
+    premiumHeading: "Du är med.",
+    premiumSub: "Full tillgång till alla Pro-funktioner. Tack för att du är en Founding Member.",
+    cta: "Bli Founding Member",
+    curatorTitle: "Din personliga AI-filmexpert",
+    curatorDesc: "Beskriv en stämning, en känsla eller en skådespelare — och få skräddarsydda rekommendationer anpassade till dig. Curator känner din smak och hittar alltid något nytt.",
+    openCurator: "Öppna Curator",
+    open: "Öppna",
+    tasteTitle: "Smakprofil",
+    tasteDesc: "AI-genererad analys av din filmsmak. Vad du gillar, vad du undviker och dina föredragna teman.",
+    recTitle: "För dig",
+    recDesc: "Personliga rekommendationer baserade på ditt bibliotek och din smakprofil.",
+    statsTitle: "Statistik",
+    statsDesc: "Djupgående statistik över dina filmvanor. Genrer, betyg och trender.",
+  },
+  fi: {
+    foundingLabel: "Founding Member",
+    priceLabel: "/ kk",
+    heroSub: "Ole mukana alusta asti. Founding Memberit lukitsevat 29 NOK ikuisesti — hinta nousee kun avaamme kaikille.",
+    lockin: "\u{1F512} Lukitse 29 NOK ikuisesti. Hinta nousee pian uusille jäsenille.",
+    premiumHeading: "Olet mukana.",
+    premiumSub: "Täysi pääsy kaikkiin Pro-ominaisuuksiin. Kiitos että olet Founding Member.",
+    cta: "Liity Founding Memberiksi",
+    curatorTitle: "Henkilökohtainen AI-elokuvaasiantuntijasi",
+    curatorDesc: "Kuvaile tunnelma, tunne tai näyttelijä — ja saa räätälöityjä suosituksia juuri sinulle. Curator tuntee makusi ja löytää aina jotain uutta.",
+    openCurator: "Avaa Curator",
+    open: "Avaa",
+    tasteTitle: "Makuprofiili",
+    tasteDesc: "AI:n luoma analyysi elokuvamustasi. Mitä pidät, mitä vältät ja suosikkiteemasi.",
+    recTitle: "Sinulle",
+    recDesc: "Henkilökohtaiset suositukset kirjastosi ja makuprofiilisi perusteella.",
+    statsTitle: "Tilastot",
+    statsDesc: "Syvälliset tilastot katselutottumuksistasi. Genret, arvosanat ja trendit.",
+  },
+} as const;
 
 /* ── Inline icons ─────────────────────────────────────── */
 
@@ -46,9 +148,10 @@ interface FeatureCardProps {
   description: string;
   icon: React.ReactNode;
   badge?: string;
+  openLabel: string;
 }
 
-function FeatureCard({ href, title, description, icon, badge }: FeatureCardProps) {
+function FeatureCard({ href, title, description, icon, badge, openLabel }: FeatureCardProps) {
   return (
     <Link
       href={href}
@@ -89,7 +192,7 @@ function FeatureCard({ href, title, description, icon, badge }: FeatureCardProps
       <p className="text-[11px] text-white/45 leading-relaxed relative z-10">{description}</p>
 
       <div className="flex items-center gap-1 mt-auto relative z-10">
-        <span className="text-[10px] text-white/25 group-hover:text-white/50 transition-colors">Åpne</span>
+        <span className="text-[10px] text-white/25 group-hover:text-white/50 transition-colors">{openLabel}</span>
         <svg className="w-3 h-3 text-white/20 group-hover:text-white/50 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>
@@ -103,6 +206,8 @@ function FeatureCard({ href, title, description, icon, badge }: FeatureCardProps
 export default function PremiumHubPage() {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const locale = useLocale();
+  const s = strings[locale as keyof typeof strings] ?? strings.en;
 
   useEffect(() => {
     fetch("/api/profile")
@@ -158,50 +263,30 @@ export default function PremiumHubPage() {
                 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2"
                 style={{ color: "rgba(229,9,20,0.85)" }}
               >
-                Founding Member
+                {s.foundingLabel}
               </p>
               {isPremium ? (
                 <>
                   <p className="text-2xl md:text-3xl font-black text-white tracking-tight">
-                    Du er med.
+                    {s.premiumHeading}
                   </p>
                   <p className="text-sm text-white/50 mt-2">
-                    Full tilgang til alle Pro-funksjoner. Takk for at du er en Founding Member.
+                    {s.premiumSub}
                   </p>
                 </>
               ) : (
                 <>
                   <p className="text-2xl md:text-3xl font-black text-white tracking-tight">
-                    29 kr <span className="text-lg font-medium text-white/40">/ mnd</span>
+                    29 kr <span className="text-lg font-medium text-white/40">{s.priceLabel}</span>
                   </p>
-                  <p className="text-sm text-white/40 mt-2">
-                    Kun for de første 500 medlemmene
+                  <p className="text-sm text-white/40 mt-2 max-w-sm leading-relaxed">
+                    {s.heroSub}
+                  </p>
+                  <p className="text-[11px] text-white/30 mt-3">
+                    {s.lockin}
                   </p>
                 </>
               )}
-
-              {/* Founding Member tracker */}
-              <div className="mt-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/40">
-                    Founding Members
-                  </span>
-                  <span className="text-[10px] font-mono font-bold text-white/50">
-                    412 <span className="text-white/25">/ 500</span>
-                  </span>
-                </div>
-                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${(412 / 500) * 100}%`,
-                      background: "linear-gradient(90deg, #E50914, #ff4d56)",
-                      boxShadow: "0 0 10px rgba(229,9,20,0.4)",
-                    }}
-                  />
-                </div>
-                <p className="text-[9px] text-white/25 mt-1">88 plasser igjen</p>
-              </div>
             </div>
 
             {!isPremium && isPremium !== null && (
@@ -214,46 +299,11 @@ export default function PremiumHubPage() {
                   animation: "pulse-cta 2.5s ease-in-out infinite",
                 }}
               >
-                Bli Founding Member
+                {s.cta}
                 <span className="ml-1.5 inline-block">→</span>
               </button>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* ── Social proof ────────────────────────────── */}
-      <div className="flex items-center justify-center gap-4 mb-8 z-10 relative">
-        {/* Overlapping avatar circles */}
-        <div className="flex -space-x-2">
-          {[
-            "rgba(229,9,20,0.3)",
-            "rgba(180,40,40,0.3)",
-            "rgba(229,9,20,0.2)",
-            "rgba(200,20,20,0.3)",
-            "rgba(150,30,30,0.3)",
-          ].map((bg, i) => (
-            <div
-              key={i}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white/60"
-              style={{
-                background: bg,
-                border: "2px solid rgba(0,0,0,0.8)",
-              }}
-            >
-              {["ML", "KS", "ER", "JB", "AH"][i]}
-            </div>
-          ))}
-        </div>
-        <div className="flex flex-col">
-          <div className="flex gap-0.5">
-            {[...Array(5)].map((_, i) => (
-              <svg key={i} width={12} height={12} viewBox="0 0 24 24" fill="rgba(229,9,20,0.85)" stroke="none">
-                <path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-              </svg>
-            ))}
-          </div>
-          <p className="text-[10px] text-white/30 font-medium">Bli med 1 200+ filmnerder</p>
         </div>
       </div>
 
@@ -301,13 +351,13 @@ export default function PremiumHubPage() {
                   AI
                 </span>
               </div>
-              <h2 className="text-lg font-bold text-white/90 mb-2">Din personlige AI-filmekspert</h2>
+              <h2 className="text-lg font-bold text-white/90 mb-2">{s.curatorTitle}</h2>
               <p className="text-xs text-white/40 leading-relaxed max-w-md">
-                Beskriv en stemning, en følelse eller en skuespiller — og få skreddersydde anbefalinger tilpasset deg. Curator kjenner smaken din og finner alltid noe nytt.
+                {s.curatorDesc}
               </p>
 
               <div className="flex items-center gap-1.5 mt-4">
-                <span className="text-[11px] text-white/25 group-hover:text-white/50 transition-colors font-medium">Åpne Curator</span>
+                <span className="text-[11px] text-white/25 group-hover:text-white/50 transition-colors font-medium">{s.openCurator}</span>
                 <svg className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
@@ -321,23 +371,26 @@ export default function PremiumHubPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 z-10 relative">
         <FeatureCard
           href="/taste"
-          title="Smaksprofil"
-          description="AI-generert analyse av filmsmaken din. Hva du liker, hva du unngår, og dine foretrukne temaer."
+          title={s.tasteTitle}
+          description={s.tasteDesc}
           icon={<ProfileIcon />}
           badge="PRO"
+          openLabel={s.open}
         />
         <FeatureCard
           href="/recommendations"
-          title="For deg"
-          description="Personlige anbefalinger basert på biblioteket og smaksprofilen din."
+          title={s.recTitle}
+          description={s.recDesc}
           icon={<StarIcon />}
           badge="PRO"
+          openLabel={s.open}
         />
         <FeatureCard
           href="/stats"
-          title="Statistikk"
-          description="Dyptgående statistikk over filmvanene dine. Sjangre, vurderinger og trender."
+          title={s.statsTitle}
+          description={s.statsDesc}
           icon={<ChartIcon />}
+          openLabel={s.open}
         />
       </div>
 
