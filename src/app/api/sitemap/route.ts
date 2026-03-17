@@ -1,6 +1,7 @@
 import { createSupabaseAdmin } from "@/lib/supabase-server";
 
 export const revalidate = 3600;
+export const dynamic = "force-static";
 
 const BASE = "https://logflix.app";
 const REGIONS = ["no", "dk", "fi", "se"] as const;

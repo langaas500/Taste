@@ -1,6 +1,7 @@
 import { MOOD_GUIDES, REGIONS, REGION_HREFLANG } from "@/config/seo-guides";
 
 export const revalidate = 3600;
+export const dynamic = "force-static";
 
 const base = "https://logflix.app";
 
