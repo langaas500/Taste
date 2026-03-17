@@ -216,7 +216,7 @@ export default function StatsPage() {
       {stats.recentlyWatched.length > 0 && (
         <GlassCard hover={false} className="p-5">
           <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-4">
-            Nylig sett
+            {s.recentlyWatched}
           </h3>
           <div className="space-y-2.5">
             {stats.recentlyWatched.map((item, i) => (

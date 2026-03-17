@@ -11,10 +11,28 @@ import { logTitle, updateProgress, toggleFavorite, removeTitle, fetchFriendOverl
 import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-browser";
 import Link from "next/link";
 import type { UserTitle, TitleCache, MediaType, FriendOverlap } from "@/lib/types";
+import { useLocale } from "@/hooks/useLocale";
+import type { Locale } from "@/lib/i18n";
+
+const strings: Record<Locale, {
+  pageTitle: string; subtitle: string; count: string; emptyTitle: string;
+  emptyDesc: string; findNew: string; recommendations: string; all: string;
+  shows: string; movies: string; allGenres: string; year: string; from: string;
+  to: string; reset: string; done: string; remove: string; doneUp: string;
+  doneDown: string; doneMeh: string;
+}> = {
+  no: { pageTitle: "Watch Bank", subtitle: "Husk hvor du var i seriene dine", count: "serier", emptyTitle: "Ingen pågående serier", emptyDesc: "Finn noe nytt å se! Legg til serier du følger med på, så husker vi hvilken episode du er på.", findNew: "Finn noe nytt", recommendations: "Anbefalinger", all: "Alle", shows: "Serier", movies: "Film", allGenres: "Alle sjangere", year: "År", from: "Fra", to: "Til", reset: "Nullstill", done: "Ferdig", remove: "Fjern", doneUp: "Ferdig 👍", doneDown: "Ferdig 👎", doneMeh: "Ferdig 😐" },
+  en: { pageTitle: "Watch Bank", subtitle: "Remember where you left off", count: "shows", emptyTitle: "No shows in progress", emptyDesc: "Find something new to watch! Add shows you're following and we'll remember which episode you're on.", findNew: "Find something new", recommendations: "Recommendations", all: "All", shows: "Shows", movies: "Movies", allGenres: "All genres", year: "Year", from: "From", to: "To", reset: "Reset", done: "Done", remove: "Remove", doneUp: "Done 👍", doneDown: "Done 👎", doneMeh: "Done 😐" },
+  dk: { pageTitle: "Watch Bank", subtitle: "Husk hvor du var i dine serier", count: "serier", emptyTitle: "Ingen igangværende serier", emptyDesc: "Find noget nyt at se! Tilføj serier du følger med i, så husker vi hvilken episode du er på.", findNew: "Find noget nyt", recommendations: "Anbefalinger", all: "Alle", shows: "Serier", movies: "Film", allGenres: "Alle genrer", year: "År", from: "Fra", to: "Til", reset: "Nulstil", done: "Færdig", remove: "Fjern", doneUp: "Færdig 👍", doneDown: "Færdig 👎", doneMeh: "Færdig 😐" },
+  se: { pageTitle: "Watch Bank", subtitle: "Kom ihåg var du var i dina serier", count: "serier", emptyTitle: "Inga pågående serier", emptyDesc: "Hitta något nytt att titta på! Lägg till serier du följer så kommer vi ihåg vilken episod du är på.", findNew: "Hitta något nytt", recommendations: "Rekommendationer", all: "Alla", shows: "Serier", movies: "Filmer", allGenres: "Alla genrer", year: "År", from: "Från", to: "Till", reset: "Återställ", done: "Klar", remove: "Ta bort", doneUp: "Klar 👍", doneDown: "Klar 👎", doneMeh: "Klar 😐" },
+  fi: { pageTitle: "Watch Bank", subtitle: "Muista missä jäit sarjoissasi", count: "sarjaa", emptyTitle: "Ei käynnissä olevia sarjoja", emptyDesc: "Löydä jotain uutta katsottavaa! Lisää sarjat joita seuraat niin muistamme missä jaksossa olet.", findNew: "Löydä jotain uutta", recommendations: "Suositukset", all: "Kaikki", shows: "Sarjat", movies: "Elokuvat", allGenres: "Kaikki genret", year: "Vuosi", from: "Alkaen", to: "Asti", reset: "Nollaa", done: "Valmis", remove: "Poista", doneUp: "Valmis 👍", doneDown: "Valmis 👎", doneMeh: "Valmis 😐" },
+};
 
 type TypeFilter = "all" | "tv" | "movie";
 
 export default function WatchBankPage() {
+  const locale = useLocale();
+  const s = strings[locale] ?? strings.en;
   const [titles, setTitles] = useState<(UserTitle & { cache?: TitleCache })[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
@@ -110,7 +128,7 @@ export default function WatchBankPage() {
         if (g.id != null && g.name) set.set(g.id, g.name);
       }
     }
-    return [...set.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "nb"));
+    return [...set.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
   }, [titles]);
 
   if (loading) return (
@@ -145,25 +163,25 @@ export default function WatchBankPage() {
     <div className="animate-fade-in-up">
       <div className="glass rounded-xl px-5 py-4 mb-5 flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">Watch Bank</h2>
-          <p className="text-xs text-white/50 mt-0.5">Husk hvor du var i seriene dine</p>
+          <h2 className="text-xl font-bold text-white">{s.pageTitle}</h2>
+          <p className="text-xs text-white/50 mt-0.5">{s.subtitle}</p>
         </div>
         {titles.length > 0 && (
-          <span className="text-sm text-white/60 font-medium">{titles.length} serier</span>
+          <span className="text-sm text-white/60 font-medium">{titles.length} {s.count}</span>
         )}
       </div>
 
       {titles.length === 0 ? (
         <div className="glass rounded-xl px-6 py-12">
           <div className="flex flex-col items-center justify-center gap-4 text-center">
-            <h3 className="text-lg font-semibold text-white">Ingen pågående serier</h3>
-            <p className="text-sm text-white/50 max-w-sm leading-relaxed">Finn noe nytt å se! Legg til serier du følger med på, så husker vi hvilken episode du er på.</p>
+            <h3 className="text-lg font-semibold text-white">{s.emptyTitle}</h3>
+            <p className="text-sm text-white/50 max-w-sm leading-relaxed">{s.emptyDesc}</p>
             <div className="mt-3 flex flex-wrap gap-3 justify-center">
               <Link href="/search">
-                <GlowButton>Finn noe nytt</GlowButton>
+                <GlowButton>{s.findNew}</GlowButton>
               </Link>
               <Link href="/recommendations" className="px-4 py-2 rounded-[var(--radius-md)] text-sm font-medium text-white/50 hover:text-white border border-white/10 hover:border-white/20 transition-colors">
-                Anbefalinger
+                {s.recommendations}
               </Link>
             </div>
           </div>
@@ -172,7 +190,7 @@ export default function WatchBankPage() {
         <div className="flex flex-wrap items-center gap-4 mb-5">
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold mr-1">Type</span>
-            {([["all", "Alle"], ["tv", "Serier"], ["movie", "Film"]] as [TypeFilter, string][]).map(([key, label]) => (
+            {([["all", s.all], ["tv", s.shows], ["movie", s.movies]] as [TypeFilter, string][]).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setTypeFilter(key)}
@@ -191,16 +209,16 @@ export default function WatchBankPage() {
             onChange={(e) => setGenreFilter(e.target.value ? parseInt(e.target.value, 10) : null)}
             className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#111627] border border-white/[0.08] text-white/70 focus:outline-none focus:border-white/20 transition-all [color-scheme:dark]"
           >
-            <option value="" className="bg-[#111627] text-white/70">Alle sjangere</option>
+            <option value="" className="bg-[#111627] text-white/70">{s.allGenres}</option>
             {allGenres.map((g) => (
               <option key={g.id} value={g.id} className="bg-[#111627] text-white/70">{g.name}</option>
             ))}
           </select>
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold">År</span>
+            <span className="text-[10px] text-white/25 uppercase tracking-wider font-semibold">{s.year}</span>
             <input
               type="number"
-              placeholder="Fra"
+              placeholder={s.from}
               value={yearFrom}
               onChange={(e) => setYearFrom(e.target.value)}
               className="w-16 px-2 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 placeholder-white/25 focus:outline-none focus:border-white/20 transition-all"
@@ -208,7 +226,7 @@ export default function WatchBankPage() {
             <span className="text-white/20">–</span>
             <input
               type="number"
-              placeholder="Til"
+              placeholder={s.to}
               value={yearTo}
               onChange={(e) => setYearTo(e.target.value)}
               className="w-16 px-2 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/[0.08] text-white/70 placeholder-white/25 focus:outline-none focus:border-white/20 transition-all"
@@ -219,7 +237,7 @@ export default function WatchBankPage() {
               onClick={() => { setTypeFilter("all"); setGenreFilter(null); setYearFrom(""); setYearTo(""); }}
               className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--red)] bg-[var(--red-glow)] hover:bg-[var(--red)]/15 transition-all"
             >
-              Nullstill
+              {s.reset}
             </button>
           )}
         </div>
@@ -238,8 +256,8 @@ export default function WatchBankPage() {
               onClick={() => setSelectedItem({ id: t.tmdb_id, type: t.type, title: t.cache?.title || `TMDB:${t.tmdb_id}`, poster_path: t.cache?.poster_path || null })}
               onAction={(action) => handleAction(t, action)}
               actions={[
-                { label: "Ferdig", action: "liked", variant: "green" },
-                { label: "Fjern", action: "remove", variant: "red" },
+                { label: s.done, action: "liked", variant: "green" },
+                { label: s.remove, action: "remove", variant: "red" },
               ]}
             />
           ))}
@@ -271,10 +289,10 @@ export default function WatchBankPage() {
             onUpdateProgress={(season, episode) => handleUpdateProgress(selectedItem.id, selectedItem.type, season, episode)}
             actions={[
               { label: "List+", action: "add-to-list", variant: "accent" },
-              { label: "Ferdig 👍", action: "liked", variant: "green" },
-              { label: "Ferdig 👎", action: "disliked", variant: "red" },
-              { label: "Ferdig 😐", action: "neutral", variant: "yellow" },
-              { label: "Fjern", action: "remove", variant: "default" },
+              { label: s.doneUp, action: "liked", variant: "green" },
+              { label: s.doneDown, action: "disliked", variant: "red" },
+              { label: s.doneMeh, action: "neutral", variant: "yellow" },
+              { label: s.remove, action: "remove", variant: "default" },
             ]}
             onAction={(action) => {
               if (t) handleAction(t, action);

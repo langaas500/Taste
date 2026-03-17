@@ -8,6 +8,23 @@ import GlowButton from "@/components/GlowButton";
 import StreamingModal from "@/components/StreamingModal";
 import Link from "next/link";
 import type { MediaType } from "@/lib/types";
+import { useLocale } from "@/hooks/useLocale";
+import type { Locale } from "@/lib/i18n";
+
+const DATE_LOCALE: Record<Locale, string> = { no: "nb-NO", en: "en-US", dk: "da-DK", se: "sv-SE", fi: "fi-FI" };
+
+const strings: Record<Locale, {
+  loading: string; title: string; subtitle: string; emptyTitle: string;
+  emptyDesc: string; goToSettings: string; unknown: string; unknownTitle: string;
+  liked: string; disliked: string; saw: string; addedToList: string; watching: string;
+  justNow: string; mAgo: string; hAgo: string; dAgo: string;
+}> = {
+  no: { loading: "Laster aktivitet...", title: "Venneaktivitet", subtitle: "Se hva vennene dine ser og liker.", emptyTitle: "Ingen aktivitet ennå", emptyDesc: "Koble deg til venner for å se hva de ser på. Del koblingskoden din fra innstillinger.", goToSettings: "Gå til innstillinger", unknown: "Ukjent", unknownTitle: "Ukjent tittel", liked: "likte", disliked: "likte ikke", saw: "så", addedToList: "la til i se-listen", watching: "følger med på", justNow: "akkurat nå", mAgo: "m siden", hAgo: "t siden", dAgo: "d siden" },
+  en: { loading: "Loading activity...", title: "Friend activity", subtitle: "See what your friends are watching and liking.", emptyTitle: "No activity yet", emptyDesc: "Connect with friends to see what they watch. Share your connect code from settings.", goToSettings: "Go to settings", unknown: "Unknown", unknownTitle: "Unknown title", liked: "liked", disliked: "disliked", saw: "watched", addedToList: "added to watchlist", watching: "watching", justNow: "just now", mAgo: "m ago", hAgo: "h ago", dAgo: "d ago" },
+  dk: { loading: "Indlæser aktivitet...", title: "Venneaktivitet", subtitle: "Se hvad dine venner ser og kan lide.", emptyTitle: "Ingen aktivitet endnu", emptyDesc: "Forbind dig med venner for at se hvad de ser. Del din forbindelseskode fra indstillinger.", goToSettings: "Gå til indstillinger", unknown: "Ukendt", unknownTitle: "Ukendt titel", liked: "kunne lide", disliked: "kunne ikke lide", saw: "så", addedToList: "tilføjede til se-listen", watching: "følger med på", justNow: "lige nu", mAgo: "m siden", hAgo: "t siden", dAgo: "d siden" },
+  se: { loading: "Laddar aktivitet...", title: "Vänaktivitet", subtitle: "Se vad dina vänner tittar på och gillar.", emptyTitle: "Ingen aktivitet ännu", emptyDesc: "Anslut till vänner för att se vad de tittar på. Dela din anslutningskod från inställningar.", goToSettings: "Gå till inställningar", unknown: "Okänd", unknownTitle: "Okänd titel", liked: "gillade", disliked: "ogillade", saw: "såg", addedToList: "lade till i att se-listan", watching: "tittar på", justNow: "just nu", mAgo: "m sedan", hAgo: "t sedan", dAgo: "d sedan" },
+  fi: { loading: "Ladataan toimintaa...", title: "Ystävien toiminta", subtitle: "Katso mitä ystäväsi katsovat ja pitävät.", emptyTitle: "Ei toimintaa vielä", emptyDesc: "Yhdistä ystäviin nähdäksesi mitä he katsovat. Jaa yhdistämiskoodisi asetuksista.", goToSettings: "Siirry asetuksiin", unknown: "Tuntematon", unknownTitle: "Tuntematon nimike", liked: "piti", disliked: "ei pitänyt", saw: "katsoi", addedToList: "lisäsi katselulistalle", watching: "seuraa", justNow: "juuri nyt", mAgo: "m sitten", hAgo: "t sitten", dAgo: "pv sitten" },
+};
 
 interface Activity {
   user_name: string;
@@ -23,14 +40,14 @@ interface Activity {
   updated_at: string;
 }
 
-function actionLabel(action: string, sentiment: string | null): string {
+function actionLabel(action: string, sentiment: string | null, s: typeof strings["no"]): string {
   if (action === "watched") {
-    if (sentiment === "liked") return "likte";
-    if (sentiment === "disliked") return "likte ikke";
-    return "så";
+    if (sentiment === "liked") return s.liked;
+    if (sentiment === "disliked") return s.disliked;
+    return s.saw;
   }
-  if (action === "watchlist") return "la til i se-listen";
-  if (action === "watching") return "følger med på";
+  if (action === "watchlist") return s.addedToList;
+  if (action === "watching") return s.watching;
   return action;
 }
 
@@ -45,19 +62,22 @@ function actionIcon(action: string, sentiment: string | null): string {
   return "🎬";
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, s: typeof strings["no"], dateLoc: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "akkurat nå";
-  if (minutes < 60) return `${minutes}m siden`;
+  if (minutes < 1) return s.justNow;
+  if (minutes < 60) return `${minutes}${s.mAgo}`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}t siden`;
+  if (hours < 24) return `${hours}${s.hAgo}`;
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d siden`;
-  return new Date(dateStr).toLocaleDateString("nb-NO", { day: "numeric", month: "short" });
+  if (days < 7) return `${days}${s.dAgo}`;
+  return new Date(dateStr).toLocaleDateString(dateLoc, { day: "numeric", month: "short" });
 }
 
 export default function ActivityPage() {
+  const locale = useLocale();
+  const s = strings[locale] ?? strings.en;
+  const dateLoc = DATE_LOCALE[locale];
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalTitle, setModalTitle] = useState<{ tmdb_id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
@@ -69,22 +89,22 @@ export default function ActivityPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <LoadingSpinner text="Laster aktivitet..." />;
+  if (loading) return <LoadingSpinner text={s.loading} />;
 
   return (
     <div className="animate-fade-in-up">
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-[var(--text-primary)] mb-1">Venneaktivitet</h2>
-        <p className="text-sm text-[var(--text-tertiary)]">Se hva vennene dine ser og liker.</p>
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mb-1">{s.title}</h2>
+        <p className="text-sm text-[var(--text-tertiary)]">{s.subtitle}</p>
       </div>
 
       {activities.length === 0 ? (
         <EmptyState
-          title="Ingen aktivitet ennå"
-          description="Koble deg til venner for å se hva de ser på. Del koblingskoden din fra innstillinger."
+          title={s.emptyTitle}
+          description={s.emptyDesc}
           action={
             <Link href="/settings">
-              <GlowButton>Gå til innstillinger</GlowButton>
+              <GlowButton>{s.goToSettings}</GlowButton>
             </Link>
           }
         />
@@ -93,7 +113,7 @@ export default function ActivityPage() {
           {activities.map((a, i) => (
             <button
               key={`${a.tmdb_id}-${a.type}-${a.user_id}-${i}`}
-              onClick={() => setModalTitle({ tmdb_id: a.tmdb_id, type: a.type, title: a.title || "Ukjent", poster_path: a.poster_path })}
+              onClick={() => setModalTitle({ tmdb_id: a.tmdb_id, type: a.type, title: a.title || s.unknown, poster_path: a.poster_path })}
               className="w-full glass rounded-[var(--radius-lg)] p-4 flex items-center gap-4 text-left hover:border-[var(--glass-hover)] transition-colors btn-press"
             >
               {/* Poster */}
@@ -118,15 +138,15 @@ export default function ActivityPage() {
                     {a.user_name}
                   </span>
                   <span className="text-xs text-[var(--text-tertiary)]">
-                    {actionLabel(a.action, a.sentiment)}
+                    {actionLabel(a.action, a.sentiment, s)}
                   </span>
                 </div>
                 <p className="text-sm text-[var(--text-secondary)] truncate">
-                  {a.title || "Ukjent tittel"}
+                  {a.title || s.unknownTitle}
                   {a.year ? ` (${a.year})` : ""}
                 </p>
                 <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
-                  {timeAgo(a.updated_at)}
+                  {timeAgo(a.updated_at, s, dateLoc)}
                 </p>
               </div>
 
