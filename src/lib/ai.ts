@@ -176,8 +176,8 @@ Return ONLY valid JSON, no markdown fences.`;
     if (!parsed.ok) throw new Error(`AI returned invalid JSON: ${parsed.error}`);
     return parsed.data;
   } catch (e) {
-    console.error("[ai] generateTasteSummary failed, returning fallback:", e instanceof Error ? e.message : e);
-    return { youLike: null, avoid: null, pacing: null, error: "unavailable" };
+    console.error("[ai] generateTasteSummary failed:", e instanceof Error ? e.message : e);
+    throw e;
   }
 }
 

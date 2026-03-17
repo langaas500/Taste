@@ -21,10 +21,11 @@ export const GET = withLogger("/api/taste-summary", async (req, { logger }) => {
 
     const isPremium = profile?.is_premium === true;
 
-    if (profile?.taste_summary) {
+    const ts = profile?.taste_summary;
+    if (ts && (ts.youLike || ts.avoid || ts.pacing)) {
       const summary = isPremium
-        ? profile.taste_summary
-        : { youLike: profile.taste_summary.youLike ?? null, avoid: null, pacing: null };
+        ? ts
+        : { youLike: ts.youLike ?? null, avoid: null, pacing: null };
       return NextResponse.json({ summary, cached: true, is_premium: isPremium });
     }
 
