@@ -243,6 +243,15 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           padding: 0 32px;
         }
 
+        @keyframes landing-arrow-bounce {
+          0%, 100% { transform: translateY(0); opacity: 0.3; }
+          50% { transform: translateY(6px); opacity: 0.55; }
+        }
+        .landing-scroll-arrow {
+          animation: landing-arrow-bounce 2s ease-in-out infinite;
+          cursor: pointer;
+        }
+
         .landing-features {
           width: 100%;
           max-width: 1200px;
@@ -743,11 +752,27 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           }}
         />
 
+        {/* Scroll-down arrow */}
+        <div
+          className="landing-scroll-arrow landing-fade-6"
+          onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            paddingTop: 16,
+            paddingBottom: 8,
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 7L10 13L16 7" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+
       </div>
     </div>
 
     {/* ── SECTION 2: FEATURES ── */}
-    <div className="landing-features" style={{ position: "relative" }}>
+    <div id="features" className="landing-features" style={{ position: "relative" }}>
       <h2 style={{
         fontSize: "clamp(1.3rem, 4vw, 1.8rem)",
         fontWeight: 600,
