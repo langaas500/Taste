@@ -12,18 +12,23 @@ export const GET = withLogger("/api/taste-summary", async (req, { logger }) => {
     logger.setUserId(user.id);
     const supabase = await createSupabaseServer();
 
-    // Check cached summary
+    // Check cached summary + premium status
     const { data: profile } = await supabase
       .from("profiles")
-      .select("taste_summary, taste_summary_updated_at")
+      .select("taste_summary, taste_summary_updated_at, is_premium")
       .eq("id", user.id)
       .single();
 
+    const isPremium = profile?.is_premium === true;
+
     if (profile?.taste_summary) {
-      return NextResponse.json({ summary: profile.taste_summary, cached: true });
+      const summary = isPremium
+        ? profile.taste_summary
+        : { youLike: profile.taste_summary.youLike ?? null, avoid: null, pacing: null };
+      return NextResponse.json({ summary, cached: true, is_premium: isPremium });
     }
 
-    return NextResponse.json({ summary: null, cached: false });
+    return NextResponse.json({ summary: null, cached: false, is_premium: isPremium });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
@@ -41,6 +46,14 @@ export const POST = withLogger("/api/taste-summary", async (req, { logger }) => 
 
     const supabase = await createSupabaseServer();
     const admin = createSupabaseAdmin();
+
+    // Check premium status
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("is_premium")
+      .eq("id", user.id)
+      .single();
+    const isPremium = prof?.is_premium === true;
 
     // Get user titles
     const { data: userTitles } = await supabase
@@ -128,7 +141,10 @@ export const POST = withLogger("/api/taste-summary", async (req, { logger }) => 
       })
       .eq("id", user.id);
 
-    return NextResponse.json({ summary, cached: false });
+    const gatedSummary = isPremium
+      ? summary
+      : { youLike: summary.youLike ?? null, avoid: null, pacing: null };
+    return NextResponse.json({ summary: gatedSummary, cached: false, is_premium: isPremium });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
