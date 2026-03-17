@@ -245,6 +245,8 @@ export default function LibraryPage() {
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [recsLoading, setRecsLoading] = useState(false);
   const [friendOverlaps, setFriendOverlaps] = useState<Record<string, FriendOverlap[]>>({});
+  const [isPremium, setIsPremium] = useState(true);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const libraryTabs = [

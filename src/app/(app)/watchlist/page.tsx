@@ -33,6 +33,8 @@ const strings = {
     from: "Fra",
     to: "Til",
     reset: "Nullstill",
+    upsellText: "Vil du vite hvilken av disse du bør se først?",
+    upsellCta: "Få AI-anbefaling",
   },
   en: {
     watchlist: "Watchlist",
@@ -53,6 +55,8 @@ const strings = {
     from: "From",
     to: "To",
     reset: "Reset",
+    upsellText: "Want to know which of these to watch first?",
+    upsellCta: "Get AI recommendation",
   },
   dk: {
     watchlist: "Se-liste",
@@ -73,6 +77,8 @@ const strings = {
     from: "Fra",
     to: "Til",
     reset: "Nulstil",
+    upsellText: "Vil du vide hvilken af disse du bør se først?",
+    upsellCta: "Få AI-anbefaling",
   },
   se: {
     watchlist: "Att se-lista",
@@ -93,6 +99,8 @@ const strings = {
     from: "Från",
     to: "Till",
     reset: "Återställ",
+    upsellText: "Vill du veta vilken av dessa du bör se först?",
+    upsellCta: "Få AI-rekommendation",
   },
   fi: {
     watchlist: "Katselulista",
@@ -113,6 +121,8 @@ const strings = {
     from: "Alkaen",
     to: "Asti",
     reset: "Nollaa",
+    upsellText: "Haluatko tietää minkä näistä katsoisit ensin?",
+    upsellCta: "Saa AI-suositus",
   },
 } as const;
 
@@ -132,10 +142,20 @@ export default function WatchlistPage() {
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
   const [addToListItem, setAddToListItem] = useState<{ tmdb_id: number; type: MediaType; title: string } | null>(null);
   const [friendOverlaps, setFriendOverlaps] = useState<Record<string, FriendOverlap[]>>({});
+  const [isPremium, setIsPremium] = useState(true); // default true to hide banner until checked
+  const [bannerDismissed, setBannerDismissed] = useState(() =>
+    typeof window !== "undefined" && localStorage.getItem("logflix_watchlist_upsell_dismissed") === "1"
+  );
 
   useEffect(() => {
     loadData();
     fetchFriendOverlaps().then(setFriendOverlaps).catch(() => {});
+    // Check premium status
+    createSupabaseBrowser().auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      createSupabaseBrowser().from("profiles").select("is_premium").eq("id", user.id).single()
+        .then(({ data }) => { if (data) setIsPremium(data.is_premium === true); });
+    });
   }, []);
 
   async function loadData() {
@@ -245,6 +265,25 @@ export default function WatchlistPage() {
           <span className="text-sm text-[var(--text-tertiary)] font-medium">{titles.length} {s.titles}</span>
         )}
       </div>
+
+      {!isPremium && titles.length >= 3 && !bannerDismissed && (
+        <div className="mb-5 flex items-center gap-3 rounded-[var(--radius-lg)] bg-white/5 backdrop-blur-3xl border border-white/10 px-4 py-3">
+          <p className="flex-1 text-sm text-[var(--text-secondary)]">{s.upsellText}</p>
+          <Link
+            href="/recommendations"
+            className="shrink-0 px-3 py-1.5 rounded-[var(--radius-md)] bg-[var(--accent)] text-white text-xs font-medium hover:brightness-110 transition-all"
+          >
+            {s.upsellCta}
+          </Link>
+          <button
+            onClick={() => { setBannerDismissed(true); localStorage.setItem("logflix_watchlist_upsell_dismissed", "1"); }}
+            className="shrink-0 p-1 text-white/30 hover:text-white/60 transition-colors bg-transparent border-0 cursor-pointer"
+            aria-label="Close"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      )}
 
       {titles.length === 0 ? (
         <EmptyState
