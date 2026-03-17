@@ -1138,7 +1138,7 @@ export default function WTBetaPage() {
       firstSwipeTrackedRef.current = false;
       setMode("paired"); setScreen("waiting");
       track("together_session_started", { mode: "duo", locale });
-      track("duo_session_started", { provider_count: selectedProviders.length });
+      track("duo_session_started", { session_id: data.session.id, provider_count: selectedProviders.length });
     } catch (e: unknown) {
       setSessionError(e instanceof Error ? e.message : "Kunne ikke opprette runde");
     }
@@ -1195,7 +1195,7 @@ export default function WTBetaPage() {
         if (!data.session) return;
         if (!partnerJoined && data.session.partner_joined) {
           setPartnerJoined(true);
-          track("partner_joined", { is_guest: !authUser });
+          track("partner_joined", { session_id: sessionId, is_guest: !authUser });
           if (screen === "waiting") {
             const newDeck = [...titles];
             setDeck(newDeck);
