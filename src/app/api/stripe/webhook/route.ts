@@ -41,6 +41,29 @@ export async function POST(req: NextRequest) {
             founding_member: isFounding,
           })
           .eq("id", userId);
+
+        // Share premium with linked partner
+        const { data: link } = await admin
+          .from("account_links")
+          .select("id, inviter_id, invitee_id")
+          .or(`inviter_id.eq.${userId},invitee_id.eq.${userId}`)
+          .eq("status", "accepted")
+          .limit(1)
+          .single();
+
+        if (link) {
+          const partnerId = link.inviter_id === userId ? link.invitee_id : link.inviter_id;
+          if (partnerId) {
+            await admin
+              .from("account_links")
+              .update({ partner_premium: true })
+              .eq("id", link.id);
+            await admin
+              .from("profiles")
+              .update({ is_premium: true, founding_member: isFounding })
+              .eq("id", partnerId);
+          }
+        }
         break;
       }
 
@@ -48,10 +71,42 @@ export async function POST(req: NextRequest) {
         const sub = event.data.object;
         const customerId = sub.customer as string;
 
+        // Find the user being downgraded
+        const { data: downgraded } = await admin
+          .from("profiles")
+          .select("id")
+          .eq("stripe_customer_id", customerId)
+          .single();
+
         await admin
           .from("profiles")
           .update({ is_premium: false })
           .eq("stripe_customer_id", customerId);
+
+        // Remove partner premium
+        if (downgraded) {
+          const { data: link } = await admin
+            .from("account_links")
+            .select("id, inviter_id, invitee_id")
+            .or(`inviter_id.eq.${downgraded.id},invitee_id.eq.${downgraded.id}`)
+            .eq("status", "accepted")
+            .limit(1)
+            .single();
+
+          if (link) {
+            const partnerId = link.inviter_id === downgraded.id ? link.invitee_id : link.inviter_id;
+            if (partnerId) {
+              await admin
+                .from("account_links")
+                .update({ partner_premium: false })
+                .eq("id", link.id);
+              await admin
+                .from("profiles")
+                .update({ is_premium: false })
+                .eq("id", partnerId);
+            }
+          }
+        }
         break;
       }
 
