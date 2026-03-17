@@ -42,6 +42,8 @@ interface Stats {
 }
 
 export default function StatsPage() {
+  const locale = useLocale();
+  const s = strings[locale] ?? strings.en;
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -88,7 +90,7 @@ export default function StatsPage() {
       .map((t) => ({
         title: cacheMap.get(`${t.tmdb_id}:${t.type}`)?.title || `TMDB:${t.tmdb_id}`,
         type: t.type,
-        date: new Date(t.watched_at!).toLocaleDateString("nb-NO"),
+        date: new Date(t.watched_at!).toLocaleDateString(DATE_LOCALE[locale]),
       }));
 
     setStats({
@@ -107,22 +109,22 @@ export default function StatsPage() {
     setLoading(false);
   }
 
-  if (loading) return <LoadingSpinner text="Knuser tall..." />;
+  if (loading) return <LoadingSpinner text={s.loading} />;
 
   if (!stats || stats.totalWatched === 0) {
     return (
       <div className="animate-fade-in-up">
-        <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">Statistikk</h2>
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">{s.pageTitle}</h2>
         <EmptyState
-          title="Ingen statistikk ennå"
-          description="Logg filmer og serier for å se visningsstatistikken din. Du kan også importere seerhistorikk fra Netflix."
+          title={s.emptyTitle}
+          description={s.emptyDesc}
           action={
             <div className="flex flex-wrap gap-3 justify-center">
               <Link href="/search">
-                <GlowButton>Søk etter titler</GlowButton>
+                <GlowButton>{s.search}</GlowButton>
               </Link>
               <Link href="/timemachine" className="px-4 py-2 rounded-[var(--radius-md)] text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--glass-border)] hover:border-[var(--glass-hover)] transition-colors">
-                Importer fra Netflix
+                {s.importNetflix}
               </Link>
             </div>
           }
@@ -134,22 +136,22 @@ export default function StatsPage() {
   const maxGenre = stats.topGenres[0]?.count || 1;
 
   const overviewCards = [
-    { label: "Sett", value: stats.totalWatched, color: "text-[var(--accent-light)]" },
-    { label: "Se-liste", value: stats.totalWatchlist, color: "text-[var(--yellow)]" },
-    { label: "Filmer", value: stats.movies, color: "text-[var(--text-primary)]" },
-    { label: "Serier", value: stats.tvShows, color: "text-[var(--text-primary)]" },
+    { label: s.watched, value: stats.totalWatched, color: "text-[var(--accent-light)]" },
+    { label: s.watchlist, value: stats.totalWatchlist, color: "text-[var(--yellow)]" },
+    { label: s.movies, value: stats.movies, color: "text-[var(--text-primary)]" },
+    { label: s.tvShows, value: stats.tvShows, color: "text-[var(--text-primary)]" },
   ];
 
   const sentimentBars = [
-    { label: "Likte", value: stats.liked, color: "bg-[var(--green)]", textColor: "text-[var(--green)]" },
-    { label: "Nøytral", value: stats.neutral, color: "bg-[var(--yellow)]", textColor: "text-[var(--yellow)]" },
-    { label: "Mislikte", value: stats.disliked, color: "bg-[var(--red)]", textColor: "text-[var(--red)]" },
-    { label: "Uvurdert", value: stats.unrated, color: "bg-[var(--text-tertiary)]", textColor: "text-[var(--text-tertiary)]" },
+    { label: s.liked, value: stats.liked, color: "bg-[var(--green)]", textColor: "text-[var(--green)]" },
+    { label: s.neutral, value: stats.neutral, color: "bg-[var(--yellow)]", textColor: "text-[var(--yellow)]" },
+    { label: s.disliked, value: stats.disliked, color: "bg-[var(--red)]", textColor: "text-[var(--red)]" },
+    { label: s.unrated, value: stats.unrated, color: "bg-[var(--text-tertiary)]", textColor: "text-[var(--text-tertiary)]" },
   ];
 
   return (
     <div className="animate-fade-in-up">
-      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6">Statistikk</h2>
+      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6">{s.pageTitle}</h2>
 
       {/* Overview cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -164,7 +166,7 @@ export default function StatsPage() {
       {/* Sentiment breakdown */}
       <GlassCard hover={false} className="p-5 mb-4">
         <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-4">
-          Vurdering
+          {s.sentiment}
         </h3>
         <div className="flex gap-4">
           {sentimentBars.map(({ label, value, color, textColor }) => (
@@ -182,7 +184,7 @@ export default function StatsPage() {
         </div>
         {stats.avgRating && (
           <p className="text-sm text-[var(--text-tertiary)] text-center mt-4 pt-4 border-t border-[var(--border)]">
-            Gjennomsnittlig vurdering: <span className="text-[var(--text-primary)] font-semibold">{stats.avgRating}/10</span>
+            {s.avgRating}: <span className="text-[var(--text-primary)] font-semibold">{stats.avgRating}/10</span>
           </p>
         )}
       </GlassCard>
@@ -191,7 +193,7 @@ export default function StatsPage() {
       {stats.topGenres.length > 0 && (
         <GlassCard hover={false} className="p-5 mb-4">
           <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-4">
-            Toppsjangre
+            {s.topGenres}
           </h3>
           <div className="space-y-3">
             {stats.topGenres.map(({ name, count }) => (

@@ -454,6 +454,38 @@ export default function LibraryPage() {
         </p>
       </div>
 
+      {/* Taste profile upsell banner */}
+      {!isPremium && titles.length >= 20 && !bannerDismissed && (
+        <div className="relative mb-6 rounded-2xl bg-white/[0.04] backdrop-blur-3xl border border-white/[0.08] px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <button
+            onClick={() => { setBannerDismissed(true); localStorage.setItem("library_taste_banner_dismissed", "1"); }}
+            className="absolute top-3 right-3 text-white/30 hover:text-white/60 transition-colors"
+            aria-label="Close"
+          >
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <p className="text-sm text-white/70 flex-1 pr-6 sm:pr-0">
+            {s.tasteReady.replace("{count}", String(titles.length))}
+          </p>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <Link
+              href="/taste"
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#ff2a2a] text-white hover:bg-[#e52525] transition-colors"
+            >
+              {s.seeTaste}
+            </Link>
+            <Link
+              href="/recommendations"
+              className="text-xs font-medium text-white/40 hover:text-white/70 transition-colors"
+            >
+              {s.getRecs}
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Filter tabs */}
       <div className="mb-6 -mx-1">
         <div className="flex gap-1 overflow-x-auto no-scrollbar pb-1">
