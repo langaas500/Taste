@@ -10,12 +10,13 @@ const strings = {
     heading: "Bli en Founding Member",
     sub: "Finn neste serie dere skal binge – uten diskusjonen. Kun for de første 500.",
     features: [
-      "Match på tvers av serier og filmer på alle strømmetjenester",
-      "Se nøyaktig hvilken sjanger som dominerer i deres stue",
-      "Full tilgang til AI-Curator for både film og serier",
+      { title: "Ubegrensede AI-anbefalinger", desc: "Få nye filmanbefalinger hver dag — ikke bare 5" },
+      { title: "Full smaksprofil", desc: "Se hele analysen av filmsmaken din, ikke bare et glimt" },
+      { title: "Curator uten grenser", desc: "Chat med AI om film og serier så mye du vil" },
     ],
-    cta: "Sikre din plass — 29 kr",
-    footer: "Ingen binding. Avslutt når du vil med ett klikk.",
+    cta: "Bli Founding Member — 29 kr/mnd",
+    lockin: "\u{1F512} Du låser inn 29 kr for alltid. Prisen øker snart for nye medlemmer.",
+    footer: "Ingen binding. Avslutt når du vil.",
     error: "Noe gikk galt, prøv igjen",
     loading: "Venter...",
   },
@@ -23,12 +24,13 @@ const strings = {
     heading: "Become a Founding Member",
     sub: "Find your next binge-worthy show – without the debate. First 500 only.",
     features: [
-      "Match across shows and movies on all streaming services",
-      "See exactly which genre dominates your watch habits",
-      "Full access to AI Curator for both movies and shows",
+      { title: "Unlimited AI recommendations", desc: "Get new movie recommendations every day — not just 5" },
+      { title: "Full taste profile", desc: "See your complete film taste analysis, not just a preview" },
+      { title: "Unlimited Curator", desc: "Chat with AI about movies and shows as much as you want" },
     ],
-    cta: "Secure your spot — 29 kr",
-    footer: "No commitment. Cancel anytime with one click.",
+    cta: "Become a Founding Member — 29 kr/mo",
+    lockin: "\u{1F512} You lock in 29 kr forever. Price increases soon for new members.",
+    footer: "No commitment. Cancel anytime.",
     error: "Something went wrong, try again",
     loading: "Please wait...",
   },
@@ -36,12 +38,13 @@ const strings = {
     heading: "Bliv Founding Member",
     sub: "Find jeres næste serie at binge – uden diskussionen. Kun for de første 500.",
     features: [
-      "Match på tværs af serier og film på alle streamingtjenester",
-      "Se præcis hvilken genre der dominerer i jeres stue",
-      "Fuld adgang til AI-Curator for både film og serier",
+      { title: "Ubegrænsede AI-anbefalinger", desc: "Få nye filmanbefalinger hver dag — ikke kun 5" },
+      { title: "Fuld smagsprofil", desc: "Se hele analysen af din filmsmag, ikke kun et glimt" },
+      { title: "Curator uden grænser", desc: "Chat med AI om film og serier så meget du vil" },
     ],
-    cta: "Sikr din plads — 29 kr",
-    footer: "Ingen binding. Opsig når du vil med ét klik.",
+    cta: "Bliv Founding Member — 29 kr/md",
+    lockin: "\u{1F512} Du låser 29 kr for altid. Prisen stiger snart for nye medlemmer.",
+    footer: "Ingen binding. Opsig når du vil.",
     error: "Noget gik galt, prøv igen",
     loading: "Vent venligst...",
   },
@@ -49,12 +52,13 @@ const strings = {
     heading: "Bli en Founding Member",
     sub: "Hitta nästa serie ni ska binga – utan diskussionen. Bara för de första 500.",
     features: [
-      "Matcha serier och filmer på alla streamingtjänster",
-      "Se exakt vilken genre som dominerar i ert vardagsrum",
-      "Full tillgång till AI-Curator för både film och serier",
+      { title: "Obegränsade AI-rekommendationer", desc: "Få nya filmrekommendationer varje dag — inte bara 5" },
+      { title: "Fullständig smakprofil", desc: "Se hela analysen av din filmsmak, inte bara ett smakprov" },
+      { title: "Curator utan gränser", desc: "Chatta med AI om film och serier hur mycket du vill" },
     ],
-    cta: "Säkra din plats — 29 kr",
-    footer: "Ingen bindningstid. Avsluta när du vill med ett klick.",
+    cta: "Bli Founding Member — 29 kr/mån",
+    lockin: "\u{1F512} Du låser in 29 kr för alltid. Priset höjs snart för nya medlemmar.",
+    footer: "Ingen bindningstid. Avsluta när du vill.",
     error: "Något gick fel, försök igen",
     loading: "Vänta...",
   },
@@ -62,12 +66,13 @@ const strings = {
     heading: "Liity Founding Memberiksi",
     sub: "Löydä seuraava sarjanne – ilman väittelyä. Vain ensimmäisille 500:lle.",
     features: [
-      "Yhdistä sarjat ja elokuvat kaikista suoratoistopalveluista",
-      "Näe tarkalleen mikä genre hallitsee katselutottumuksianne",
-      "Täysi pääsy AI-kuraattoriin elokuville ja sarjoille",
+      { title: "Rajattomat AI-suositukset", desc: "Saa uusia elokuvasuosituksia joka päivä — ei vain 5" },
+      { title: "Täydellinen makuprofiili", desc: "Näe koko elokuvamakusi analyysi, ei vain esikatselu" },
+      { title: "Curator ilman rajoja", desc: "Keskustele AI:n kanssa elokuvista niin paljon kuin haluat" },
     ],
-    cta: "Varaa paikkasi — 29 kr",
-    footer: "Ei sitoutumista. Peru milloin vain yhdellä klikkauksella.",
+    cta: "Liity Founding Memberiksi — 29 kr/kk",
+    lockin: "\u{1F512} Lukitset 29 kr ikuisesti. Hinta nousee pian uusille jäsenille.",
+    footer: "Ei sitoutumista. Peru milloin vain.",
     error: "Jokin meni pieleen, yritä uudelleen",
     loading: "Odota...",
   },
@@ -164,11 +169,11 @@ export default function PremiumModal({ isOpen, onClose, source }: PremiumModalPr
         </p>
 
         {/* Feature list */}
-        <ul className="space-y-2 mb-5">
+        <ul className="space-y-3 mb-5">
           {s.features.map((f) => (
-            <li key={f} className="flex items-center gap-2.5">
+            <li key={f.title} className="flex gap-2.5">
               <svg
-                className="w-4 h-4 shrink-0"
+                className="w-4 h-4 shrink-0 mt-0.5"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={2.5}
@@ -180,7 +185,10 @@ export default function PremiumModal({ isOpen, onClose, source }: PremiumModalPr
                   d="M4.5 12.75l6 6 9-13.5"
                 />
               </svg>
-              <span className="text-sm text-white/70">{f}</span>
+              <div>
+                <span className="text-sm font-medium text-white/90">{f.title}</span>
+                <p className="text-xs text-white/45 mt-0.5 leading-relaxed">{f.desc}</p>
+              </div>
             </li>
           ))}
         </ul>
@@ -205,10 +213,18 @@ export default function PremiumModal({ isOpen, onClose, source }: PremiumModalPr
           {loading ? s.loading : s.cta}
         </button>
 
-        {/* Subtext */}
+        {/* Lock-in text */}
         <p
-          className="text-xs text-center mt-3"
-          style={{ color: "rgba(255,255,255,0.3)" }}
+          className="text-[11px] text-center mt-3 leading-relaxed"
+          style={{ color: "rgba(255,255,255,0.35)" }}
+        >
+          {s.lockin}
+        </p>
+
+        {/* Footer */}
+        <p
+          className="text-xs text-center mt-2"
+          style={{ color: "rgba(255,255,255,0.25)" }}
         >
           {s.footer}
         </p>

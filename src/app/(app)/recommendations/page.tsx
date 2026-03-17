@@ -8,6 +8,7 @@ import GlowButton from "@/components/GlowButton";
 import StreamingModal from "@/components/StreamingModal";
 import AddToListModal from "@/components/AddToListModal";
 import ConversionWall from "@/components/ConversionWall";
+import PremiumModal from "@/components/PremiumModal";
 import { submitFeedback, addExclusion, logTitle } from "@/lib/api";
 import { prefetchNetflixIds } from "@/lib/prefetch-netflix-ids";
 import type { Recommendation, MediaType } from "@/lib/types";
@@ -167,6 +168,7 @@ export default function RecommendationsPage() {
   const [locale, setLocale] = useState<Locale>("en");
   const [isPremium, setIsPremium] = useState(true); // default true to avoid flash
   const [showWall, setShowWall] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -270,6 +272,11 @@ export default function RecommendationsPage() {
     .filter((r) => typeFilter === "all" || r.type === typeFilter);
 
   const hitLimit = !isPremium && allVisible.length > FREE_REC_LIMIT;
+
+  // Auto-show premium modal when free limit is hit
+  useEffect(() => {
+    if (hitLimit) setShowPremiumModal(true);
+  }, [hitLimit]);
   const visible = hitLimit ? allVisible.slice(0, FREE_REC_LIMIT) : allVisible;
 
   const hero = visible[0] ?? null;
@@ -335,7 +342,8 @@ export default function RecommendationsPage() {
   }
 
   return (
-    <div className="animate-fade-in-up">
+    <>
+    <div className={`animate-fade-in-up${showPremiumModal ? " opacity-30 blur-sm pointer-events-none" : ""}`} style={{ transition: "opacity 0.3s, filter 0.3s" }}>
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-xl font-bold text-[var(--text-primary)]">{s.title}</h2>
@@ -693,5 +701,11 @@ export default function RecommendationsPage() {
         />
       )}
     </div>
+    <PremiumModal
+      isOpen={showPremiumModal}
+      onClose={() => setShowPremiumModal(false)}
+      source="recommendations_limit"
+    />
+    </>
   );
 }
