@@ -95,6 +95,7 @@ export default function WTBetaPage() {
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [watchedLoading, setWatchedLoading] = useState(false);
   const [emailValue, setEmailValue] = useState("");
+  const [streakData, setStreakData] = useState<{ current_streak: number; streak_at_risk: boolean; unlocked_rewards: string[] } | null>(null);
   const [superLikesUsed, setSuperLikesUsed] = useState(0);
   const [iAmDone, setIAmDone] = useState(false);
   const [waitingFactIndex, setWaitingFactIndex] = useState(0);
@@ -176,7 +177,16 @@ export default function WTBetaPage() {
       }
     } catch { /* ignore */ }
     createSupabaseBrowser().auth.getSession()
-      .then(({ data }) => { setAuthUser(data.session?.user ?? null); })
+      .then(({ data }) => {
+        setAuthUser(data.session?.user ?? null);
+        // Fetch couple streak for logged-in users (fire-and-forget, non-blocking)
+        if (data.session?.user) {
+          fetch("/api/couple-streak")
+            .then((r) => r.ok ? r.json() : null)
+            .then((d) => { if (d && d.current_streak > 0) setStreakData(d); })
+            .catch(() => {});
+        }
+      })
       .catch(() => {});
 
     // Resume saved duo session (if any)
@@ -1291,6 +1301,30 @@ export default function WTBetaPage() {
                   {t(locale, "intro", "movieNightTips")}
                 </a>
               </p>
+
+              {/* Couple streak */}
+              {streakData && streakData.current_streak > 0 && (
+                <div style={{ marginTop: 14, textAlign: "center" }}>
+                  {streakData.streak_at_risk ? (
+                    <p style={{ fontSize: "0.75rem", color: "#f59e0b", fontWeight: 600 }}>
+                      ⚠️ {t(locale, "streak", "atRisk")}
+                    </p>
+                  ) : (
+                    <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.55)", fontWeight: 600 }}>
+                      🔥 {streakData.current_streak} {t(locale, "streak", "weeks")}
+                    </p>
+                  )}
+                  {streakData.unlocked_rewards.length > 0 && (
+                    <p style={{ fontSize: "0.65rem", color: "rgba(255,200,100,0.7)", marginTop: 4 }}>
+                      🎁 {streakData.current_streak} {t(locale, "streak", "weeks")} — {
+                        streakData.unlocked_rewards.includes("klassikere") ? t(locale, "streak", "rewardKlassikere")
+                        : streakData.unlocked_rewards.includes("skjulte-perler") ? t(locale, "streak", "rewardSkjultePerler")
+                        : t(locale, "streak", "rewardHelgevalg")
+                      }
+                    </p>
+                  )}
+                </div>
+              )}
 
               {authUser && (
                 <Link

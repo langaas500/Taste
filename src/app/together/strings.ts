@@ -215,6 +215,17 @@ const strings = {
   },
 
   // ============================================
+  // STREAK
+  // ============================================
+  streak: {
+    weeks: { no: "ukers streak", en: "week streak", dk: "ugers streak", se: "veckors streak", fi: "viikon putki" },
+    atRisk: { no: "Ikke la streaken brytes i kveld", en: "Don't let the streak break tonight", dk: "Lad ikke streaken brydes i aften", se: "Låt inte streaken brytas ikväll", fi: "Älä anna putken katketa tänä iltana" },
+    rewardHelgevalg: { no: "Helgevalg låst opp!", en: "Weekend picks unlocked!", dk: "Weekendvalg låst op!", se: "Helgval upplåst!", fi: "Viikonloppuvalinnat avattu!" },
+    rewardSkjultePerler: { no: "Skjulte perler låst opp!", en: "Hidden gems unlocked!", dk: "Skjulte perler låst op!", se: "Dolda pärlor upplåsta!", fi: "Piilotetut helmet avattu!" },
+    rewardKlassikere: { no: "Klassikere låst opp!", en: "Classics unlocked!", dk: "Klassikere låst op!", se: "Klassiker upplåsta!", fi: "Klassikot avattu!" },
+  },
+
+  // ============================================
   // GLOBAL
   // ============================================
   global: {

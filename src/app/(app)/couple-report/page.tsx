@@ -31,6 +31,14 @@ const strings = {
     upgradeCta: "Bli Founding Member",
     movie: "Film",
     series: "Serie",
+    streakTitle: "Watch Together Streak",
+    streakWeeks: "uker",
+    streakCurrent: "Nåværende",
+    streakLongest: "Lengste",
+    streakAtRisk: "Ikke la streaken brytes!",
+    streakRewardHelgevalg: "Helgevalg låst opp!",
+    streakRewardSkjultePerler: "Skjulte perler låst opp!",
+    streakRewardKlassikere: "Klassikere låst opp!",
   },
   en: {
     loading: "Calculating compatibility...",
@@ -53,6 +61,14 @@ const strings = {
     upgradeCta: "Become a Founding Member",
     movie: "Movie",
     series: "Series",
+    streakTitle: "Watch Together Streak",
+    streakWeeks: "weeks",
+    streakCurrent: "Current",
+    streakLongest: "Longest",
+    streakAtRisk: "Don't let the streak break!",
+    streakRewardHelgevalg: "Weekend picks unlocked!",
+    streakRewardSkjultePerler: "Hidden gems unlocked!",
+    streakRewardKlassikere: "Classics unlocked!",
   },
   dk: {
     loading: "Beregner kompatibilitet...",
@@ -75,6 +91,14 @@ const strings = {
     upgradeCta: "Bliv Founding Member",
     movie: "Film",
     series: "Serie",
+    streakTitle: "Watch Together Streak",
+    streakWeeks: "uger",
+    streakCurrent: "Nuværende",
+    streakLongest: "Længste",
+    streakAtRisk: "Lad ikke streaken brydes!",
+    streakRewardHelgevalg: "Weekendvalg låst op!",
+    streakRewardSkjultePerler: "Skjulte perler låst op!",
+    streakRewardKlassikere: "Klassikere låst op!",
   },
   se: {
     loading: "Beräknar kompatibilitet...",
@@ -97,6 +121,14 @@ const strings = {
     upgradeCta: "Bli Founding Member",
     movie: "Film",
     series: "Serie",
+    streakTitle: "Watch Together Streak",
+    streakWeeks: "veckor",
+    streakCurrent: "Nuvarande",
+    streakLongest: "Längsta",
+    streakAtRisk: "Låt inte streaken brytas!",
+    streakRewardHelgevalg: "Helgval upplåst!",
+    streakRewardSkjultePerler: "Dolda pärlor upplåsta!",
+    streakRewardKlassikere: "Klassiker upplåsta!",
   },
   fi: {
     loading: "Lasketaan yhteensopivuutta...",
@@ -119,6 +151,14 @@ const strings = {
     upgradeCta: "Liity Founding Memberiksi",
     movie: "Elokuva",
     series: "Sarja",
+    streakTitle: "Watch Together Streak",
+    streakWeeks: "viikkoa",
+    streakCurrent: "Nykyinen",
+    streakLongest: "Pisin",
+    streakAtRisk: "Älä anna putken katketa!",
+    streakRewardHelgevalg: "Viikonloppuvalinnat avattu!",
+    streakRewardSkjultePerler: "Piilotetut helmet avattu!",
+    streakRewardKlassikere: "Klassikot avattu!",
   },
 } as const;
 
@@ -168,6 +208,7 @@ export default function CoupleReportPage() {
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [noPartner, setNoPartner] = useState(false);
+  const [streak, setStreak] = useState<{ current_streak: number; longest_streak: number; streak_at_risk: boolean; unlocked_rewards: string[] } | null>(null);
   const [animatedScore, setAnimatedScore] = useState(0);
   const scoreRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -181,6 +222,10 @@ export default function CoupleReportPage() {
       .then((d) => { if (d) setData(d); })
       .catch(() => {})
       .finally(() => setLoading(false));
+    fetch("/api/couple-streak")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) setStreak(d); })
+      .catch(() => {});
   }, []);
 
   // Animate score counter
@@ -283,6 +328,35 @@ export default function CoupleReportPage() {
       </div>
 
       <p className="text-center text-xs text-white/35 mb-8">{s.percentile(data.percentile)}</p>
+
+      {/* Couple streak */}
+      {streak && (streak.current_streak > 0 || streak.longest_streak > 0) && (
+        <section className="mb-8 rounded-xl border border-white/[0.06] p-4" style={{ background: "rgba(255,255,255,0.025)" }}>
+          <h2 className="text-sm font-bold text-white/80 mb-3">{s.streakTitle}</h2>
+          <div className="flex gap-6 mb-2">
+            <div>
+              <p className="text-2xl font-black text-white">🔥 {streak.current_streak}</p>
+              <p className="text-[9px] text-white/30 uppercase tracking-wider">{s.streakCurrent} ({s.streakWeeks})</p>
+            </div>
+            <div>
+              <p className="text-2xl font-black text-white/50">{streak.longest_streak}</p>
+              <p className="text-[9px] text-white/30 uppercase tracking-wider">{s.streakLongest}</p>
+            </div>
+          </div>
+          {streak.streak_at_risk && (
+            <p className="text-xs font-semibold mt-2" style={{ color: "#f59e0b" }}>⚠️ {s.streakAtRisk}</p>
+          )}
+          {streak.unlocked_rewards.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {streak.unlocked_rewards.map((r) => (
+                <span key={r} className="px-2.5 py-1 rounded-full text-[10px] font-medium border" style={{ background: "rgba(255,200,100,0.08)", borderColor: "rgba(255,200,100,0.2)", color: "rgba(255,200,100,0.8)" }}>
+                  🎁 {r === "klassikere" ? s.streakRewardKlassikere : r === "skjulte-perler" ? s.streakRewardSkjultePerler : s.streakRewardHelgevalg}
+                </span>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Premium gate overlay for free users */}
       <div className={blurred ? "relative" : ""}>

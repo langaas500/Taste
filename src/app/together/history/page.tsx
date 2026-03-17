@@ -19,6 +19,10 @@ const strings: Record<string, Record<Locale, string>> = {
   movie: { no: "Film", en: "Movie", dk: "Film", se: "Film", fi: "Elokuva" },
   tv: { no: "Serie", en: "Series", dk: "Serie", se: "Serie", fi: "Sarja" },
   loading: { no: "Laster...", en: "Loading...", dk: "Indlæser...", se: "Laddar...", fi: "Ladataan..." },
+  hiddenMatches: { no: "flere matcher skjult", en: "more matches hidden", dk: "flere matches skjult", se: "fler matchningar dolda", fi: "matchia piilotettu" },
+  gateText: { no: "Se hele historikken og par-rapporten deres", en: "See full history and your couple report", dk: "Se hele historikken og jeres parrapport", se: "Se hela historiken och er parrapport", fi: "Katso koko historia ja pariprofiili" },
+  gateCta: { no: "Logflix Par — 29 kr/mnd", en: "Logflix Par — 29 NOK/mo", dk: "Logflix Par — 29 NOK/md", se: "Logflix Par — 29 NOK/mån", fi: "Logflix Par — 29 NOK/kk" },
+  gateSub: { no: "for dere begge", en: "for both of you", dk: "for jer begge", se: "för er båda", fi: "teille molemmille" },
 };
 
 function s(key: string, locale: Locale): string {
@@ -48,6 +52,8 @@ export default function HistoryPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFoundingMember, setIsFoundingMember] = useState(false);
+  const [isPremium, setIsPremium] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     fetch("/api/together/history")
@@ -55,6 +61,8 @@ export default function HistoryPage() {
       .then((data) => {
         if (data.matches) setMatches(data.matches);
         if (data.stats) setStats(data.stats);
+        if (data.is_premium !== undefined) setIsPremium(data.is_premium);
+        if (data.total_count !== undefined) setTotalCount(data.total_count);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -216,6 +224,52 @@ export default function HistoryPage() {
                 </Link>
               ))}
             </div>
+
+            {/* Premium gate */}
+            {!isPremium && totalCount > 10 && (
+              <div style={{ position: "relative", marginTop: 6 }}>
+                {/* Blurred preview of next match */}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 12, padding: "10px 12px",
+                  background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)",
+                  borderRadius: 12, filter: "blur(6px)", opacity: 0.4, pointerEvents: "none",
+                }}>
+                  <div style={{ width: 40, height: 60, borderRadius: 6, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ height: 14, width: "60%", borderRadius: 4, background: "rgba(255,255,255,0.1)", marginBottom: 6 }} />
+                    <div style={{ height: 10, width: "35%", borderRadius: 4, background: "rgba(255,255,255,0.06)" }} />
+                  </div>
+                </div>
+
+                {/* Gate card */}
+                <div style={{
+                  marginTop: 12, padding: "24px 20px", borderRadius: 16, textAlign: "center",
+                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(229,9,20,0.2)",
+                  backdropFilter: "blur(30px)", WebkitBackdropFilter: "blur(30px)",
+                }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>
+                    + {totalCount - 10} {s("hiddenMatches", locale)}
+                  </p>
+                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 20, lineHeight: 1.5 }}>
+                    {s("gateText", locale)}
+                  </p>
+                  <Link
+                    href="/premium"
+                    style={{
+                      display: "inline-block", padding: "12px 28px", borderRadius: 12,
+                      background: "linear-gradient(135deg, #E50914, #82060c)",
+                      boxShadow: "0 0 30px rgba(229,9,20,0.3)",
+                      color: "#fff", fontSize: 14, fontWeight: 700, textDecoration: "none",
+                    }}
+                  >
+                    {s("gateCta", locale)}
+                  </Link>
+                  <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 8 }}>
+                    {s("gateSub", locale)}
+                  </p>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
