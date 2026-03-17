@@ -22,6 +22,17 @@ const strings = {
     micro1: "Bestem dere raskere",
     micro2: "Swipe privat",
     micro3: "Mindre krangling. Mer filmkveld.",
+    featureTitle: "Med gratis konto får du også",
+    featureLog: "Logg det du ser",
+    featureLogDesc: "Bygg biblioteket ditt og hold styr på hva du har sett",
+    featureAI: "AI-anbefalinger",
+    featureAIDesc: "Få personlige anbefalinger basert på din smak",
+    featureTaste: "Smaksprofil",
+    featureTasteDesc: "Se hva slags filmsmak du egentlig har",
+    featureFriends: "Del med venner",
+    featureFriendsDesc: "Sammenlign smak og se hva vennene dine ser",
+    featureCta: "Opprett gratis konto",
+    featureCtaSub: "Tar 30 sekunder. Ingen kredittkort.",
   },
   en: {
     hero: "Find something to watch together. Instantly.",
@@ -38,6 +49,17 @@ const strings = {
     micro1: "Decide faster",
     micro2: "Swipe privately",
     micro3: "Less debating. More watching.",
+    featureTitle: "With a free account you also get",
+    featureLog: "Log what you watch",
+    featureLogDesc: "Build your library and keep track of everything you've seen",
+    featureAI: "AI recommendations",
+    featureAIDesc: "Get personal suggestions based on your taste",
+    featureTaste: "Taste profile",
+    featureTasteDesc: "Discover what kind of movie taste you really have",
+    featureFriends: "Share with friends",
+    featureFriendsDesc: "Compare taste and see what your friends are watching",
+    featureCta: "Create free account",
+    featureCtaSub: "Takes 30 seconds. No credit card.",
   },
 };
 
@@ -76,13 +98,24 @@ export default function LandingContent({ locale }: { locale: Locale }) {
   return (
     <div
       style={{
-        height: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        position: "relative",
+        background: "#0a0a0a",
+      }}
+    >
+    {/* Hero wrapper — keeps 100dvh for first screen */}
+    <div
+      style={{
+        minHeight: "100dvh",
+        width: "100%",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         position: "relative",
         overflow: "hidden",
-        background: "radial-gradient(ellipse 60% 50% at 50% 30%, rgba(255,42,42,0.08) 0%, transparent 70%) #0a0a0a",
+        background: "radial-gradient(ellipse 60% 50% at 50% 30%, rgba(255,42,42,0.08) 0%, transparent 70%)",
       }}
     >
       <style
@@ -208,6 +241,45 @@ export default function LandingContent({ locale }: { locale: Locale }) {
           margin-left: auto;
           margin-right: auto;
           padding: 0 32px;
+        }
+
+        .landing-features {
+          width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 80px 24px;
+        }
+        .landing-features-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+        }
+        @media (min-width: 768px) {
+          .landing-features {
+            padding: 100px 32px;
+          }
+          .landing-features-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+          }
+        }
+        .landing-feature-card {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 14px;
+          padding: 22px 18px;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          transition: border-color 0.2s ease, background 0.2s ease;
+        }
+        .landing-feature-card:hover {
+          border-color: rgba(255,255,255,0.14);
+          background: rgba(255,255,255,0.06);
+        }
+        @media (min-width: 768px) {
+          .landing-feature-card {
+            padding: 28px 22px;
+          }
         }
         .landing-grid {
           display: flex;
@@ -672,6 +744,84 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         />
 
       </div>
+    </div>
+
+    {/* ── SECTION 2: FEATURES ── */}
+    <div className="landing-features" style={{ position: "relative" }}>
+      <h2 style={{
+        fontSize: "clamp(1.3rem, 4vw, 1.8rem)",
+        fontWeight: 600,
+        color: "#ffffff",
+        textAlign: "center",
+        marginBottom: 40,
+        letterSpacing: "-0.02em",
+      }}>
+        {s.featureTitle}
+      </h2>
+
+      <div className="landing-features-grid">
+        {([
+          { emoji: "📚", title: s.featureLog, desc: s.featureLogDesc },
+          { emoji: "🤖", title: s.featureAI, desc: s.featureAIDesc },
+          { emoji: "✨", title: s.featureTaste, desc: s.featureTasteDesc },
+          { emoji: "👫", title: s.featureFriends, desc: s.featureFriendsDesc },
+        ] as const).map((f) => (
+          <div key={f.title} className="landing-feature-card">
+            <div style={{ fontSize: 28, marginBottom: 10 }}>{f.emoji}</div>
+            <h3 style={{
+              fontSize: 15,
+              fontWeight: 600,
+              color: "#ffffff",
+              margin: "0 0 6px",
+            }}>
+              {f.title}
+            </h3>
+            <p style={{
+              fontSize: 13,
+              fontWeight: 400,
+              color: "rgba(255,255,255,0.55)",
+              lineHeight: 1.5,
+              margin: 0,
+            }}>
+              {f.desc}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 40 }}>
+        <Link
+          href="/login?mode=signup"
+          className="landing-cta-v2"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "15px 36px",
+            background: "#dc2626",
+            color: "#ffffff",
+            fontSize: 18,
+            fontWeight: 600,
+            letterSpacing: "0.01em",
+            borderRadius: 10,
+            textDecoration: "none",
+            textAlign: "center",
+          }}
+        >
+          {s.featureCta}
+        </Link>
+        <p style={{
+          fontSize: 12,
+          fontWeight: 400,
+          color: "rgba(255,255,255,0.40)",
+          marginTop: 12,
+          textAlign: "center",
+        }}>
+          {s.featureCtaSub}
+        </p>
+      </div>
+    </div>
+
     </div>
   );
 }
