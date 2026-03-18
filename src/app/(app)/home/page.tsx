@@ -259,7 +259,13 @@ export default function HomePage() {
   const [locale, setLocale] = useState<Locale>("en");
   const [hasTaste, setHasTaste] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
-  const [homeRecs, setHomeRecs] = useState<Recommendation[]>([]);
+  const [homeRecs, setHomeRecs] = useState<Recommendation[]>(() => {
+    try {
+      const cached = localStorage.getItem("logflix_home_recs");
+      if (cached) return JSON.parse(cached) as Recommendation[];
+    } catch { /* ignore */ }
+    return [];
+  });
   const [tonightPick, setTonightPick] = useState<TonightPickData | null>(null);
   const [tpLoading, setTpLoading] = useState(false);
   const [tpRerolling, setTpRerolling] = useState(false);
@@ -292,13 +298,15 @@ export default function HomePage() {
       setIsPremium(premium);
       if (tasteRes?.summary) {
         setHasTaste(true);
-        if (premium) {
-          try {
-            const recRes = await fetch("/api/recommendations");
-            const recData = await recRes.json();
-            if (recData.recommendations) setHomeRecs(recData.recommendations.slice(0, 3));
-          } catch { /* ignore */ }
-        }
+        try {
+          const recRes = await fetch("/api/recommendations");
+          const recData = await recRes.json();
+          if (recData.recommendations) {
+            const recs = recData.recommendations.slice(0, 3);
+            setHomeRecs(recs);
+            try { localStorage.setItem("logflix_home_recs", JSON.stringify(recs)); } catch { /* ignore */ }
+          }
+        } catch { /* ignore */ }
       }
       if (premium) loadTonightPick();
     } catch { /* ignore */ }
@@ -562,42 +570,26 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Recommendations row — hidden if premium user has Tonight's Pick */}
-      {hasTaste && !(isPremium && tonightPick) && (
+      {/* Recommendations row — only show when we have actual recs */}
+      {homeRecs.length > 0 && !(isPremium && tonightPick) && (
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">
-              {isPremium && homeRecs.length > 0 ? s.recTitlePremium : s.recTitle}
+              {s.recTitlePremium}
             </h2>
             <Link href="/recommendations" className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] font-medium transition-colors">{s.seeAll}</Link>
           </div>
-          {isPremium && homeRecs.length > 0 ? (
-            <HorizontalScroll>
-              {homeRecs.map((rec) => (
-                <PosterCard
-                  key={`hr-${rec.tmdb_id}:${rec.type}`}
-                  title={rec.title}
-                  posterPath={rec.poster_path || null}
-                  subtitle={rec.tags?.[0]}
-                  onClick={() => setSelectedItem({ id: rec.tmdb_id, type: rec.type, title: rec.title, poster_path: rec.poster_path || null })}
-                />
-              ))}
-            </HorizontalScroll>
-          ) : (
-            <div className="relative">
-              <div className="flex gap-3 overflow-hidden">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex-shrink-0 w-[120px] sm:w-[140px]">
-                    <div className="aspect-[2/3] w-full rounded-xl bg-white/[0.06]" style={{ filter: "blur(6px)", opacity: 0.5 }} />
-                  </div>
-                ))}
-              </div>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-                <p className="text-xs text-white/50 mb-2">{s.recBased}</p>
-                <Link href="/recommendations" className="px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90" style={{ background: "#dc2626" }}>{s.recCta}</Link>
-              </div>
-            </div>
-          )}
+          <HorizontalScroll>
+            {homeRecs.map((rec) => (
+              <PosterCard
+                key={`hr-${rec.tmdb_id}:${rec.type}`}
+                title={rec.title}
+                posterPath={rec.poster_path || null}
+                subtitle={rec.tags?.[0]}
+                onClick={() => setSelectedItem({ id: rec.tmdb_id, type: rec.type, title: rec.title, poster_path: rec.poster_path || null })}
+              />
+            ))}
+          </HorizontalScroll>
         </section>
       )}
 
