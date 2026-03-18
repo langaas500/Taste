@@ -458,6 +458,9 @@ export async function sendWeeklyDigestEmail(
     watchlistCount?: number;
     friendsActivity?: number;
     recommendations?: Array<{ title: string; reason: string }>;
+    coupleMatches?: number;
+    coupleLastMatch?: string;
+    locale?: string;
   }
 ): Promise<void> {
   if (!resend) {
@@ -495,7 +498,34 @@ export async function sendWeeklyDigestEmail(
     dynamicRows += recsHtml;
   }
 
-  const hasDynamic = dynamicRows.length > 0;
+  // Couple stats section for premium users with partner
+  let coupleHtml = "";
+  if (data?.coupleMatches && data.coupleMatches > 0) {
+    const loc = data.locale || "no";
+    const coupleDigestStrings: Record<string, { matched: (n: number) => string; latest: string; cta: string }> = {
+      no: { matched: (n) => `Dere matchet ${n} gang${n > 1 ? "er" : ""} denne uken 🎬`, latest: "Siste match", cta: "Se par-rapporten deres →" },
+      en: { matched: (n) => `You matched ${n} time${n > 1 ? "s" : ""} this week 🎬`, latest: "Latest match", cta: "See your couple report →" },
+      dk: { matched: (n) => `I matchede ${n} gang${n > 1 ? "e" : ""} denne uge 🎬`, latest: "Seneste match", cta: "Se jeres par-rapport →" },
+      se: { matched: (n) => `Ni matchade ${n} gång${n > 1 ? "er" : ""} denna vecka 🎬`, latest: "Senaste match", cta: "Se er par-rapport →" },
+      fi: { matched: (n) => `Matchasitte ${n} kertaa tällä viikolla 🎬`, latest: "Viimeisin match", cta: "Katso pariraporttinne →" },
+    };
+    const cs = coupleDigestStrings[loc] || coupleDigestStrings.en;
+    coupleHtml = `<tr><td style="padding:16px 0 0;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:${BG};border-radius:12px;border:1px solid ${BORDER};padding:16px;">
+        <tr><td style="color:#fff;font-size:15px;font-weight:600;line-height:1.5;">
+          ${cs.matched(data.coupleMatches)}
+        </td></tr>
+        ${data.coupleLastMatch ? `<tr><td style="color:${TEXT_DIM};font-size:13px;padding-top:4px;">
+          ${cs.latest}: <strong style="color:#fff;">${data.coupleLastMatch}</strong>
+        </td></tr>` : ""}
+        <tr><td style="padding-top:10px;">
+          <a href="https://logflix.app/couple-report" style="color:${RED};font-size:13px;font-weight:600;text-decoration:none;">${cs.cta}</a>
+        </td></tr>
+      </table>
+    </td></tr>`;
+  }
+
+  const hasDynamic = dynamicRows.length > 0 || coupleHtml.length > 0;
 
   try {
     await resend.emails.send({
@@ -507,7 +537,7 @@ export async function sendWeeklyDigestEmail(
           <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:700;">${greeting}</h1>
         </td></tr>
         ${hasDynamic ? `<tr><td style="padding-bottom:24px;">
-          <table width="100%" cellpadding="0" cellspacing="0">${dynamicRows}</table>
+          <table width="100%" cellpadding="0" cellspacing="0">${dynamicRows}${coupleHtml}</table>
         </td></tr>` : `<tr><td align="center" style="padding-bottom:24px;">
           <p style="margin:0;font-size:15px;color:${TEXT};line-height:1.6;">Finn noe å se sammen — åpne Se Sammen og sveip dere frem til enighet.</p>
         </td></tr>`}

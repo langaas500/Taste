@@ -87,7 +87,7 @@ const strings = {
     copied: { no: "Kopiert!", en: "Copied!", dk: "Kopieret!", se: "Kopierat!", fi: "Kopioitu!" },
     cancel: { no: "Avbryt", en: "Cancel", dk: "Annuller", se: "Avbryt", fi: "Peruuta" },
     startSolo: { no: "Start alene i stedet", en: "Start solo instead", dk: "Start alene i stedet", se: "Starta solo istället", fi: "Aloita yksin sen sijaan" },
-    shareText: { no: "Swipe filmer med meg og se hva vi matcher på 🎬", en: "Swipe movies with me and see what we match on 🎬", dk: "Swipe film med mig og se hvad vi matcher på 🎬", se: "Svajpa filmer med mig och se vad vi matchar på 🎬", fi: "Swaippaa elokuvia kanssani ja katso mihin matchaamme 🎬" },
+    shareText: { no: "Jeg fant noe vi kan se i kveld 🎬 — swipe med meg og se om vi matcher!", en: "I found something we could watch tonight 🎬 — swipe with me and see if we match!", dk: "Jeg fandt noget vi kan se i aften 🎬 — swipe med mig og se om vi matcher!", se: "Jag hittade något vi kan se ikväll 🎬 — swipa med mig och se om vi matchar!", fi: "Löysin jotain katsottavaa tänä iltana 🎬 — selaa kanssani ja katso matchaammeko!" },
   },
 
   // ============================================
@@ -177,8 +177,8 @@ const strings = {
     addedWatchlist: { no: "✓ Lagt til watchlist", en: "✓ Added to watchlist", dk: "✓ Tilføjet til watchlist", se: "✓ Tillagd i watchlist", fi: "✓ Lisätty katselulistalle" },
     markWatched: { no: "Vi har sett den", en: "We've watched it", dk: "Vi har set den", se: "Vi har sett den", fi: "Olemme katsoneet sen" },
     markedWatched: { no: "✓ Logget", en: "✓ Logged", dk: "✓ Logget", se: "✓ Loggad", fi: "✓ Kirjattu" },
-    guestSignupText: { no: "Lag gratis konto for å lagre matchen, bygge watchlist og få personlige anbefalinger", en: "Create a free account to save this match, build a watchlist and get personal recommendations", dk: "Opret gratis konto for at gemme matchet, bygge watchlist og få personlige anbefalinger", se: "Skapa gratis konto för att spara matchen, bygga watchlist och få personliga rekommendationer", fi: "Luo ilmainen tili tallentaaksesi matchin, rakentaaksesi katselulistan ja saadaksesi henkilökohtaisia suosituksia" },
-    guestSignupBtn: { no: "Lag konto gratis", en: "Create free account", dk: "Opret gratis konto", se: "Skapa gratis konto", fi: "Luo ilmainen tili" },
+    guestSignupText: { no: "Lagre matchen og se den på alle enheter — tar 20 sekunder", en: "Save the match and watch it on all devices — takes 20 seconds", dk: "Gem matchen og se den på alle enheder — tager 20 sekunder", se: "Spara matchen och se den på alla enheter — tar 20 sekunder", fi: "Tallenna ottelu ja katso se kaikilla laitteilla — kestää 20 sekuntia" },
+    guestSignupBtn: { no: "Lagre matchen", en: "Save match", dk: "Gem match", se: "Spara matchen", fi: "Tallenna ottelu" },
     guestLoginBtn: { no: "Logg inn", en: "Log in", dk: "Log ind", se: "Logga in", fi: "Kirjaudu" },
     tryAnotherFriend: { no: "Prøv med en annen venn →", en: "Try with another friend →", dk: "Prøv med en anden ven →", se: "Testa med en annan vän →", fi: "Kokeile toisen ystävän kanssa →" },
     tryAnotherFriendShareText: { no: "Jeg matchet på {title} — prøv du også!", en: "I matched on {title} — try it too!", dk: "Jeg matchede på {title} — prøv du også!", se: "Jag matchade på {title} — testa du också!", fi: "Matchasin elokuvaan {title} — kokeile sinäkin!" },

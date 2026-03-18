@@ -8,8 +8,8 @@ export type Locale = "no" | "en" | "sv" | "da" | "fi";
 
 const strings = {
   no: {
-    hero: "Finn noe å se sammen. Bestem dere nå.",
-    sub: "Bestem dere på minutter, ikke 30.",
+    hero: "Slutt å krangle om hva dere skal se.",
+    sub: "Swipe filmer og serier sammen. Match på under 3 minutter.",
     cta: "Start Swiping",
     trust: "Gratis. Ingen konto nødvendig.",
     support: "Laget for to. Fungerer live på hver sin telefon.",
@@ -36,8 +36,8 @@ const strings = {
     streamingWith: "Fungerer på Netflix, Prime Video, Disney+ og mer.",
   },
   en: {
-    hero: "Find something to watch together. Instantly.",
-    sub: "Decide in minutes, not 30.",
+    hero: "Stop arguing about what to watch.",
+    sub: "Swipe movies and shows together. Match in under 3 minutes.",
     cta: "Start Swiping",
     trust: "Free. No account needed.",
     support: "Built for two people. Works live on separate phones.",
@@ -64,8 +64,8 @@ const strings = {
     streamingWith: "Works with Netflix, Prime Video, Disney+ and more.",
   },
   sv: {
-    hero: "Hitta något att se tillsammans. Direkt.",
-    sub: "Bestäm er på minuter, inte 30.",
+    hero: "Sluta bråka om vad ni ska se.",
+    sub: "Swipa filmer och serier tillsammans. Matcha på under 3 minuter.",
     cta: "Start Swiping",
     trust: "Gratis. Inget konto behövs.",
     support: "Byggt för två. Fungerar live på varsin telefon.",
@@ -92,8 +92,8 @@ const strings = {
     streamingWith: "Fungerar med Netflix, Prime Video, Disney+ och mer.",
   },
   da: {
-    hero: "Find noget at se sammen. Med det samme.",
-    sub: "Beslut jer på minutter, ikke 30.",
+    hero: "Stop med at skændes om hvad I skal se.",
+    sub: "Swipe film og serier sammen. Match på under 3 minutter.",
     cta: "Start Swiping",
     trust: "Gratis. Ingen konto nødvendig.",
     support: "Lavet til to. Virker live på hver sin telefon.",
@@ -120,8 +120,8 @@ const strings = {
     streamingWith: "Virker med Netflix, Prime Video, Disney+ og mere.",
   },
   fi: {
-    hero: "Löydä jotain katsottavaa yhdessä. Heti.",
-    sub: "Päättäkää minuuteissa, ei 30:ssä.",
+    hero: "Lopeta kinastelu siitä mitä katsoa.",
+    sub: "Selaa elokuvia yhdessä. Sovi alle 3 minuutissa.",
     cta: "Start Swiping",
     trust: "Ilmainen. Ei tiliä tarvita.",
     support: "Tehty kahdelle. Toimii livenä omilla puhelimilla.",
