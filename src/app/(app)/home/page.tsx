@@ -567,9 +567,20 @@ export default function HomePage() {
       )}
 
       {/* Se Sammen — cinematisk banner med filmpostere */}
-      <div className="relative overflow-hidden rounded-2xl">
+      <div className="relative overflow-hidden rounded-2xl transition-transform duration-300 hover:scale-[1.02]">
+        {/* Rotating red border */}
+        <div className="absolute -inset-px rounded-2xl overflow-hidden pointer-events-none">
+          <div
+            className="absolute inset-[-100%]"
+            style={{
+              background: "conic-gradient(from 0deg, transparent 0%, transparent 60%, rgba(255,42,42,0.5) 72%, rgba(229,9,20,0.8) 80%, rgba(255,42,42,0.5) 88%, transparent 100%)",
+              animation: "border-rotate 4s linear infinite",
+            }}
+          />
+          <div className="absolute inset-[2px] rounded-[14px]" style={{ background: "#0a0a0c" }} />
+        </div>
         <div className="absolute -inset-4 rounded-full pointer-events-none" style={{ background: "rgba(220,38,38,0.1)", filter: "blur(48px)" }} />
-      <Link href="/together" style={{ display: "block", borderRadius: 16, overflow: "hidden", position: "relative", minHeight: 180, textDecoration: "none" }}>
+      <Link href="/together" style={{ display: "block", borderRadius: 14, overflow: "hidden", position: "relative", zIndex: 1, minHeight: 180, textDecoration: "none", margin: 2 }}>
         {/* Poster bakgrunner */}
         <div style={{ position: "absolute", inset: 0, display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 2 }}>
           {data.bannerPosters.length > 0
@@ -608,7 +619,12 @@ export default function HomePage() {
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            <span style={{ background: "#ff2a2a", color: "#fff", borderRadius: 12, padding: "12px 18px", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 0 20px rgba(255,42,42,0.4)", display: "block" }}>
+            <span
+              className="transition-all duration-200"
+              style={{ background: "#ff2a2a", color: "#fff", borderRadius: 12, padding: "12px 18px", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 0 20px rgba(255,42,42,0.4)", display: "block" }}
+              onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = "0 0 30px rgba(255,42,42,0.6)"; el.style.background = "#e02424"; el.style.transform = "translateY(-1px)"; }}
+              onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = "0 0 20px rgba(255,42,42,0.4)"; el.style.background = "#ff2a2a"; el.style.transform = "translateY(0)"; }}
+            >
               {s.togetherCta}
             </span>
           </div>
