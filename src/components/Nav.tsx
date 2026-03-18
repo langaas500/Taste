@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { getLocale, type Locale } from "@/lib/i18n";
 
@@ -133,6 +133,12 @@ export default function Nav() {
   const [isFoundingMember, setIsFoundingMember] = useState(false);
   const [locale, setLocale] = useState<Locale>("en");
   const [region, setRegion] = useState<string>("no");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerTranslateX, setDrawerTranslateX] = useState<number | null>(null);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const touchIsEdge = useRef(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -162,6 +168,58 @@ export default function Nav() {
       })
       .catch(() => {});
   }, []);
+
+  // Close drawer on route change
+  useEffect(() => { setDrawerOpen(false); }, [pathname]);
+
+  // Edge swipe to open drawer (touch on document, 0-20px from left)
+  useEffect(() => {
+    function onTouchStart(e: TouchEvent) {
+      const x = e.touches[0].clientX;
+      const y = e.touches[0].clientY;
+      touchStartX.current = x;
+      touchStartY.current = y;
+      touchIsEdge.current = !drawerOpen && x <= 20;
+    }
+    function onTouchMove(e: TouchEvent) {
+      if (!touchIsEdge.current && !drawerOpen) return;
+      const dx = e.touches[0].clientX - touchStartX.current;
+      const dy = e.touches[0].clientY - touchStartY.current;
+      if (Math.abs(dy) > Math.abs(dx)) return; // vertical scroll
+      if (touchIsEdge.current && dx > 10) {
+        setDrawerOpen(true);
+        touchIsEdge.current = false;
+      }
+    }
+    function onTouchEnd() { touchIsEdge.current = false; }
+    document.addEventListener("touchstart", onTouchStart, { passive: true });
+    document.addEventListener("touchmove", onTouchMove, { passive: true });
+    document.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      document.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [drawerOpen]);
+
+  // Swipe to close drawer
+  const handleDrawerTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    setDrawerTranslateX(null);
+  }, []);
+  const handleDrawerTouchMove = useCallback((e: React.TouchEvent) => {
+    const dx = e.touches[0].clientX - touchStartX.current;
+    const dy = e.touches[0].clientY - touchStartY.current;
+    if (Math.abs(dy) > Math.abs(dx) * 1.5) return;
+    if (dx < 0) setDrawerTranslateX(dx);
+  }, []);
+  const handleDrawerTouchEnd = useCallback(() => {
+    if (drawerTranslateX !== null && drawerTranslateX < -80) {
+      setDrawerOpen(false);
+    }
+    setDrawerTranslateX(null);
+  }, [drawerTranslateX]);
 
   const s = strings[locale] ?? strings.en;
 
@@ -223,37 +281,180 @@ export default function Nav() {
         className="fixed top-0 left-0 right-0 z-50 md:hidden"
         style={{ background: "rgba(6,8,15,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
       >
-        <div className="flex items-center justify-around px-2 py-1.5">
-          {mobileTopLinks.map(({ href, label, icon }) => {
-            const active = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all"
-                style={{ background: active ? "rgba(255,42,42,0.1)" : "transparent" }}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={active ? 2 : 1.5}
-                  stroke="currentColor"
-                  style={{ color: active ? RED : "rgba(255,255,255,0.6)" }}
+        <div className="flex items-center px-2 py-1.5">
+          {/* Hamburger */}
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0 bg-transparent border-0 cursor-pointer"
+            aria-label="Menu"
+          >
+            <div className="flex flex-col gap-[5px]">
+              <div style={{ width: 18, height: 1.5, borderRadius: 1, background: "rgba(255,255,255,0.6)" }} />
+              <div style={{ width: 14, height: 1.5, borderRadius: 1, background: "rgba(255,255,255,0.4)" }} />
+              <div style={{ width: 18, height: 1.5, borderRadius: 1, background: "rgba(255,255,255,0.6)" }} />
+            </div>
+          </button>
+          <div className="flex items-center justify-around flex-1">
+            {mobileTopLinks.map(({ href, label, icon }) => {
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all"
+                  style={{ background: active ? "rgba(255,42,42,0.1)" : "transparent" }}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
-                </svg>
-                <span
-                  className="text-[10px] font-medium"
-                  style={{ color: active ? RED : "rgba(255,255,255,0.55)" }}
-                >
-                  {label}
-                </span>
-              </Link>
-            );
-          })}
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={active ? 2 : 1.5}
+                    stroke="currentColor"
+                    style={{ color: active ? RED : "rgba(255,255,255,0.6)" }}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
+                  </svg>
+                  <span
+                    className="text-[10px] font-medium"
+                    style={{ color: active ? RED : "rgba(255,255,255,0.55)" }}
+                  >
+                    {label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </nav>
+
+      {/* ==================== MOBILE DRAWER ==================== */}
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 z-[60] md:hidden"
+        onClick={() => setDrawerOpen(false)}
+        style={{
+          background: "rgba(0,0,0,0.6)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
+          opacity: drawerOpen ? 1 : 0,
+          pointerEvents: drawerOpen ? "auto" : "none",
+          transition: "opacity 0.3s ease",
+        }}
+      />
+      {/* Drawer panel */}
+      <div
+        ref={drawerRef}
+        className="fixed top-0 bottom-0 left-0 z-[61] md:hidden flex flex-col overflow-y-auto"
+        onTouchStart={handleDrawerTouchStart}
+        onTouchMove={handleDrawerTouchMove}
+        onTouchEnd={handleDrawerTouchEnd}
+        style={{
+          width: "min(80vw, 280px)",
+          background: "linear-gradient(180deg, rgba(15,15,18,0.98) 0%, rgba(10,10,12,0.99) 100%)",
+          borderRight: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "4px 0 24px rgba(0,0,0,0.5)",
+          transform: drawerTranslateX !== null
+            ? `translateX(${drawerTranslateX}px)`
+            : drawerOpen ? "translateX(0)" : "translateX(-100%)",
+          transition: drawerTranslateX !== null ? "none" : "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+      >
+        {/* Brand + Profile (reused from sidebar) */}
+        <div className="px-3 pt-4 pb-3">
+          <div className="flex items-center justify-center mb-3">
+            <Image src="/logo.png" alt="Logflix" width={130} height={41} className="object-contain" style={{ height: "auto" }} priority />
+          </div>
+          <Link
+            href="/profile"
+            className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-all duration-200 hover:bg-white/[0.04]"
+          >
+            <div
+              className="w-[34px] h-[34px] rounded-full flex items-center justify-center flex-shrink-0 relative overflow-hidden"
+              style={{ background: "rgba(255,42,42,0.1)", border: "1.5px solid rgba(255,42,42,0.2)" }}
+            >
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
+              ) : (
+                <span style={{ fontSize: 11, fontWeight: 700, color: RED }}>{initials}</span>
+              )}
+              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e", border: "2px solid rgba(10,10,12,0.95)" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-semibold truncate" style={{ color: "rgba(255,255,255,0.9)" }}>
+                {userName}{isFoundingMember && <span style={{ color: "rgba(229,9,20,0.7)", marginLeft: 4 }}>⭐</span>}
+              </p>
+              <p className="text-[10px]" style={{ color: "rgba(255,42,42,0.4)" }}>
+                {isGuest ? s.login : userEmail === "martinlangaas@live.no" ? s.admin : s.filmelsker}
+              </p>
+            </div>
+          </Link>
+        </div>
+
+        <div className="mx-3" style={{ height: "1px", background: "rgba(255,255,255,0.06)" }} />
+
+        {/* Nav links */}
+        <nav className="flex-1 px-2 pt-3 pb-2 overflow-y-auto" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {sidebarLinks.map(({ links }, sectionIdx) => (
+            <div key={sectionIdx} className="flex flex-col" style={{ gap: 1 }}>
+              {links.map(({ href, label, icon, badge }) => {
+                const active = pathname === href;
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className="group flex items-center gap-2.5 py-2 rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-200 ease-out px-2.5"
+                    style={{ background: active ? "rgba(255,42,42,0.05)" : "transparent" }}
+                  >
+                    {active && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r-full" style={{ height: "60%", background: RED, boxShadow: "0 0 8px rgba(255,42,42,0.4)" }} />
+                    )}
+                    <svg className="w-[18px] h-[18px] flex-shrink-0 relative" fill="none" viewBox="0 0 24 24" strokeWidth={active ? 2 : 1.5} stroke="currentColor" style={{ color: active ? "rgba(255,42,42,0.95)" : "rgba(255,255,255,0.45)" }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
+                    </svg>
+                    <span style={{ color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.55)" }}>{label}</span>
+                    {badge && (
+                      <span className="ml-auto text-[8px] font-semibold px-1.5 py-[3px] rounded-full" style={{ background: "rgba(255,42,42,0.08)", color: "rgba(255,42,42,0.75)", border: "1px solid rgba(255,42,42,0.12)" }}>{badge}</span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        {/* Bottom CTA */}
+        <div className="px-2.5 pb-2.5 mt-auto">
+          <div className="rounded-[12px] p-3 relative overflow-hidden" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <p className="text-[12px] font-bold mb-1" style={{ color: RED }}>{s.togetherTagline}</p>
+            <p className="text-[11px] leading-relaxed mb-2.5" style={{ color: "rgba(255,255,255,0.4)" }}>{s.togetherSub}</p>
+            <Link href="/together" className="flex items-center justify-center gap-1.5 w-full py-[7px] rounded-lg text-[11px] font-semibold" style={{ background: RED, color: "white", textDecoration: "none" }}>
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
+              </svg>
+              {s.togetherCta}
+            </Link>
+          </div>
+          <Link href={`/${region}/guides`} className="group flex items-center gap-2 w-full mt-1.5 px-3 py-[9px] rounded-[10px] text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none" }}>
+            <svg className="w-[16px] h-[16px] flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+            </svg>
+            {s.guides}
+          </Link>
+          {!isGuest && (
+            <button
+              onClick={async () => { const supabase = createSupabaseBrowser(); await supabase.auth.signOut(); window.location.href = "/login"; }}
+              className="group flex items-center gap-2 w-full mt-2 px-3 py-[7px] rounded-[10px] text-[12px] font-medium bg-transparent border-0 cursor-pointer"
+              style={{ color: "rgba(255,255,255,0.3)" }}
+            >
+              <svg className="w-[16px] h-[16px] flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+              {s.logout}
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* ==================== MOBILE BOTTOM NAV ==================== */}
       <nav
