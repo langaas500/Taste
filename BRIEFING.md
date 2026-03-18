@@ -6,13 +6,14 @@
 **18.03.2026**
 
 ## Git-status
-- **Siste push:** `feat: conditional couple report CTA, returning user hook, streak guide links, onboarding par teaser` (18.03.2026)
+- **Siste push:** `feat: add shareable Stories image for match screen` (18.03.2026)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 
 ## Hva er gjort nylig (siste 10 endringer)
 
-1. [pushet] **Konverteringsendringer (runde 2)** — (a) Par-rapport CTA på match-skjerm vises kun etter 3+ matcher, med personlig tekst "Dere har matchet X ganger 🎬". (b) Returning user dag 3/7 banner på home — glassmorphism-seksjon som trigger smaksprofil for brukere uten taste. (c) Streak-belønninger er nå klikkbare lenker til mood-guider (helgevalg→perfekt-fredagskveld, skjulte-perler→skjult-skatt, klassikere→nostalgisk-perle). (d) Onboarding ferdig-skjerm har par-rapport teaser "Har du en filmpartner?" med CTA til /premium. Alt lokalisert 5 språk.
+1. [pushet] **Shareable Stories-bilde** — Ny edge API `/api/og/match-share` genererer 1080x1920 Stories-format bilde med filmplakat, "Det er en match! 🎬", tittel og Logflix-branding. "Del som Stories 📸"-knapp på match-skjermen (kun mobil). Bruker Web Share API med file share, fallback til nedlasting. Lokalisert 5 språk.
+2. [pushet] **Konverteringsendringer (runde 2)** — (a) Par-rapport CTA på match-skjerm vises kun etter 3+ matcher, med personlig tekst "Dere har matchet X ganger 🎬". (b) Returning user dag 3/7 banner på home — glassmorphism-seksjon som trigger smaksprofil for brukere uten taste. (c) Streak-belønninger er nå klikkbare lenker til mood-guider (helgevalg→perfekt-fredagskveld, skjulte-perler→skjult-skatt, klassikere→nostalgisk-perle). (d) Onboarding ferdig-skjerm har par-rapport teaser "Har du en filmpartner?" med CTA til /premium. Alt lokalisert 5 språk.
 2. [pushet] **Konverteringsendringer (quick wins)** — Landing headline byttet til emosjonell "Slutt å krangle om hva dere skal se" (5 språk). PremiumModal CTA → "Start Logflix Par — 29 kr/mnd". Guest CTA på match-skjerm → "Lagre matchen" (mer spesifikt). Invite-tekst → "Jeg fant noe vi kan se i kveld 🎬". Weekly digest inkluderer nå par-matchdata (antall matcher + siste match + link til par-rapport) for brukere med koblet partner.
 2. [pushet] **Viral loop på match-skjerm** — "Prøv med en annen venn →" knapp på winner-skjermen. Åpner native share med "Jeg matchet på [tittel] — prøv du også!" + logflix.app/together. Lokalisert 5 språk. Kun synlig etter match.
 2. [pushet] **Feature-seksjon på landing** — Ny scrollbar seksjon under hero som viser verdien av gratis konto: 4 glassmorphism-kort (Logg, AI, Smaksprofil, Venner) i 2×2 grid (mobil) / 4×1 (desktop). Rød signup-CTA. Lokalisert no/en.
