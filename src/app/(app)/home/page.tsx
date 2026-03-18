@@ -635,21 +635,6 @@ export default function HomePage() {
       </div>
 
       {/* Tonight's Pick — premium users (solo + paired) */}
-      {isPremium && tpLoading && (
-        <section>
-          <div className="skeleton h-5 w-56 rounded mb-4" />
-          <div className="grid grid-cols-2 gap-3 max-w-md">
-            {[1, 2].map((i) => (
-              <div key={i} className="rounded-xl border border-white/[0.06] p-3" style={{ background: "rgba(255,255,255,0.025)", minHeight: 120 }}>
-                <div className="skeleton h-3 w-24 rounded mb-2" />
-                <div className="skeleton w-full rounded-lg mb-2" style={{ aspectRatio: "2/3", maxHeight: 180 }} />
-                <div className="skeleton h-3 w-32 rounded mb-1" />
-                <div className="skeleton h-3 w-20 rounded" />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Tonight's Pick — blurred placeholder for non-premium */}
       {!isPremium && (
@@ -686,81 +671,110 @@ export default function HomePage() {
         </section>
       )}
 
-      {isPremium && tonightPick && (
-        <section>
-          <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-4">
-            {hasPartner ? s.tpTitle(partnerName || "Partner") : s.tpTitleSolo}
-          </h2>
-          <div className="grid grid-cols-2 gap-3 max-w-md">
-            {tonightPick.movie && (
-              <div className="rounded-xl border border-white/[0.06] p-3 flex flex-col" style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", minHeight: 120 }}>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2">🎬 {s.tpMovie}</p>
-                {tonightPick.movie.poster_path && (
-                  <div className="relative w-full rounded-lg overflow-hidden mb-2" style={{ aspectRatio: "2/3", maxHeight: 180 }}>
-                    <Image src={`https://image.tmdb.org/t/p/w185${tonightPick.movie.poster_path}`} alt={tonightPick.movie.title} fill className="object-cover" sizes="160px" />
-                  </div>
-                )}
-                <p className="text-xs font-semibold text-white/85 truncate">{tonightPick.movie.title}</p>
-                {tonightPick.movie.match_score != null && (
-                  <p className="text-[10px] text-[var(--accent-light)] mt-0.5">★ {tonightPick.movie.match_score}% {s.tpMatch}</p>
-                )}
-                <Link href="/together" className="mt-2 text-center py-1 rounded-md text-[10px] font-semibold text-white/70 bg-white/[0.06] hover:bg-white/[0.1] transition-colors">{s.tpSeTogether}</Link>
-              </div>
-            )}
-            {tonightPick.series && (
-              <div className="rounded-xl border border-white/[0.06] p-3 flex flex-col" style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", minHeight: 120 }}>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2">📺 {s.tpSeries}</p>
-                {tonightPick.series.poster_path && (
-                  <div className="relative w-full rounded-lg overflow-hidden mb-2" style={{ aspectRatio: "2/3", maxHeight: 180 }}>
-                    <Image src={`https://image.tmdb.org/t/p/w185${tonightPick.series.poster_path}`} alt={tonightPick.series.title} fill className="object-cover" sizes="160px" />
-                  </div>
-                )}
-                <p className="text-xs font-semibold text-white/85 truncate">{tonightPick.series.title}</p>
-                {tonightPick.series.match_score != null && (
-                  <p className="text-[10px] text-[var(--accent-light)] mt-0.5">★ {tonightPick.series.match_score}% {s.tpMatch}</p>
-                )}
-                <Link href="/together" className="mt-2 text-center py-1 rounded-md text-[10px] font-semibold text-white/70 bg-white/[0.06] hover:bg-white/[0.1] transition-colors">{s.tpSeTogether}</Link>
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col items-center gap-2 mt-3">
-            <button onClick={handleReroll} disabled={tpRerolling} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white/40 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.08] transition-all disabled:opacity-40 cursor-pointer">
-              {tpRerolling ? "..." : `↻ ${s.tpReroll}`}
-            </button>
-            {hasPartner && (
-              <Link href="/couple-report" className="text-xs transition-colors" style={{ color: "rgba(255,255,255,0.35)" }} onMouseEnter={(e) => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }} onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}>
-                {s.coupleReportLink}
-              </Link>
-            )}
-          </div>
-        </section>
-      )}
+      {/* Tonight's Pick + Recommendations — side by side on desktop */}
+      <div className="flex flex-col md:flex-row gap-6 items-start">
 
-      {/* Recommendations row — only show when we have actual recs */}
-      {homeRecs.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">
-              {s.recTitlePremium}
+        {/* Tonight's Pick — venstre kolonne (alltid synlig for premium) */}
+        {isPremium && (
+          <div className="w-full md:w-[320px] md:flex-shrink-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[9px] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-full" style={{ background: "rgba(245,200,66,0.12)", border: "0.5px solid rgba(245,200,66,0.3)", color: "#F5C842" }}>Premium</span>
+            </div>
+            <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-4">
+              {hasPartner ? s.tpTitle(partnerName || "Partner") : s.tpTitleSolo}
             </h2>
-            <Link href="/recommendations" className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] font-medium transition-colors">{s.seeAll}</Link>
+            {tpLoading && !tonightPick && (
+              <div className="flex items-center gap-3 py-8">
+                <div className="w-5 h-5 border-2 border-white/10 border-t-[var(--accent)] rounded-full animate-spin flex-shrink-0" />
+                <p className="text-xs text-white/40">{locale === "no" ? "Genererer basert på smaken din..." : locale === "se" ? "Genererar baserat på din smak..." : locale === "dk" ? "Genererer baseret på din smag..." : locale === "fi" ? "Luodaan makusi perusteella..." : "Generating based on your taste..."}</p>
+              </div>
+            )}
+            {tonightPick && (
+              <>
+                <div className="flex gap-3">
+                  {tonightPick.movie && (
+                    <div className="w-[140px] rounded-xl border border-white/[0.06] p-3 flex flex-col flex-shrink-0"
+                      style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2">🎬 {s.tpMovie}</p>
+                      {tonightPick.movie.poster_path && (
+                        <div className="relative w-full rounded-lg overflow-hidden mb-2" style={{ aspectRatio: "2/3" }}>
+                          <Image src={`https://image.tmdb.org/t/p/w185${tonightPick.movie.poster_path}`} alt={tonightPick.movie.title} fill className="object-cover" sizes="140px" />
+                        </div>
+                      )}
+                      <p className="text-xs font-semibold text-white/85 truncate">{tonightPick.movie.title}</p>
+                      {tonightPick.movie.match_score != null && (
+                        <p className="text-[10px] text-[var(--accent-light)] mt-0.5">★ {tonightPick.movie.match_score}% {s.tpMatch}</p>
+                      )}
+                      <Link href="/together" className="mt-2 text-center py-1 rounded-md text-[10px] font-semibold text-white/70 bg-white/[0.06] hover:bg-white/[0.1] transition-colors">{s.tpSeTogether}</Link>
+                    </div>
+                  )}
+                  {tonightPick.series && (
+                    <div className="w-[140px] rounded-xl border border-white/[0.06] p-3 flex flex-col flex-shrink-0"
+                      style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2">📺 {s.tpSeries}</p>
+                      {tonightPick.series.poster_path && (
+                        <div className="relative w-full rounded-lg overflow-hidden mb-2" style={{ aspectRatio: "2/3" }}>
+                          <Image src={`https://image.tmdb.org/t/p/w185${tonightPick.series.poster_path}`} alt={tonightPick.series.title} fill className="object-cover" sizes="140px" />
+                        </div>
+                      )}
+                      <p className="text-xs font-semibold text-white/85 truncate">{tonightPick.series.title}</p>
+                      {tonightPick.series.match_score != null && (
+                        <p className="text-[10px] text-[var(--accent-light)] mt-0.5">★ {tonightPick.series.match_score}% {s.tpMatch}</p>
+                      )}
+                      <Link href="/together" className="mt-2 text-center py-1 rounded-md text-[10px] font-semibold text-white/70 bg-white/[0.06] hover:bg-white/[0.1] transition-colors">{s.tpSeTogether}</Link>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col items-center gap-2 mt-3">
+                  <button onClick={handleReroll} disabled={tpRerolling} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white/40 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.08] transition-all disabled:opacity-40 cursor-pointer">
+                    {tpRerolling ? "..." : `↻ ${s.tpReroll}`}
+                  </button>
+                  {hasPartner && (
+                    <Link href="/couple-report" className="text-xs transition-colors" style={{ color: "rgba(255,255,255,0.35)" }}
+                      onMouseEnter={(e) => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }}
+                      onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}>
+                      {s.coupleReportLink}
+                    </Link>
+                  )}
+                </div>
+              </>
+            )}
           </div>
-          <HorizontalScroll>
-            {homeRecs.map((rec) => (
-              <PosterCard
-                key={`hr-${rec.tmdb_id}:${rec.type}`}
-                title={rec.title}
-                posterPath={rec.poster_path || null}
-                subtitle={rec.tags?.[0]}
-                onClick={() => setSelectedItem({ id: rec.tmdb_id, type: rec.type, title: rec.title, poster_path: rec.poster_path || null })}
-              />
-            ))}
-          </HorizontalScroll>
-        </section>
-      )}
+        )}
+
+        {/* Recommendations — høyre kolonne */}
+        {homeRecs.length > 0 && (
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">
+                {s.recTitlePremium}
+              </h2>
+              <Link href="/recommendations" className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] font-medium transition-colors">{s.seeAll}</Link>
+            </div>
+            <HorizontalScroll>
+              {homeRecs.map((rec) => (
+                <PosterCard
+                  key={`hr-${rec.tmdb_id}:${rec.type}`}
+                  title={rec.title}
+                  posterPath={rec.poster_path || null}
+                  subtitle={rec.tags?.[0]}
+                  onClick={() => setSelectedItem({ id: rec.tmdb_id, type: rec.type, title: rec.title, poster_path: rec.poster_path || null })}
+                />
+              ))}
+            </HorizontalScroll>
+          </div>
+        )}
+
+      </div>
 
       {/* Curator promo */}
       {hasTaste && (
+        <div>
+        {isPremium && (
+          <div className="mb-2">
+            <span className="text-[9px] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-full" style={{ background: "rgba(245,200,66,0.12)", border: "0.5px solid rgba(245,200,66,0.3)", color: "#F5C842" }}>Premium</span>
+          </div>
+        )}
         <div className="relative rounded-2xl overflow-hidden transition-transform duration-300 hover:scale-[1.02]"
           style={{
             background: "rgba(255,255,255,0.02)",
@@ -856,6 +870,7 @@ export default function HomePage() {
               {s.curatorCta}
             </Link>
           </div>
+        </div>
         </div>
       )}
 
