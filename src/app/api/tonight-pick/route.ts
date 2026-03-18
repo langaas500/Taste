@@ -24,7 +24,7 @@ export async function GET() {
       .single();
 
     const isSolo = !link;
-    const linkId = link?.id ?? `solo_${user.id}`;
+    const linkId = link?.id ?? user.id;
     const partnerId = link ? (link.inviter_id === user.id ? link.invitee_id : link.inviter_id) : null;
     const today = new Date().toISOString().slice(0, 10);
 
@@ -81,7 +81,7 @@ export async function POST() {
       .single();
 
     const isSolo = !link;
-    const linkId = link?.id ?? `solo_${user.id}`;
+    const linkId = link?.id ?? user.id;
     const partnerId = link ? (link.inviter_id === user.id ? link.invitee_id : link.inviter_id) : null;
     const today = new Date().toISOString().slice(0, 10);
 
