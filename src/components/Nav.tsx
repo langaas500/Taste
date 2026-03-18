@@ -353,60 +353,62 @@ export default function Nav() {
               )}
             </div>
 
-            {/* Profile row */}
-            <Link
-              href="/profile"
-              className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"} rounded-lg px-2 py-1.5 -mx-2 -my-1.5 transition-all duration-200 hover:bg-white/[0.04] cursor-pointer`}
-            >
-              {/* Avatar */}
-              <div
-                className="w-[34px] h-[34px] rounded-full flex items-center justify-center flex-shrink-0 relative overflow-hidden"
-                style={{
-                  background: "rgba(255,42,42,0.1)",
-                  border: "1.5px solid rgba(255,42,42,0.2)",
-                }}
+            {/* Profile row + collapse toggle */}
+            <div className={`flex items-center ${collapsed ? "justify-center" : "gap-1.5"}`}>
+              <Link
+                href="/profile"
+                className={`flex items-center flex-1 min-w-0 ${collapsed ? "justify-center" : "gap-2.5"} rounded-lg px-2 py-1.5 transition-all duration-200 hover:bg-white/[0.04] cursor-pointer`}
               >
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
-                ) : (
-                  <span style={{ fontSize: 11, fontWeight: 700, color: RED }}>{initials}</span>
-                )}
+                {/* Avatar */}
                 <div
-                  className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full"
+                  className="w-[34px] h-[34px] rounded-full flex items-center justify-center flex-shrink-0 relative overflow-hidden"
                   style={{
-                    background: "#22c55e",
-                    border: "2px solid rgba(10,10,12,0.95)",
+                    background: "rgba(255,42,42,0.1)",
+                    border: "1.5px solid rgba(255,42,42,0.2)",
                   }}
-                />
-              </div>
-
-              {!collapsed && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold truncate" style={{ color: "rgba(255,255,255,0.9)" }}>
-                    {userName}{isFoundingMember && <span style={{ color: "rgba(229,9,20,0.7)", marginLeft: 4 }}>⭐</span>}
-                  </p>
-                  <p className="text-[10px]" style={{ color: "rgba(255,42,42,0.4)" }}>
-                    {isGuest ? s.login : userEmail === "martinlangaas@live.no" ? s.admin : s.filmelsker}
-                  </p>
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
+                  ) : (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: RED }}>{initials}</span>
+                  )}
+                  <div
+                    className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full"
+                    style={{
+                      background: "#22c55e",
+                      border: "2px solid rgba(10,10,12,0.95)",
+                    }}
+                  />
                 </div>
-              )}
-            </Link>
 
-            {/* Collapse toggle */}
-            {!collapsed && (
-              <button
-                onClick={() => setCollapsed(true)}
-                className="flex-shrink-0 w-[26px] h-[26px] rounded-lg flex items-center justify-center transition-all duration-200"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                }}
-              >
-                <svg className="w-[13px] h-[13px]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="rgba(255,255,255,0.35)">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                </svg>
-              </button>
-            )}
+                {!collapsed && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-semibold truncate" style={{ color: "rgba(255,255,255,0.9)" }}>
+                      {userName}{isFoundingMember && <span style={{ color: "rgba(229,9,20,0.7)", marginLeft: 4 }}>⭐</span>}
+                    </p>
+                    <p className="text-[10px]" style={{ color: "rgba(255,42,42,0.4)" }}>
+                      {isGuest ? s.login : userEmail === "martinlangaas@live.no" ? s.admin : s.filmelsker}
+                    </p>
+                  </div>
+                )}
+              </Link>
+
+              {/* Collapse toggle — inline with profile */}
+              {!collapsed && (
+                <button
+                  onClick={() => setCollapsed(true)}
+                  className="flex-shrink-0 w-[26px] h-[26px] rounded-lg flex items-center justify-center transition-all duration-200"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                  }}
+                >
+                  <svg className="w-[13px] h-[13px]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="rgba(255,255,255,0.35)">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                  </svg>
+                </button>
+              )}
+            </div>
 
             {collapsed && (
               <button
