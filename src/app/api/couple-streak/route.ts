@@ -9,10 +9,10 @@ import { createSupabaseAdmin } from "@/lib/supabase-server";
  * logged-in user's linked partner pair.
  */
 
-const REWARDS: { weeks: number; key: string }[] = [
-  { weeks: 4, key: "helgevalg" },
-  { weeks: 8, key: "skjulte-perler" },
-  { weeks: 12, key: "klassikere" },
+const REWARDS: { weeks: number; key: string; slug: string }[] = [
+  { weeks: 4, key: "helgevalg", slug: "perfekt-fredagskveld" },
+  { weeks: 8, key: "skjulte-perler", slug: "skjult-skatt" },
+  { weeks: 12, key: "klassikere", slug: "nostalgisk-perle" },
 ];
 
 /** Monday 00:00 UTC of the week containing `date` */
@@ -117,7 +117,7 @@ export async function GET() {
     // 7. Unlocked rewards
     const unlockedRewards = REWARDS
       .filter((r) => longestStreak >= r.weeks)
-      .map((r) => r.key);
+      .map((r) => ({ key: r.key, slug: r.slug }));
 
     return NextResponse.json({
       current_streak: currentStreak,

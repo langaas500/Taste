@@ -55,6 +55,12 @@ const strings = {
     tpConnect: "Koble til partner",
     tpSeTogether: "Se Sammen",
     coupleReportLink: "Se par-rapporten →",
+    returnDay3Title: "Filmsmaken din tar form",
+    returnDay3Desc: "Du har logget titler — se hva det sier om deg.",
+    returnDay3Cta: "Se smaksprofil",
+    returnDay7Title: "Du har brukt Logflix i en uke 🎉",
+    returnDay7Desc: "Nok data til å analysere filmsmaken din nå.",
+    returnDay7Cta: "Analyser smaken min",
   },
   en: {
     title: "Home",
@@ -99,6 +105,12 @@ const strings = {
     tpConnect: "Connect partner",
     tpSeTogether: "Watch Together",
     coupleReportLink: "See couple report →",
+    returnDay3Title: "Your film taste is taking shape",
+    returnDay3Desc: "You've logged titles — see what it says about you.",
+    returnDay3Cta: "See taste profile",
+    returnDay7Title: "You've used Logflix for a week 🎉",
+    returnDay7Desc: "Enough data to analyze your film taste now.",
+    returnDay7Cta: "Analyze my taste",
   },
   dk: {
     title: "Hjem",
@@ -143,6 +155,12 @@ const strings = {
     tpConnect: "Forbind partner",
     tpSeTogether: "Se Sammen",
     coupleReportLink: "Se parrapporten →",
+    returnDay3Title: "Din filmsmag tager form",
+    returnDay3Desc: "Du har logget titler — se hvad det siger om dig.",
+    returnDay3Cta: "Se smagsprofil",
+    returnDay7Title: "Du har brugt Logflix i en uge 🎉",
+    returnDay7Desc: "Nok data til at analysere din filmsmag nu.",
+    returnDay7Cta: "Analyser min smag",
   },
   se: {
     title: "Hem",
@@ -187,6 +205,12 @@ const strings = {
     tpConnect: "Koppla partner",
     tpSeTogether: "Se Tillsammans",
     coupleReportLink: "Se parrapporten →",
+    returnDay3Title: "Din filmsmak tar form",
+    returnDay3Desc: "Du har loggat titlar — se vad det säger om dig.",
+    returnDay3Cta: "Se smakprofil",
+    returnDay7Title: "Du har använt Logflix i en vecka 🎉",
+    returnDay7Desc: "Tillräckligt med data för att analysera din filmsmak nu.",
+    returnDay7Cta: "Analysera min smak",
   },
   fi: {
     title: "Koti",
@@ -231,6 +255,12 @@ const strings = {
     tpConnect: "Yhdistä kumppani",
     tpSeTogether: "Katsotaan Yhdessä",
     coupleReportLink: "Katso pariraportti →",
+    returnDay3Title: "Elokuvamakusi muotoutuu",
+    returnDay3Desc: "Olet kirjannut nimikkeitä — katso mitä se kertoo sinusta.",
+    returnDay3Cta: "Katso makuprofiili",
+    returnDay7Title: "Olet käyttänyt Logflixiä viikon 🎉",
+    returnDay7Desc: "Tarpeeksi dataa elokuvamakusi analysoimiseen.",
+    returnDay7Cta: "Analysoi makuni",
   },
 } as const;
 
@@ -276,6 +306,7 @@ export default function HomePage() {
   const [tpRerolling, setTpRerolling] = useState(false);
   const [partnerName, setPartnerName] = useState<string | null>(null);
   const [hasPartner, setHasPartner] = useState<boolean | null>(null);
+  const [returningBanner, setReturningBanner] = useState<{ type: "day3" | "day7" } | null>(null);
 
   useEffect(() => {
     loadDashboard();
@@ -289,6 +320,30 @@ export default function HomePage() {
         if (data.region) setLocale(getLocale(data.region));
       })
       .catch(() => {});
+  }, []);
+
+  // Returning user hook — day 3/7 banner
+  useEffect(() => {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const first = localStorage.getItem("logflix_first_visit");
+      if (!first) {
+        localStorage.setItem("logflix_first_visit", today);
+        localStorage.setItem("logflix_last_visit", today);
+        return;
+      }
+      localStorage.setItem("logflix_last_visit", today);
+      const bannerDate = localStorage.getItem("logflix_returning_banner_date");
+      if (bannerDate === today) return;
+      const daysSince = Math.floor((Date.now() - new Date(first).getTime()) / 86400000);
+      if (daysSince >= 7) {
+        setReturningBanner({ type: "day7" });
+        localStorage.setItem("logflix_returning_banner_date", today);
+      } else if (daysSince >= 3) {
+        setReturningBanner({ type: "day3" });
+        localStorage.setItem("logflix_returning_banner_date", today);
+      }
+    } catch { /* ignore */ }
   }, []);
 
   const s = strings[locale] ?? strings.en;
@@ -447,6 +502,30 @@ export default function HomePage() {
           {data.totalTitles} {data.totalTitles === 1 ? s.titleSingular : s.titlesInCollection}
         </p>
       </div>
+
+      {/* Returning user hook — day 3/7 */}
+      {returningBanner && !hasTaste && (
+        <Link
+          href="/taste"
+          className="block rounded-[var(--radius-lg)] p-4 border border-white/[0.08] hover:border-white/[0.14] transition-all"
+          style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xl flex-shrink-0">🎬</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-[var(--text-primary)]">
+                {returningBanner.type === "day7" ? s.returnDay7Title : s.returnDay3Title}
+              </p>
+              <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                {returningBanner.type === "day7" ? s.returnDay7Desc : s.returnDay3Desc}
+              </p>
+            </div>
+            <span className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white/80 bg-white/[0.08]">
+              {returningBanner.type === "day7" ? s.returnDay7Cta : s.returnDay3Cta}
+            </span>
+          </div>
+        </Link>
+      )}
 
       {/* Se Sammen — cinematisk banner med filmpostere */}
       <Link href="/together" style={{ display: "block", borderRadius: 16, overflow: "hidden", position: "relative", minHeight: 180, textDecoration: "none" }}>

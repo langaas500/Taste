@@ -234,7 +234,7 @@ export default function CoupleReportPage() {
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [noPartner, setNoPartner] = useState(false);
-  const [streak, setStreak] = useState<{ current_streak: number; longest_streak: number; streak_at_risk: boolean; unlocked_rewards: string[] } | null>(null);
+  const [streak, setStreak] = useState<{ current_streak: number; longest_streak: number; streak_at_risk: boolean; unlocked_rewards: Array<{ key: string; slug: string }> } | null>(null);
   const [frozenData, setFrozenData] = useState<{ score: number; matches: number; streak: number; frozen_at: string } | null>(null);
   const [animatedScore, setAnimatedScore] = useState(0);
   const scoreRef = useRef<NodeJS.Timeout | null>(null);
@@ -381,15 +381,18 @@ export default function CoupleReportPage() {
           {streak.streak_at_risk && (
             <p className="text-xs font-semibold mt-2" style={{ color: "#f59e0b" }}>⚠️ {s.streakAtRisk}</p>
           )}
-          {streak.unlocked_rewards.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {streak.unlocked_rewards.map((r) => (
-                <span key={r} className="px-2.5 py-1 rounded-full text-[10px] font-medium border" style={{ background: "rgba(255,200,100,0.08)", borderColor: "rgba(255,200,100,0.2)", color: "rgba(255,200,100,0.8)" }}>
-                  🎁 {r === "klassikere" ? s.streakRewardKlassikere : r === "skjulte-perler" ? s.streakRewardSkjultePerler : s.streakRewardHelgevalg}
-                </span>
-              ))}
-            </div>
-          )}
+          {streak.unlocked_rewards.length > 0 && (() => {
+            const region = (locale === "no" || locale === "se" || locale === "dk" || locale === "fi") ? locale : "no";
+            return (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {streak.unlocked_rewards.map((r) => (
+                  <Link key={r.key} href={`/${region}/guides/${r.slug}`} className="px-2.5 py-1 rounded-full text-[10px] font-medium border hover:brightness-125 transition-all" style={{ background: "rgba(255,200,100,0.08)", borderColor: "rgba(255,200,100,0.2)", color: "rgba(255,200,100,0.8)", textDecoration: "none" }}>
+                    🎁 {r.key === "klassikere" ? s.streakRewardKlassikere : r.key === "skjulte-perler" ? s.streakRewardSkjultePerler : s.streakRewardHelgevalg} →
+                  </Link>
+                ))}
+              </div>
+            );
+          })()}
         </section>
       )}
 

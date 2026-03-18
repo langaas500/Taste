@@ -55,6 +55,9 @@ const strings = {
     startTogether: "Start Se Sammen",
     shareTaste: "Del smaksprofilen din",
     copied: "Lenke kopiert!",
+    parTitle: "Har du en filmpartner?",
+    parDesc: "Koble dere sammen og se hva dere egentlig liker — Taste Compatibility, felles favoritter og Tonight's Pick.",
+    parCta: "Se Logflix Par →",
   },
   en: {
     headline: "Let's build your",
@@ -87,6 +90,9 @@ const strings = {
     startTogether: "Start Watch Together",
     shareTaste: "Share your taste profile",
     copied: "Link copied!",
+    parTitle: "Got a movie partner?",
+    parDesc: "Link up and see what you actually like — Taste Compatibility, shared favorites and Tonight's Pick.",
+    parCta: "See Logflix Par →",
   },
   dk: {
     headline: "Lad os bygge din",
@@ -119,6 +125,9 @@ const strings = {
     startTogether: "Start Se Sammen",
     shareTaste: "Del din smagsprofil",
     copied: "Link kopieret!",
+    parTitle: "Har du en filmpartner?",
+    parDesc: "Forbind jer og se hvad I egentlig kan lide — Taste Compatibility, fælles favoritter og Tonight's Pick.",
+    parCta: "Se Logflix Par →",
   },
   se: {
     headline: "Låt oss bygga din",
@@ -151,6 +160,9 @@ const strings = {
     startTogether: "Starta Se Tillsammans",
     shareTaste: "Dela din smakprofil",
     copied: "Länk kopierad!",
+    parTitle: "Har du en filmpartner?",
+    parDesc: "Koppla ihop er och se vad ni egentligen gillar — Taste Compatibility, gemensamma favoriter och Tonight's Pick.",
+    parCta: "Se Logflix Par →",
   },
   fi: {
     headline: "Rakennetaan sinun",
@@ -183,6 +195,9 @@ const strings = {
     startTogether: "Aloita Katsotaan Yhdessä",
     shareTaste: "Jaa makuprofiilisi",
     copied: "Linkki kopioitu!",
+    parTitle: "Onko sinulla elokuvakumppani?",
+    parDesc: "Yhdistäkää ja katsokaa mitä oikeasti pidätte — Taste Compatibility, yhteiset suosikit ja Tonight's Pick.",
+    parCta: "Katso Logflix Par →",
   },
 } as const;
 
@@ -796,6 +811,22 @@ function OnboardingContent() {
                     {copied ? s.copied : s.shareTaste}
                   </button>
                 )}
+
+                {/* Par teaser */}
+                <button
+                  onClick={() => router.push("/premium")}
+                  className="w-full mt-6 rounded-[var(--radius-lg)] p-4 text-left transition-all hover:border-[var(--accent)]/30"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(229,9,20,0.15)", cursor: "pointer" }}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl flex-shrink-0 mt-0.5">💑</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">{s.parTitle}</p>
+                      <p className="text-xs text-[var(--text-tertiary)] leading-relaxed mb-2">{s.parDesc}</p>
+                      <span className="text-xs font-semibold" style={{ color: "#E50914" }}>{s.parCta}</span>
+                    </div>
+                  </div>
+                </button>
               </div>
             )}
           </div>

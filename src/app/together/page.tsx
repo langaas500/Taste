@@ -95,8 +95,9 @@ export default function WTBetaPage() {
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [watchedLoading, setWatchedLoading] = useState(false);
   const [emailValue, setEmailValue] = useState("");
-  const [streakData, setStreakData] = useState<{ current_streak: number; streak_at_risk: boolean; unlocked_rewards: string[] } | null>(null);
+  const [streakData, setStreakData] = useState<{ current_streak: number; streak_at_risk: boolean; unlocked_rewards: Array<{ key: string; slug: string }> } | null>(null);
   const [frozenStreak, setFrozenStreak] = useState<number>(0);
+  const [matchCount, setMatchCount] = useState<number>(0);
   const [superLikesUsed, setSuperLikesUsed] = useState(0);
   const [iAmDone, setIAmDone] = useState(false);
   const [waitingFactIndex, setWaitingFactIndex] = useState(0);
@@ -180,8 +181,9 @@ export default function WTBetaPage() {
     createSupabaseBrowser().auth.getSession()
       .then(({ data }) => {
         setAuthUser(data.session?.user ?? null);
-        // Fetch couple streak for logged-in users (fire-and-forget, non-blocking)
+        // Fetch couple streak + match count for logged-in users (fire-and-forget, non-blocking)
         if (data.session?.user) {
+          fetch("/api/couple-report").then((r) => r.ok ? r.json() : null).then((d) => { if (d?.total_matches) setMatchCount(d.total_matches); }).catch(() => {});
           fetch("/api/couple-streak")
             .then((r) => r.ok ? r.json() : null)
             .then((d) => {
@@ -1330,15 +1332,18 @@ export default function WTBetaPage() {
                       🔥 {streakData.current_streak} {t(locale, "streak", "weeks")}
                     </p>
                   )}
-                  {streakData.unlocked_rewards.length > 0 && (
-                    <p style={{ fontSize: "0.65rem", color: "rgba(255,200,100,0.7)", marginTop: 4 }}>
-                      🎁 {streakData.current_streak} {t(locale, "streak", "weeks")} — {
-                        streakData.unlocked_rewards.includes("klassikere") ? t(locale, "streak", "rewardKlassikere")
-                        : streakData.unlocked_rewards.includes("skjulte-perler") ? t(locale, "streak", "rewardSkjultePerler")
-                        : t(locale, "streak", "rewardHelgevalg")
-                      }
-                    </p>
-                  )}
+                  {streakData.unlocked_rewards.length > 0 && (() => {
+                    const best = streakData.unlocked_rewards[streakData.unlocked_rewards.length - 1];
+                    const region = locale === "no" ? "no" : locale === "se" ? "se" : locale === "dk" ? "dk" : locale === "fi" ? "fi" : "no";
+                    const label = best.key === "klassikere" ? t(locale, "streak", "rewardKlassikere")
+                      : best.key === "skjulte-perler" ? t(locale, "streak", "rewardSkjultePerler")
+                      : t(locale, "streak", "rewardHelgevalg");
+                    return (
+                      <Link href={`/${region}/guides/${best.slug}`} style={{ display: "block", fontSize: "0.65rem", color: "rgba(255,200,100,0.7)", marginTop: 4, textDecoration: "none" }}>
+                        🎁 {streakData.current_streak} {t(locale, "streak", "weeks")} — {label} →
+                      </Link>
+                    );
+                  })()}
                 </div>
               )}
               {/* Frozen streak (cancelled premium) */}
@@ -2112,9 +2117,9 @@ export default function WTBetaPage() {
                     <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>
                       {t(locale, "winner", "playAgain")}
                     </button>
-                    {authUser && (
+                    {authUser && matchCount >= 3 && (
                       <Link href="/couple-report" className="block w-full py-2 text-xs font-medium text-center" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none" }} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}>
-                        {t(locale, "winner", "coupleReport")}
+                        {t(locale, "winner", "coupleReportWithCount").replace("{n}", String(matchCount))}
                       </Link>
                     )}
                     {mode === "solo" && (
