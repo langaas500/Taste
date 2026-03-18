@@ -182,6 +182,7 @@ const strings = {
     guestLoginBtn: { no: "Logg inn", en: "Log in", dk: "Log ind", se: "Logga in", fi: "Kirjaudu" },
     tryAnotherFriend: { no: "Prøv med en annen venn →", en: "Try with another friend →", dk: "Prøv med en anden ven →", se: "Testa med en annan vän →", fi: "Kokeile toisen ystävän kanssa →" },
     tryAnotherFriendShareText: { no: "Jeg matchet på {title} — prøv du også!", en: "I matched on {title} — try it too!", dk: "Jeg matchede på {title} — prøv du også!", se: "Jag matchade på {title} — testa du också!", fi: "Matchasin elokuvaan {title} — kokeile sinäkin!" },
+    coupleReport: { no: "Se hva dere liker sammen →", en: "See what you like together →", dk: "Se hvad I kan lide sammen →", se: "Se vad ni gillar tillsammans →", fi: "Katso mitä pidätte yhdessä →" },
   },
 
   // ============================================
@@ -223,6 +224,8 @@ const strings = {
     rewardHelgevalg: { no: "Helgevalg låst opp!", en: "Weekend picks unlocked!", dk: "Weekendvalg låst op!", se: "Helgval upplåst!", fi: "Viikonloppuvalinnat avattu!" },
     rewardSkjultePerler: { no: "Skjulte perler låst opp!", en: "Hidden gems unlocked!", dk: "Skjulte perler låst op!", se: "Dolda pärlor upplåsta!", fi: "Piilotetut helmet avattu!" },
     rewardKlassikere: { no: "Klassikere låst opp!", en: "Classics unlocked!", dk: "Klassikere låst op!", se: "Klassiker upplåsta!", fi: "Klassikot avattu!" },
+    frozenStreak: { no: "Streaken stoppet på {n} uker", en: "Streak stopped at {n} weeks", dk: "Streaken stoppet på {n} uger", se: "Streaken stannade på {n} veckor", fi: "Putki pysähtyi {n} viikkoon" },
+    frozenCta: { no: "Gjenaktiver →", en: "Reactivate →", dk: "Genaktiver →", se: "Återaktivera →", fi: "Aktivoi uudelleen →" },
   },
 
   // ============================================

@@ -23,6 +23,9 @@ const strings: Record<string, Record<Locale, string>> = {
   gateText: { no: "Se hele historikken og par-rapporten deres", en: "See full history and your couple report", dk: "Se hele historikken og jeres parrapport", se: "Se hela historiken och er parrapport", fi: "Katso koko historia ja pariprofiili" },
   gateCta: { no: "Logflix Par — 29 kr/mnd", en: "Logflix Par — 29 NOK/mo", dk: "Logflix Par — 29 NOK/md", se: "Logflix Par — 29 NOK/mån", fi: "Logflix Par — 29 NOK/kk" },
   gateSub: { no: "for dere begge", en: "for both of you", dk: "for jer begge", se: "för er båda", fi: "teille molemmille" },
+  crTitle: { no: "Se par-rapporten", en: "See couple report", dk: "Se parrapporten", se: "Se parrapporten", fi: "Katso pariraportti" },
+  crDesc: { no: "Taste Compatibility + full historikk", en: "Taste Compatibility + full history", dk: "Taste Compatibility + fuld historik", se: "Taste Compatibility + full historik", fi: "Taste Compatibility + koko historia" },
+  crCta: { no: "Se rapport →", en: "See report →", dk: "Se rapport →", se: "Se rapport →", fi: "Katso raportti →" },
 };
 
 function s(key: string, locale: Locale): string {
@@ -120,6 +123,27 @@ export default function HistoryPage() {
           </p>
         )}
       </div>
+
+      {/* Couple report banner — premium users */}
+      {isPremium && (
+        <div style={{ padding: "0 16px 12px", maxWidth: 560, margin: "0 auto" }}>
+          <Link
+            href="/couple-report"
+            style={{
+              display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderRadius: 14, textDecoration: "none",
+              background: "rgba(255,255,255,0.04)", backdropFilter: "blur(30px)", WebkitBackdropFilter: "blur(30px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            <span style={{ fontSize: 20, flexShrink: 0 }}>💑</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>{s("crTitle", locale)}</p>
+              <p style={{ margin: "2px 0 0", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{s("crDesc", locale)}</p>
+            </div>
+            <span style={{ flexShrink: 0, padding: "6px 12px", borderRadius: 8, background: "#ff2a2a", color: "#fff", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>{s("crCta", locale)}</span>
+          </Link>
+        </div>
+      )}
 
       <div style={{ padding: "0 16px 32px", maxWidth: 560, margin: "0 auto" }}>
         {loading ? (

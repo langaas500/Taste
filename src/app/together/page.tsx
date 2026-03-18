@@ -96,6 +96,7 @@ export default function WTBetaPage() {
   const [watchedLoading, setWatchedLoading] = useState(false);
   const [emailValue, setEmailValue] = useState("");
   const [streakData, setStreakData] = useState<{ current_streak: number; streak_at_risk: boolean; unlocked_rewards: string[] } | null>(null);
+  const [frozenStreak, setFrozenStreak] = useState<number>(0);
   const [superLikesUsed, setSuperLikesUsed] = useState(0);
   const [iAmDone, setIAmDone] = useState(false);
   const [waitingFactIndex, setWaitingFactIndex] = useState(0);
@@ -183,7 +184,22 @@ export default function WTBetaPage() {
         if (data.session?.user) {
           fetch("/api/couple-streak")
             .then((r) => r.ok ? r.json() : null)
-            .then((d) => { if (d && d.current_streak > 0) setStreakData(d); })
+            .then((d) => {
+              if (d && d.current_streak > 0) {
+                setStreakData(d);
+              } else {
+                // Check for frozen streak from cancelled subscription
+                createSupabaseBrowser()
+                  .from("profiles")
+                  .select("frozen_couple_data")
+                  .single()
+                  .then(({ data: p }) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const fd = (p as any)?.frozen_couple_data;
+                    if (fd?.streak > 0) setFrozenStreak(fd.streak);
+                  });
+              }
+            })
             .catch(() => {});
         }
       })
@@ -1325,6 +1341,17 @@ export default function WTBetaPage() {
                   )}
                 </div>
               )}
+              {/* Frozen streak (cancelled premium) */}
+              {!streakData && frozenStreak > 0 && (
+                <div style={{ marginTop: 14, textAlign: "center" }}>
+                  <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>
+                    ⏸ {t(locale, "streak", "frozenStreak").replace("{n}", String(frozenStreak))}
+                  </p>
+                  <Link href="/premium" style={{ fontSize: "0.65rem", color: "#E50914", textDecoration: "none", fontWeight: 600 }}>
+                    {t(locale, "streak", "frozenCta")}
+                  </Link>
+                </div>
+              )}
 
               {authUser && (
                 <Link
@@ -2085,6 +2112,11 @@ export default function WTBetaPage() {
                     <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>
                       {t(locale, "winner", "playAgain")}
                     </button>
+                    {authUser && (
+                      <Link href="/couple-report" className="block w-full py-2 text-xs font-medium text-center" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none" }} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}>
+                        {t(locale, "winner", "coupleReport")}
+                      </Link>
+                    )}
                     {mode === "solo" && (
                       <button
                         onClick={() => {

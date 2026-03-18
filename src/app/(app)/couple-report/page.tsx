@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "@/hooks/useLocale";
+import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { Locale } from "@/lib/i18n";
 
@@ -39,6 +40,11 @@ const strings = {
     streakRewardHelgevalg: "Helgevalg låst opp!",
     streakRewardSkjultePerler: "Skjulte perler låst opp!",
     streakRewardKlassikere: "Klassikere låst opp!",
+    frozenTitle: "Rapporten er satt på pause",
+    frozenScore: (s: number, m: number) => `Taste Compatibility stoppet på ${s}% — ${m} matcher`,
+    frozenStreak: (n: number) => `🔥 ${n} ukers streak`,
+    frozenCta: "Gjenaktiver — 29 kr/mnd",
+    frozenSub: "for dere begge",
   },
   en: {
     loading: "Calculating compatibility...",
@@ -69,6 +75,11 @@ const strings = {
     streakRewardHelgevalg: "Weekend picks unlocked!",
     streakRewardSkjultePerler: "Hidden gems unlocked!",
     streakRewardKlassikere: "Classics unlocked!",
+    frozenTitle: "Report paused",
+    frozenScore: (s: number, m: number) => `Taste Compatibility stopped at ${s}% — ${m} matches`,
+    frozenStreak: (n: number) => `🔥 ${n} week streak`,
+    frozenCta: "Reactivate — 29 NOK/mo",
+    frozenSub: "for both of you",
   },
   dk: {
     loading: "Beregner kompatibilitet...",
@@ -99,6 +110,11 @@ const strings = {
     streakRewardHelgevalg: "Weekendvalg låst op!",
     streakRewardSkjultePerler: "Skjulte perler låst op!",
     streakRewardKlassikere: "Klassikere låst op!",
+    frozenTitle: "Rapporten er sat på pause",
+    frozenScore: (s: number, m: number) => `Smagskompatibilitet stoppet på ${s}% — ${m} matches`,
+    frozenStreak: (n: number) => `🔥 ${n} ugers streak`,
+    frozenCta: "Genaktiver — 29 NOK/md",
+    frozenSub: "for jer begge",
   },
   se: {
     loading: "Beräknar kompatibilitet...",
@@ -129,6 +145,11 @@ const strings = {
     streakRewardHelgevalg: "Helgval upplåst!",
     streakRewardSkjultePerler: "Dolda pärlor upplåsta!",
     streakRewardKlassikere: "Klassiker upplåsta!",
+    frozenTitle: "Rapporten är pausad",
+    frozenScore: (s: number, m: number) => `Smakkompatibilitet stannade på ${s}% — ${m} matchningar`,
+    frozenStreak: (n: number) => `🔥 ${n} veckors streak`,
+    frozenCta: "Återaktivera — 29 NOK/mån",
+    frozenSub: "för er båda",
   },
   fi: {
     loading: "Lasketaan yhteensopivuutta...",
@@ -159,6 +180,11 @@ const strings = {
     streakRewardHelgevalg: "Viikonloppuvalinnat avattu!",
     streakRewardSkjultePerler: "Piilotetut helmet avattu!",
     streakRewardKlassikere: "Klassikot avattu!",
+    frozenTitle: "Raportti tauolla",
+    frozenScore: (s: number, m: number) => `Makuyhteensopivuus pysähtyi ${s}%:iin — ${m} matchia`,
+    frozenStreak: (n: number) => `🔥 ${n} viikon putki`,
+    frozenCta: "Aktivoi uudelleen — 29 NOK/kk",
+    frozenSub: "molemmille",
   },
 } as const;
 
@@ -209,6 +235,7 @@ export default function CoupleReportPage() {
   const [loading, setLoading] = useState(true);
   const [noPartner, setNoPartner] = useState(false);
   const [streak, setStreak] = useState<{ current_streak: number; longest_streak: number; streak_at_risk: boolean; unlocked_rewards: string[] } | null>(null);
+  const [frozenData, setFrozenData] = useState<{ score: number; matches: number; streak: number; frozen_at: string } | null>(null);
   const [animatedScore, setAnimatedScore] = useState(0);
   const scoreRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -226,6 +253,14 @@ export default function CoupleReportPage() {
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d) setStreak(d); })
       .catch(() => {});
+    // Fetch frozen couple data for cancelled subscribers
+    createSupabaseBrowser()
+      .from("profiles")
+      .select("frozen_couple_data")
+      .single()
+      .then(({ data: p }) => {
+        if (p?.frozen_couple_data) setFrozenData(p.frozen_couple_data);
+      });
   }, []);
 
   // Animate score counter
@@ -362,14 +397,34 @@ export default function CoupleReportPage() {
       <div className={blurred ? "relative" : ""}>
         {blurred && (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-2xl" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
-            <p className="text-sm text-white/70 text-center px-6 mb-4">{s.premiumGate}</p>
-            <Link
-              href="/premium"
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-              style={{ background: "#E50914" }}
-            >
-              {s.upgradeCta}
-            </Link>
+            {frozenData ? (
+              <div className="text-center px-6">
+                <p className="text-lg font-bold text-white mb-2">⏸ {s.frozenTitle}</p>
+                <p className="text-sm text-white/60 mb-1">{s.frozenScore(frozenData.score, frozenData.matches)}</p>
+                {frozenData.streak > 0 && (
+                  <p className="text-sm text-white/50 mb-4">{s.frozenStreak(frozenData.streak)}</p>
+                )}
+                <Link
+                  href="/premium"
+                  className="inline-block px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 mb-1.5"
+                  style={{ background: "#E50914" }}
+                >
+                  {s.frozenCta}
+                </Link>
+                <p className="text-[11px] text-white/30">{s.frozenSub}</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-white/70 text-center px-6 mb-4">{s.premiumGate}</p>
+                <Link
+                  href="/premium"
+                  className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
+                  style={{ background: "#E50914" }}
+                >
+                  {s.upgradeCta}
+                </Link>
+              </>
+            )}
           </div>
         )}
 

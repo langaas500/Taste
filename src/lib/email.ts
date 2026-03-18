@@ -260,7 +260,196 @@ export async function sendFridayPickEmail(
   }
 }
 
-/* ── 4. Weekly Digest ───────────────────────────────────── */
+/* ── 4. Monthly Couple Report ──────────────────────────── */
+
+const monthNames: Record<string, string[]> = {
+  no: ["januar", "februar", "mars", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "desember"],
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  dk: ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"],
+  se: ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"],
+  fi: ["tammikuu", "helmikuu", "maaliskuu", "huhtikuu", "toukokuu", "kesäkuu", "heinäkuu", "elokuu", "syyskuu", "lokakuu", "marraskuu", "joulukuu"],
+};
+
+const coupleReportStrings: Record<string, {
+  subject: (month: string, name: string, partner: string) => string;
+  heading: (name: string, partner: string) => string;
+  scoreLabel: string;
+  changeUp: (n: number) => string;
+  changeDown: (n: number) => string;
+  moviesLabel: string;
+  favoriteLabel: string;
+  genreLabel: string;
+  streakLabel: string;
+  streakWeeks: string;
+  cta: string;
+  footer: string;
+}> = {
+  no: {
+    subject: (m, name, partner) => `${m} — ${name} & ${partner} sin filmrapport 🎬`,
+    heading: (name, partner) => `${name} & ${partner}`,
+    scoreLabel: "Taste Compatibility",
+    changeUp: (n) => `↑ +${n}% fra forrige måned`,
+    changeDown: (n) => `↓ ${n}% fra forrige måned`,
+    moviesLabel: "filmer/serier sett",
+    favoriteLabel: "Favoritt",
+    genreLabel: "Top sjanger",
+    streakLabel: "Streak",
+    streakWeeks: "uker",
+    cta: "Se hele par-rapporten",
+    footer: "Du mottar denne fordi du har en koblet partner på logflix.app.",
+  },
+  en: {
+    subject: (m) => `${m} — Your monthly movie report 🎬`,
+    heading: (name, partner) => `${name} & ${partner}`,
+    scoreLabel: "Taste Compatibility",
+    changeUp: (n) => `↑ +${n}% from last month`,
+    changeDown: (n) => `↓ ${n}% from last month`,
+    moviesLabel: "movies/shows watched",
+    favoriteLabel: "Favorite",
+    genreLabel: "Top genre",
+    streakLabel: "Streak",
+    streakWeeks: "weeks",
+    cta: "See full couple report",
+    footer: "You're receiving this because you have a linked partner on logflix.app.",
+  },
+  dk: {
+    subject: (m, name, partner) => `${m} — ${name} & ${partner}s månedlige filmrapport 🎬`,
+    heading: (name, partner) => `${name} & ${partner}`,
+    scoreLabel: "Smagskompatibilitet",
+    changeUp: (n) => `↑ +${n}% fra sidste måned`,
+    changeDown: (n) => `↓ ${n}% fra sidste måned`,
+    moviesLabel: "film/serier set",
+    favoriteLabel: "Favorit",
+    genreLabel: "Top genre",
+    streakLabel: "Streak",
+    streakWeeks: "uger",
+    cta: "Se hele par-rapporten",
+    footer: "Du modtager denne fordi du har en forbundet partner på logflix.app.",
+  },
+  se: {
+    subject: (m) => `${m} — Er månadsrapport 🎬`,
+    heading: (name, partner) => `${name} & ${partner}`,
+    scoreLabel: "Smakkompatibilitet",
+    changeUp: (n) => `↑ +${n}% från förra månaden`,
+    changeDown: (n) => `↓ ${n}% från förra månaden`,
+    moviesLabel: "filmer/serier sedda",
+    favoriteLabel: "Favorit",
+    genreLabel: "Toppgenre",
+    streakLabel: "Streak",
+    streakWeeks: "veckor",
+    cta: "Se hela par-rapporten",
+    footer: "Du får detta för att du har en kopplad partner på logflix.app.",
+  },
+  fi: {
+    subject: (m) => `${m} — Kuukausiraporttinne 🎬`,
+    heading: (name, partner) => `${name} & ${partner}`,
+    scoreLabel: "Makuyhteensopivuus",
+    changeUp: (n) => `↑ +${n}% edellisestä kuukaudesta`,
+    changeDown: (n) => `↓ ${n}% edellisestä kuukaudesta`,
+    moviesLabel: "elokuvia/sarjoja katsottu",
+    favoriteLabel: "Suosikki",
+    genreLabel: "Suosituin genre",
+    streakLabel: "Putki",
+    streakWeeks: "viikkoa",
+    cta: "Katso koko pariraportti",
+    footer: "Saat tämän koska sinulla on yhdistetty kumppani logflix.app-sivustolla.",
+  },
+};
+
+function getMonthName(month: string, locale: string): string {
+  const names = monthNames[locale] || monthNames.en;
+  const idx = parseInt(month.split("-")[1] || "1") - 1;
+  return names[idx] || month;
+}
+
+function statCell(icon: string, value: string, label: string): string {
+  return `<td width="50%" style="padding:8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:${BG};border-radius:10px;border:1px solid ${BORDER};padding:14px 12px;">
+      <tr><td>
+        <span style="font-size:14px;">${icon}</span>
+        <span style="font-size:16px;font-weight:700;color:#fff;margin-left:6px;">${value}</span>
+        <br><span style="font-size:11px;color:${TEXT_DIM};margin-top:4px;display:inline-block;">${label}</span>
+      </td></tr>
+    </table>
+  </td>`;
+}
+
+export async function sendMonthlyCoupleReport(
+  email: string,
+  partnerName: string,
+  month: string,
+  data: {
+    moviesWatched: number;
+    topGenre: string;
+    favoriteTitle: string;
+    compatibilityScore: number;
+    compatibilityChange: number;
+    streakWeeks: number;
+  },
+  locale: string,
+  myName?: string,
+): Promise<void> {
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set — skipping monthly couple report email");
+    return;
+  }
+
+  const t = coupleReportStrings[locale] || coupleReportStrings.en;
+  const monthLabel = getMonthName(month, locale);
+  const displayName = myName || "Du";
+
+  const changeHtml = data.compatibilityChange !== 0
+    ? `<p style="margin:4px 0 0;font-size:12px;color:${data.compatibilityChange > 0 ? "#22c55e" : "#ef4444"};">
+        ${data.compatibilityChange > 0 ? t.changeUp(data.compatibilityChange) : t.changeDown(Math.abs(data.compatibilityChange))}
+      </p>`
+    : "";
+
+  try {
+    await resend.emails.send({
+      from: "Logflix <hei@logflix.app>",
+      to: email,
+      subject: t.subject(monthLabel, displayName, partnerName),
+      html: wrap(`
+        <tr><td align="center" style="padding-bottom:6px;">
+          <p style="margin:0;font-size:11px;font-weight:700;color:${RED};letter-spacing:1.5px;text-transform:uppercase;">${monthLabel.toUpperCase()}</p>
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:20px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:700;">${t.heading(displayName, partnerName)}</h1>
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:4px;">
+          <div style="display:inline-block;width:120px;height:120px;border-radius:60px;border:2px solid rgba(229,9,20,0.3);background:rgba(229,9,20,0.05);text-align:center;line-height:120px;">
+            <span style="font-size:36px;font-weight:900;color:#fff;">${data.compatibilityScore}%</span>
+          </div>
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:24px;">
+          <p style="margin:2px 0 0;font-size:11px;color:${TEXT_DIM};text-transform:uppercase;letter-spacing:1px;">${t.scoreLabel}</p>
+          ${changeHtml}
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              ${statCell("🎬", String(data.moviesWatched), t.moviesLabel)}
+              ${statCell("🏆", data.favoriteTitle || "—", t.favoriteLabel)}
+            </tr>
+            <tr>
+              ${statCell("🎭", data.topGenre || "—", t.genreLabel)}
+              ${statCell("🔥", `${data.streakWeeks} ${t.streakWeeks}`, t.streakLabel)}
+            </tr>
+          </table>
+        </td></tr>
+        ${ctaButton(t.cta, "https://logflix.app/couple-report")}
+        ${footer(
+          t.footer,
+          '<a href="https://logflix.app/settings" style="color:' + TEXT_DIM + ';text-decoration:underline;">Innstillinger</a>'
+        )}
+      `),
+    });
+  } catch (err) {
+    console.error("Failed to send monthly couple report email:", err);
+  }
+}
+
+/* ── 5. Weekly Digest ───────────────────────────────────── */
 
 export async function sendWeeklyDigestEmail(
   email: string,

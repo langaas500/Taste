@@ -53,6 +53,7 @@ const strings = {
     tpNoPartner: "Koble til en partner for å få Tonight's Pick",
     tpConnect: "Koble til partner",
     tpSeTogether: "Se Sammen",
+    coupleReportLink: "Se par-rapporten →",
   },
   en: {
     title: "Home",
@@ -95,6 +96,7 @@ const strings = {
     tpNoPartner: "Link a partner to get Tonight's Pick",
     tpConnect: "Connect partner",
     tpSeTogether: "Watch Together",
+    coupleReportLink: "See couple report →",
   },
   dk: {
     title: "Hjem",
@@ -137,6 +139,7 @@ const strings = {
     tpNoPartner: "Forbind en partner for at få Tonight's Pick",
     tpConnect: "Forbind partner",
     tpSeTogether: "Se Sammen",
+    coupleReportLink: "Se parrapporten →",
   },
   se: {
     title: "Hem",
@@ -179,6 +182,7 @@ const strings = {
     tpNoPartner: "Koppla ihop med en partner för att få Tonight's Pick",
     tpConnect: "Koppla partner",
     tpSeTogether: "Se Tillsammans",
+    coupleReportLink: "Se parrapporten →",
   },
   fi: {
     title: "Koti",
@@ -221,6 +225,7 @@ const strings = {
     tpNoPartner: "Yhdistä kumppani saadaksesi Tonight's Pick",
     tpConnect: "Yhdistä kumppani",
     tpSeTogether: "Katsotaan Yhdessä",
+    coupleReportLink: "Katso pariraportti →",
   },
 } as const;
 
@@ -546,10 +551,13 @@ export default function HomePage() {
               </div>
             )}
           </div>
-          <div className="flex justify-center mt-3">
+          <div className="flex flex-col items-center gap-2 mt-3">
             <button onClick={handleReroll} disabled={tpRerolling} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white/40 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.08] transition-all disabled:opacity-40 cursor-pointer">
               {tpRerolling ? "..." : `↻ ${s.tpReroll}`}
             </button>
+            <Link href="/couple-report" className="text-xs transition-colors" style={{ color: "rgba(255,255,255,0.35)" }} onMouseEnter={(e) => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }} onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}>
+              {s.coupleReportLink}
+            </Link>
           </div>
         </section>
       )}
