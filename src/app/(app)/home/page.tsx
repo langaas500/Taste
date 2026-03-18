@@ -332,7 +332,7 @@ export default function HomePage() {
     return [];
   });
   const [tonightPick, setTonightPick] = useState<TonightPickData | null>(null);
-  const [tpLoading, setTpLoading] = useState(false);
+  const [tpLoading, setTpLoading] = useState(true);
   const [tpRerolling, setTpRerolling] = useState(false);
   const [partnerName, setPartnerName] = useState<string | null>(null);
   const [hasPartner, setHasPartner] = useState<boolean | null>(null);
@@ -389,6 +389,7 @@ export default function HomePage() {
       console.log("isPremium:", !!profileRes?.profile?.is_premium);
       const premium = !!profileRes?.profile?.is_premium;
       setIsPremium(premium);
+      if (!premium) setTpLoading(false);
       if (tasteRes?.summary) {
         setHasTaste(true);
         try {
@@ -674,8 +675,8 @@ export default function HomePage() {
       {/* Tonight's Pick + Recommendations — side by side on desktop */}
       <div className="flex flex-col md:flex-row gap-6 items-start">
 
-        {/* Tonight's Pick — venstre kolonne (alltid synlig for premium) */}
-        {isPremium && (
+        {/* Tonight's Pick — venstre kolonne */}
+        {(isPremium || tpLoading) && (
           <div className="w-full md:w-[320px] md:flex-shrink-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[9px] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-full" style={{ background: "rgba(245,200,66,0.12)", border: "0.5px solid rgba(245,200,66,0.3)", color: "#F5C842" }}>Premium</span>
