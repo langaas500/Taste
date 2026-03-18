@@ -393,7 +393,7 @@ export default function HomePage() {
           const recRes = await fetch("/api/recommendations");
           const recData = await recRes.json();
           if (recData.recommendations) {
-            const recs = recData.recommendations.slice(0, 3);
+            const recs = recData.recommendations.slice(0, 8);
             setHomeRecs(recs);
             try { localStorage.setItem("logflix_home_recs", JSON.stringify(recs)); } catch { /* ignore */ }
           }
