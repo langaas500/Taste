@@ -385,6 +385,8 @@ export default function HomePage() {
         fetch("/api/taste-summary").then((r) => r.json()).catch(() => ({})),
         fetch("/api/profile").then((r) => r.json()).catch(() => ({})),
       ]);
+      console.log("profileRes:", JSON.stringify(profileRes));
+      console.log("isPremium:", !!profileRes?.profile?.is_premium);
       const premium = !!profileRes?.profile?.is_premium;
       setIsPremium(premium);
       if (tasteRes?.summary) {
@@ -649,6 +651,41 @@ export default function HomePage() {
         </section>
       )}
 
+      {/* Tonight's Pick — blurred placeholder for non-premium */}
+      {!isPremium && (
+        <section>
+          <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-4">
+            Tonight&apos;s Pick for deg
+          </h2>
+          <div className="relative grid grid-cols-2 gap-3 max-w-md">
+            {[
+              { label: "🎬 Film i kveld", title: "Chinatown", score: "85% match" },
+              { label: "📺 Serie i kveld", title: "CSI: Crime Scene Investigation", score: "85% match" },
+            ].map((item) => (
+              <div key={item.label} className="rounded-xl border border-white/[0.06] p-3 flex flex-col"
+                style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", minHeight: 120 }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2">{item.label}</p>
+                <div className="relative w-full rounded-lg overflow-hidden mb-2" style={{ aspectRatio: "2/3", maxHeight: 180, background: "rgba(255,255,255,0.05)", filter: "blur(6px)" }} />
+                <p className="text-xs font-semibold text-white/85 truncate" style={{ filter: "blur(4px)" }}>{item.title}</p>
+                <p className="text-[10px] mt-0.5" style={{ filter: "blur(4px)", color: "rgba(245,200,66,0.8)" }}>★ {item.score}</p>
+              </div>
+            ))}
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl"
+              style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(2px)" }}>
+              <div className="text-center px-4">
+                <p className="text-sm font-bold text-white mb-1">🔒 Tonight&apos;s Pick</p>
+                <p className="text-xs text-white/60 mb-3">Daglig film + serie basert på smaken din</p>
+                <Link href="/premium"
+                  className="block px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                  style={{ background: "rgba(245,200,66,0.15)", border: "0.5px solid rgba(245,200,66,0.4)", color: "#F5C842" }}>
+                  Logflix Par — 29 kr/mnd
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {isPremium && tonightPick && (
         <section>
           <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-4">
@@ -700,7 +737,7 @@ export default function HomePage() {
       )}
 
       {/* Recommendations row — only show when we have actual recs */}
-      {homeRecs.length > 0 && !(isPremium && tonightPick) && (
+      {homeRecs.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">
