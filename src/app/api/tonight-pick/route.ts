@@ -24,15 +24,15 @@ export async function GET() {
       .single();
 
     const isSolo = !link;
-    const linkId = link?.id ?? user.id;
+    const linkId = link?.id ?? null;
     const partnerId = link ? (link.inviter_id === user.id ? link.invitee_id : link.inviter_id) : null;
     const today = new Date().toISOString().slice(0, 10);
 
-    // Check for existing pick today
+    // Check for existing pick today (keyed by user_id)
     const { data: existing } = await admin
       .from("couple_picks")
       .select("*")
-      .eq("link_id", linkId)
+      .eq("user_id", user.id)
       .eq("generated_at", today)
       .single();
 
@@ -81,7 +81,7 @@ export async function POST() {
       .single();
 
     const isSolo = !link;
-    const linkId = link?.id ?? user.id;
+    const linkId = link?.id ?? null;
     const partnerId = link ? (link.inviter_id === user.id ? link.invitee_id : link.inviter_id) : null;
     const today = new Date().toISOString().slice(0, 10);
 
@@ -89,7 +89,7 @@ export async function POST() {
     const { data: current } = await admin
       .from("couple_picks")
       .select("reroll_count")
-      .eq("link_id", linkId)
+      .eq("user_id", user.id)
       .eq("generated_at", today)
       .single();
 
@@ -99,7 +99,7 @@ export async function POST() {
     await admin
       .from("couple_picks")
       .delete()
-      .eq("link_id", linkId)
+      .eq("user_id", user.id)
       .eq("generated_at", today);
 
     const pick = await generatePick(admin, linkId, user.id, partnerId, today, rerollCount);
@@ -227,7 +227,7 @@ async function discoverTitle(
 
 async function generatePick(
   admin: ReturnType<typeof createSupabaseAdmin>,
-  linkId: string,
+  linkId: string | null,
   userId: string,
   partnerId: string | null,
   today: string,
@@ -252,6 +252,7 @@ async function generatePick(
 
   // Insert pick
   const row = {
+    user_id: userId,
     link_id: linkId,
     movie_tmdb_id: movie?.tmdb_id ?? null,
     movie_type: movie ? "movie" : null,
@@ -269,7 +270,7 @@ async function generatePick(
 
   const { data: inserted, error } = await admin
     .from("couple_picks")
-    .upsert(row, { onConflict: "link_id,generated_at" })
+    .upsert(row, { onConflict: "user_id,generated_at" })
     .select()
     .single();
 
