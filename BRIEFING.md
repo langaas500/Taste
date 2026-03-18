@@ -3,16 +3,17 @@
 > Denne filen er IKKE for kode-agenten (se CLAUDE.md). Den er kun til ekstern AI-assistent for rask kontekst uten kodebase-tilgang.
 
 ## Sist oppdatert
-**17.03.2026**
+**18.03.2026**
 
 ## Git-status
-- **Siste push:** `feat: add try with another friend CTA on match screen` (17.03.2026)
+- **Siste push:** `feat: conversion quick wins - landing headline, premium CTA, guest save match, invite text, digest couple stats` (18.03.2026)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 
 ## Hva er gjort nylig (siste 10 endringer)
 
-1. [pushet] **Viral loop på match-skjerm** — "Prøv med en annen venn →" knapp på winner-skjermen. Åpner native share med "Jeg matchet på [tittel] — prøv du også!" + logflix.app/together. Lokalisert 5 språk. Kun synlig etter match.
+1. [pushet] **Konverteringsendringer (quick wins)** — Landing headline byttet til emosjonell "Slutt å krangle om hva dere skal se" (5 språk). PremiumModal CTA → "Start Logflix Par — 29 kr/mnd". Guest CTA på match-skjerm → "Lagre matchen" (mer spesifikt). Invite-tekst → "Jeg fant noe vi kan se i kveld 🎬". Weekly digest inkluderer nå par-matchdata (antall matcher + siste match + link til par-rapport) for brukere med koblet partner.
+2. [pushet] **Viral loop på match-skjerm** — "Prøv med en annen venn →" knapp på winner-skjermen. Åpner native share med "Jeg matchet på [tittel] — prøv du også!" + logflix.app/together. Lokalisert 5 språk. Kun synlig etter match.
 2. [pushet] **Feature-seksjon på landing** — Ny scrollbar seksjon under hero som viser verdien av gratis konto: 4 glassmorphism-kort (Logg, AI, Smaksprofil, Venner) i 2×2 grid (mobil) / 4×1 (desktop). Rød signup-CTA. Lokalisert no/en.
 2. [pushet] **Server-side premium gate på taste-summary** — `/api/taste-summary` returnerer nå kun `youLike` for gratisbrukere (avoid/pacing nulles ut server-side). Full data kun for premium. Respons inkluderer `is_premium` boolean. Full summary lagres fortsatt i DB slik at oppgradering gir umiddelbar tilgang.
 2. [pushet] **Guide hub-sider** — Ny `/[region]/guides` side som lister alle 22 guider gruppert i 4 kategorier (For to, Alene, Familie & venner, Stemning & sjanger). Glassmorphism-kort, lokalisert metadata+hreflang, BreadcrumbList JSON-LD. Forbedrer intern oppdagelse av guider.
