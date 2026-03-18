@@ -250,10 +250,10 @@ export default function PremiumHubPage() {
           <div style={{ display: "flex", gap: 8, height: "100%", width: "max-content", animation: "poster-drift-p 60s linear infinite" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {[...heroPosters, ...heroPosters].map((p, i) => (
-              <img key={i} src={`https://image.tmdb.org/t/p/w185${p}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.06, filter: "blur(3px)", flexShrink: 0 }} />
+              <img key={i} src={`https://image.tmdb.org/t/p/w185${p}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.10, filter: "blur(2px)", flexShrink: 0 }} />
             ))}
           </div>
-          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 80% at 50% 50%, transparent 20%, rgba(10,10,15,0.95) 100%)" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(10,10,15,0.3) 0%, rgba(10,10,15,0.5) 50%, rgba(10,10,15,0.7) 100%)" }} />
         </div>
       )}
 
@@ -378,7 +378,7 @@ export default function PremiumHubPage() {
             </>
           ) : (
             <p className="text-xs text-white/30">
-              {locale === "no" ? "Koble til en partner for å se rapporten" : "Connect a partner to see the report"}
+              {locale === "no" ? "Du mangler en partner-kobling. Finn ut nøyaktig hva dere matcher på." : "No partner connected yet. Find out exactly what you match on."}
             </p>
           )}
           <p className="text-[10px] text-white/20 group-hover:text-white/40 mt-3 transition-colors">
@@ -396,7 +396,7 @@ export default function PremiumHubPage() {
             </p>
           </div>
           <p className="text-xs text-white/40 leading-relaxed">
-            {locale === "no" ? "AI-analyse av filmsmaken din basert på biblioteket ditt." : "AI analysis of your film taste based on your library."}
+            {locale === "no" ? "Din AI-smaksprofil er klar. Klikk for å se hva biblioteket ditt sier om deg." : "Your AI taste profile is ready. Click to see what your library says about you."}
           </p>
           <p className="text-[10px] text-white/20 group-hover:text-white/40 mt-3 transition-colors">
             {locale === "no" ? "Se profilen →" : "See profile →"}
@@ -415,7 +415,7 @@ export default function PremiumHubPage() {
             </span>
           </div>
           <p className="text-xs text-white/40 leading-relaxed">
-            {locale === "no" ? "Din personlige AI-filmekspert. Spør om stemning, sjanger eller skuespiller." : "Your personal AI film expert. Ask about mood, genre or actor."}
+            {locale === "no" ? "Curator venter. Hva har du lyst til å føle i kveld?" : "Curator is ready. What do you want to feel tonight?"}
           </p>
           <p className="text-[10px] text-white/20 group-hover:text-white/40 mt-3 transition-colors">
             {locale === "no" ? "Åpne Curator →" : "Open Curator →"}
