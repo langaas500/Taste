@@ -697,6 +697,33 @@ export default function WTBetaPage() {
     }
   }
 
+  async function handleShareStory() {
+    if (!finalWinner) return;
+    try {
+      const params = new URLSearchParams({
+        title: finalWinner.title,
+        poster: finalWinner.poster_path || "",
+        locale,
+      });
+      const res = await fetch(`/api/og/match-share?${params}`);
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const file = new File([blob], "logflix-match.png", { type: "image/png" });
+      if (typeof navigator !== "undefined" && navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: finalWinner.title });
+        track("match_story_shared", { session_id: sessionId, tmdb_id: finalWinner.tmdb_id, method: "native_share" });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "logflix-match.png";
+        a.click();
+        URL.revokeObjectURL(url);
+        track("match_story_shared", { session_id: sessionId, tmdb_id: finalWinner.tmdb_id, method: "download" });
+      }
+    } catch { /* ignore */ }
+  }
+
   async function handleAddWatchlist() {
     if (!finalWinner || !authUser || watchlistAdded || watchlistLoading) return;
     setWatchlistLoading(true);
@@ -1793,6 +1820,13 @@ export default function WTBetaPage() {
                   >
                     {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "share")}
                   </button>
+                  <button
+                    onClick={handleShareStory}
+                    className="w-full py-2.5 rounded-xl text-xs font-medium mb-2 sm:hidden"
+                    style={{ background: "rgba(255,42,42,0.08)", border: "1px solid rgba(255,42,42,0.15)", color: "rgba(255,255,255,0.55)", cursor: "pointer" }}
+                  >
+                    {t(locale, "winner", "shareStory")}
+                  </button>
                   {authUser && (
                     <div className="flex gap-2 mb-2 w-full">
                       <button
@@ -2053,10 +2087,17 @@ export default function WTBetaPage() {
                     )}
                     <button
                       onClick={() => finalWinner && handleShare(finalWinner.title)}
-                      className="w-full py-3 rounded-xl text-sm font-medium mb-3"
+                      className="w-full py-3 rounded-xl text-sm font-medium mb-2"
                       style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.72)", cursor: "pointer" }}
                     >
                       {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "share")}
+                    </button>
+                    <button
+                      onClick={handleShareStory}
+                      className="w-full py-2.5 rounded-xl text-xs font-medium mb-3 sm:hidden"
+                      style={{ background: "rgba(255,42,42,0.08)", border: "1px solid rgba(255,42,42,0.15)", color: "rgba(255,255,255,0.55)", cursor: "pointer" }}
+                    >
+                      {t(locale, "winner", "shareStory")}
                     </button>
                     {authUser && (
                       <div className="flex gap-2 mb-3 w-full">
