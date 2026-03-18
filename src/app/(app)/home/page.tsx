@@ -46,6 +46,7 @@ const strings = {
     curatorText: "Ikke sikker på hva du vil se? Spør Curator",
     curatorCta: "Åpne Curator",
     tpTitle: (name: string) => `Tonight's Pick for deg og ${name}`,
+    tpTitleSolo: "Tonight's Pick for deg",
     tpMovie: "Film i kveld",
     tpSeries: "Serie i kveld",
     tpMatch: "match",
@@ -89,6 +90,7 @@ const strings = {
     curatorText: "Not sure what to watch? Ask Curator",
     curatorCta: "Open Curator",
     tpTitle: (name: string) => `Tonight's Pick for you and ${name}`,
+    tpTitleSolo: "Tonight's Pick for you",
     tpMovie: "Movie tonight",
     tpSeries: "Series tonight",
     tpMatch: "match",
@@ -132,6 +134,7 @@ const strings = {
     curatorText: "Ikke sikker på hvad du vil se? Spørg Curator",
     curatorCta: "Åbn Curator",
     tpTitle: (name: string) => `Tonight's Pick for dig og ${name}`,
+    tpTitleSolo: "Tonight's Pick for dig",
     tpMovie: "Film i aften",
     tpSeries: "Serie i aften",
     tpMatch: "match",
@@ -175,6 +178,7 @@ const strings = {
     curatorText: "Inte säker på vad du vill se? Fråga Curator",
     curatorCta: "Öppna Curator",
     tpTitle: (name: string) => `Tonight's Pick för dig och ${name}`,
+    tpTitleSolo: "Tonight's Pick för dig",
     tpMovie: "Film ikväll",
     tpSeries: "Serie ikväll",
     tpMatch: "match",
@@ -218,6 +222,7 @@ const strings = {
     curatorText: "Etkö tiedä mitä katsoa? Kysy Curatorilta",
     curatorCta: "Avaa Curator",
     tpTitle: (name: string) => `Tonight's Pick sinulle ja ${name}`,
+    tpTitleSolo: "Tonight's Pick sinulle",
     tpMovie: "Elokuva tänään",
     tpSeries: "Sarja tänään",
     tpMatch: "osuma",
@@ -316,16 +321,17 @@ export default function HomePage() {
     setTpLoading(true);
     try {
       const res = await fetch("/api/tonight-pick");
-      if (res.status === 404) { setHasPartner(false); setTpLoading(false); return; }
       if (!res.ok) { setTpLoading(false); return; }
       const data = await res.json();
       setTonightPick(data);
-      setHasPartner(true);
-      try {
-        const friendsRes = await fetch("/api/friends/titles");
-        const friendsData = await friendsRes.json();
-        if (friendsData.friendName) setPartnerName(friendsData.friendName);
-      } catch { /* ignore */ }
+      setHasPartner(!data.solo);
+      if (!data.solo) {
+        try {
+          const friendsRes = await fetch("/api/friends/titles");
+          const friendsData = await friendsRes.json();
+          if (friendsData.friendName) setPartnerName(friendsData.friendName);
+        } catch { /* ignore */ }
+      }
     } catch { /* ignore */ }
     setTpLoading(false);
   }
@@ -491,21 +497,7 @@ export default function HomePage() {
         </div>
       </Link>
 
-      {/* Tonight's Pick — premium users */}
-      {isPremium && hasPartner === false && (
-        <Link
-          href="/settings"
-          className="flex items-center gap-3 rounded-[var(--radius-lg)] p-4 border border-white/[0.06] hover:border-white/[0.12] transition-all"
-          style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
-        >
-          <span className="text-xl flex-shrink-0">💑</span>
-          <p className="flex-1 text-sm text-white/50">{s.tpNoPartner}</p>
-          <span className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white/80 bg-white/[0.08]">
-            {s.tpConnect}
-          </span>
-        </Link>
-      )}
-
+      {/* Tonight's Pick — premium users (solo + paired) */}
       {isPremium && tpLoading && (
         <section>
           <div className="skeleton h-5 w-56 rounded mb-4" />
@@ -522,10 +514,10 @@ export default function HomePage() {
         </section>
       )}
 
-      {isPremium && tonightPick && hasPartner && (
+      {isPremium && tonightPick && (
         <section>
           <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-4">
-            {s.tpTitle(partnerName || "Partner")}
+            {hasPartner ? s.tpTitle(partnerName || "Partner") : s.tpTitleSolo}
           </h2>
           <div className="grid grid-cols-2 gap-3 max-w-md">
             {tonightPick.movie && (
@@ -563,9 +555,11 @@ export default function HomePage() {
             <button onClick={handleReroll} disabled={tpRerolling} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white/40 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.08] transition-all disabled:opacity-40 cursor-pointer">
               {tpRerolling ? "..." : `↻ ${s.tpReroll}`}
             </button>
-            <Link href="/couple-report" className="text-xs transition-colors" style={{ color: "rgba(255,255,255,0.35)" }} onMouseEnter={(e) => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }} onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}>
-              {s.coupleReportLink}
-            </Link>
+            {hasPartner && (
+              <Link href="/couple-report" className="text-xs transition-colors" style={{ color: "rgba(255,255,255,0.35)" }} onMouseEnter={(e) => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }} onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}>
+                {s.coupleReportLink}
+              </Link>
+            )}
           </div>
         </section>
       )}

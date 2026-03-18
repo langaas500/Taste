@@ -14,7 +14,7 @@ export async function GET() {
     const user = await requireUser();
     const admin = createSupabaseAdmin();
 
-    // Find accepted partner link
+    // Find accepted partner link (optional — solo users won't have one)
     const { data: link } = await admin
       .from("account_links")
       .select("id, inviter_id, invitee_id")
@@ -23,28 +23,26 @@ export async function GET() {
       .limit(1)
       .single();
 
-    if (!link) {
-      return NextResponse.json({ error: "No linked partner" }, { status: 404 });
-    }
-
-    const partnerId = link.inviter_id === user.id ? link.invitee_id : link.inviter_id;
+    const isSolo = !link;
+    const linkId = link?.id ?? `solo_${user.id}`;
+    const partnerId = link ? (link.inviter_id === user.id ? link.invitee_id : link.inviter_id) : null;
     const today = new Date().toISOString().slice(0, 10);
 
     // Check for existing pick today
     const { data: existing } = await admin
       .from("couple_picks")
       .select("*")
-      .eq("link_id", link.id)
+      .eq("link_id", linkId)
       .eq("generated_at", today)
       .single();
 
     if (existing) {
-      return NextResponse.json(formatPick(existing));
+      return NextResponse.json({ ...formatPick(existing), solo: isSolo });
     }
 
     // Generate new pick
-    const pick = await generatePick(admin, link.id, user.id, partnerId, today);
-    return NextResponse.json(pick);
+    const pick = await generatePick(admin, linkId, user.id, partnerId, today);
+    return NextResponse.json({ ...pick, solo: isSolo });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
@@ -73,7 +71,7 @@ export async function POST() {
       return NextResponse.json({ error: "Premium required" }, { status: 403 });
     }
 
-    // Find accepted partner link
+    // Find accepted partner link (optional — solo users won't have one)
     const { data: link } = await admin
       .from("account_links")
       .select("id, inviter_id, invitee_id")
@@ -82,18 +80,16 @@ export async function POST() {
       .limit(1)
       .single();
 
-    if (!link) {
-      return NextResponse.json({ error: "No linked partner" }, { status: 404 });
-    }
-
-    const partnerId = link.inviter_id === user.id ? link.invitee_id : link.inviter_id;
+    const isSolo = !link;
+    const linkId = link?.id ?? `solo_${user.id}`;
+    const partnerId = link ? (link.inviter_id === user.id ? link.invitee_id : link.inviter_id) : null;
     const today = new Date().toISOString().slice(0, 10);
 
     // Get current reroll count
     const { data: current } = await admin
       .from("couple_picks")
       .select("reroll_count")
-      .eq("link_id", link.id)
+      .eq("link_id", linkId)
       .eq("generated_at", today)
       .single();
 
@@ -103,11 +99,11 @@ export async function POST() {
     await admin
       .from("couple_picks")
       .delete()
-      .eq("link_id", link.id)
+      .eq("link_id", linkId)
       .eq("generated_at", today);
 
-    const pick = await generatePick(admin, link.id, user.id, partnerId, today, rerollCount);
-    return NextResponse.json(pick);
+    const pick = await generatePick(admin, linkId, user.id, partnerId, today, rerollCount);
+    return NextResponse.json({ ...pick, solo: isSolo });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
@@ -233,17 +229,17 @@ async function generatePick(
   admin: ReturnType<typeof createSupabaseAdmin>,
   linkId: string,
   userId: string,
-  partnerId: string,
+  partnerId: string | null,
   today: string,
   rerollCount: number = 0,
 ) {
-  // Get both users' genre preferences
-  const [genresA, genresB] = await Promise.all([
-    getUserTopGenres(admin, userId),
-    getUserTopGenres(admin, partnerId),
-  ]);
+  // Get genre preferences — solo uses only user's genres
+  const genresA = await getUserTopGenres(admin, userId);
+  const genresB = partnerId ? await getUserTopGenres(admin, partnerId) : [];
 
-  const { genreIds, score } = computeOverlap(genresA, genresB);
+  const { genreIds, score } = partnerId
+    ? computeOverlap(genresA, genresB)
+    : { genreIds: genresA.slice(0, 5).map((g) => g.genre_id), score: 85 };
 
   // Use different TMDB pages for rerolls to get fresh results
   const page = String(1 + rerollCount);
