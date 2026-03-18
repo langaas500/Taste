@@ -684,9 +684,16 @@ export default function HomePage() {
               {hasPartner ? s.tpTitle(partnerName || "Partner") : s.tpTitleSolo}
             </h2>
             {tpLoading && !tonightPick && (
-              <div className="flex items-center gap-3 py-8">
-                <div className="w-5 h-5 border-2 border-white/10 border-t-[var(--accent)] rounded-full animate-spin flex-shrink-0" />
-                <p className="text-xs text-white/40">{locale === "no" ? "Genererer basert på smaken din..." : locale === "se" ? "Genererar baserat på din smak..." : locale === "dk" ? "Genererer baseret på din smag..." : locale === "fi" ? "Luodaan makusi perusteella..." : "Generating based on your taste..."}</p>
+              <div className="flex gap-3">
+                {[s.tpMovie, s.tpSeries].map((_, i) => (
+                  <div key={i} className="w-[140px] rounded-xl border border-white/[0.06] p-3 flex flex-col flex-shrink-0"
+                    style={{ background: "rgba(255,255,255,0.025)" }}>
+                    <div className="skeleton h-3 w-20 rounded mb-2" />
+                    <div className="skeleton w-full rounded-lg mb-2" style={{ aspectRatio: "2/3" }} />
+                    <div className="skeleton h-3 w-24 rounded mb-1" />
+                    <div className="skeleton h-2.5 w-16 rounded" />
+                  </div>
+                ))}
               </div>
             )}
             {tonightPick && (
