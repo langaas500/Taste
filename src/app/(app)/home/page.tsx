@@ -16,6 +16,11 @@ const strings = {
     title: "Hjem",
     titlesInCollection: "titler i samlingen din",
     titleSingular: "tittel",
+    greetMorning: "God morgen",
+    greetDay: "God dag",
+    greetEvening: "God kveld",
+    greetLate: "Sent ute",
+    loggedCount: (n: number) => `Du har logget ${n} titler`,
     togetherLabel: "Se Sammen",
     togetherHeadline: "Slutt å scrolle.",
     togetherHeadline2: "Finn noe å se sammen.",
@@ -43,7 +48,8 @@ const strings = {
     recTitlePremium: "Anbefalt for deg i dag",
     recBased: "Basert på filmsmaken din",
     recCta: "Se dine anbefalinger",
-    curatorText: "Ikke sikker på hva du vil se? Spør Curator",
+    curatorText: "Hva vil du føle i kveld?",
+    curatorSub: "Curator analyserer biblioteket ditt og finner noe perfekt.",
     curatorCta: "Åpne Curator",
     tpTitle: (name: string) => `Tonight's Pick for deg og ${name}`,
     tpTitleSolo: "Tonight's Pick for deg",
@@ -66,6 +72,11 @@ const strings = {
     title: "Home",
     titlesInCollection: "titles in your collection",
     titleSingular: "title",
+    greetMorning: "Good morning",
+    greetDay: "Good afternoon",
+    greetEvening: "Good evening",
+    greetLate: "Up late",
+    loggedCount: (n: number) => `You've logged ${n} titles`,
     togetherLabel: "Watch Together",
     togetherHeadline: "Stop scrolling.",
     togetherHeadline2: "Find something to watch.",
@@ -93,7 +104,8 @@ const strings = {
     recTitlePremium: "Recommended for you today",
     recBased: "Based on your film taste",
     recCta: "See your recommendations",
-    curatorText: "Not sure what to watch? Ask Curator",
+    curatorText: "What do you want to feel tonight?",
+    curatorSub: "Curator analyzes your library and finds something perfect.",
     curatorCta: "Open Curator",
     tpTitle: (name: string) => `Tonight's Pick for you and ${name}`,
     tpTitleSolo: "Tonight's Pick for you",
@@ -116,6 +128,11 @@ const strings = {
     title: "Hjem",
     titlesInCollection: "titler i din samling",
     titleSingular: "titel",
+    greetMorning: "God morgen",
+    greetDay: "God dag",
+    greetEvening: "God aften",
+    greetLate: "Sent ude",
+    loggedCount: (n: number) => `Du har logget ${n} titler`,
     togetherLabel: "Se Sammen",
     togetherHeadline: "Stop med at scrolle.",
     togetherHeadline2: "Find noget at se sammen.",
@@ -143,7 +160,8 @@ const strings = {
     recTitlePremium: "Anbefalet til dig i dag",
     recBased: "Baseret på din filmsmag",
     recCta: "Se dine anbefalinger",
-    curatorText: "Ikke sikker på hvad du vil se? Spørg Curator",
+    curatorText: "Hvad vil du føle i aften?",
+    curatorSub: "Curator analyserer dit bibliotek og finder noget perfekt.",
     curatorCta: "Åbn Curator",
     tpTitle: (name: string) => `Tonight's Pick for dig og ${name}`,
     tpTitleSolo: "Tonight's Pick for dig",
@@ -166,6 +184,11 @@ const strings = {
     title: "Hem",
     titlesInCollection: "titlar i din samling",
     titleSingular: "titel",
+    greetMorning: "God morgon",
+    greetDay: "God dag",
+    greetEvening: "God kväll",
+    greetLate: "Uppe sent",
+    loggedCount: (n: number) => `Du har loggat ${n} titlar`,
     togetherLabel: "Se Tillsammans",
     togetherHeadline: "Sluta scrolla.",
     togetherHeadline2: "Hitta något att se tillsammans.",
@@ -193,7 +216,8 @@ const strings = {
     recTitlePremium: "Rekommenderat för dig idag",
     recBased: "Baserat på din filmsmak",
     recCta: "Se dina rekommendationer",
-    curatorText: "Inte säker på vad du vill se? Fråga Curator",
+    curatorText: "Vad vill du känna ikväll?",
+    curatorSub: "Curator analyserar ditt bibliotek och hittar något perfekt.",
     curatorCta: "Öppna Curator",
     tpTitle: (name: string) => `Tonight's Pick för dig och ${name}`,
     tpTitleSolo: "Tonight's Pick för dig",
@@ -216,6 +240,11 @@ const strings = {
     title: "Koti",
     titlesInCollection: "nimikettä kokoelmassasi",
     titleSingular: "nimike",
+    greetMorning: "Hyvää huomenta",
+    greetDay: "Hyvää päivää",
+    greetEvening: "Hyvää iltaa",
+    greetLate: "Myöhäinen ilta",
+    loggedCount: (n: number) => `Olet kirjannut ${n} nimikettä`,
     togetherLabel: "Katsotaan Yhdessä",
     togetherHeadline: "Lopeta selaaminen.",
     togetherHeadline2: "Löydä jotain katsottavaa yhdessä.",
@@ -243,7 +272,8 @@ const strings = {
     recTitlePremium: "Suositeltu sinulle tänään",
     recBased: "Makusi perusteella",
     recCta: "Katso suosituksesi",
-    curatorText: "Etkö tiedä mitä katsoa? Kysy Curatorilta",
+    curatorText: "Mitä haluat tuntea tänä iltana?",
+    curatorSub: "Curator analysoi kirjastosi ja löytää jotain täydellistä.",
     curatorCta: "Avaa Curator",
     tpTitle: (name: string) => `Tonight's Pick sinulle ja ${name}`,
     tpTitleSolo: "Tonight's Pick sinulle",
@@ -307,6 +337,7 @@ export default function HomePage() {
   const [partnerName, setPartnerName] = useState<string | null>(null);
   const [hasPartner, setHasPartner] = useState<boolean | null>(null);
   const [returningBanner, setReturningBanner] = useState<{ type: "day3" | "day7" } | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
 
   useEffect(() => {
     loadDashboard();
@@ -404,6 +435,8 @@ export default function HomePage() {
     const supabase = createSupabaseBrowser();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
+    const { data: profile } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
+    setUserName(profile?.display_name || user.email?.split("@")[0] || null);
 
     const [titlesRes, trendingRes, bannersRes] = await Promise.all([
       supabase.from("user_titles").select("*").eq("user_id", user.id).order("updated_at", { ascending: false }),
@@ -491,15 +524,21 @@ export default function HomePage() {
 
   const showImportBanner = data.totalTitles < 20;
 
+  const hour = new Date().getHours();
+  const greeting = hour >= 23 || hour < 6 ? s.greetLate
+    : hour < 11 ? s.greetMorning
+    : hour < 17 ? s.greetDay
+    : s.greetEvening;
+
   return (
     <div className="animate-fade-in-up space-y-10">
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">
-          {s.title}
+          {greeting}{userName ? `, ${userName}` : ""}
         </h1>
         <p className="text-sm text-[var(--text-tertiary)] mt-0.5">
-          {data.totalTitles} {data.totalTitles === 1 ? s.titleSingular : s.titlesInCollection}
+          {s.loggedCount(data.totalTitles)}
         </p>
       </div>
 
@@ -528,6 +567,8 @@ export default function HomePage() {
       )}
 
       {/* Se Sammen — cinematisk banner med filmpostere */}
+      <div className="relative overflow-hidden rounded-2xl">
+        <div className="absolute -inset-4 rounded-full pointer-events-none" style={{ background: "rgba(220,38,38,0.1)", filter: "blur(48px)" }} />
       <Link href="/together" style={{ display: "block", borderRadius: 16, overflow: "hidden", position: "relative", minHeight: 180, textDecoration: "none" }}>
         {/* Poster bakgrunner */}
         <div style={{ position: "absolute", inset: 0, display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 2 }}>
@@ -556,7 +597,7 @@ export default function HomePage() {
             <h2 style={{ margin: "0 0 6px", fontSize: 20, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
               {s.togetherHeadline}<br />{s.togetherHeadline2}
             </h2>
-            <p style={{ margin: "0 0 14px", fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>{s.togetherSub}</p>
+            <p style={{ margin: "0 0 14px", fontSize: 13, color: "rgba(255,120,120,0.7)", lineHeight: 1.5 }}>{s.togetherSub}</p>
             <div style={{ display: "flex", gap: 14 }}>
               {[["❤️", s.togetherSwipe], ["🎬", s.togetherMatch], ["🍿", s.togetherWatch]].map(([icon, label]) => (
                 <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -570,11 +611,10 @@ export default function HomePage() {
             <span style={{ background: "#ff2a2a", color: "#fff", borderRadius: 12, padding: "12px 18px", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 0 20px rgba(255,42,42,0.4)", display: "block" }}>
               {s.togetherCta}
             </span>
-            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", textAlign: "center" }}>{s.togetherFree} &nbsp; {s.togetherNoAccount}</span>
-            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>{s.togetherSocialProof}</span>
           </div>
         </div>
       </Link>
+      </div>
 
       {/* Tonight's Pick — premium users (solo + paired) */}
       {isPremium && tpLoading && (
@@ -668,9 +708,12 @@ export default function HomePage() {
 
       {/* Curator promo */}
       {hasTaste && (
-        <Link href="/curator" className="flex items-center gap-3 rounded-[var(--radius-lg)] p-3.5 border border-white/[0.06] hover:border-white/[0.12] transition-all" style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
-          <span className="text-xl flex-shrink-0">🤖</span>
-          <p className="flex-1 text-sm text-white/60">{s.curatorText}</p>
+        <Link href="/curator" className="flex items-center gap-3 rounded-[var(--radius-lg)] p-3.5 border border-white/10 hover:border-white/[0.16] transition-all" style={{ background: "rgba(255,255,255,0.05)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
+          <span className="text-xl flex-shrink-0 animate-pulse">🤖</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white/80">{s.curatorText}</p>
+            <p className="text-xs text-white/40 mt-0.5">{s.curatorSub}</p>
+          </div>
           <span className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white/80 bg-white/[0.08] hover:bg-white/[0.12] transition-colors">{s.curatorCta}</span>
         </Link>
       )}
@@ -823,7 +866,7 @@ function PosterCard({ title, posterPath, subtitle, sentiment, onClick, quickActi
 
   return (
     <div className="group flex-shrink-0 w-[120px] sm:w-[140px] cursor-pointer" style={{ scrollSnapAlign: "start" }}>
-      <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06] group-hover:border-white/[0.14] transition-all duration-300" onClick={onClick}>
+      <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06] group-hover:border-white/[0.14] group-hover:-translate-y-2 group-hover:shadow-[0_10px_30px_rgba(220,38,38,0.2)] transition-all duration-300" onClick={onClick}>
         {imgSrc ? (
           <Image src={imgSrc} alt={title} fill sizes="140px" className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
         ) : (
