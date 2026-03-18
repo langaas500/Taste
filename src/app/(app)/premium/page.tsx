@@ -356,7 +356,7 @@ export default function PremiumHubPage() {
           style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(245,200,66,0.15)" }}>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-base">💑</span>
-            <p className="text-xs font-bold text-white/70">
+            <p className="text-xs font-bold text-white">
               {locale === "no" ? "Par-rapport" : "Couple Report"}
             </p>
           </div>
@@ -367,21 +367,21 @@ export default function PremiumHubPage() {
                   {coupleReport.compatibility_score}%
                 </p>
               )}
-              <p className="text-xs text-white/40 mb-1">
+              <p className="text-xs text-white mb-1">
                 {locale === "no" ? `${coupleReport.total_matches} matcher totalt` : `${coupleReport.total_matches} total matches`}
               </p>
               {coupleReport.top_genre && (
-                <p className="text-xs text-white/30">
+                <p className="text-xs text-white/80">
                   {locale === "no" ? `Toppsjanger: ${coupleReport.top_genre}` : `Top genre: ${coupleReport.top_genre}`}
                 </p>
               )}
             </>
           ) : (
-            <p className="text-xs text-white/30">
+            <p className="text-xs text-white/80">
               {locale === "no" ? "Du mangler en partner-kobling. Finn ut nøyaktig hva dere matcher på." : "No partner connected yet. Find out exactly what you match on."}
             </p>
           )}
-          <p className="text-[10px] text-white/20 group-hover:text-white/40 mt-3 transition-colors">
+          <p className="text-[10px] text-white/50 group-hover:text-white/80 mt-3 transition-colors">
             {locale === "no" ? "Se full rapport →" : "See full report →"}
           </p>
         </Link>
@@ -391,14 +391,14 @@ export default function PremiumHubPage() {
           style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.06)" }}>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-base">🎭</span>
-            <p className="text-xs font-bold text-white/70">
+            <p className="text-xs font-bold text-white">
               {locale === "no" ? "Smaksprofil" : "Taste Profile"}
             </p>
           </div>
-          <p className="text-xs text-white/40 leading-relaxed">
+          <p className="text-xs text-white/80 leading-relaxed">
             {locale === "no" ? "Din AI-smaksprofil er klar. Klikk for å se hva biblioteket ditt sier om deg." : "Your AI taste profile is ready. Click to see what your library says about you."}
           </p>
-          <p className="text-[10px] text-white/20 group-hover:text-white/40 mt-3 transition-colors">
+          <p className="text-[10px] text-white/50 group-hover:text-white/80 mt-3 transition-colors">
             {locale === "no" ? "Se profilen →" : "See profile →"}
           </p>
         </Link>
@@ -408,16 +408,16 @@ export default function PremiumHubPage() {
           style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.06)" }}>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-base">🤖</span>
-            <p className="text-xs font-bold text-white/70">Curator AI</p>
+            <p className="text-xs font-bold text-white">Curator AI</p>
             <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full font-semibold"
               style={{ background: "rgba(245,200,66,0.1)", color: "#F5C842", border: "0.5px solid rgba(245,200,66,0.2)" }}>
               {locale === "no" ? "Ubegrenset" : "Unlimited"}
             </span>
           </div>
-          <p className="text-xs text-white/40 leading-relaxed">
+          <p className="text-xs text-white/80 leading-relaxed">
             {locale === "no" ? "Curator venter. Hva har du lyst til å føle i kveld?" : "Curator is ready. What do you want to feel tonight?"}
           </p>
-          <p className="text-[10px] text-white/20 group-hover:text-white/40 mt-3 transition-colors">
+          <p className="text-[10px] text-white/50 group-hover:text-white/80 mt-3 transition-colors">
             {locale === "no" ? "Åpne Curator →" : "Open Curator →"}
           </p>
         </Link>
