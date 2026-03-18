@@ -529,6 +529,7 @@ function SettingsContent() {
   const [passwordMsg, setPasswordMsg] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [authProvider, setAuthProvider] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
 
   const traktMsg = searchParams.get("trakt");
   const errorMsg = searchParams.get("error");
@@ -543,6 +544,9 @@ function SettingsContent() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.app_metadata?.provider) {
         setAuthProvider(session.user.app_metadata.provider);
+      }
+      if (session?.user?.email) {
+        setUserEmail(session.user.email);
       }
     } catch {}
     try {
@@ -820,29 +824,37 @@ function SettingsContent() {
 
       {/* ── Email & Password (side by side) ─────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        {/* Change email */}
-        <div className={glassCard} style={glassCardStyle}>
-          <p className={sectionLabel}>{s.changeEmail}</p>
-          <p className={sectionDesc}>{s.changeEmailDesc}</p>
-          <div className="flex items-center gap-2">
-            <input
-              type="email"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleChangeEmail(); }}
-              placeholder={s.newEmail}
-              className="flex-1 px-3 py-2 bg-white/[0.04] border border-white/[0.1] rounded-xl text-sm text-white placeholder-white/25 focus:outline-none focus:border-[rgba(229,9,20,0.4)] transition-all duration-200"
-            />
-            <GhostButton onClick={handleChangeEmail} disabled={savingEmail}>
-              {savingEmail ? s.savingEmail : s.saveEmail}
-            </GhostButton>
+        {/* Change email — hidden for OAuth users */}
+        {authProvider !== "google" && (
+          <div className={glassCard} style={glassCardStyle}>
+            <p className={sectionLabel}>{s.changeEmail}</p>
+            <p className={sectionDesc}>{s.changeEmailDesc}</p>
+            {userEmail && (
+              <div className="mb-3">
+                <p className="text-[10px] text-white/35 uppercase tracking-wider mb-1">{s.currentEmail}</p>
+                <p className="text-sm text-white/50">{userEmail}</p>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleChangeEmail(); }}
+                placeholder={s.newEmail}
+                className="flex-1 px-3 py-2 bg-white/[0.04] border border-white/[0.1] rounded-xl text-sm text-white placeholder-white/25 focus:outline-none focus:border-[rgba(229,9,20,0.4)] transition-all duration-200"
+              />
+              <GhostButton onClick={handleChangeEmail} disabled={savingEmail}>
+                {savingEmail ? s.savingEmail : s.saveEmail}
+              </GhostButton>
+            </div>
+            {emailMsg && (
+              <p className={`text-xs mt-2 ${emailMsg === s.emailConfirmSent ? "text-emerald-400/70" : "text-red-400/70"}`}>
+                {emailMsg}
+              </p>
+            )}
           </div>
-          {emailMsg && (
-            <p className={`text-xs mt-2 ${emailMsg === s.emailConfirmSent ? "text-emerald-400/70" : "text-red-400/70"}`}>
-              {emailMsg}
-            </p>
-          )}
-        </div>
+        )}
 
         {/* Change password — hidden for OAuth users */}
         {authProvider !== "google" && (
