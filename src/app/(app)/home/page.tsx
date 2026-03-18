@@ -11,19 +11,22 @@ import type { UserTitle, TitleCache, MediaType, Recommendation } from "@/lib/typ
 import { track } from "@/lib/posthog";
 import { getLocale, type Locale } from "@/lib/i18n";
 
-/* ── locale strings ─────────────────────────────────────── */
-
 const strings = {
   no: {
     title: "Hjem",
     titlesInCollection: "titler i samlingen din",
     titleSingular: "tittel",
     togetherLabel: "Se Sammen",
-    togetherHeadline: "Finn noe å se i kveld",
-    togetherSub: "Match med en venn på under 3 minutter",
+    togetherHeadline: "Slutt å scrolle.",
+    togetherHeadline2: "Finn noe å se sammen.",
+    togetherSub: "Swipe filmer og serier sammen og match på under 3 minutter.",
+    togetherSwipe: "Swipe",
+    togetherMatch: "Match",
+    togetherWatch: "Se",
     togetherFree: "✓ Gratis",
-    togetherTime: "✓ Under 3 min",
-    togetherCta: "Finn en match",
+    togetherNoAccount: "✓ Ingen konto nødvendig",
+    togetherSocialProof: "70+ filmelskere bruker dette",
+    togetherCta: "Start Se Sammen",
     importTitle: "Importer seerhistorikk",
     importSub: "Hent inn det du allerede har sett fra Netflix og andre tjenester",
     continueWatching: "Fortsett å se",
@@ -40,9 +43,6 @@ const strings = {
     recTitlePremium: "Anbefalt for deg i dag",
     recBased: "Basert på filmsmaken din",
     recCta: "Se dine anbefalinger",
-    inviteText: "Finn noe å se med noen i kveld",
-    inviteCta: "Start Se Sammen",
-    inviteSecondary: "Inviter noen",
     curatorText: "Ikke sikker på hva du vil se? Spør Curator",
     curatorCta: "Åpne Curator",
     tpTitle: (name: string) => `Tonight's Pick for deg og ${name}`,
@@ -59,11 +59,16 @@ const strings = {
     titlesInCollection: "titles in your collection",
     titleSingular: "title",
     togetherLabel: "Watch Together",
-    togetherHeadline: "Find something to watch tonight",
-    togetherSub: "Match with a friend in under 3 minutes",
+    togetherHeadline: "Stop scrolling.",
+    togetherHeadline2: "Find something to watch.",
+    togetherSub: "Swipe movies and shows together and match in under 3 minutes.",
+    togetherSwipe: "Swipe",
+    togetherMatch: "Match",
+    togetherWatch: "Watch",
     togetherFree: "✓ Free",
-    togetherTime: "✓ Under 3 min",
-    togetherCta: "Find a match",
+    togetherNoAccount: "✓ No account needed",
+    togetherSocialProof: "70+ film lovers use this",
+    togetherCta: "Start Watch Together",
     importTitle: "Import watch history",
     importSub: "Import what you've already watched from Netflix and other services",
     continueWatching: "Continue watching",
@@ -80,9 +85,6 @@ const strings = {
     recTitlePremium: "Recommended for you today",
     recBased: "Based on your film taste",
     recCta: "See your recommendations",
-    inviteText: "Find something to watch with someone tonight",
-    inviteCta: "Start Watch Together",
-    inviteSecondary: "Invite someone",
     curatorText: "Not sure what to watch? Ask Curator",
     curatorCta: "Open Curator",
     tpTitle: (name: string) => `Tonight's Pick for you and ${name}`,
@@ -99,11 +101,16 @@ const strings = {
     titlesInCollection: "titler i din samling",
     titleSingular: "titel",
     togetherLabel: "Se Sammen",
-    togetherHeadline: "Find noget at se i aften",
-    togetherSub: "Match med en ven på under 3 minutter",
+    togetherHeadline: "Stop med at scrolle.",
+    togetherHeadline2: "Find noget at se sammen.",
+    togetherSub: "Swipe film og serier sammen og match på under 3 minutter.",
+    togetherSwipe: "Swipe",
+    togetherMatch: "Match",
+    togetherWatch: "Se",
     togetherFree: "✓ Gratis",
-    togetherTime: "✓ Under 3 min",
-    togetherCta: "Find et match",
+    togetherNoAccount: "✓ Ingen konto nødvendig",
+    togetherSocialProof: "70+ filmnerder bruger dette",
+    togetherCta: "Start Se Sammen",
     importTitle: "Importer seerhistorik",
     importSub: "Hent det du allerede har set fra Netflix og andre tjenester",
     continueWatching: "Fortsæt med at se",
@@ -120,9 +127,6 @@ const strings = {
     recTitlePremium: "Anbefalet til dig i dag",
     recBased: "Baseret på din filmsmag",
     recCta: "Se dine anbefalinger",
-    inviteText: "Find noget at se med nogen i aften",
-    inviteCta: "Start Se Sammen",
-    inviteSecondary: "Inviter nogen",
     curatorText: "Ikke sikker på hvad du vil se? Spørg Curator",
     curatorCta: "Åbn Curator",
     tpTitle: (name: string) => `Tonight's Pick for dig og ${name}`,
@@ -139,11 +143,16 @@ const strings = {
     titlesInCollection: "titlar i din samling",
     titleSingular: "titel",
     togetherLabel: "Se Tillsammans",
-    togetherHeadline: "Hitta något att se ikväll",
-    togetherSub: "Matcha med en vän på under 3 minuter",
+    togetherHeadline: "Sluta scrolla.",
+    togetherHeadline2: "Hitta något att se tillsammans.",
+    togetherSub: "Swipa filmer och serier tillsammans och matcha på under 3 minuter.",
+    togetherSwipe: "Swipa",
+    togetherMatch: "Matcha",
+    togetherWatch: "Se",
     togetherFree: "✓ Gratis",
-    togetherTime: "✓ Under 3 min",
-    togetherCta: "Hitta en match",
+    togetherNoAccount: "✓ Inget konto behövs",
+    togetherSocialProof: "70+ filmälskare använder detta",
+    togetherCta: "Starta Se Tillsammans",
     importTitle: "Importera tittarhistorik",
     importSub: "Hämta det du redan har sett från Netflix och andra tjänster",
     continueWatching: "Fortsätt titta",
@@ -160,9 +169,6 @@ const strings = {
     recTitlePremium: "Rekommenderat för dig idag",
     recBased: "Baserat på din filmsmak",
     recCta: "Se dina rekommendationer",
-    inviteText: "Hitta något att se med någon ikväll",
-    inviteCta: "Starta Se Tillsammans",
-    inviteSecondary: "Bjud in någon",
     curatorText: "Inte säker på vad du vill se? Fråga Curator",
     curatorCta: "Öppna Curator",
     tpTitle: (name: string) => `Tonight's Pick för dig och ${name}`,
@@ -179,11 +185,16 @@ const strings = {
     titlesInCollection: "nimikettä kokoelmassasi",
     titleSingular: "nimike",
     togetherLabel: "Katsotaan Yhdessä",
-    togetherHeadline: "Löydä jotain katsottavaa tänä iltana",
-    togetherSub: "Matchaa ystävän kanssa alle 3 minuutissa",
+    togetherHeadline: "Lopeta selaaminen.",
+    togetherHeadline2: "Löydä jotain katsottavaa yhdessä.",
+    togetherSub: "Selaa elokuvia ja sarjoja yhdessä ja sovi alle 3 minuutissa.",
+    togetherSwipe: "Selaa",
+    togetherMatch: "Sovi",
+    togetherWatch: "Katso",
     togetherFree: "✓ Ilmainen",
-    togetherTime: "✓ Alle 3 min",
-    togetherCta: "Löydä match",
+    togetherNoAccount: "✓ Ei tiliä tarvita",
+    togetherSocialProof: "70+ elokuvaharrastajaa käyttää tätä",
+    togetherCta: "Aloita Katsotaan Yhdessä",
     importTitle: "Tuo katseluhistoria",
     importSub: "Tuo jo katsomasi Netflixistä ja muista palveluista",
     continueWatching: "Jatka katsomista",
@@ -200,9 +211,6 @@ const strings = {
     recTitlePremium: "Suositeltu sinulle tänään",
     recBased: "Makusi perusteella",
     recCta: "Katso suosituksesi",
-    inviteText: "Löydä jotain katsottavaa jonkun kanssa tänä iltana",
-    inviteCta: "Aloita Katsotaan Yhdessä",
-    inviteSecondary: "Kutsu joku",
     curatorText: "Etkö tiedä mitä katsoa? Kysy Curatorilta",
     curatorCta: "Avaa Curator",
     tpTitle: (name: string) => `Tonight's Pick sinulle ja ${name}`,
@@ -216,14 +224,13 @@ const strings = {
   },
 } as const;
 
-/* ── types ─────────────────────────────────────────────── */
-
 interface DashboardData {
   watching: (UserTitle & { cache?: TitleCache })[];
   recentlyLogged: (UserTitle & { cache?: TitleCache })[];
   recommendations: Recommendation[];
   trending: { tmdb_id: number; type: MediaType; title: string; poster_path: string | null; year: string }[];
   totalTitles: number;
+  bannerPosters: string[];
 }
 
 interface TonightPickItem {
@@ -288,10 +295,7 @@ export default function HomePage() {
           } catch { /* ignore */ }
         }
       }
-      // Load Tonight's Pick for premium users
-      if (premium) {
-        loadTonightPick();
-      }
+      if (premium) loadTonightPick();
     } catch { /* ignore */ }
   }
 
@@ -299,15 +303,11 @@ export default function HomePage() {
     setTpLoading(true);
     try {
       const res = await fetch("/api/tonight-pick");
-      if (res.status === 404) {
-        setHasPartner(false);
-        return;
-      }
-      if (!res.ok) return;
+      if (res.status === 404) { setHasPartner(false); setTpLoading(false); return; }
+      if (!res.ok) { setTpLoading(false); return; }
       const data = await res.json();
       setTonightPick(data);
       setHasPartner(true);
-      // Fetch partner name
       try {
         const friendsRes = await fetch("/api/friends/titles");
         const friendsData = await friendsRes.json();
@@ -321,10 +321,7 @@ export default function HomePage() {
     setTpRerolling(true);
     try {
       const res = await fetch("/api/tonight-pick", { method: "POST" });
-      if (res.ok) {
-        const data = await res.json();
-        setTonightPick(data);
-      }
+      if (res.ok) { const data = await res.json(); setTonightPick(data); }
     } catch { /* ignore */ }
     setTpRerolling(false);
   }
@@ -334,10 +331,10 @@ export default function HomePage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
-    // Parallel data fetching
-    const [titlesRes, trendingRes] = await Promise.all([
+    const [titlesRes, trendingRes, bannersRes] = await Promise.all([
       supabase.from("user_titles").select("*").eq("user_id", user.id).order("updated_at", { ascending: false }),
       fetch("/api/tmdb/discover?type=movie&sort_by=popularity.desc&page=1").then((r) => r.json()).catch(() => ({ results: [] })),
+      supabase.from("titles_cache").select("poster_path").not("poster_path", "is", null).limit(4),
     ]);
 
     const userTitles = (titlesRes.data || []) as UserTitle[];
@@ -362,17 +359,22 @@ export default function HomePage() {
         year: ((r.release_date || r.first_air_date) as string || "").slice(0, 4),
       }));
 
+    const bannerPosters = (bannersRes.data || [])
+      .map((r: { poster_path: string }) => r.poster_path)
+      .filter(Boolean)
+      .slice(0, 4);
+
     setData({
       watching,
       recentlyLogged,
       recommendations: [],
       trending: trendingItems,
       totalTitles: allTitles.length,
+      bannerPosters,
     });
     setLoading(false);
     track("home_viewed", { has_library: allTitles.length > 0 });
 
-    // Prefetch Netflix IDs for watching titles (best-effort)
     const prefetchItems = watching.map((t) => ({ id: t.tmdb_id, type: t.type }));
     if (prefetchItems.length > 0) prefetchNetflixIds(prefetchItems);
   }
@@ -384,9 +386,7 @@ export default function HomePage() {
       } else if (action === "liked") {
         await logTitle({ tmdb_id, type, status: "watched", sentiment: "liked" });
       }
-    } catch {
-      // Silent fail for quick actions
-    }
+    } catch { /* ignore */ }
   }
 
   if (loading) {
@@ -429,7 +429,56 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Tonight's Pick — premium users with partner */}
+      {/* Se Sammen — cinematisk banner med filmpostere */}
+      <Link href="/together" style={{ display: "block", borderRadius: 16, overflow: "hidden", position: "relative", minHeight: 180, textDecoration: "none" }}>
+        {/* Poster bakgrunner */}
+        <div style={{ position: "absolute", inset: 0, display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 2 }}>
+          {data.bannerPosters.length > 0
+            ? data.bannerPosters.map((p, i) => (
+                <div key={i} style={{ position: "relative", overflow: "hidden" }}>
+                  <Image src={`https://image.tmdb.org/t/p/w200${p}`} alt="" fill sizes="25vw" className="object-cover" />
+                </div>
+              ))
+            : [
+                "linear-gradient(160deg,#1a2e3a,#0d1f2e)",
+                "linear-gradient(160deg,#2e1a2e,#1f0d1f)",
+                "linear-gradient(160deg,#1a3a1a,#0d1f0d)",
+                "linear-gradient(160deg,#3a2a1a,#1f160d)",
+              ].map((bg, i) => (
+                <div key={i} style={{ background: bg }} />
+              ))
+          }
+        </div>
+        {/* Gradient overlay */}
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.85) 50%,rgba(0,0,0,0.45) 100%)" }} />
+        {/* Innhold */}
+        <div style={{ position: "relative", padding: "24px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#ff2a2a" }}>{s.togetherLabel}</p>
+            <h2 style={{ margin: "0 0 6px", fontSize: 20, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+              {s.togetherHeadline}<br />{s.togetherHeadline2}
+            </h2>
+            <p style={{ margin: "0 0 14px", fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>{s.togetherSub}</p>
+            <div style={{ display: "flex", gap: 14 }}>
+              {[["❤️", s.togetherSwipe], ["🎬", s.togetherMatch], ["🍿", s.togetherWatch]].map(([icon, label]) => (
+                <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ fontSize: 13 }}>{icon}</span>
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <span style={{ background: "#ff2a2a", color: "#fff", borderRadius: 12, padding: "12px 18px", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 0 20px rgba(255,42,42,0.4)", display: "block" }}>
+              {s.togetherCta}
+            </span>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", textAlign: "center" }}>{s.togetherFree} &nbsp; {s.togetherNoAccount}</span>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>{s.togetherSocialProof}</span>
+          </div>
+        </div>
+      </Link>
+
+      {/* Tonight's Pick — premium users */}
       {isPremium && hasPartner === false && (
         <Link
           href="/settings"
@@ -447,12 +496,12 @@ export default function HomePage() {
       {isPremium && tpLoading && (
         <section>
           <div className="skeleton h-5 w-56 rounded mb-4" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 max-w-md">
             {[1, 2].map((i) => (
-              <div key={i} className="rounded-2xl border border-white/[0.06] p-4" style={{ background: "rgba(255,255,255,0.025)" }}>
-                <div className="skeleton h-3 w-24 rounded mb-3" />
-                <div className="skeleton aspect-[2/3] w-full rounded-xl mb-3" />
-                <div className="skeleton h-3 w-32 rounded mb-2" />
+              <div key={i} className="rounded-xl border border-white/[0.06] p-3" style={{ background: "rgba(255,255,255,0.025)", minHeight: 120 }}>
+                <div className="skeleton h-3 w-24 rounded mb-2" />
+                <div className="skeleton w-full rounded-lg mb-2" style={{ aspectRatio: "2/3", maxHeight: 180 }} />
+                <div className="skeleton h-3 w-32 rounded mb-1" />
                 <div className="skeleton h-3 w-20 rounded" />
               </div>
             ))}
@@ -465,89 +514,54 @@ export default function HomePage() {
           <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-4">
             {s.tpTitle(partnerName || "Partner")}
           </h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 max-w-md">
             {tonightPick.movie && (
-              <div
-                className="rounded-2xl border border-white/[0.06] p-4 flex flex-col"
-                style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
-              >
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-3">🎬 {s.tpMovie}</p>
+              <div className="rounded-xl border border-white/[0.06] p-3 flex flex-col" style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", minHeight: 120 }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2">🎬 {s.tpMovie}</p>
                 {tonightPick.movie.poster_path && (
-                  <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden mb-3">
-                    <Image
-                      src={`https://image.tmdb.org/t/p/w342${tonightPick.movie.poster_path}`}
-                      alt={tonightPick.movie.title}
-                      fill
-                      className="object-cover"
-                    />
+                  <div className="relative w-full rounded-lg overflow-hidden mb-2" style={{ aspectRatio: "2/3", maxHeight: 180 }}>
+                    <Image src={`https://image.tmdb.org/t/p/w185${tonightPick.movie.poster_path}`} alt={tonightPick.movie.title} fill className="object-cover" sizes="160px" />
                   </div>
                 )}
-                <p className="text-sm font-semibold text-white/85 truncate">{tonightPick.movie.title}</p>
+                <p className="text-xs font-semibold text-white/85 truncate">{tonightPick.movie.title}</p>
                 {tonightPick.movie.match_score != null && (
-                  <p className="text-xs text-[var(--accent-light)] mt-1">★ {tonightPick.movie.match_score}% {s.tpMatch}</p>
+                  <p className="text-[10px] text-[var(--accent-light)] mt-0.5">★ {tonightPick.movie.match_score}% {s.tpMatch}</p>
                 )}
-                <Link
-                  href="/together"
-                  className="mt-3 text-center py-1.5 rounded-lg text-[10px] font-semibold text-white/70 bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
-                >
-                  {s.tpSeTogether}
-                </Link>
+                <Link href="/together" className="mt-2 text-center py-1 rounded-md text-[10px] font-semibold text-white/70 bg-white/[0.06] hover:bg-white/[0.1] transition-colors">{s.tpSeTogether}</Link>
               </div>
             )}
             {tonightPick.series && (
-              <div
-                className="rounded-2xl border border-white/[0.06] p-4 flex flex-col"
-                style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
-              >
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-3">📺 {s.tpSeries}</p>
+              <div className="rounded-xl border border-white/[0.06] p-3 flex flex-col" style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", minHeight: 120 }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2">📺 {s.tpSeries}</p>
                 {tonightPick.series.poster_path && (
-                  <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden mb-3">
-                    <Image
-                      src={`https://image.tmdb.org/t/p/w342${tonightPick.series.poster_path}`}
-                      alt={tonightPick.series.title}
-                      fill
-                      className="object-cover"
-                    />
+                  <div className="relative w-full rounded-lg overflow-hidden mb-2" style={{ aspectRatio: "2/3", maxHeight: 180 }}>
+                    <Image src={`https://image.tmdb.org/t/p/w185${tonightPick.series.poster_path}`} alt={tonightPick.series.title} fill className="object-cover" sizes="160px" />
                   </div>
                 )}
-                <p className="text-sm font-semibold text-white/85 truncate">{tonightPick.series.title}</p>
+                <p className="text-xs font-semibold text-white/85 truncate">{tonightPick.series.title}</p>
                 {tonightPick.series.match_score != null && (
-                  <p className="text-xs text-[var(--accent-light)] mt-1">★ {tonightPick.series.match_score}% {s.tpMatch}</p>
+                  <p className="text-[10px] text-[var(--accent-light)] mt-0.5">★ {tonightPick.series.match_score}% {s.tpMatch}</p>
                 )}
-                <Link
-                  href="/together"
-                  className="mt-3 text-center py-1.5 rounded-lg text-[10px] font-semibold text-white/70 bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
-                >
-                  {s.tpSeTogether}
-                </Link>
+                <Link href="/together" className="mt-2 text-center py-1 rounded-md text-[10px] font-semibold text-white/70 bg-white/[0.06] hover:bg-white/[0.1] transition-colors">{s.tpSeTogether}</Link>
               </div>
             )}
           </div>
           <div className="flex justify-center mt-3">
-            <button
-              onClick={handleReroll}
-              disabled={tpRerolling}
-              className="px-4 py-1.5 rounded-lg text-xs font-medium text-white/40 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.08] transition-all disabled:opacity-40 cursor-pointer"
-            >
+            <button onClick={handleReroll} disabled={tpRerolling} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white/40 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.08] transition-all disabled:opacity-40 cursor-pointer">
               {tpRerolling ? "..." : `↻ ${s.tpReroll}`}
             </button>
           </div>
         </section>
       )}
 
-      {/* Recommendations row — only if user has taste profile */}
-      {hasTaste && (
+      {/* Recommendations row — hidden if premium user has Tonight's Pick */}
+      {hasTaste && !(isPremium && tonightPick) && (
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">
               {isPremium && homeRecs.length > 0 ? s.recTitlePremium : s.recTitle}
             </h2>
-            <Link
-              href="/recommendations"
-              className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] font-medium transition-colors"
-            >
-              {s.seeAll}
-            </Link>
+            <Link href="/recommendations" className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] font-medium transition-colors">{s.seeAll}</Link>
           </div>
           {isPremium && homeRecs.length > 0 ? (
             <HorizontalScroll>
@@ -557,12 +571,7 @@ export default function HomePage() {
                   title={rec.title}
                   posterPath={rec.poster_path || null}
                   subtitle={rec.tags?.[0]}
-                  onClick={() => setSelectedItem({
-                    id: rec.tmdb_id,
-                    type: rec.type,
-                    title: rec.title,
-                    poster_path: rec.poster_path || null,
-                  })}
+                  onClick={() => setSelectedItem({ id: rec.tmdb_id, type: rec.type, title: rec.title, poster_path: rec.poster_path || null })}
                 />
               ))}
             </HorizontalScroll>
@@ -570,108 +579,32 @@ export default function HomePage() {
             <div className="relative">
               <div className="flex gap-3 overflow-hidden">
                 {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="flex-shrink-0 w-[120px] sm:w-[140px]"
-                  >
-                    <div
-                      className="aspect-[2/3] w-full rounded-xl bg-white/[0.06]"
-                      style={{ filter: "blur(6px)", opacity: 0.5 }}
-                    />
+                  <div key={i} className="flex-shrink-0 w-[120px] sm:w-[140px]">
+                    <div className="aspect-[2/3] w-full rounded-xl bg-white/[0.06]" style={{ filter: "blur(6px)", opacity: 0.5 }} />
                   </div>
                 ))}
               </div>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
                 <p className="text-xs text-white/50 mb-2">{s.recBased}</p>
-                <Link
-                  href="/recommendations"
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90"
-                  style={{ background: "#dc2626" }}
-                >
-                  {s.recCta}
-                </Link>
+                <Link href="/recommendations" className="px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90" style={{ background: "#dc2626" }}>{s.recCta}</Link>
               </div>
             </div>
           )}
         </section>
       )}
 
-      {/* Invite friend CTA */}
-      <div
-        className="rounded-[var(--radius-lg)] p-4 flex items-center gap-3 border border-white/[0.08]"
-        style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
-      >
-        <span className="text-2xl flex-shrink-0">🎬</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-white/80">{s.inviteText}</p>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Link
-            href="/together"
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90"
-            style={{ background: "#dc2626" }}
-          >
-            {s.inviteCta}
-          </Link>
-        </div>
-      </div>
-
-      {/* Curator promo — only for users with taste profile */}
+      {/* Curator promo */}
       {hasTaste && (
-        <Link
-          href="/curator"
-          className="flex items-center gap-3 rounded-[var(--radius-lg)] p-3.5 border border-white/[0.06] hover:border-white/[0.12] transition-all"
-          style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
-        >
+        <Link href="/curator" className="flex items-center gap-3 rounded-[var(--radius-lg)] p-3.5 border border-white/[0.06] hover:border-white/[0.12] transition-all" style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
           <span className="text-xl flex-shrink-0">🤖</span>
           <p className="flex-1 text-sm text-white/60">{s.curatorText}</p>
-          <span className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white/80 bg-white/[0.08] hover:bg-white/[0.12] transition-colors">
-            {s.curatorCta}
-          </span>
+          <span className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white/80 bg-white/[0.08] hover:bg-white/[0.12] transition-colors">{s.curatorCta}</span>
         </Link>
       )}
 
-      {/* Se Sammen */}
-      <div className="relative flex flex-col md:flex-row md:items-center gap-6 md:gap-3">
-        {/* Logo */}
-        <div className="flex-shrink-0 w-56 h-56 sm:w-64 sm:h-64 relative mx-auto md:mx-0" style={{ filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.6))" }}>
-          <Image
-            src="/se-sammen-logo.png"
-            alt={s.togetherLabel}
-            fill
-            className="object-contain"
-          />
-        </div>
-
-        {/* Glassboks */}
-        <Link
-          href="/together"
-          className="flex-1 glass rounded-[var(--radius-lg)] border border-[var(--accent)]/30 bg-[var(--accent)]/5 hover:border-[var(--accent)]/40 transition-all"
-          style={{ boxShadow: "0 0 24px rgba(255,42,42,0.08)" }}
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6 p-5 sm:p-6">
-            <div className="flex-1 space-y-3">
-              <p className="font-bold text-xs sm:text-sm text-[var(--accent-light)] uppercase tracking-wide">{s.togetherLabel}</p>
-              <h2 className="font-extrabold text-xl sm:text-2xl text-white leading-tight">{s.togetherHeadline}</h2>
-              <p className="text-sm text-[var(--text-tertiary)] leading-relaxed">{s.togetherSub}</p>
-              <div className="flex gap-2.5">
-                <span className="text-[11px] text-white/40 bg-white/[0.06] px-2.5 py-1 rounded-full">{s.togetherFree}</span>
-                <span className="text-[11px] text-white/40 bg-white/[0.06] px-2.5 py-1 rounded-full">{s.togetherTime}</span>
-              </div>
-            </div>
-            <div className="button flex-shrink-0 self-center">
-              {s.togetherCta}
-            </div>
-          </div>
-        </Link>
-      </div>
-
-      {/* Import banner for new users */}
+      {/* Import banner */}
       {showImportBanner && (
-        <Link
-          href="/timemachine"
-          className="block glass rounded-[var(--radius-lg)] p-4 border border-[var(--accent)]/20 hover:border-[var(--accent)]/40 transition-all"
-        >
+        <Link href="/timemachine" className="block glass rounded-[var(--radius-lg)] p-4 border border-[var(--accent)]/20 hover:border-[var(--accent)]/40 transition-all">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[var(--accent-glow)] flex items-center justify-center flex-shrink-0">
               <svg className="w-5 h-5 text-[var(--accent-light)]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -689,7 +622,7 @@ export default function HomePage() {
         </Link>
       )}
 
-      {/* Section: Fortsett å se (Watch Bank) */}
+      {/* Fortsett å se */}
       {data.watching.length > 0 && (
         <DashboardSection title={s.continueWatching} href="/watch-bank" seeAll={s.seeAll}>
           <HorizontalScroll>
@@ -699,19 +632,14 @@ export default function HomePage() {
                 title={t.cache?.title || `TMDB:${t.tmdb_id}`}
                 posterPath={t.cache?.poster_path || null}
                 subtitle={t.last_season && t.last_episode ? `S${t.last_season} E${t.last_episode}` : undefined}
-                onClick={() => setSelectedItem({
-                  id: t.tmdb_id,
-                  type: t.type,
-                  title: t.cache?.title || `TMDB:${t.tmdb_id}`,
-                  poster_path: t.cache?.poster_path || null,
-                })}
+                onClick={() => setSelectedItem({ id: t.tmdb_id, type: t.type, title: t.cache?.title || `TMDB:${t.tmdb_id}`, poster_path: t.cache?.poster_path || null })}
               />
             ))}
           </HorizontalScroll>
         </DashboardSection>
       )}
 
-      {/* Section: For deg (Recommendations) */}
+      {/* For deg */}
       {data.recommendations.length > 0 && (
         <DashboardSection title={s.forDeg} href="/recommendations" seeAll={s.seeAll}>
           <HorizontalScroll>
@@ -721,16 +649,8 @@ export default function HomePage() {
                 title={rec.title}
                 posterPath={rec.poster_path || null}
                 subtitle={rec.tags?.[0]}
-                onClick={() => setSelectedItem({
-                  id: rec.tmdb_id,
-                  type: rec.type,
-                  title: rec.title,
-                  poster_path: rec.poster_path || null,
-                })}
-                quickActions={[
-                  { label: "+", action: "liked", title: s.watched },
-                  { label: "Se", action: "watchlist", title: s.watchlist },
-                ]}
+                onClick={() => setSelectedItem({ id: rec.tmdb_id, type: rec.type, title: rec.title, poster_path: rec.poster_path || null })}
+                quickActions={[{ label: "+", action: "liked", title: s.watched }, { label: "Se", action: "watchlist", title: s.watchlist }]}
                 onQuickAction={(action) => handleQuickAction(rec.tmdb_id, rec.type, action)}
               />
             ))}
@@ -738,7 +658,7 @@ export default function HomePage() {
         </DashboardSection>
       )}
 
-      {/* Section: Nylig logget */}
+      {/* Nylig logget */}
       {data.recentlyLogged.length > 0 && (
         <DashboardSection title={s.recentlyLogged} href="/library" seeAll={s.seeAll}>
           <HorizontalScroll>
@@ -748,19 +668,14 @@ export default function HomePage() {
                 title={t.cache?.title || `TMDB:${t.tmdb_id}`}
                 posterPath={t.cache?.poster_path || null}
                 sentiment={t.sentiment as "liked" | "disliked" | "neutral" | null}
-                onClick={() => setSelectedItem({
-                  id: t.tmdb_id,
-                  type: t.type,
-                  title: t.cache?.title || `TMDB:${t.tmdb_id}`,
-                  poster_path: t.cache?.poster_path || null,
-                })}
+                onClick={() => setSelectedItem({ id: t.tmdb_id, type: t.type, title: t.cache?.title || `TMDB:${t.tmdb_id}`, poster_path: t.cache?.poster_path || null })}
               />
             ))}
           </HorizontalScroll>
         </DashboardSection>
       )}
 
-      {/* Section: Populært nå (Trending — always visible) */}
+      {/* Populært nå */}
       {data.trending.length > 0 && (
         <DashboardSection title={s.trending} href="/search" seeAll={s.seeAll}>
           <HorizontalScroll>
@@ -770,16 +685,8 @@ export default function HomePage() {
                 title={t.title}
                 posterPath={t.poster_path}
                 subtitle={t.year}
-                onClick={() => setSelectedItem({
-                  id: t.tmdb_id,
-                  type: t.type,
-                  title: t.title,
-                  poster_path: t.poster_path,
-                })}
-                quickActions={[
-                  { label: "+", action: "liked", title: s.watched },
-                  { label: "Se", action: "watchlist", title: s.watchlist },
-                ]}
+                onClick={() => setSelectedItem({ id: t.tmdb_id, type: t.type, title: t.title, poster_path: t.poster_path })}
+                quickActions={[{ label: "+", action: "liked", title: s.watched }, { label: "Se", action: "watchlist", title: s.watchlist }]}
                 onQuickAction={(action) => handleQuickAction(t.tmdb_id, t.type, action)}
               />
             ))}
@@ -787,7 +694,6 @@ export default function HomePage() {
         </DashboardSection>
       )}
 
-      {/* Streaming Modal */}
       {selectedItem && (
         <StreamingModal
           tmdbId={selectedItem.id}
@@ -807,19 +713,12 @@ export default function HomePage() {
   );
 }
 
-/* ── Subcomponents ── */
-
 function DashboardSection({ title, href, seeAll, children }: { title: string; href: string; seeAll: string; children: React.ReactNode }) {
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">{title}</h2>
-        <Link
-          href={href}
-          className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] font-medium transition-colors"
-        >
-          {seeAll}
-        </Link>
+        <Link href={href} className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] font-medium transition-colors">{seeAll}</Link>
       </div>
       {children}
     </section>
@@ -828,29 +727,16 @@ function DashboardSection({ title, href, seeAll, children }: { title: string; hr
 
 function HorizontalScroll({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
-
   return (
     <div className="relative">
-      <div
-        ref={ref}
-        className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth -mx-4 px-4 pb-1"
-        style={{ scrollSnapType: "x mandatory" }}
-      >
+      <div ref={ref} className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth -mx-4 px-4 pb-1" style={{ scrollSnapType: "x mandatory" }}>
         {children}
       </div>
     </div>
   );
 }
 
-function PosterCard({
-  title,
-  posterPath,
-  subtitle,
-  sentiment,
-  onClick,
-  quickActions,
-  onQuickAction,
-}: {
+function PosterCard({ title, posterPath, subtitle, sentiment, onClick, quickActions, onQuickAction }: {
   title: string;
   posterPath: string | null;
   subtitle?: string;
@@ -860,71 +746,36 @@ function PosterCard({
   onQuickAction?: (action: string) => void;
 }) {
   const imgSrc = posterPath ? `https://image.tmdb.org/t/p/w342${posterPath}` : null;
-
-  const sentimentColor =
-    sentiment === "liked" ? "var(--green)" :
-    sentiment === "disliked" ? "var(--red)" :
-    sentiment === "neutral" ? "var(--yellow)" : null;
+  const sentimentColor = sentiment === "liked" ? "var(--green)" : sentiment === "disliked" ? "var(--red)" : sentiment === "neutral" ? "var(--yellow)" : null;
 
   return (
-    <div
-      className="group flex-shrink-0 w-[120px] sm:w-[140px] cursor-pointer"
-      style={{ scrollSnapAlign: "start" }}
-    >
-      <div
-        className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06] group-hover:border-white/[0.14] transition-all duration-300"
-        onClick={onClick}
-      >
+    <div className="group flex-shrink-0 w-[120px] sm:w-[140px] cursor-pointer" style={{ scrollSnapAlign: "start" }}>
+      <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06] group-hover:border-white/[0.14] transition-all duration-300" onClick={onClick}>
         {imgSrc ? (
-          <Image
-            src={imgSrc}
-            alt={title}
-            fill
-            sizes="140px"
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-          />
+          <Image src={imgSrc} alt={title} fill sizes="140px" className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-white/10">
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
-              <rect x="2" y="3" width="20" height="18" rx="2" />
-            </svg>
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor"><rect x="2" y="3" width="20" height="18" rx="2" /></svg>
           </div>
         )}
-
-        {/* Sentiment badge */}
         {sentimentColor && (
           <div className="absolute top-1.5 left-1.5">
             <div className="w-2.5 h-2.5 rounded-full" style={{ background: sentimentColor, boxShadow: `0 0 6px ${sentimentColor}` }} />
           </div>
         )}
-
-        {/* Quick actions on hover */}
         {quickActions && quickActions.length > 0 && (
           <div className="absolute bottom-0 left-0 right-0 flex gap-0.5 p-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/80 to-transparent pt-6">
             {quickActions.map((qa) => (
-              <button
-                key={qa.action}
-                title={qa.title}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onQuickAction?.(qa.action);
-                }}
-                className="flex-1 py-1.5 text-[10px] font-semibold text-white/80 hover:text-white bg-white/[0.1] hover:bg-white/[0.2] rounded-lg transition-all backdrop-blur-sm"
-              >
+              <button key={qa.action} title={qa.title} onClick={(e) => { e.stopPropagation(); onQuickAction?.(qa.action); }} className="flex-1 py-1.5 text-[10px] font-semibold text-white/80 hover:text-white bg-white/[0.1] hover:bg-white/[0.2] rounded-lg transition-all backdrop-blur-sm">
                 {qa.label}
               </button>
             ))}
           </div>
         )}
       </div>
-
       <div className="mt-1.5 px-0.5">
-        <p className="text-[11px] font-medium text-white/60 leading-tight truncate group-hover:text-white/80 transition-colors">
-          {title}
-        </p>
-        {subtitle && (
-          <p className="text-[10px] text-white/25 mt-0.5">{subtitle}</p>
-        )}
+        <p className="text-[11px] font-medium text-white/60 leading-tight truncate group-hover:text-white/80 transition-colors">{title}</p>
+        {subtitle && <p className="text-[10px] text-white/25 mt-0.5">{subtitle}</p>}
       </div>
     </div>
   );
