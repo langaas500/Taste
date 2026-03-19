@@ -341,7 +341,8 @@ BRIEFING.md er en kontekstfil i rooten som holdes oppdatert for bruk i Claude.ai
 Claude Code skal IKKE lese denne filen selv — den er kun for ekstern bruk.
 
 ### Regler:
+- BRIEFING.md er KUN lokal — skal ALDRI pushes til remote
 - Oppdater BRIEFING.md automatisk etter hver arbeidsøkt
-- Oppdater den også etter hver commit og hver push
+- Oppdater den også etter hver commit og hver push (commit lokalt, ikke push)
 - Filen skal alltid reflektere faktisk tilstand — ikke planer eller antagelser
 - Skill tydelig mellom hva som er live (pushet) og hva som er committed men ikke pushet

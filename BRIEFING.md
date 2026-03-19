@@ -6,7 +6,7 @@
 **18.03.2026**
 
 ## Git-status
-- **Siste push:** `feat: add shareable Stories image for match screen` (18.03.2026)
+- **Siste push:** `feat: mobile drawer nav using existing sidebar content` (18.03.2026)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 

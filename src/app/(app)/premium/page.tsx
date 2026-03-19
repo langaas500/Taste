@@ -353,7 +353,7 @@ export default function PremiumHubPage() {
 
         {/* Par-rapport widget */}
         <Link href="/couple-report" className="group rounded-2xl p-5 hover:border-white/[0.12] transition-all"
-          style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(245,200,66,0.15)" }}>
+          style={{ background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(245,200,66,0.35)" }}>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-base">💑</span>
             <p className="text-xs font-bold text-white">
@@ -388,7 +388,7 @@ export default function PremiumHubPage() {
 
         {/* Smaksprofil widget */}
         <Link href="/taste" className="group rounded-2xl p-5 hover:border-white/[0.12] transition-all"
-          style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.06)" }}>
+          style={{ background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.12)" }}>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-base">🎭</span>
             <p className="text-xs font-bold text-white">
@@ -405,7 +405,7 @@ export default function PremiumHubPage() {
 
         {/* Curator widget */}
         <Link href="/curator" className="group rounded-2xl p-5 hover:border-white/[0.12] transition-all"
-          style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.06)" }}>
+          style={{ background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.12)" }}>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-base">🤖</span>
             <p className="text-xs font-bold text-white">Curator AI</p>
