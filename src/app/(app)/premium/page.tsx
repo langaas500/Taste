@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import PremiumModal from "@/components/PremiumModal";
+import StreamingModal from "@/components/StreamingModal";
 import { useLocale } from "@/hooks/useLocale";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
@@ -33,7 +34,7 @@ interface CoupleReport {
 
 /* ── Inline icons ─────────────────────────────────────── */
 
-function StarIcon({ color = "#F5C842", size = 16 }: { color?: string; size?: number }) {
+function StarIcon({ color = "#E8A830", size = 16 }: { color?: string; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -56,11 +57,18 @@ export default function PremiumHubPage() {
   const [inviteLoading, setInviteLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [heroPosters, setHeroPosters] = useState<string[]>([]);
+  const [selectedTitle, setSelectedTitle] = useState<{ id: number; type: "movie" | "tv"; title: string; poster_path: string | null } | null>(null);
   const locale = useLocale();
 
   useEffect(() => {
     createSupabaseBrowser().from("titles_cache").select("poster_path").not("poster_path", "is", null).limit(30)
       .then(({ data }) => { if (data) setHeroPosters(data.map((r: { poster_path: string }) => r.poster_path)); });
+  }, []);
+
+  // Override global bg-taste.jpg on premium page
+  useEffect(() => {
+    document.body.classList.add("premium-bg-override");
+    return () => { document.body.classList.remove("premium-bg-override"); };
   }, []);
 
   useEffect(() => {
@@ -191,21 +199,21 @@ export default function PremiumHubPage() {
             },
           ].map((item) => (
             <div key={item.title} className="flex items-start gap-4 p-5 rounded-2xl"
-              style={{ background: "rgba(255,255,255,0.03)", border: item.gold ? "0.5px solid rgba(245,200,66,0.2)" : "0.5px solid rgba(255,255,255,0.06)" }}>
+              style={{ background: "rgba(255,255,255,0.03)", border: item.gold ? "0.5px solid rgba(232,168,48,0.2)" : "0.5px solid rgba(255,255,255,0.06)" }}>
               <span className="text-2xl flex-shrink-0">{item.icon}</span>
               <div>
                 <p className="text-sm font-bold text-white/90 mb-1">{item.title}</p>
                 <p className="text-xs text-white/45 leading-relaxed">{item.desc}</p>
               </div>
-              {item.gold && <StarIcon color="#F5C842" size={14} />}
+              {item.gold && <StarIcon color="#E8A830" size={14} />}
             </div>
           ))}
         </div>
 
         {/* Blurret Tonight's Pick preview */}
         <div className="relative rounded-2xl overflow-hidden p-6 mb-8"
-          style={{ background: "rgba(255,255,255,0.02)", border: "0.5px solid rgba(245,200,66,0.15)" }}>
-          <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "rgba(245,200,66,0.6)" }}>
+          style={{ background: "rgba(255,255,255,0.02)", border: "0.5px solid rgba(232,168,48,0.15)" }}>
+          <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "rgba(232,168,48,0.6)" }}>
             {locale === "no" ? "Tonight's Pick — forhåndsvisning" : "Tonight's Pick — preview"}
           </p>
           <div className="flex gap-4">
@@ -224,7 +232,7 @@ export default function PremiumHubPage() {
               <p className="text-sm font-bold text-white mb-1">🔒 {locale === "no" ? "Låst for Founding Members" : "Locked for Founding Members"}</p>
               <button onClick={() => setShowModal(true)}
                 className="mt-3 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                style={{ background: "rgba(245,200,66,0.15)", border: "0.5px solid rgba(245,200,66,0.4)", color: "#F5C842" }}>
+                style={{ background: "rgba(232,168,48,0.15)", border: "0.5px solid rgba(232,168,48,0.4)", color: "#E8A830" }}>
                 {locale === "no" ? "Lås opp — 29 kr/mnd" : "Unlock — 29 NOK/mo"}
               </button>
             </div>
@@ -238,189 +246,173 @@ export default function PremiumHubPage() {
 
   /* ── PREMIUM VIEW ──────────────────────────────────── */
   return (
-    <div className="animate-fade-in-up max-w-3xl mx-auto space-y-6 relative">
+    <div className="animate-fade-in-up mx-auto relative" style={{ maxWidth: 960 }}>
       <style>{`
-        @keyframes border-rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@1&display=swap');
         @keyframes poster-drift-p { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        @keyframes card-shine { 0% { transform: translateX(-100%) skewX(-15deg); } 100% { transform: translateX(200%) skewX(-15deg); } }
+        .premium-card { position: relative; overflow: hidden; border: 1px solid rgba(212,168,83,0.2); }
+        .premium-card::after { content: ""; position: absolute; top: 0; left: 0; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(212,168,83,0.08), transparent); animation: card-shine 4s ease-in-out infinite; pointer-events: none; }
+        @keyframes poster-shine { 0%,60% { transform: translateX(-100%) skewX(-15deg); } 80% { transform: translateX(200%) skewX(-15deg); } 100% { transform: translateX(200%) skewX(-15deg); } }
+        .poster-shine { position: relative; overflow: hidden; border: 1px solid rgba(212,168,83,0.25); }
+        .poster-shine::after { content: ""; position: absolute; top: 0; left: 0; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(212,168,83,0.12), transparent); animation: poster-shine 5s ease-in-out infinite; pointer-events: none; z-index: 1; }
       `}</style>
 
-      {/* Animated poster drift background */}
-      {heroPosters.length > 0 && (
-        <div className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
-          <div style={{ display: "flex", gap: 8, height: "100%", width: "max-content", animation: "poster-drift-p 60s linear infinite" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            {[...heroPosters, ...heroPosters].map((p, i) => (
-              <img key={i} src={`https://image.tmdb.org/t/p/w185${p}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.10, filter: "blur(2px)", flexShrink: 0 }} />
-            ))}
-          </div>
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(10,10,15,0.3) 0%, rgba(10,10,15,0.5) 50%, rgba(10,10,15,0.7) 100%)" }} />
-        </div>
-      )}
 
-      {/* Founding Member kort */}
-      <div className="relative rounded-2xl overflow-hidden">
-        <div className="absolute -inset-px rounded-2xl overflow-hidden pointer-events-none">
-          <div className="absolute inset-[-100%]"
-            style={{ background: "conic-gradient(from 0deg, transparent 0%, transparent 60%, rgba(252,211,77,0.6) 72%, rgba(252,196,44,0.9) 80%, rgba(252,211,77,0.6) 88%, transparent 100%)", animation: "border-rotate 4s linear infinite" }} />
-          <div className="absolute inset-[2px] rounded-[14px]" style={{ background: "#0a0a0c" }} />
-        </div>
-        <div className="relative z-10 p-6 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(245,200,66,0.1)", border: "0.5px solid rgba(245,200,66,0.3)" }}>
-            <StarIcon color="#F5C842" size={22} />
-          </div>
-          <div className="flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: "#F5C842" }}>Founding Member</p>
-            <p className="text-lg font-black text-white">
-              {locale === "no" ? "Du er med." : "You're in."}
-            </p>
-            {foundingDate && (
-              <p className="text-xs text-white/40 mt-0.5">
-                {locale === "no" ? `Medlem siden ${foundingDate}` : `Member since ${foundingDate}`}
-              </p>
-            )}
-            {partnerName && (
-              <p className="text-xs mt-1" style={{ color: "rgba(245,200,66,0.7)" }}>
-                💑 {locale === "no" ? `${partnerName} har også tilgang` : `${partnerName} also has access`}
-              </p>
-            )}
-          </div>
-          {!partnerName && (
-            <button onClick={() => setShowPartnerInvite(true)}
-              className="flex-shrink-0 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
-              style={{ background: "rgba(245,200,66,0.1)", border: "0.5px solid rgba(245,200,66,0.3)", color: "#F5C842" }}>
-              {locale === "no" ? "Inviter partner" : "Invite partner"}
-            </button>
-          )}
-        </div>
-      </div>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: 28 }}>
 
-      {/* Tonight's Pick */}
-      {tonightPick && (
-        <div className="rounded-2xl p-5"
-          style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(245,200,66,0.15)" }}>
-          <div className="flex items-center justify-between mb-4">
+        {/* 1. Hero image with Tonight's Pick overlay */}
+        <div style={{ position: "relative" }}>
+          <Link href="/together" style={{ textDecoration: "none", display: "block" }}>
+            <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", borderRadius: 20, overflow: "hidden" }}>
+              <Image src="/couple-hero.jpg" alt="Par som ser film" fill className="object-cover" sizes="100vw" priority />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.55) 100%)" }} />
+              {/* Tonight's Pick heading on image */}
+              {/* Tonight's Pick heading + film/serie cards overlay */}
+              <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", padding: "20px 24px 24px", gap: 12 }}>
+                {/* Tonight's Pick heading — top */}
+                <h1 style={{
+                  fontFamily: "'DM Serif Display', Georgia, serif",
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  fontSize: "clamp(32px, 6vw, 52px)",
+                  textAlign: "center",
+                  lineHeight: 1.1,
+                  margin: 0,
+                  color: "#fff",
+                  textShadow: "0 0 20px rgba(212,168,83,0.4), 0 0 60px rgba(212,168,83,0.2), 0 4px 12px rgba(0,0,0,0.8)",
+                  WebkitFontSmoothing: "antialiased",
+                  MozOsxFontSmoothing: "grayscale",
+                }}>
+                  Tonight&apos;s Pick
+                </h1>
+
+                {/* Film + Pick again + Serie cards — under heading */}
+                <div style={{ display: "flex", gap: 20, alignItems: "flex-end" }}>
+                  {tonightPick?.movie && (
+                    <div style={{ textAlign: "center", maxWidth: 120, cursor: "pointer" }}
+                      onClick={(e) => { e.preventDefault(); setSelectedTitle({ id: tonightPick.movie!.tmdb_id, type: tonightPick.movie!.type as "movie" | "tv", title: tonightPick.movie!.title, poster_path: tonightPick.movie!.poster_path }); }}>
+                      {tonightPick.movie.poster_path && (
+                        <div style={{ position: "relative", width: 80, height: 120, borderRadius: 8, margin: "0 auto 8px", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }} className="poster-shine">
+                          <Image src={`https://image.tmdb.org/t/p/w185${tonightPick.movie.poster_path}`} alt={tonightPick.movie.title} fill className="object-cover" sizes="80px" />
+                        </div>
+                      )}
+                      <p style={{ fontSize: 11, fontWeight: 700, color: "#fff", margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.8)" }} className="truncate">{tonightPick.movie.title}</p>
+                      {tonightPick.movie.match_score != null && (
+                        <p style={{ fontSize: 10, color: "#D4A853", fontWeight: 600, margin: "2px 0 0", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>★ {tonightPick.movie.match_score}%</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Pick again button */}
+                  <button onClick={(e) => { e.preventDefault(); handleReroll(); }} disabled={tpRerolling}
+                    style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, padding: "8px 14px", cursor: "pointer", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 40, transition: "all 0.2s", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
+                    {tpRerolling ? "..." : `↻ ${locale === "no" ? "Ny pick" : "New pick"}`}
+                  </button>
+
+                  {tonightPick?.series && (
+                    <div style={{ textAlign: "center", maxWidth: 120, cursor: "pointer" }}
+                      onClick={(e) => { e.preventDefault(); setSelectedTitle({ id: tonightPick.series!.tmdb_id, type: tonightPick.series!.type as "movie" | "tv", title: tonightPick.series!.title, poster_path: tonightPick.series!.poster_path }); }}>
+                      {tonightPick.series.poster_path && (
+                        <div style={{ position: "relative", width: 80, height: 120, borderRadius: 8, margin: "0 auto 8px", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }} className="poster-shine">
+                          <Image src={`https://image.tmdb.org/t/p/w185${tonightPick.series.poster_path}`} alt={tonightPick.series.title} fill className="object-cover" sizes="80px" />
+                        </div>
+                      )}
+                      <p style={{ fontSize: 11, fontWeight: 700, color: "#fff", margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.8)" }} className="truncate">{tonightPick.series.title}</p>
+                      {tonightPick.series.match_score != null && (
+                        <p style={{ fontSize: 10, color: "#D4A853", fontWeight: 600, margin: "2px 0 0", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>★ {tonightPick.series.match_score}%</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* Partner invite button */}
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <button
+            onClick={() => setShowPartnerInvite(true)}
+            style={{ background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(212,168,83,0.25)", borderRadius: 999, padding: "10px 24px", cursor: "pointer", transition: "all 0.2s ease" }}
+            onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(212,168,83,0.1)"; el.style.borderColor = "rgba(212,168,83,0.4)"; }}
+            onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.05)"; el.style.borderColor = "rgba(212,168,83,0.25)"; }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>
+              {partnerName
+                ? <>{partnerName} {locale === "no" ? "har" : "has"} <span style={{ color: "#D4A853" }}>Premium</span></>
+                : <>{locale === "no" ? "Partneren får" : "Partner gets"} <span style={{ color: "#D4A853" }}>Premium</span> {locale === "no" ? "gratis" : "free"}</>
+              }
+            </span>
+          </button>
+        </div>
+
+        {/* 3. 4-column feature grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+
+          {/* Curator AI */}
+          <Link href="/curator" style={{ textDecoration: "none" }}>
+            <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 18, padding: "22px 18px", display: "flex", flexDirection: "column", gap: 14, transition: "all 0.2s ease", cursor: "pointer", height: "100%" }} className="premium-card"
+              onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.07)"; el.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.04)"; el.style.transform = "translateY(0)"; }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(212,168,83,0.1)", border: "0.5px solid rgba(212,168,83,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🤖</div>
+              <div>
+                <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>Curator AI</p>
+                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: "6px 0 0", lineHeight: 1.4 }}>
+                  {locale === "no" ? "Ubegrenset AI-filmrådgiver som kjenner smaken din." : "Unlimited AI film advisor that knows your taste."}
+                </p>
+              </div>
+            </div>
+          </Link>
+
+          {/* Smaksprofil */}
+          <Link href="/taste" style={{ textDecoration: "none" }}>
+            <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 18, padding: "22px 18px", display: "flex", flexDirection: "column", gap: 14, transition: "all 0.2s ease", cursor: "pointer", height: "100%" }} className="premium-card"
+              onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.07)"; el.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.04)"; el.style.transform = "translateY(0)"; }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(212,168,83,0.1)", border: "0.5px solid rgba(212,168,83,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>✨</div>
+              <div>
+                <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>{locale === "no" ? "Smaksprofil" : "Taste Profile"}</p>
+                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: "6px 0 0", lineHeight: 1.4 }}>
+                  {locale === "no" ? "AI-analyse av din filmsmak og foretrekkinger." : "AI analysis of your film taste and preferences."}
+                </p>
+              </div>
+            </div>
+          </Link>
+
+          {/* Par-rapport */}
+          <Link href="/couple-report" style={{ textDecoration: "none" }}>
+            <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 18, padding: "22px 18px", display: "flex", flexDirection: "column", gap: 14, transition: "all 0.2s ease", cursor: "pointer", height: "100%" }} className="premium-card"
+              onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.07)"; el.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.04)"; el.style.transform = "translateY(0)"; }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(212,168,83,0.1)", border: "0.5px solid rgba(212,168,83,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>❤️</div>
+              <div>
+                <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>{locale === "no" ? "Par-rapport" : "Couple Report"}</p>
+                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: "6px 0 0", lineHeight: 1.4 }}>
+                  {locale === "no" ? "Kompatibilitet og matchhistorikk for dere." : "Compatibility and match history for you both."}
+                </p>
+              </div>
+            </div>
+          </Link>
+
+          {/* Founding Member */}
+          <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 18, padding: "22px 18px", display: "flex", flexDirection: "column", gap: 14, transition: "all 0.2s ease", cursor: "pointer", height: "100%" }} className="premium-card"
+            onClick={() => setShowPartnerInvite(true)}
+            onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.07)"; el.style.transform = "translateY(-2px)"; }}
+            onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.04)"; el.style.transform = "translateY(0)"; }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(212,168,83,0.1)", border: "0.5px solid rgba(212,168,83,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>⭐</div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "rgba(245,200,66,0.7)" }}>
-                {locale === "no" ? "Tonight's Pick" : "Tonight's Pick"}
-              </p>
-              <p className="text-base font-bold text-white">
-                {partnerName
-                  ? (locale === "no" ? `For deg og ${partnerName}` : `For you and ${partnerName}`)
-                  : (locale === "no" ? "For deg i kveld" : "For you tonight")}
+              <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>Founding Member</p>
+              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: "6px 0 0", lineHeight: 1.4 }}>
+                {foundingDate
+                  ? (locale === "no" ? `Medlem siden ${foundingDate}` : `Member since ${foundingDate}`)
+                  : (locale === "no" ? "Inviter partneren din." : "Invite your partner.")}
               </p>
             </div>
-            <button onClick={handleReroll} disabled={tpRerolling}
-              className="px-3 py-1.5 rounded-lg text-xs text-white/40 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.08] transition-all disabled:opacity-40">
-              {tpRerolling ? "..." : `↻ ${locale === "no" ? "Ny pick" : "New pick"}`}
-            </button>
           </div>
-          <div className="flex gap-4">
-            {tonightPick.movie && (
-              <Link href="/together" className="flex-1 rounded-xl border border-white/[0.06] p-3 hover:border-white/[0.12] transition-all group">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2">🎬 {locale === "no" ? "Film i kveld" : "Movie tonight"}</p>
-                {tonightPick.movie.poster_path && (
-                  <div className="relative w-full rounded-lg overflow-hidden mb-2" style={{ aspectRatio: "2/3" }}>
-                    <Image src={`https://image.tmdb.org/t/p/w342${tonightPick.movie.poster_path}`} alt={tonightPick.movie.title} fill className="object-cover group-hover:scale-[1.02] transition-transform duration-300" sizes="200px" />
-                  </div>
-                )}
-                <p className="text-xs font-semibold text-white/85 truncate">{tonightPick.movie.title}</p>
-                {tonightPick.movie.match_score != null && (
-                  <p className="text-[10px] mt-0.5" style={{ color: "#F5C842" }}>★ {tonightPick.movie.match_score}% match</p>
-                )}
-              </Link>
-            )}
-            {tonightPick.series && (
-              <Link href="/together" className="flex-1 rounded-xl border border-white/[0.06] p-3 hover:border-white/[0.12] transition-all group">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2">📺 {locale === "no" ? "Serie i kveld" : "Series tonight"}</p>
-                {tonightPick.series.poster_path && (
-                  <div className="relative w-full rounded-lg overflow-hidden mb-2" style={{ aspectRatio: "2/3" }}>
-                    <Image src={`https://image.tmdb.org/t/p/w342${tonightPick.series.poster_path}`} alt={tonightPick.series.title} fill className="object-cover group-hover:scale-[1.02] transition-transform duration-300" sizes="200px" />
-                  </div>
-                )}
-                <p className="text-xs font-semibold text-white/85 truncate">{tonightPick.series.title}</p>
-                {tonightPick.series.match_score != null && (
-                  <p className="text-[10px] mt-0.5" style={{ color: "#F5C842" }}>★ {tonightPick.series.match_score}% match</p>
-                )}
-              </Link>
-            )}
-          </div>
+
         </div>
-      )}
 
-      {/* Widgets grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-        {/* Par-rapport widget */}
-        <Link href="/couple-report" className="group rounded-2xl p-5 hover:border-white/[0.12] transition-all"
-          style={{ background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(245,200,66,0.35)" }}>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-base">💑</span>
-            <p className="text-xs font-bold text-white">
-              {locale === "no" ? "Par-rapport" : "Couple Report"}
-            </p>
-          </div>
-          {coupleReport ? (
-            <>
-              {coupleReport.compatibility_score != null && (
-                <p className="text-2xl font-black mb-1" style={{ color: "#F5C842" }}>
-                  {coupleReport.compatibility_score}%
-                </p>
-              )}
-              <p className="text-xs text-white mb-1">
-                {locale === "no" ? `${coupleReport.total_matches} matcher totalt` : `${coupleReport.total_matches} total matches`}
-              </p>
-              {coupleReport.top_genre && (
-                <p className="text-xs text-white/80">
-                  {locale === "no" ? `Toppsjanger: ${coupleReport.top_genre}` : `Top genre: ${coupleReport.top_genre}`}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-xs text-white/80">
-              {locale === "no" ? "Du mangler en partner-kobling. Finn ut nøyaktig hva dere matcher på." : "No partner connected yet. Find out exactly what you match on."}
-            </p>
-          )}
-          <p className="text-[10px] text-white/50 group-hover:text-white/80 mt-3 transition-colors">
-            {locale === "no" ? "Se full rapport →" : "See full report →"}
-          </p>
-        </Link>
-
-        {/* Smaksprofil widget */}
-        <Link href="/taste" className="group rounded-2xl p-5 hover:border-white/[0.12] transition-all"
-          style={{ background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.12)" }}>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-base">🎭</span>
-            <p className="text-xs font-bold text-white">
-              {locale === "no" ? "Smaksprofil" : "Taste Profile"}
-            </p>
-          </div>
-          <p className="text-xs text-white/80 leading-relaxed">
-            {locale === "no" ? "Din AI-smaksprofil er klar. Klikk for å se hva biblioteket ditt sier om deg." : "Your AI taste profile is ready. Click to see what your library says about you."}
-          </p>
-          <p className="text-[10px] text-white/50 group-hover:text-white/80 mt-3 transition-colors">
-            {locale === "no" ? "Se profilen →" : "See profile →"}
-          </p>
-        </Link>
-
-        {/* Curator widget */}
-        <Link href="/curator" className="group rounded-2xl p-5 hover:border-white/[0.12] transition-all"
-          style={{ background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.12)" }}>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-base">🤖</span>
-            <p className="text-xs font-bold text-white">Curator AI</p>
-            <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "rgba(245,200,66,0.1)", color: "#F5C842", border: "0.5px solid rgba(245,200,66,0.2)" }}>
-              {locale === "no" ? "Ubegrenset" : "Unlimited"}
-            </span>
-          </div>
-          <p className="text-xs text-white/80 leading-relaxed">
-            {locale === "no" ? "Curator venter. Hva har du lyst til å føle i kveld?" : "Curator is ready. What do you want to feel tonight?"}
-          </p>
-          <p className="text-[10px] text-white/50 group-hover:text-white/80 mt-3 transition-colors">
-            {locale === "no" ? "Åpne Curator →" : "Open Curator →"}
-          </p>
-        </Link>
       </div>
 
       {/* Partner invite modal */}
@@ -428,15 +420,15 @@ export default function PremiumHubPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowPartnerInvite(false)} />
           <div className="relative w-full max-w-sm rounded-2xl p-6 text-center"
-            style={{ background: "rgba(20,20,20,0.95)", backdropFilter: "blur(30px)", border: "0.5px solid rgba(245,200,66,0.3)", boxShadow: "0 0 60px rgba(245,200,66,0.1)" }}>
+            style={{ background: "rgba(20,20,20,0.98)", backdropFilter: "blur(30px)", border: "0.5px solid rgba(232,168,48,0.3)", boxShadow: "0 0 60px rgba(232,168,48,0.1)" }}>
             <p className="text-lg font-bold text-white mb-2">
               {locale === "no" ? "Inviter partneren din 💑" : "Invite your partner 💑"}
             </p>
-            <p className="text-sm text-white/50 mb-6">
+            <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.5)" }}>
               {locale === "no" ? "Du har betalt — nå kan partneren din få premium gratis. Del lenken:" : "You've paid — now your partner can get premium for free. Share the link:"}
             </p>
             {inviteLoading ? (
-              <p className="text-xs text-white/30 mb-6">{locale === "no" ? "Genererer lenke..." : "Generating link..."}</p>
+              <p className="text-xs mb-6" style={{ color: "rgba(255,255,255,0.3)" }}>{locale === "no" ? "Genererer lenke..." : "Generating link..."}</p>
             ) : inviteCode ? (
               <div className="flex flex-col gap-3 mb-6">
                 {(() => {
@@ -457,8 +449,8 @@ export default function PremiumHubPage() {
                         {locale === "no" ? "Send WhatsApp" : "Send WhatsApp"}
                       </a>
                       <button onClick={async () => { await navigator.clipboard.writeText(inviteUrl); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); }}
-                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white/80 border border-white/10"
-                        style={{ background: "rgba(255,255,255,0.05)" }}>
+                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold border"
+                        style={{ background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.8)" }}>
                         {linkCopied ? (locale === "no" ? "Kopiert!" : "Copied!") : (locale === "no" ? "Kopier lenke" : "Copy link")}
                       </button>
                     </>
@@ -466,7 +458,7 @@ export default function PremiumHubPage() {
                 })()}
               </div>
             ) : null}
-            <button onClick={() => setShowPartnerInvite(false)} className="text-xs text-white/30 hover:text-white/50 transition-colors">
+            <button onClick={() => setShowPartnerInvite(false)} className="text-xs transition-colors" style={{ color: "rgba(255,255,255,0.3)" }}>
               {locale === "no" ? "Gjør dette senere" : "Do this later"}
             </button>
           </div>
@@ -474,6 +466,16 @@ export default function PremiumHubPage() {
       )}
 
       <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} source="premium_hub" />
+
+      {selectedTitle && (
+        <StreamingModal
+          tmdbId={selectedTitle.id}
+          type={selectedTitle.type}
+          title={selectedTitle.title}
+          posterPath={selectedTitle.poster_path}
+          onClose={() => setSelectedTitle(null)}
+        />
+      )}
     </div>
   );
 }

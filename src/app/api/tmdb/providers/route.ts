@@ -10,10 +10,11 @@ export async function GET(req: NextRequest) {
     if (!tmdbId || !type) return NextResponse.json({ error: "Missing params" }, { status: 400 });
 
     // Try to detect country from headers
-    const country =
+    const country = (
       req.nextUrl.searchParams.get("country") ||
       req.headers.get("x-vercel-ip-country") ||
-      "US";
+      "US"
+    ).toUpperCase();
 
     const result = await getWatchProvidersCached({ tmdbId, type, country });
 

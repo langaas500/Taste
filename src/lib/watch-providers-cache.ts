@@ -41,6 +41,7 @@ export async function getWatchProvidersCached({
   type: "movie" | "tv";
   country: string;
 }): Promise<CachedProviderResultSingle> {
+  country = country.toUpperCase();
   const admin = createSupabaseAdmin();
 
   // 1. Check cache

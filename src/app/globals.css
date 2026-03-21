@@ -57,6 +57,17 @@ body {
   overscroll-behavior-y: contain;
 }
 
+/* Premium page background override */
+body.premium-bg-override::before {
+  background: url("/premium-bg.jpg") center center / cover no-repeat fixed !important;
+  filter: blur(3px) brightness(0.25) saturate(1.3) !important;
+  opacity: 1 !important;
+  transform: scale(1.05) !important;
+}
+body.premium-bg-override::after {
+  background: none !important;
+}
+
 /* Background image layer - fixed, covers entire viewport */
 body::before {
   content: "";

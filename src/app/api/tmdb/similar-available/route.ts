@@ -23,10 +23,11 @@ export async function GET(req: NextRequest) {
     if (!tmdbId || !type)
       return NextResponse.json({ error: "Missing params" }, { status: 400 });
 
-    const country =
+    const country = (
       req.nextUrl.searchParams.get("country") ||
       req.headers.get("x-vercel-ip-country") ||
-      "US";
+      "US"
+    ).toUpperCase();
 
     // 1. Get similar titles from TMDB (1 API call)
     const similarData = await tmdbSimilar(tmdbId, type);
