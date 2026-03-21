@@ -461,11 +461,10 @@ export default function SearchPage() {
     });
   }
 
-  // Simple search
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    if (!query.trim()) return;
-    addToHistory(query);
+  // Core search function (used by both form submit and live search)
+  const doSearch = useCallback(async (q: string, type: string, saveHistory = false) => {
+    if (!q.trim()) return;
+    if (saveHistory) addToHistory(q);
     setShowHistory(false);
     setLoading(true);
     setError("");
@@ -473,7 +472,7 @@ export default function SearchPage() {
     setPersonMode(null);
     setTopicMatch(false);
     try {
-      const res = await fetch(`/api/tmdb/search?q=${encodeURIComponent(query)}&type=${typeFilter}`);
+      const res = await fetch(`/api/tmdb/search?q=${encodeURIComponent(q)}&type=${type}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResults(data.results || []);
@@ -482,7 +481,31 @@ export default function SearchPage() {
       setError(e instanceof Error ? e.message : "Search failed");
     }
     setLoading(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typeFilter]);
+
+  // Form submit — immediate search + save to history
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    doSearch(query, typeFilter, true);
   }
+
+  // Live search — debounced, triggers after 3+ chars
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (isAdvancedMode) return;
+    const q = query.trim();
+    if (q.length < 3) {
+      if (q.length === 0 && results.length > 0) setResults([]);
+      return;
+    }
+    debounceRef.current = setTimeout(() => {
+      doSearch(q, typeFilter);
+    }, 400);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, typeFilter]);
 
   // Advanced discover search
   async function handleAdvancedSearch(page = 1) {
