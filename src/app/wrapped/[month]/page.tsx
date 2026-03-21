@@ -543,13 +543,24 @@ function SlideShare({ isOwner, month, locale, userId, shareRef }: {
     if (!shareRef.current) return;
     setDownloading(true);
     try {
+      const el = shareRef.current;
+      // Move element on-screen for rendering (off-screen elements produce black images)
+      el.style.left = "0";
+      el.style.top = "0";
+      el.style.zIndex = "-1";
+      el.style.opacity = "1";
+      // Wait for browser to layout
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       const { toPng } = await import("html-to-image");
-      const dataUrl = await toPng(shareRef.current, {
+      const dataUrl = await toPng(el, {
         width: 1080,
         height: 1920,
         pixelRatio: 1,
         backgroundColor: "#06080f",
       });
+      // Move back off-screen
+      el.style.left = "-9999px";
+      el.style.zIndex = "";
       const link = document.createElement("a");
       link.download = `logflix-wrapped-${month}.png`;
       link.href = dataUrl;
