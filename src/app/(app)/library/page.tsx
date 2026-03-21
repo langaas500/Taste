@@ -444,6 +444,33 @@ export default function LibraryPage() {
         })}
       </div>
 
+      {/* Wrapped teaser */}
+      <Link
+        href="/wrapped"
+        className="flex items-center gap-3 px-4 py-3 mb-5 rounded-xl transition-all group"
+        style={{
+          background: "linear-gradient(135deg, rgba(229,9,20,0.15) 0%, rgba(245,200,66,0.08) 100%)",
+          border: "1px solid rgba(229,9,20,0.3)",
+        }}
+      >
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, rgba(229,9,20,0.2), rgba(245,200,66,0.1))", border: "0.5px solid rgba(229,9,20,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <defs><linearGradient id="wrapped-lib" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stopColor="#E50914"/><stop offset="100%" stopColor="#D4A853"/></linearGradient></defs>
+            <rect x="3" y="8" width="18" height="13" rx="2" stroke="url(#wrapped-lib)"/>
+            <path d="M12 8v13" stroke="url(#wrapped-lib)"/>
+            <path d="M3 12h18" stroke="url(#wrapped-lib)" opacity="0.5"/>
+            <path d="M7.5 8C7.5 8 7.5 4 12 4s4.5 4 4.5 4" stroke="url(#wrapped-lib)"/>
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold text-white">{locale === "no" ? "Din Wrapped er klar" : "Your Wrapped is ready"}</p>
+          <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.6)" }}>{locale === "no" ? "Se ditt år i film og serier" : "See your year in movies and series"}</p>
+        </div>
+        <svg className="w-4 h-4 text-white/40 group-hover:text-white/70 transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </Link>
+
       {/* Hero header */}
       <div className="mb-8">
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)]">
