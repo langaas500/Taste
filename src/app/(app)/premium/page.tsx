@@ -355,7 +355,14 @@ export default function PremiumHubPage() {
             <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 18, padding: "22px 18px", display: "flex", flexDirection: "column", gap: 14, transition: "all 0.2s ease", cursor: "pointer", height: "100%" }} className="premium-card"
               onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.07)"; el.style.transform = "translateY(-2px)"; }}
               onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.04)"; el.style.transform = "translateY(0)"; }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(212,168,83,0.1)", border: "0.5px solid rgba(212,168,83,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🤖</div>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, rgba(212,168,83,0.15), rgba(212,168,83,0.05))", border: "0.5px solid rgba(212,168,83,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#gold1)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <defs><linearGradient id="gold1" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stopColor="#E8C86A"/><stop offset="100%" stopColor="#C4944A"/></linearGradient></defs>
+                  <path d="M12 3c.5 0 2.5 4 2.5 4s4.5.5 4.5 1-3 3.5-3 3.5.5 4.5 0 4.5-3.5-2.5-4-2.5-3.5 3-4 2.5.5-4.5 0-4.5-3-3-3-3.5 4.5-1 4.5-1S11.5 3 12 3z"/>
+                  <circle cx="12" cy="12" r="3" strokeWidth="1.2"/>
+                  <path d="M12 2v2M12 20v2M2 12h2M20 12h2" strokeWidth="1" opacity="0.5"/>
+                </svg>
+              </div>
               <div>
                 <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>Curator AI</p>
                 <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: "6px 0 0", lineHeight: 1.4 }}>
@@ -370,7 +377,15 @@ export default function PremiumHubPage() {
             <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 18, padding: "22px 18px", display: "flex", flexDirection: "column", gap: 14, transition: "all 0.2s ease", cursor: "pointer", height: "100%" }} className="premium-card"
               onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.07)"; el.style.transform = "translateY(-2px)"; }}
               onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.04)"; el.style.transform = "translateY(0)"; }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(212,168,83,0.1)", border: "0.5px solid rgba(212,168,83,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>✨</div>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, rgba(212,168,83,0.15), rgba(212,168,83,0.05))", border: "0.5px solid rgba(212,168,83,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#gold2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <defs><linearGradient id="gold2" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stopColor="#E8C86A"/><stop offset="100%" stopColor="#C4944A"/></linearGradient></defs>
+                  <circle cx="12" cy="12" r="9"/>
+                  <path d="M12 8v4l2.5 1.5"/>
+                  <path d="M8.5 3.5L7 2M15.5 3.5L17 2" strokeWidth="1.2"/>
+                  <path d="M16.5 16.5l1.5 1.5M7.5 16.5L6 18" opacity="0.4"/>
+                </svg>
+              </div>
               <div>
                 <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>{locale === "no" ? "Smaksprofil" : "Taste Profile"}</p>
                 <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: "6px 0 0", lineHeight: 1.4 }}>
@@ -385,7 +400,12 @@ export default function PremiumHubPage() {
             <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 18, padding: "22px 18px", display: "flex", flexDirection: "column", gap: 14, transition: "all 0.2s ease", cursor: "pointer", height: "100%" }} className="premium-card"
               onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.07)"; el.style.transform = "translateY(-2px)"; }}
               onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.04)"; el.style.transform = "translateY(0)"; }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(212,168,83,0.1)", border: "0.5px solid rgba(212,168,83,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>❤️</div>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, rgba(212,168,83,0.15), rgba(212,168,83,0.05))", border: "0.5px solid rgba(212,168,83,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <defs><linearGradient id="gold3" x1="4" y1="4" x2="20" y2="20"><stop offset="0%" stopColor="#E8C86A"/><stop offset="100%" stopColor="#C4944A"/></linearGradient></defs>
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="url(#gold3)" fill="url(#gold3)" fillOpacity="0.15"/>
+                </svg>
+              </div>
               <div>
                 <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>{locale === "no" ? "Par-rapport" : "Couple Report"}</p>
                 <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: "6px 0 0", lineHeight: 1.4 }}>
@@ -400,7 +420,12 @@ export default function PremiumHubPage() {
             onClick={() => setShowPartnerInvite(true)}
             onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.07)"; el.style.transform = "translateY(-2px)"; }}
             onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.04)"; el.style.transform = "translateY(0)"; }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(212,168,83,0.1)", border: "0.5px solid rgba(212,168,83,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>⭐</div>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, rgba(212,168,83,0.2), rgba(212,168,83,0.08))", border: "0.5px solid rgba(212,168,83,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <defs><linearGradient id="gold4" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stopColor="#F0D67B"/><stop offset="100%" stopColor="#C4944A"/></linearGradient></defs>
+                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6L12 2z" stroke="url(#gold4)" fill="url(#gold4)" fillOpacity="0.2"/>
+              </svg>
+            </div>
             <div>
               <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>Founding Member</p>
               <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: "6px 0 0", lineHeight: 1.4 }}>
