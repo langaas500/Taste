@@ -284,7 +284,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
       )}
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl max-h-[92dvh] sm:max-h-[90vh] rounded-t-3xl sm:rounded-2xl bg-[#0c1022] border border-white/[0.08] shadow-2xl overflow-hidden animate-fade-in-up flex flex-col">
+      <div className="relative w-full max-w-2xl max-h-[92dvh] sm:max-h-[90vh] rounded-t-3xl sm:rounded-2xl bg-[#111113] border border-white/[0.08] shadow-2xl overflow-hidden animate-fade-in-up flex flex-col">
 
         {/* Mobile drag handle */}
         <div className="sm:hidden flex justify-center pt-2.5 pb-1">
@@ -343,7 +343,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                 priority
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0c1022] via-[#0c1022]/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#111113] via-[#111113]/60 to-transparent" />
 
             {/* Title overlay at bottom of backdrop */}
             <div className="absolute bottom-0 left-0 right-0 p-5 flex items-end gap-4">

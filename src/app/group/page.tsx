@@ -223,12 +223,12 @@ export default function GroupPage() {
         ))}
       </div>
       {/* Edge fade + darken center slightly */}
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, #06080f 0%, rgba(6,8,15,0.55) 15%, rgba(6,8,15,0.55) 85%, #06080f 100%)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, #0a0a0c 0%, rgba(10,10,12,0.55) 15%, rgba(10,10,12,0.55) 85%, #0a0a0c 100%)", pointerEvents: "none" }} />
     </div>
   );
 
   return (
-    <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", position: "relative", overflow: "hidden" }}>
+    <div style={{ minHeight: "100dvh", background: "#0a0a0c", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", position: "relative", overflow: "hidden" }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
       `}} />

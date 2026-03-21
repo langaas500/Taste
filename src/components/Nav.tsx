@@ -266,7 +266,7 @@ export default function Nav() {
       {/* ==================== MOBILE TOP BAR (hamburger only) ==================== */}
       <nav
         className="fixed top-0 left-0 right-0 z-50 md:hidden"
-        style={{ background: "rgba(6,8,15,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ background: "rgba(10,10,12,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
       >
         <div className="flex items-center px-2 py-1.5">
           <button

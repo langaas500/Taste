@@ -358,7 +358,7 @@ export default function GroupSessionPage() {
 
   if (!sessionId && !actionError) {
     return (
-      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ minHeight: "100dvh", background: "#0a0a0c", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <p style={{ color: "rgba(255,255,255,0.5)" }}>{gt(locale, "connecting")}</p>
       </div>
     );
@@ -366,7 +366,7 @@ export default function GroupSessionPage() {
 
   if (actionError && !state) {
     return (
-      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
+      <div style={{ minHeight: "100dvh", background: "#0a0a0c", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
         <p style={{ color: RED }}>{actionError}</p>
         <button onClick={() => router.push("/group")} style={{ ...btnPrimary, maxWidth: 300 }}>{gt(locale, "back")}</button>
       </div>
@@ -376,7 +376,7 @@ export default function GroupSessionPage() {
   /* ── EXPIRED ── */
   if (isExpired && sessionStatus !== "completed") {
     return (
-      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
+      <div style={{ minHeight: "100dvh", background: "#0a0a0c", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
         <h2 style={{ fontSize: 22, fontWeight: 700 }}>{gt(locale, "expired")}</h2>
         <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 15, textAlign: "center" }}>{gt(locale, "expiredSub")}</p>
         <button onClick={() => { clearStoredSession(); router.push("/group"); }} style={{ ...btnPrimary, maxWidth: 300 }}>
@@ -389,7 +389,7 @@ export default function GroupSessionPage() {
   /* ── LOBBY ── */
   if (sessionStatus === "lobby" || sessionStatus === "pool_ready") {
     return (
-      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 24, position: "relative", overflow: "hidden" }}>
+      <div style={{ minHeight: "100dvh", background: "#0a0a0c", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 24, position: "relative", overflow: "hidden" }}>
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
           @keyframes code-glow { 0% { box-shadow: 0 0 20px rgba(255,42,42,0.08); } 100% { box-shadow: 0 0 30px rgba(255,42,42,0.25); } }
@@ -413,7 +413,7 @@ export default function GroupSessionPage() {
                 <img key={i} src={`${TMDB_IMG_SM}${url}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.07, filter: "blur(3px)", flexShrink: 0 }} />
               ))}
             </div>
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, #06080f 0%, transparent 10%, transparent 90%, #06080f 100%)" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, #0a0a0c 0%, transparent 10%, transparent 90%, #0a0a0c 100%)" }} />
           </div>
         )}
 
@@ -572,7 +572,7 @@ export default function GroupSessionPage() {
 
     // Card stack
     return (
-      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", padding: "16px 16px 24px", position: "relative" }}>
+      <div style={{ minHeight: "100dvh", background: "#0a0a0c", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", padding: "16px 16px 24px", position: "relative" }}>
         {/* Back to group landing */}
         <button
           onClick={() => router.push("/group")}
@@ -687,7 +687,7 @@ export default function GroupSessionPage() {
     const allVoted = participants.every((p) => finalVotes?.[p.user_id]);
 
     return (
-      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 16px", gap: 20, position: "relative", overflow: "hidden" }}>
+      <div style={{ minHeight: "100dvh", background: "#0a0a0c", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 16px", gap: 20, position: "relative", overflow: "hidden" }}>
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
           @keyframes card-glow { 0% { box-shadow: 0 0 12px rgba(255,42,42,0.15); } 100% { box-shadow: 0 0 24px rgba(255,42,42,0.35); } }
@@ -701,7 +701,7 @@ export default function GroupSessionPage() {
                 <img key={i} src={`${TMDB_IMG_SM}${url}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.06, filter: "blur(3px)", flexShrink: 0 }} />
               ))}
             </div>
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, #06080f 0%, transparent 10%, transparent 90%, #06080f 100%)" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, #0a0a0c 0%, transparent 10%, transparent 90%, #0a0a0c 100%)" }} />
           </div>
         )}
 
@@ -815,7 +815,7 @@ export default function GroupSessionPage() {
     const posterUrl = pick?.poster_path ? `https://image.tmdb.org/t/p/w780${pick.poster_path}` : null;
 
     return (
-      <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 0, position: "relative", overflow: "hidden" }}>
+      <div style={{ minHeight: "100dvh", background: "#0a0a0c", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 0, position: "relative", overflow: "hidden" }}>
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes winner-flash { 0% { opacity: 0.6; } 100% { opacity: 0; } }
         `}} />
@@ -824,7 +824,7 @@ export default function GroupSessionPage() {
         {posterUrl && (
           <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
             <img src={posterUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.18, filter: "blur(20px) saturate(1.2)" }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #06080f 10%, rgba(6,8,15,0.7) 50%, #06080f 100%)" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #0a0a0c 10%, rgba(10,10,12,0.7) 50%, #0a0a0c 100%)" }} />
           </div>
         )}
 
@@ -875,7 +875,7 @@ export default function GroupSessionPage() {
 
   /* ── fallback ── */
   return (
-    <div style={{ minHeight: "100dvh", background: "#06080f", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ minHeight: "100dvh", background: "#0a0a0c", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <p style={{ color: "rgba(255,255,255,0.5)" }}>{loading ? gt(locale, "loading") : pollError || gt(locale, "unknownStatus")}</p>
     </div>
   );

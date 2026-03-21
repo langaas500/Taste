@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Hold styr på det du ser. Få smarte anbefalinger.",
     start_url: "/library",
     display: "standalone",
-    background_color: "#06080f",
-    theme_color: "#06080f",
+    background_color: "#0a0a0c",
+    theme_color: "#0a0a0c",
     icons: [
       {
         src: "/icon",

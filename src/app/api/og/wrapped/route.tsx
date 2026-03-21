@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
           justifyContent: "space-between",
           padding: "48px 56px",
           fontFamily: "Inter, system-ui, sans-serif",
-          background: "linear-gradient(165deg, #06080f 0%, #0d1017 50%, #1a0a0c 100%)",
+          background: "linear-gradient(165deg, #0a0a0c 0%, #0d0d0f 50%, #1a0a0c 100%)",
           position: "relative",
           overflow: "hidden",
         }}

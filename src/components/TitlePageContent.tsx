@@ -474,7 +474,7 @@ export default function TitlePageContent(props: TitlePageProps) {
                 className="object-cover opacity-30"
                 sizes="100vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#06080f] via-[#06080f]/80 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c] via-[#0a0a0c]/80 to-transparent" />
             </div>
           )}
 

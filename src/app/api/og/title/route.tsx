@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
           position: "relative",
           overflow: "hidden",
           fontFamily: "Inter, system-ui, sans-serif",
-          background: "#06080f",
+          background: "#0a0a0c",
         }}
       >
         {/* Poster background */}
@@ -58,8 +58,8 @@ export async function GET(req: NextRequest) {
             height: 630,
             display: "flex",
             background: hasPoster
-              ? "linear-gradient(180deg, rgba(6,8,15,0.55) 0%, rgba(6,8,15,0.82) 50%, rgba(6,8,15,0.96) 100%)"
-              : "linear-gradient(165deg, #06080f 0%, #0d1017 50%, #1a0a0c 100%)",
+              ? "linear-gradient(180deg, rgba(10,10,12,0.55) 0%, rgba(10,10,12,0.82) 50%, rgba(10,10,12,0.96) 100%)"
+              : "linear-gradient(165deg, #0a0a0c 0%, #0d0d0f 50%, #1a0a0c 100%)",
           }}
         />
 

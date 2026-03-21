@@ -100,7 +100,7 @@ export default function AddToListModal({ tmdb_id, type, title, onClose }: AddToL
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={handleBackdropClick}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
-      <div className="relative w-full max-w-sm rounded-2xl bg-[#0c1022] border border-white/[0.08] shadow-2xl overflow-hidden animate-fade-in-up">
+      <div className="relative w-full max-w-sm rounded-2xl bg-[#111113] border border-white/[0.08] shadow-2xl overflow-hidden animate-fade-in-up">
         {/* Header */}
         <div className="p-4 border-b border-white/[0.06]">
           <div className="flex items-center justify-between">

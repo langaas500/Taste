@@ -117,7 +117,7 @@ export default async function GuidesHubPage({ params }: { params: Promise<Params
     <div
       style={{
         minHeight: "100dvh",
-        background: "#06080f",
+        background: "#0a0a0c",
         color: "#fff",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}

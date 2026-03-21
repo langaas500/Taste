@@ -100,7 +100,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="min-h-dvh" style={{ background: "#06080f" }}>
+    <div className="min-h-dvh" style={{ background: "#0a0a0c" }}>
       {/* Header */}
       <div style={{ padding: "16px 16px 0", maxWidth: 560, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>

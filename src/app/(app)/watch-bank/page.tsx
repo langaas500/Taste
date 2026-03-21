@@ -207,11 +207,11 @@ export default function WatchBankPage() {
           <select
             value={genreFilter ?? ""}
             onChange={(e) => setGenreFilter(e.target.value ? parseInt(e.target.value, 10) : null)}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#111627] border border-white/[0.08] text-white/70 focus:outline-none focus:border-white/20 transition-all [color-scheme:dark]"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#161618] border border-white/[0.08] text-white/70 focus:outline-none focus:border-white/20 transition-all [color-scheme:dark]"
           >
-            <option value="" className="bg-[#111627] text-white/70">{s.allGenres}</option>
+            <option value="" className="bg-[#161618] text-white/70">{s.allGenres}</option>
             {allGenres.map((g) => (
-              <option key={g.id} value={g.id} className="bg-[#111627] text-white/70">{g.name}</option>
+              <option key={g.id} value={g.id} className="bg-[#161618] text-white/70">{g.name}</option>
             ))}
           </select>
           <div className="flex items-center gap-1.5">

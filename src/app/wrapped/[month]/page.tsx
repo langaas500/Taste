@@ -368,7 +368,7 @@ function SlideFavorites({ stats, locale }: { stats: WrappedStats; locale: WLocal
       <div className="flex gap-4 justify-center flex-wrap">
         {stats.topTitles.map((title, i) => (
           <div key={`${title.tmdb_id}:${title.type}`} className="text-center" style={{ animationDelay: `${i * 150}ms` }}>
-            <div className={`w-[110px] aspect-[2/3] rounded-xl overflow-hidden mb-2 ${i === 0 ? "ring-2 ring-[#E50914] ring-offset-2 ring-offset-[#06080f]" : ""}`}>
+            <div className={`w-[110px] aspect-[2/3] rounded-xl overflow-hidden mb-2 ${i === 0 ? "ring-2 ring-[#E50914] ring-offset-2 ring-offset-[#0a0a0c]" : ""}`}>
               {title.poster_path ? (
                 <Image
                   src={`https://image.tmdb.org/t/p/w185${title.poster_path}`}
@@ -556,7 +556,7 @@ function SlideShare({ isOwner, month, locale, userId, shareRef }: {
         width: 1080,
         height: 1920,
         pixelRatio: 1,
-        backgroundColor: "#06080f",
+        backgroundColor: "#0a0a0c",
       });
       // Move back off-screen
       el.style.left = "-9999px";
@@ -632,7 +632,7 @@ function ShareCard({ stats, month, displayName, locale, cardRef }: {
       style={{
         width: 1080,
         height: 1920,
-        background: "linear-gradient(180deg, #06080f 0%, #0d0f14 40%, #1a0a0a 100%)",
+        background: "linear-gradient(180deg, #0a0a0c 0%, #0d0f14 40%, #1a0a0a 100%)",
         padding: "60px 60px 50px",
         display: "flex",
         flexDirection: "column",
@@ -873,14 +873,14 @@ export default function WrappedMonthPage() {
   const t = WRAPPED_TEXT[locale];
 
   if (loading) return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "#06080f" }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "#0a0a0c" }}>
       <LoadingSpinner text={t.loading} />
     </div>
   );
 
   if (insufficient) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center text-center px-6" style={{ background: "#06080f" }}>
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center text-center px-6" style={{ background: "#0a0a0c" }}>
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30 mb-4">Logflix Wrapped</p>
         <h1 className="text-2xl font-bold text-white/80 mb-3">{t.insufficientTitle}</h1>
         <p className="text-sm text-white/40 mb-8 max-w-sm">{t.insufficientDesc(insufficientCount)}</p>
@@ -901,7 +901,7 @@ export default function WrappedMonthPage() {
     <>
       <div
         className="fixed inset-0 z-50 flex flex-col"
-        style={{ background: "#06080f" }}
+        style={{ background: "#0a0a0c" }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
