@@ -563,19 +563,29 @@ export default function SearchPage() {
 
   return (
     <div className="animate-fade-in-up">
-      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">{s.search}</h2>
+      <style>{`
+        @keyframes wrapped-pulse {
+          0%, 100% { box-shadow: 0 0 20px rgba(229,9,20,0.1); }
+          50% { box-shadow: 0 0 35px rgba(229,9,20,0.25), 0 0 60px rgba(245,200,66,0.08); }
+        }
+      `}</style>
 
       {/* Wrapped teaser */}
       <Link
         href="/wrapped"
-        className="flex items-center gap-3 px-3.5 py-2.5 mb-4 rounded-xl bg-gradient-to-r from-[var(--accent)]/10 to-purple-500/10 border border-[var(--accent)]/15 hover:border-[var(--accent)]/30 transition-all group"
+        className="flex items-center gap-3 px-4 py-3 mb-5 rounded-xl transition-all group"
+        style={{
+          background: "linear-gradient(135deg, rgba(229,9,20,0.15) 0%, rgba(245,200,66,0.08) 100%)",
+          border: "1px solid rgba(229,9,20,0.3)",
+          animation: "wrapped-pulse 2.5s ease-in-out infinite",
+        }}
       >
-        <span className="text-lg">🎬</span>
+        <span className="text-lg">🎁</span>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-[var(--text-primary)]">{s.wrappedReady}</p>
-          <p className="text-[10px] text-[var(--text-tertiary)]">{s.wrappedSubtitle}</p>
+          <p className="text-xs font-bold text-white">{s.wrappedReady}</p>
+          <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.6)" }}>{s.wrappedSubtitle}</p>
         </div>
-        <svg className="w-4 h-4 text-[var(--text-tertiary)] group-hover:text-[var(--accent-light)] transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <svg className="w-4 h-4 text-white/40 group-hover:text-white/70 transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>
       </Link>
@@ -584,7 +594,7 @@ export default function SearchPage() {
       <form onSubmit={handleSearch} className="flex gap-2 mb-3 sticky top-0 z-20 -mx-4 px-4 py-2 md:static md:mx-0 md:px-0 md:py-0 bg-[var(--bg-base)]/95 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none">
         <div className="flex-1 relative">
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-white/30"
             fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -594,7 +604,10 @@ export default function SearchPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={s.searchPlaceholder}
-            className="w-full pl-9 pr-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder-white/25 transition-all duration-300 focus:outline-none focus:border-white/20 focus:bg-white/[0.06]"
+            className="w-full pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder-white/30 transition-all duration-200 focus:outline-none"
+            style={{ height: 52, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}
+            onFocus={(e) => { const el = e.currentTarget; el.style.borderColor = "rgba(255,42,42,0.5)"; el.style.boxShadow = "0 0 0 3px rgba(255,42,42,0.1)"; }}
+            onBlur={(e) => { const el = e.currentTarget; el.style.borderColor = "rgba(255,255,255,0.12)"; el.style.boxShadow = "none"; }}
           />
         </div>
         <select
