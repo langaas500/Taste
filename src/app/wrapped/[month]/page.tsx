@@ -622,6 +622,8 @@ function ShareCard({ stats, month, displayName, locale, cardRef }: {
   const t = WRAPPED_TEXT[locale];
   const monthStr = formatMonth(month, locale);
   const top = stats.topGenres[0];
+  const cardBg = "rgba(255,255,255,0.04)";
+  const cardBorder = "1px solid rgba(255,255,255,0.06)";
 
   return (
     <div
@@ -631,80 +633,145 @@ function ShareCard({ stats, month, displayName, locale, cardRef }: {
         width: 1080,
         height: 1920,
         background: "linear-gradient(180deg, #06080f 0%, #0d0f14 40%, #1a0a0a 100%)",
-        padding: 80,
+        padding: "60px 60px 50px",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
+        gap: 32,
         fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
-      {/* Top */}
+      {/* Header */}
       <div>
-        <p style={{ fontSize: 28, fontWeight: 600, letterSpacing: "0.2em", color: "rgba(255,255,255,0.3)", textTransform: "uppercase" }}>
+        <p style={{ fontSize: 22, fontWeight: 600, letterSpacing: "0.2em", color: "rgba(229,9,20,0.6)", textTransform: "uppercase", margin: 0 }}>
           Logflix Wrapped
         </p>
-        <p style={{ fontSize: 64, fontWeight: 900, color: "#fff", marginTop: 16 }}>
+        <p style={{ fontSize: 52, fontWeight: 900, color: "#fff", margin: "8px 0 0" }}>
           {displayName ? `${displayName}s` : ""} {monthStr}
         </p>
         {stats.vibeTitle && (
-          <p style={{ fontSize: 32, fontWeight: 700, color: "rgba(229,9,20,0.85)", marginTop: 12 }}>
+          <p style={{ fontSize: 26, fontWeight: 700, color: "rgba(229,9,20,0.8)", margin: "8px 0 0", fontStyle: "italic" }}>
             &quot;{stats.vibeTitle}&quot;
           </p>
         )}
       </div>
 
-      {/* Stats grid */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
-        {/* Numbers row */}
-        <div style={{ display: "flex", gap: 40 }}>
-          {[
-            { val: stats.totalWatched, label: t.titlesTotal },
-            { val: stats.movies, label: t.movies },
-            { val: stats.tvShows, label: t.tvShows },
-            { val: stats.estimatedHours, label: t.hours },
-          ].map(({ val, label }) => (
-            <div key={label} style={{ flex: 1, textAlign: "center", background: "rgba(255,255,255,0.04)", borderRadius: 20, padding: "28px 16px", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <p style={{ fontSize: 56, fontWeight: 900, color: "#fff" }}>{val}</p>
-              <p style={{ fontSize: 18, color: "rgba(255,255,255,0.4)", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</p>
-            </div>
-          ))}
-        </div>
+      {/* Stats row */}
+      <div style={{ display: "flex", gap: 20 }}>
+        {[
+          { val: stats.totalWatched, label: t.titlesTotal },
+          { val: stats.movies, label: t.movies },
+          { val: stats.tvShows, label: t.tvShows },
+          { val: stats.estimatedHours, label: t.hours },
+        ].map(({ val, label }) => (
+          <div key={label} style={{ flex: 1, textAlign: "center", background: cardBg, borderRadius: 18, padding: "22px 12px", border: cardBorder }}>
+            <p style={{ fontSize: 44, fontWeight: 900, color: "#fff", margin: 0 }}>{val}</p>
+            <p style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</p>
+          </div>
+        ))}
+      </div>
 
-        {/* Top genre */}
-        {top && (
-          <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: 24, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.15em" }}>{t.topGenre}</p>
-            <p style={{ fontSize: 72, fontWeight: 900, color: "#E50914", marginTop: 8 }}>{top.name}</p>
+      {/* Top genre + genre bars */}
+      {top && (
+        <div style={{ background: cardBg, borderRadius: 18, padding: "24px 28px", border: cardBorder }}>
+          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0 }}>{t.topGenre}</p>
+          <p style={{ fontSize: 48, fontWeight: 900, color: "#E50914", margin: "6px 0 16px" }}>{top.name}</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {stats.topGenres.slice(0, 4).map((g) => (
+              <div key={g.name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <p style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", width: 120, margin: 0, textAlign: "right" }}>{g.name}</p>
+                <div style={{ flex: 1, height: 16, background: "rgba(255,255,255,0.06)", borderRadius: 8, overflow: "hidden" }}>
+                  <div style={{ width: `${g.percent}%`, height: "100%", background: g.name === top.name ? "#E50914" : "rgba(229,9,20,0.4)", borderRadius: 8 }} />
+                </div>
+                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", width: 40, margin: 0 }}>{g.percent}%</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Top titles */}
+      {stats.topTitles.length > 0 && (
+        <div style={{ background: cardBg, borderRadius: 18, padding: "24px 28px", border: cardBorder }}>
+          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 16px" }}>
+            {locale === "no" ? "Favoritter" : "Favorites"}
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {stats.topTitles.slice(0, 3).map((title, i) => (
+              <div key={title.title} style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <p style={{ fontSize: 32, fontWeight: 900, color: "rgba(229,9,20,0.5)", margin: 0, width: 40 }}>{i + 1}</p>
+                <div>
+                  <p style={{ fontSize: 20, fontWeight: 700, color: "#fff", margin: 0 }}>{title.title}</p>
+                  <p style={{ fontSize: 14, color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>
+                    {title.type === "movie" ? "Film" : "Serie"}{title.year ? ` — ${title.year}` : ""}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Mood tags + fun stats row */}
+      <div style={{ display: "flex", gap: 20, flex: 1, minHeight: 0 }}>
+        {/* Moods */}
+        {stats.moodBreakdown.length > 0 && (
+          <div style={{ flex: 1, background: cardBg, borderRadius: 18, padding: "24px 28px", border: cardBorder, display: "flex", flexDirection: "column" }}>
+            <p style={{ fontSize: 14, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 14px" }}>
+              {locale === "no" ? "Stemning" : "Moods"}
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {stats.moodBreakdown.slice(0, 6).map((m) => (
+                <span key={m.tag} style={{ fontSize: 15, padding: "6px 14px", borderRadius: 999, background: "rgba(229,9,20,0.12)", border: "1px solid rgba(229,9,20,0.2)", color: "rgba(255,255,255,0.7)" }}>
+                  {m.tag} ({m.count})
+                </span>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Fun stats */}
-        <div style={{ display: "flex", gap: 24 }}>
+        {/* Fun stats column */}
+        <div style={{ width: 280, display: "flex", flexDirection: "column", gap: 20 }}>
           {stats.nightOwlPercent > 0 && (
-            <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", borderRadius: 20, padding: 24, border: "1px solid rgba(255,255,255,0.06)", textAlign: "center" }}>
-              <p style={{ fontSize: 20, color: "rgba(255,255,255,0.4)" }}>{t.nightOwl}</p>
-              <p style={{ fontSize: 48, fontWeight: 900, color: "#fff" }}>{stats.nightOwlPercent}%</p>
+            <div style={{ background: cardBg, borderRadius: 18, padding: "18px 22px", border: cardBorder, textAlign: "center" }}>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", margin: 0 }}>{t.nightOwl}</p>
+              <p style={{ fontSize: 36, fontWeight: 900, color: "#fff", margin: "4px 0 0" }}>{stats.nightOwlPercent}%</p>
             </div>
           )}
           {stats.longestStreak > 0 && (
-            <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", borderRadius: 20, padding: 24, border: "1px solid rgba(255,255,255,0.06)", textAlign: "center" }}>
-              <p style={{ fontSize: 20, color: "rgba(255,255,255,0.4)" }}>{t.streak}</p>
-              <p style={{ fontSize: 48, fontWeight: 900, color: "#fff" }}>{stats.longestStreak}</p>
-              <p style={{ fontSize: 16, color: "rgba(255,255,255,0.3)" }}>{t.streakDays(stats.longestStreak)}</p>
+            <div style={{ background: cardBg, borderRadius: 18, padding: "18px 22px", border: cardBorder, textAlign: "center" }}>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", margin: 0 }}>{t.streak}</p>
+              <p style={{ fontSize: 36, fontWeight: 900, color: "#fff", margin: "4px 0 0" }}>{stats.longestStreak} {t.streakDays(stats.longestStreak)}</p>
             </div>
           )}
-          {stats.hiddenGems > 0 && (
-            <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", borderRadius: 20, padding: 24, border: "1px solid rgba(255,255,255,0.06)", textAlign: "center" }}>
-              <p style={{ fontSize: 20, color: "rgba(255,255,255,0.4)" }}>{t.hiddenGems}</p>
-              <p style={{ fontSize: 48, fontWeight: 900, color: "#fff" }}>{stats.hiddenGems}</p>
+          {stats.wtMatches > 0 && (
+            <div style={{ background: cardBg, borderRadius: 18, padding: "18px 22px", border: cardBorder, textAlign: "center" }}>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", margin: 0 }}>{t.wtMatches}</p>
+              <p style={{ fontSize: 36, fontWeight: 900, color: "#fff", margin: "4px 0 0" }}>{stats.wtMatches}</p>
             </div>
           )}
         </div>
       </div>
 
+      {/* Globetrotter bar */}
+      {(stats.globetrotter.nordic > 0 || stats.globetrotter.hollywood > 0) && (
+        <div style={{ background: cardBg, borderRadius: 18, padding: "20px 28px", border: cardBorder }}>
+          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 12px" }}>{t.globetrotter}</p>
+          <div style={{ display: "flex", height: 20, borderRadius: 10, overflow: "hidden" }}>
+            {stats.globetrotter.nordic > 0 && <div style={{ width: `${stats.globetrotter.nordic}%`, background: "#3b82f6" }} />}
+            {stats.globetrotter.hollywood > 0 && <div style={{ width: `${stats.globetrotter.hollywood}%`, background: "#E50914" }} />}
+            {stats.globetrotter.other > 0 && <div style={{ width: `${stats.globetrotter.other}%`, background: "rgba(255,255,255,0.15)" }} />}
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
+            <span>{t.nordic} {stats.globetrotter.nordic}%</span>
+            <span>{t.hollywood} {stats.globetrotter.hollywood}%</span>
+            <span>{t.other} {stats.globetrotter.other}%</span>
+          </div>
+        </div>
+      )}
+
       {/* Bottom branding */}
-      <div style={{ textAlign: "center" }}>
-        <p style={{ fontSize: 24, fontWeight: 700, color: "rgba(229,9,20,0.6)", letterSpacing: "0.1em" }}>{t.logflix}</p>
+      <div style={{ textAlign: "center", paddingTop: 8 }}>
+        <p style={{ fontSize: 20, fontWeight: 700, color: "rgba(229,9,20,0.5)", letterSpacing: "0.1em", margin: 0 }}>logflix.app</p>
       </div>
     </div>
   );

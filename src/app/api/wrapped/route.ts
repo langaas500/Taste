@@ -62,14 +62,15 @@ export async function GET() {
       const cache = cacheMap[`${t.tmdb_id}:${t.type}`];
       if (cache?.genres) {
         for (const g of cache.genres) {
-          genreCounts[g.name] = (genreCounts[g.name] || 0) + 1;
+          if (g.name) genreCounts[g.name] = (genreCounts[g.name] || 0) + 1;
         }
       }
     }
+    const genreTotal = Object.values(genreCounts).reduce((a, b) => a + b, 0) || 1;
     const topGenres = Object.entries(genreCounts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
-      .map(([name, count]) => ({ name, count, percent: Math.round((count / titles.length) * 100) }));
+      .map(([name, count]) => ({ name, count, percent: Math.round((count / genreTotal) * 100) }));
 
     // Top titles (liked + favorite first)
     const topTitles = titles
