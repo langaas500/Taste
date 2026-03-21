@@ -370,6 +370,43 @@ export default function SearchPage() {
   const [hideWatched, setHideWatched] = useState(true);
   const [watchedIds, setWatchedIds] = useState<Set<string>>(new Set());
 
+  // Search history
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem("logflix_search_history");
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+  const [showHistory, setShowHistory] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const historyRef = useRef<HTMLDivElement>(null);
+
+  function addToHistory(term: string) {
+    const trimmed = term.trim();
+    if (!trimmed) return;
+    const updated = [trimmed, ...searchHistory.filter((h) => h.toLowerCase() !== trimmed.toLowerCase())].slice(0, 8);
+    setSearchHistory(updated);
+    try { localStorage.setItem("logflix_search_history", JSON.stringify(updated)); } catch { /* ignore */ }
+  }
+
+  function removeFromHistory(term: string) {
+    const updated = searchHistory.filter((h) => h !== term);
+    setSearchHistory(updated);
+    try { localStorage.setItem("logflix_search_history", JSON.stringify(updated)); } catch { /* ignore */ }
+  }
+
+  // Close history dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (historyRef.current && !historyRef.current.contains(e.target as Node) &&
+          searchInputRef.current && !searchInputRef.current.contains(e.target as Node)) {
+        setShowHistory(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
   // Discovery rows (shown when search is empty)
   const [discoveryRows, setDiscoveryRows] = useState<DiscoveryRowData[]>([]);
   const [discoveryLoading, setDiscoveryLoading] = useState(true);
@@ -422,6 +459,8 @@ export default function SearchPage() {
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!query.trim()) return;
+    addToHistory(query);
+    setShowHistory(false);
     setLoading(true);
     setError("");
     setIsAdvancedMode(false);
@@ -580,7 +619,15 @@ export default function SearchPage() {
           animation: "wrapped-pulse 2.5s ease-in-out infinite",
         }}
       >
-        <span className="text-lg">🎁</span>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, rgba(229,9,20,0.2), rgba(245,200,66,0.1))", border: "0.5px solid rgba(229,9,20,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <defs><linearGradient id="wrapped-g" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stopColor="#E50914"/><stop offset="100%" stopColor="#D4A853"/></linearGradient></defs>
+            <rect x="3" y="8" width="18" height="13" rx="2" stroke="url(#wrapped-g)"/>
+            <path d="M12 8v13" stroke="url(#wrapped-g)"/>
+            <path d="M3 12h18" stroke="url(#wrapped-g)" opacity="0.5"/>
+            <path d="M7.5 8C7.5 8 7.5 4 12 4s4.5 4 4.5 4" stroke="url(#wrapped-g)"/>
+          </svg>
+        </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-bold text-white">{s.wrappedReady}</p>
           <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.6)" }}>{s.wrappedSubtitle}</p>
@@ -600,15 +647,60 @@ export default function SearchPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
           </svg>
           <input
+            ref={searchInputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={s.searchPlaceholder}
             className="w-full pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder-white/30 transition-all duration-200 focus:outline-none"
             style={{ height: 52, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}
-            onFocus={(e) => { const el = e.currentTarget; el.style.borderColor = "rgba(255,42,42,0.5)"; el.style.boxShadow = "0 0 0 3px rgba(255,42,42,0.1)"; }}
+            onFocus={(e) => { const el = e.currentTarget; el.style.borderColor = "rgba(255,42,42,0.5)"; el.style.boxShadow = "0 0 0 3px rgba(255,42,42,0.1)"; if (searchHistory.length > 0 && !query.trim()) setShowHistory(true); }}
             onBlur={(e) => { const el = e.currentTarget; el.style.borderColor = "rgba(255,255,255,0.12)"; el.style.boxShadow = "none"; }}
+            autoComplete="off"
           />
+          {/* Search history dropdown */}
+          {showHistory && searchHistory.length > 0 && (
+            <div ref={historyRef} style={{ position: "absolute", top: 56, left: 0, right: 0, background: "rgba(18,18,22,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, overflow: "hidden", zIndex: 30, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+              <div style={{ padding: "10px 14px 6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", margin: 0 }}>
+                  {locale === "no" ? "Siste søk" : "Recent searches"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setSearchHistory([]); setShowHistory(false); try { localStorage.removeItem("logflix_search_history"); } catch { /* ignore */ } }}
+                  style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                >
+                  {locale === "no" ? "Tøm" : "Clear"}
+                </button>
+              </div>
+              {searchHistory.map((term) => (
+                <div
+                  key={term}
+                  style={{ display: "flex", alignItems: "center", padding: "10px 14px", cursor: "pointer", transition: "background 0.15s" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginRight: 10 }}>
+                    <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                  </svg>
+                  <button
+                    type="button"
+                    onClick={() => { setQuery(term); setShowHistory(false); searchInputRef.current?.form?.requestSubmit(); }}
+                    style={{ flex: 1, textAlign: "left", fontSize: 14, color: "rgba(255,255,255,0.8)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  >
+                    {term}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); removeFromHistory(term); }}
+                    style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 4px", color: "rgba(255,255,255,0.2)" }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <select
           value={typeFilter}
