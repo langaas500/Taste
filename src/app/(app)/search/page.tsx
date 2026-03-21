@@ -68,13 +68,13 @@ function DiscoveryRow({ row, onSelect }: { row: DiscoveryRowData; onSelect: (ite
 
   return (
     <div
-      className="mb-8 relative group/row"
+      className="mb-12 relative group/row"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       <h3
         className="mb-3 px-0.5"
-        style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}
+        style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(212,168,83,0.7)", borderLeft: "2px solid rgba(212,168,83,0.4)", paddingLeft: 8 }}
       >
         {row.label}
       </h3>
@@ -394,6 +394,12 @@ export default function SearchPage() {
     setSearchHistory(updated);
     try { localStorage.setItem("logflix_search_history", JSON.stringify(updated)); } catch { /* ignore */ }
   }
+
+  // Override global bg-taste.jpg on search page
+  useEffect(() => {
+    document.body.classList.add("premium-bg-override");
+    return () => { document.body.classList.remove("premium-bg-override"); };
+  }, []);
 
   // Close history dropdown on outside click
   useEffect(() => {
