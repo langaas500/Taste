@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
       .eq("id", user.id);
 
     if (profileError) {
-      // Non-fatal: onboarding titles are already saved — log and continue
       console.error("onboarding profile update failed:", profileError.message);
+      return NextResponse.json({ error: "Profile update failed", saved: titles?.length || 0 }, { status: 500 });
     }
 
     // Send welcome email for email/password signups (OAuth handled in auth/callback)

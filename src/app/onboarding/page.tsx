@@ -243,14 +243,38 @@ function OnboardingContent() {
   const [searchResults, setSearchResults] = useState<OnboardingTitle[]>([]);
   const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [tasteSummary, setTasteSummary] = useState<{ youLike: string; avoid: string; pacing: string } | null>(null);
   const [tasteLoading, setTasteLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [userRegion, setUserRegion] = useState("US");
   const [locale, setLocale] = useState<Locale>("en");
+  const [isPremium, setIsPremium] = useState(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Bug 5: localStorage backup for selections
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("logflix_onboarding_selections");
+      if (stored) {
+        const parsed = JSON.parse(stored) as [string, Selection][];
+        if (parsed.length > 0) setSelections(new Map(parsed));
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    if (selections.size > 0) {
+      try { localStorage.setItem("logflix_onboarding_selections", JSON.stringify(Array.from(selections.entries()))); } catch { /* ignore */ }
+    }
+  }, [selections]);
+
+  // Bug 4: fetch isPremium for par-teaser
+  useEffect(() => {
+    fetch("/api/profile").then((r) => r.json()).then((d) => { if (d.profile?.is_premium) setIsPremium(true); }).catch(() => {});
+  }, []);
 
   // Detect region + locale via the ribbon endpoint (same as Se Sammen)
   useEffect(() => {
@@ -373,9 +397,10 @@ function OnboardingContent() {
 
   async function handleSave() {
     setSaving(true);
+    setSaveError(false);
     try {
       const titleData = Array.from(selections.values());
-      await fetch("/api/onboarding/save", {
+      const res = await fetch("/api/onboarding/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -383,25 +408,43 @@ function OnboardingContent() {
           streaming_services: Array.from(selectedServices),
         }),
       });
+      const data = await res.json();
 
+      // Bug 3: check for profile update error
+      if (!res.ok || data.error) {
+        setSaveError(true);
+        setSaving(false);
+        return;
+      }
+
+      // Bug 1: track only on success
       track("onboarding_completed", { selection_count: selections.size, services_count: selectedServices.size });
       setStep(3);
       setTasteLoading(true);
 
-      // Fetch taste summary in background after showing done screen
-      try {
-        await new Promise((r) => setTimeout(r, 5000));
-        const res = await fetch("/api/taste-summary");
-        const data = await res.json();
-        if (data.taste_summary) setTasteSummary(data.taste_summary);
-      } catch {
-        // Not critical
-      }
-      setTasteLoading(false);
+      // Bug 5: clear localStorage after successful save
+      try { localStorage.removeItem("logflix_onboarding_selections"); } catch { /* ignore */ }
+
+      // Bug 2: poll taste summary every 1.5s instead of 5s hard delay
+      let attempts = 0;
+      const pollTaste = async () => {
+        while (attempts < 10) {
+          attempts++;
+          await new Promise((r) => setTimeout(r, 1500));
+          try {
+            const tasteRes = await fetch("/api/taste-summary");
+            const tasteData = await tasteRes.json();
+            if (tasteData.summary?.youLike) {
+              setTasteSummary(tasteData.summary);
+              break;
+            }
+          } catch { /* retry */ }
+        }
+        setTasteLoading(false);
+      };
+      pollTaste();
     } catch {
-      track("onboarding_completed", { selection_count: selections.size, services_count: selectedServices.size });
-      setStep(3);
-      setTasteLoading(false);
+      setSaveError(true);
     }
     setSaving(false);
   }
@@ -674,6 +717,14 @@ function OnboardingContent() {
                   </button>
                 )}
               </div>
+              {saveError && (
+                <div className="mt-3 text-center">
+                  <p className="text-sm text-red-400 mb-2">{locale === "no" ? "Noe gikk galt — prøv igjen" : "Something went wrong — try again"}</p>
+                  <button onClick={handleSave} className="text-sm font-semibold text-[var(--accent)] hover:underline">
+                    {locale === "no" ? "Prøv igjen" : "Try again"}
+                  </button>
+                </div>
+              )}
               {isTogether && (
                 <button
                   onClick={() => router.push("/together")}
@@ -812,21 +863,23 @@ function OnboardingContent() {
                   </button>
                 )}
 
-                {/* Par teaser */}
-                <button
-                  onClick={() => router.push("/premium")}
-                  className="w-full mt-6 rounded-[var(--radius-lg)] p-4 text-left transition-all hover:border-[var(--accent)]/30"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(229,9,20,0.15)", cursor: "pointer" }}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="text-xl flex-shrink-0 mt-0.5">💑</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">{s.parTitle}</p>
-                      <p className="text-xs text-[var(--text-tertiary)] leading-relaxed mb-2">{s.parDesc}</p>
-                      <span className="text-xs font-semibold" style={{ color: "#E50914" }}>{s.parCta}</span>
+                {/* Par teaser — only for non-premium */}
+                {!isPremium && (
+                  <button
+                    onClick={() => router.push("/premium")}
+                    className="w-full mt-6 rounded-[var(--radius-lg)] p-4 text-left transition-all hover:border-[var(--accent)]/30"
+                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(229,9,20,0.15)", cursor: "pointer" }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-xl flex-shrink-0 mt-0.5">💑</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">{s.parTitle}</p>
+                        <p className="text-xs text-[var(--text-tertiary)] leading-relaxed mb-2">{s.parDesc}</p>
+                        <span className="text-xs font-semibold" style={{ color: "#E50914" }}>{s.parCta}</span>
+                      </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                )}
               </div>
             )}
           </div>
