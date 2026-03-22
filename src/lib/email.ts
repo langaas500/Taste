@@ -192,16 +192,21 @@ const fridayStrings: Record<string, {
 };
 
 function posterCard(label: string, title: string, posterUrl: string): string {
+  // TMDB blocks images loaded from email clients — show text-only card if no poster
+  const hasImage = posterUrl && posterUrl.length > 10;
+  const imageHtml = hasImage
+    ? `<tr><td align="center" style="padding:0 12px;">
+        <img src="${posterUrl}" alt="${title}" width="120" style="border-radius:8px;display:block;max-width:100%;" />
+      </td></tr>`
+    : "";
   return `<td width="50%" valign="top" style="padding:0 4px;">
     <table width="100%" cellpadding="0" cellspacing="0" style="background:${BG};border-radius:12px;border:1px solid ${BORDER};overflow:hidden;">
       <tr><td style="padding:12px 12px 6px;">
         <p style="margin:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:${TEXT_DIM};">${label}</p>
       </td></tr>
-      <tr><td align="center" style="padding:0 12px;">
-        <img src="${posterUrl}" alt="${title}" width="120" style="border-radius:8px;display:block;max-width:100%;" />
-      </td></tr>
+      ${imageHtml}
       <tr><td style="padding:8px 12px 12px;">
-        <p style="margin:0;font-size:14px;font-weight:600;color:#ffffff;line-height:1.3;">${title}</p>
+        <p style="margin:0;font-size:${hasImage ? "14" : "18"}px;font-weight:${hasImage ? "600" : "700"};color:#ffffff;line-height:1.3;">${title}</p>
       </td></tr>
     </table>
   </td>`;
@@ -222,8 +227,8 @@ export async function sendFridayPickEmail(
   }
 
   const t = fridayStrings[locale] || fridayStrings.en;
-  const moviePosterUrl = moviePoster ? `https://image.tmdb.org/t/p/w300${moviePoster}` : "";
-  const seriesPosterUrl = seriesPoster ? `https://image.tmdb.org/t/p/w300${seriesPoster}` : "";
+  const moviePosterUrl = moviePoster ? `https://logflix.app/api/tmdb/image?w=300&path=${moviePoster}` : "";
+  const seriesPosterUrl = seriesPoster ? `https://logflix.app/api/tmdb/image?w=300&path=${seriesPoster}` : "";
 
   let cardsHtml = "";
   if (movieTitle || seriesTitle) {
@@ -630,14 +635,14 @@ export async function sendDailyPickEmail(
       ? posterCard(
           `🎬 ${t.movieLabel}`,
           `${movie.title}${movie.match_score ? ` — ★ ${movie.match_score}%` : ""}`,
-          movie.poster_path ? `https://image.tmdb.org/t/p/w300${movie.poster_path}` : "",
+          movie.poster_path ? `https://logflix.app/api/tmdb/image?w=300&path=${movie.poster_path}` : "",
         )
       : "";
     const seriesHtml = series
       ? posterCard(
           `📺 ${t.seriesLabel}`,
           `${series.title}${series.match_score ? ` — ★ ${series.match_score}%` : ""}`,
-          series.poster_path ? `https://image.tmdb.org/t/p/w300${series.poster_path}` : "",
+          series.poster_path ? `https://logflix.app/api/tmdb/image?w=300&path=${series.poster_path}` : "",
         )
       : "";
     cardsHtml = `<tr><td style="padding-bottom:24px;">
