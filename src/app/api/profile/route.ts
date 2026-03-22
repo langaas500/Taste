@@ -28,6 +28,15 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Trial-aware is_premium: true if paid OR active trial
+    if (data && !data.is_premium && data.trial_ends_at) {
+      const trialActive = new Date(data.trial_ends_at) > new Date();
+      if (trialActive) {
+        data.is_premium = true;
+        data.is_trial = true;
+      }
+    }
+
     return NextResponse.json({ profile: data });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";

@@ -251,6 +251,11 @@ function OnboardingContent() {
   const [userRegion, setUserRegion] = useState("US");
   const [locale, setLocale] = useState<Locale>("en");
   const [isPremium, setIsPremium] = useState(false);
+  const [emailOptIn, setEmailOptIn] = useState(false);
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [trialActivated, setTrialActivated] = useState(false);
+  const [trialDays, setTrialDays] = useState(7);
+  const trialActivating = useRef(false);
   const [loadingTextIdx, setLoadingTextIdx] = useState(0);
   const loadingTexts = locale === "no"
     ? ["Analyserer sjangerne dine...", "Finner mønstre i smaken din...", "Bygger filmprofilen din...", "Nesten klar..."]
@@ -282,10 +287,28 @@ function OnboardingContent() {
     }
   }, [selections]);
 
-  // Bug 4: fetch isPremium for par-teaser
+  // Fetch isPremium + activate trial when reaching step 3
   useEffect(() => {
-    fetch("/api/profile").then((r) => r.json()).then((d) => { if (d.profile?.is_premium) setIsPremium(true); }).catch(() => {});
+    fetch("/api/profile").then((r) => r.json()).then((d) => {
+      if (d.profile?.is_premium) setIsPremium(true);
+      if (d.profile?.trial_ends_at) {
+        const daysLeft = Math.ceil((new Date(d.profile.trial_ends_at).getTime() - Date.now()) / 86400000);
+        if (daysLeft > 0) { setTrialActivated(true); setTrialDays(daysLeft); setIsPremium(true); }
+      }
+    }).catch(() => {});
   }, []);
+
+  // Auto-activate trial on step 3 for non-premium users
+  useEffect(() => {
+    if (step !== 3 || isPremium || trialActivated || trialActivating.current) return;
+    trialActivating.current = true;
+    fetch("/api/trial/activate", { method: "POST" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) { setTrialActivated(true); setTrialDays(7); setIsPremium(true); }
+      })
+      .catch(() => {});
+  }, [step, isPremium, trialActivated]);
 
   // Detect region + locale via the ribbon endpoint (same as Se Sammen)
   useEffect(() => {
@@ -814,6 +837,65 @@ function OnboardingContent() {
                   )}
                 </div>
               </div>
+            )}
+
+            {/* Trial activated banner */}
+            {!tasteLoading && trialActivated && (
+              <div
+                className="w-full max-w-md rounded-xl px-4 py-3 mb-4 text-center"
+                style={{ background: "rgba(245,200,66,0.08)", border: "0.5px solid rgba(245,200,66,0.25)" }}
+              >
+                <p style={{ fontSize: 13, fontWeight: 700, color: "#F5C842", margin: "0 0 2px" }}>
+                  🎁 {locale === "no" ? "7 dager gratis Premium aktivert!" : locale === "se" ? "7 dagars gratis Premium aktiverat!" : locale === "dk" ? "7 dages gratis Premium aktiveret!" : locale === "fi" ? "7 päivän ilmainen Premium aktivoitu!" : "7 days free Premium activated!"}
+                </p>
+                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", margin: "0 0 4px" }}>
+                  {locale === "no" ? "Tonight's Pick, Curator ubegrenset + partneren får det gratis" : "Tonight's Pick, unlimited Curator + your partner gets it free"}
+                </p>
+                <p style={{ fontSize: 10, color: "rgba(245,200,66,0.6)", margin: 0 }}>
+                  {trialDays} {locale === "no" ? "dager gjenstår" : locale === "se" ? "dagar kvar" : locale === "dk" ? "dage tilbage" : locale === "fi" ? "päivää jäljellä" : "days remaining"}
+                </p>
+              </div>
+            )}
+
+            {/* Email capture */}
+            {!tasteLoading && !emailOptIn && (
+              <div
+                className="w-full max-w-md rounded-xl px-4 py-3 mb-4 text-center"
+                style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.1)" }}
+              >
+                <p style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.85)", margin: "0 0 2px" }}>
+                  📬 {locale === "no" ? "Få Tonight's Pick kl 18:00 hver dag" : locale === "se" ? "Få Tonight's Pick kl 18:00 varje dag" : locale === "dk" ? "Få Tonight's Pick kl 18:00 hver dag" : locale === "fi" ? "Saat Tonight's Pick klo 18:00 joka päivä" : "Get Tonight's Pick at 6 PM every day"}
+                </p>
+                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", margin: "0 0 10px" }}>
+                  {locale === "no" ? "Vi sender deg dagens film + serie direkte på e-post" : "We'll send you today's movie + series directly to your email"}
+                </p>
+                <button
+                  onClick={async () => {
+                    setEmailSaving(true);
+                    try {
+                      await fetch("/api/email-preferences", { method: "POST" });
+                      setEmailOptIn(true);
+                    } catch { /* ignore */ }
+                    setEmailSaving(false);
+                  }}
+                  disabled={emailSaving}
+                  className="px-6 py-2 rounded-lg text-xs font-semibold text-white transition-all"
+                  style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.15)", cursor: "pointer" }}
+                >
+                  {emailSaving ? "..." : (locale === "no" ? "Ja takk!" : locale === "se" ? "Ja tack!" : locale === "dk" ? "Ja tak!" : "Yes please!")}
+                </button>
+                <button
+                  onClick={() => setEmailOptIn(true)}
+                  style={{ display: "block", margin: "6px auto 0", fontSize: 10, color: "rgba(255,255,255,0.3)", background: "none", border: "none", cursor: "pointer" }}
+                >
+                  {locale === "no" ? "Hopp over" : locale === "se" ? "Hoppa över" : locale === "dk" ? "Spring over" : locale === "fi" ? "Ohita" : "Skip"}
+                </button>
+              </div>
+            )}
+            {!tasteLoading && emailOptIn && !trialActivated && (
+              <p style={{ fontSize: 11, color: "rgba(245,200,66,0.7)", margin: "0 0 12px", textAlign: "center" }}>
+                ✅ {locale === "no" ? "Du får Tonight's Pick på e-post!" : "You'll get Tonight's Pick by email!"}
+              </p>
             )}
 
             {!tasteLoading && (
