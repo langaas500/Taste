@@ -1,29 +1,82 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Se Sammen — Finn noe å se sammen | Logflix",
-  description:
-    "Sveip hver for dere, match på det begge vil se. Gratis verktøy som løser «hva skal vi se i kveld?» på under 3 minutter.",
-  alternates: {
-    canonical: "https://logflix.app/together",
-  },
-  openGraph: {
-    title: "Se Sammen — Finn noe å se sammen | Logflix",
-    description:
-      "Sveip hver for dere, match på det begge vil se. Gratis verktøy som løser «hva skal vi se i kveld?» på under 3 minutter.",
-    url: "https://logflix.app/together",
-    siteName: "Logflix",
-    type: "website",
-    images: ["/og-v2.png"],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Se Sammen — Finn noe å se sammen | Logflix",
-    description:
-      "Sveip hver for dere, match på det begge vil se. Gratis verktøy som løser «hva skal vi se i kveld?» på under 3 minutter.",
-    images: ["/og-v2.png"],
-  },
+const defaultTitle = "Se Sammen — Finn noe å se sammen | Logflix";
+const defaultDescription =
+  "Sveip hver for dere, match på det begge vil se. Gratis verktøy som løser «hva skal vi se i kveld?» på under 3 minutter.";
+
+const challengeTexts: Record<string, string> = {
+  no: "Klarer dere å finne kveldens film på under 3 min?",
+  en: "Can you find tonight's movie in under 3 min?",
+  se: "Klarar ni hitta kvällens film på under 3 min?",
+  dk: "Kan I finde aftenens film på under 3 min?",
+  fi: "Löydättekö illan elokuvan alle 3 minuutissa?",
 };
+
+const matchTitleTexts: Record<string, (t: string) => string> = {
+  no: (t) => `Vi matchet på ${t}! 🎬`,
+  en: (t) => `We matched on ${t}! 🎬`,
+  se: (t) => `Vi matchade på ${t}! 🎬`,
+  dk: (t) => `Vi matchede på ${t}! 🎬`,
+  fi: (t) => `Matchasimme: ${t}! 🎬`,
+};
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const isMatch = params?.ref === "match";
+  const title = typeof params?.title === "string" ? params.title : "";
+  const poster = typeof params?.poster === "string" ? params.poster : "";
+  const locale = typeof params?.locale === "string" ? params.locale : "no";
+
+  if (isMatch && title) {
+    const ogImage = `https://logflix.app/api/og/match?title=${encodeURIComponent(title)}&poster=${encodeURIComponent(poster)}&locale=${locale}`;
+    const matchTitle = (matchTitleTexts[locale] || matchTitleTexts.no)(title);
+    const challenge = challengeTexts[locale] || challengeTexts.no;
+
+    return {
+      title: matchTitle,
+      description: challenge,
+      alternates: { canonical: "https://logflix.app/together" },
+      openGraph: {
+        title: matchTitle,
+        description: challenge,
+        url: "https://logflix.app/together",
+        siteName: "Logflix",
+        type: "website",
+        images: [{ url: ogImage, width: 1200, height: 630 }],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: matchTitle,
+        description: challenge,
+        images: [ogImage],
+      },
+    };
+  }
+
+  return {
+    title: defaultTitle,
+    description: defaultDescription,
+    alternates: { canonical: "https://logflix.app/together" },
+    openGraph: {
+      title: defaultTitle,
+      description: defaultDescription,
+      url: "https://logflix.app/together",
+      siteName: "Logflix",
+      type: "website",
+      images: ["/og-v2.png"],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: defaultTitle,
+      description: defaultDescription,
+      images: ["/og-v2.png"],
+    },
+  };
+}
 
 const togetherJsonLd = {
   "@context": "https://schema.org",
