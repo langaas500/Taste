@@ -462,9 +462,33 @@ export default function CuratorPage() {
             </div>
           )}
 
-          {/* Premium unlock — Inline (after free limit hit) */}
+          {/* Premium unlock — Inline (after free limit hit) + last response smakebit */}
           {isPremium === false && userMessageCount >= FREE_MESSAGE_LIMIT && (
             <div className="mt-2">
+              {/* Show last bot response as a "taste" of what premium gives */}
+              {(() => {
+                const lastBot = [...messages].reverse().find((m) => m.role === "bot" && !m.loading);
+                if (!lastBot) return null;
+                return (
+                  <div
+                    className="rounded-xl mb-3 px-4 py-3"
+                    style={{ background: "rgba(245,200,66,0.06)", border: "0.5px solid rgba(245,200,66,0.15)" }}
+                  >
+                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", margin: "0 0 6px" }}>
+                      {lang === "no" ? "Siste smakebit fra Curator:" : lang === "se" ? "Sista smakbit från Curator:" : lang === "dk" ? "Sidste smagsprøve fra Curator:" : "Last taste from Curator:"}
+                    </p>
+                    <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", margin: "0 0 10px", lineHeight: 1.5 }} className="line-clamp-3">
+                      {lastBot.text}
+                    </p>
+                    <button
+                      onClick={() => { track("curator_premium_gate", { action: "smakebit_cta" }); setShowPremium(true); }}
+                      style={{ fontSize: 12, fontWeight: 700, color: "#F5C842", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                    >
+                      {lang === "no" ? "Få ubegrenset Curator →" : lang === "se" ? "Få obegränsat Curator →" : lang === "dk" ? "Få ubegrænset Curator →" : "Get unlimited Curator →"}
+                    </button>
+                  </div>
+                );
+              })()}
               <PremiumUnlock
                 lang={lang}
                 onUpgrade={() => { track("curator_premium_gate", { action: "cta_click" }); setShowPremium(true); }}

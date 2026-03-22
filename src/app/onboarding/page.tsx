@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { getLocale, type Locale } from "@/lib/i18n";
 import { track } from "@/lib/posthog";
 
@@ -830,6 +831,16 @@ function OnboardingContent() {
                   >
                     {s.startTogether}
                   </button>
+                )}
+
+                {/* Premium trial teaser */}
+                {!isPremium && (
+                  <Link
+                    href="/premium"
+                    style={{ display: "block", fontSize: 11, color: "rgba(245,200,66,0.8)", textAlign: "center", marginTop: 8, textDecoration: "none" }}
+                  >
+                    ✨ {locale === "no" || locale === "dk" ? "Du får 7 dager gratis Premium når du inviterer partneren din" : locale === "se" ? "Du får 7 dagars gratis Premium när du bjuder in din partner" : locale === "fi" ? "Saat 7 päivää ilmaista Premiumia kun kutsut kumppanisi" : "Get 7 days free Premium when you invite your partner"}
+                  </Link>
                 )}
 
                 {/* Par teaser — only for non-premium */}

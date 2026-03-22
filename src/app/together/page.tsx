@@ -2122,8 +2122,42 @@ export default function WTBetaPage() {
                       {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "share")}
                     </button>
 
-                    {/* Premium teaser — non-premium only */}
-                    {!authUser?.email && (
+                    {/* Guest signup CTA — before premium teaser */}
+                    {!authUser && (
+                      <div
+                        style={{
+                          background: "rgba(255,255,255,0.06)",
+                          border: "0.5px solid rgba(255,255,255,0.15)",
+                          borderRadius: 12,
+                          padding: "14px 16px",
+                          marginBottom: 12,
+                          textAlign: "center",
+                        }}
+                      >
+                        <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>
+                          💾 {locale === "no" ? "Lagre denne matchen for alltid" : locale === "se" ? "Spara denna match för alltid" : locale === "dk" ? "Gem dette match for altid" : locale === "fi" ? "Tallenna tämä match ikuisesti" : "Save this match forever"}
+                        </p>
+                        <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", margin: "0 0 12px" }}>
+                          {locale === "no" ? "Opprett konto på 20 sekunder — Google eller e-post" : locale === "se" ? "Skapa konto på 20 sekunder — Google eller e-post" : locale === "dk" ? "Opret konto på 20 sekunder — Google eller e-mail" : locale === "fi" ? "Luo tili 20 sekunnissa — Google tai sähköposti" : "Create account in 20 seconds — Google or email"}
+                        </p>
+                        <Link
+                          href="/login?from=together&mode=signup"
+                          className="button"
+                          style={{ display: "block", width: "100%", textAlign: "center", marginBottom: 8, textDecoration: "none" }}
+                        >
+                          {locale === "no" ? "Registrer deg gratis →" : locale === "se" ? "Registrera dig gratis →" : locale === "dk" ? "Registrer dig gratis →" : locale === "fi" ? "Rekisteröidy ilmaiseksi →" : "Sign up for free →"}
+                        </Link>
+                        <Link
+                          href="/login"
+                          style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", textDecoration: "none" }}
+                        >
+                          {locale === "no" ? "Har konto? Logg inn" : locale === "se" ? "Har konto? Logga in" : locale === "dk" ? "Har konto? Log ind" : locale === "fi" ? "Onko tili? Kirjaudu" : "Have an account? Log in"}
+                        </Link>
+                      </div>
+                    )}
+
+                    {/* Premium teaser — logged in users */}
+                    {authUser && (
                       <Link
                         href="/premium"
                         style={{
