@@ -683,9 +683,16 @@ export default function WTBetaPage() {
       const slugBase = titleName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").replace(/-{2,}/g, "-");
       const slug = slugBase ? `${slugBase}-${fw.tmdb_id}` : `${fw.tmdb_id}`;
       const mediaType = fw.type === "tv" ? "tv" : "movie";
-      shareUrl = `https://logflix.app/${shareRegion}/${mediaType}/${slug}?match=1`;
+      shareUrl = `https://logflix.app/${shareRegion}/${mediaType}/${slug}?match=1&utm_source=share&utm_medium=together&utm_campaign=match`;
     }
-    const shareText = `${t(locale, "winner", "shareText")} ${titleName}`;
+    const shareTexts: Record<string, string> = {
+      no: `Vi ble enige om ${titleName} på under 3 min 🎬 Prøv selv:`,
+      en: `We agreed on ${titleName} in under 3 min 🎬 Try it:`,
+      dk: `Vi blev enige om ${titleName} på under 3 min 🎬 Prøv selv:`,
+      se: `Vi kom överens om ${titleName} på under 3 min 🎬 Prova själv:`,
+      fi: `Löysimme yhteisen elokuvan ${titleName} alle 3 min 🎬 Kokeile:`,
+    };
+    const shareText = shareTexts[locale] ?? shareTexts.en;
     if (typeof navigator !== "undefined" && navigator.share) {
       try { await navigator.share({ title: titleName, text: shareText, url: shareUrl }); track("match_shared", { session_id: sessionId, tmdb_id: fw?.tmdb_id, method: "native_share" }); } catch { /* cancelled */ }
     } else {
@@ -2042,6 +2049,36 @@ export default function WTBetaPage() {
                     {/* Collapsible section */}
                     {matchMoreOpen && (
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {/* Facebook share */}
+                        {finalWinner && (() => {
+                          const locToReg: Record<string, string> = { nb: "no", sv: "se", da: "dk", fi: "fi", en: "no" };
+                          const reg = locToReg[locale] ?? "no";
+                          const sb = finalWinner.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+                          const mt = finalWinner.type === "tv" ? "tv" : "movie";
+                          const fbUrl = `https://logflix.app/${reg}/${mt}/${sb}-${finalWinner.tmdb_id}?match=1&utm_source=facebook&utm_medium=together&utm_campaign=match`;
+                          const fbTexts: Record<string, string> = {
+                            no: `Vi ble enige om ${finalWinner.title} på under 3 min 🎬 Prøv selv:`,
+                            en: `We agreed on ${finalWinner.title} in under 3 min 🎬 Try it:`,
+                            dk: `Vi blev enige om ${finalWinner.title} på under 3 min 🎬 Prøv selv:`,
+                            se: `Vi kom överens om ${finalWinner.title} på under 3 min 🎬 Prova själv:`,
+                            fi: `Löysimme yhteisen elokuvan ${finalWinner.title} alle 3 min 🎬 Kokeile:`,
+                          };
+                          const fbText = fbTexts[locale] ?? fbTexts.en;
+                          return (
+                            <button
+                              onClick={() => {
+                                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(fbUrl)}&quote=${encodeURIComponent(fbText)}`, "_blank", "noopener,noreferrer");
+                                track("match_facebook_shared", { session_id: sessionId, tmdb_id: finalWinner.tmdb_id, title: finalWinner.title });
+                              }}
+                              className="w-full py-2.5 rounded-xl text-xs font-medium flex items-center justify-center gap-2"
+                              style={{ background: "rgba(24,119,242,0.1)", border: "1px solid rgba(24,119,242,0.3)", color: "#1877F2", cursor: "pointer" }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                              {locale === "no" ? "Del i Facebook-gruppe" : "Share to Facebook group"}
+                            </button>
+                          );
+                        })()}
+
                         {/* Share as Story — mobile only */}
                         <button
                           onClick={handleShareStory}
