@@ -674,17 +674,25 @@ export default function WTBetaPage() {
   }
 
   async function handleShare(titleName: string) {
-    // Build SEO title page URL for the matched title (has rich OG images)
     const fw = finalWinner;
-    const localeToRegion: Record<string, string> = { nb: "no", sv: "se", da: "dk", fi: "fi", en: "no" };
-    const shareRegion = localeToRegion[locale] ?? "no";
-    let shareUrl = "https://logflix.app/together";
+    const shareUrl = fw
+      ? `https://logflix.app/together?ref=match&title=${encodeURIComponent(fw.title)}&utm_source=share&utm_medium=together&utm_campaign=match`
+      : "https://logflix.app/together";
+
+    // Set og:image meta tag to the match card before sharing
     if (fw) {
-      const slugBase = titleName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").replace(/-{2,}/g, "-");
-      const slug = slugBase ? `${slugBase}-${fw.tmdb_id}` : `${fw.tmdb_id}`;
-      const mediaType = fw.type === "tv" ? "tv" : "movie";
-      shareUrl = `https://logflix.app/${shareRegion}/${mediaType}/${slug}?match=1&utm_source=share&utm_medium=together&utm_campaign=match`;
+      const ogImageUrl = `https://logflix.app/api/og/match?title=${encodeURIComponent(fw.title)}&poster=${encodeURIComponent(fw.poster_path || "")}&type=${fw.type || "movie"}&locale=${locale}`;
+      const existingMeta = document.querySelector('meta[property="og:image"]');
+      if (existingMeta) {
+        existingMeta.setAttribute("content", ogImageUrl);
+      } else {
+        const meta = document.createElement("meta");
+        meta.setAttribute("property", "og:image");
+        meta.setAttribute("content", ogImageUrl);
+        document.head.appendChild(meta);
+      }
     }
+
     const shareTexts: Record<string, string> = {
       no: `Vi ble enige om ${titleName} på under 3 min 🎬 Prøv selv:`,
       en: `We agreed on ${titleName} in under 3 min 🎬 Try it:`,
