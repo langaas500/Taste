@@ -250,6 +250,16 @@ function OnboardingContent() {
   const [userRegion, setUserRegion] = useState("US");
   const [locale, setLocale] = useState<Locale>("en");
   const [isPremium, setIsPremium] = useState(false);
+  const [loadingTextIdx, setLoadingTextIdx] = useState(0);
+  const loadingTexts = locale === "no"
+    ? ["Analyserer sjangerne dine...", "Finner mønstre i smaken din...", "Bygger filmprofilen din...", "Nesten klar..."]
+    : ["Analysing your genres...", "Finding patterns in your taste...", "Building your film profile...", "Almost ready..."];
+
+  useEffect(() => {
+    if (!tasteLoading) return;
+    const iv = setInterval(() => setLoadingTextIdx((i) => (i + 1) % 4), 2000);
+    return () => clearInterval(iv);
+  }, [tasteLoading]);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -774,10 +784,8 @@ function OnboardingContent() {
             <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
               {tasteLoading ? s.saving : s.doneTitle}
             </h2>
-            <p className="text-sm text-[var(--text-secondary)] mb-8 max-w-sm">
-              {tasteLoading
-                ? (locale === "no" ? "Bygger smaksprofilen din..." : locale === "dk" ? "Bygger din smagsprofil..." : locale === "se" ? "Bygger din smakprofil..." : locale === "fi" ? "Rakennetaan makuprofiiliasi..." : "Building your taste profile...")
-                : s.doneSubtitle(selectionCount)}
+            <p className="text-sm text-[var(--text-secondary)] mb-8 max-w-sm transition-opacity duration-300" key={tasteLoading ? loadingTextIdx : "done"}>
+              {tasteLoading ? loadingTexts[loadingTextIdx] : s.doneSubtitle(selectionCount)}
             </p>
 
             {/* Taste summary preview */}
@@ -788,19 +796,19 @@ function OnboardingContent() {
                   {tasteSummary.youLike && (
                     <div>
                       <span className="text-[10px] uppercase tracking-wide text-[var(--green)] font-bold">{s.youLike}</span>
-                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">{tasteSummary.youLike}</p>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">{tasteSummary.youLike.length > 120 ? tasteSummary.youLike.slice(0, 120) + "..." : tasteSummary.youLike}</p>
                     </div>
                   )}
                   {tasteSummary.avoid && (
                     <div>
                       <span className="text-[10px] uppercase tracking-wide text-[var(--red)] font-bold">{s.youAvoid}</span>
-                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">{tasteSummary.avoid}</p>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">{tasteSummary.avoid.length > 120 ? tasteSummary.avoid.slice(0, 120) + "..." : tasteSummary.avoid}</p>
                     </div>
                   )}
                   {tasteSummary.pacing && (
                     <div>
                       <span className="text-[10px] uppercase tracking-wide text-[var(--yellow)] font-bold">{s.pacing}</span>
-                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">{tasteSummary.pacing}</p>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">{tasteSummary.pacing.length > 120 ? tasteSummary.pacing.slice(0, 120) + "..." : tasteSummary.pacing}</p>
                     </div>
                   )}
                 </div>
@@ -809,65 +817,18 @@ function OnboardingContent() {
 
             {!tasteLoading && (
               <div className="flex flex-col gap-3 w-full max-w-md">
-                {isTogether ? (
+                <button
+                  onClick={() => router.push(isTogether ? "/together" : "/recommendations")}
+                  className="btn-press w-full py-3 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_24px_var(--accent-glow-strong)] text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all"
+                >
+                  {isTogether ? s.startTogether : s.exploreRec}
+                </button>
+                {!isTogether && (
                   <button
                     onClick={() => router.push("/together")}
-                    className="btn-press w-full py-3 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_24px_var(--accent-glow-strong)] text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all"
+                    className="btn-press w-full py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-md)] font-medium text-xs transition-all"
                   >
                     {s.startTogether}
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => router.push("/recommendations")}
-                      className="btn-press w-full py-3 bg-[var(--accent)] hover:brightness-110 hover:shadow-[0_0_24px_var(--accent-glow-strong)] text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all"
-                    >
-                      {s.exploreRec}
-                    </button>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => router.push("/together")}
-                        className="btn-press flex-1 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-md)] font-medium text-xs transition-all"
-                      >
-                        {s.startTogether}
-                      </button>
-                      <button
-                        onClick={() => router.push("/library")}
-                        className="btn-press flex-1 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-md)] font-medium text-xs transition-all"
-                      >
-                        {s.goLibrary}
-                      </button>
-                    </div>
-                  </>
-                )}
-
-                {/* Share taste profile link */}
-                {tasteSummary && (
-                  <button
-                    onClick={async () => {
-                      const shareUrl = "https://logflix.app/taste";
-                      const firstSentence = tasteSummary.youLike?.split(/[.!]/).filter(Boolean)[0]?.trim() || "";
-                      const shareTitle = locale === "no" ? "Filmsmaken min på Logflix"
-                        : locale === "dk" ? "Min filmsmag på Logflix"
-                        : locale === "se" ? "Min filmsmak på Logflix"
-                        : locale === "fi" ? "Elokuvamakuni Logflixissä"
-                        : "My movie taste on Logflix";
-
-                      if (navigator.share) {
-                        try {
-                          await navigator.share({ title: shareTitle, text: firstSentence, url: shareUrl });
-                        } catch {
-                          // User cancelled share
-                        }
-                      } else {
-                        await navigator.clipboard.writeText(shareUrl);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                      }
-                    }}
-                    className="text-xs text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors mt-2"
-                  >
-                    {copied ? s.copied : s.shareTaste}
                   </button>
                 )}
 
