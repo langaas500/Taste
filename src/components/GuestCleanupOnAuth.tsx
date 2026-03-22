@@ -14,18 +14,20 @@ export default function GuestCleanupOnAuth() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Migrate guest title actions to user_titles (once)
+      // Migrate guest title actions + Se Sammen swipes to user account (once)
       if (!localStorage.getItem(TITLES_MIGRATED_KEY)) {
         const actions = readGuestTitleActions();
-        if (actions.length > 0) {
+        const wtGuestId = localStorage.getItem("wt_guest_id") || "";
+        if (actions.length > 0 || wtGuestId) {
           try {
             const res = await fetch("/api/guest/migrate", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ actions }),
+              body: JSON.stringify({ actions, wt_guest_id: wtGuestId }),
             });
             if (res.ok) {
               clearGuestTitleActions();
+              if (wtGuestId) localStorage.removeItem("wt_guest_id");
             }
           } catch {
             /* silent — will retry next load */

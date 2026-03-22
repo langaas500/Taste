@@ -82,7 +82,42 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ok: true, migrated });
+    // ── Migrate Se Sammen (wt) guest sessions + swipes ──
+    let wtMigrated = 0;
+    const guestId = body.wt_guest_id;
+    if (typeof guestId === "string" && guestId.length > 0) {
+      // Find sessions where this guest is host or guest
+      const { data: sessions } = await supabase
+        .from("wt_sessions")
+        .select("id")
+        .or(`host_id.eq.${guestId},guest_id.eq.${guestId}`);
+
+      if (sessions && sessions.length > 0) {
+        const sessionIds = sessions.map((s: { id: string }) => s.id);
+
+        // Update sessions: replace guest_id references with user_id
+        await supabase
+          .from("wt_sessions")
+          .update({ host_id: user.id })
+          .eq("host_id", guestId);
+
+        await supabase
+          .from("wt_sessions")
+          .update({ guest_id: user.id })
+          .eq("guest_id", guestId);
+
+        // Update swipes: replace guest_id with user_id
+        const { count } = await supabase
+          .from("wt_session_swipes")
+          .update({ user_id: user.id, guest_id: null })
+          .eq("guest_id", guestId)
+          .in("session_id", sessionIds);
+
+        wtMigrated = count ?? 0;
+      }
+    }
+
+    return NextResponse.json({ ok: true, migrated, wt_migrated: wtMigrated });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
