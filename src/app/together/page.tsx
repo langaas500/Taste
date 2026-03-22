@@ -95,6 +95,7 @@ export default function WTBetaPage() {
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [watchedLoading, setWatchedLoading] = useState(false);
   const [emailValue, setEmailValue] = useState("");
+  const [matchMoreOpen, setMatchMoreOpen] = useState(false);
   const [streakData, setStreakData] = useState<{ current_streak: number; streak_at_risk: boolean; unlocked_rewards: Array<{ key: string; slug: string }> } | null>(null);
   const [frozenStreak, setFrozenStreak] = useState<number>(0);
   const [matchCount, setMatchCount] = useState<number>(0);
@@ -1997,8 +1998,8 @@ export default function WTBetaPage() {
                 <div className="relative z-10 w-full max-w-sm md:mx-auto">
                   {/* Phase 1: label */}
                   <div style={{
-                    fontSize: "1rem", letterSpacing: "0.04em",
-                    color: "rgba(255,255,255,0.72)", marginBottom: 12,
+                    fontSize: "clamp(1.5rem, 4vw, 2.5rem)", fontWeight: 800, letterSpacing: "-0.02em",
+                    color: "#fff", marginBottom: 12,
                     textShadow: "0 0 20px rgba(255,42,42,0.55)",
                     opacity: matchRevealPhase >= 1 ? 1 : 0,
                     transition: "opacity 600ms ease",
@@ -2022,164 +2023,160 @@ export default function WTBetaPage() {
                       </p>
                     )}
                   </div>
-                  {/* Phase 3: buttons */}
+                  {/* Phase 3: primary CTAs + collapsible */}
                   <div style={{ opacity: matchRevealPhase >= 3 ? 1 : 0, transition: "opacity 600ms ease" }}>
+                    {/* PRIMARY: Watch */}
                     {finalWinner && (() => {
                       const wi = getWatchInfo(finalWinner.title, finalWinner.tmdb_id, finalWinner.type, selectedProviders, winnerProviderIds);
                       const label = wi.providerName
                         ? t(locale, "winner", "watchOn").replace("{provider}", wi.providerName)
                         : t(locale, "winner", "startWatching");
                       return (
-                        <button onClick={() => { track("together_watch_clicked", { provider: wi.providerName, tmdb_id: finalWinner.tmdb_id, title: finalWinner.title }); window.open(wi.url, "_blank", "noopener,noreferrer"); }} className="button" style={{ width: "100%", marginBottom: 12 }}>
+                        <button onClick={() => { track("together_watch_clicked", { provider: wi.providerName, tmdb_id: finalWinner.tmdb_id, title: finalWinner.title }); window.open(wi.url, "_blank", "noopener,noreferrer"); }} className="button" style={{ width: "100%", marginBottom: 10 }}>
                           {label}
                         </button>
                       );
                     })()}
-                    {/* Email capture — show once per session, skip if user has email */}
-                    {!emailCaptured && !(authUser?.email) && (
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          const email = emailValue.trim();
-                          if (!email) return;
-                          setEmailCaptured(true);
-                          track("together_email_captured", { tmdb_id: finalWinner.tmdb_id, title: finalWinner.title });
-                          fetch("/api/email-capture", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              email,
-                              tmdb_id: finalWinner.tmdb_id,
-                              title: finalWinner.title,
-                              type: finalWinner.type,
-                            }),
-                          }).catch(() => {});
-                        }}
-                        className="flex gap-2 mb-3"
-                      >
-                        <input
-                          type="email"
-                          required
-                          placeholder={t(locale, "emailCapture", "placeholder")}
-                          value={emailValue}
-                          onChange={(e) => setEmailValue(e.target.value)}
-                          className="flex-1 min-w-0 px-3 py-2 rounded-lg text-sm"
-                          style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", outline: "none" }}
-                        />
-                        <button
-                          type="submit"
-                          className="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
-                          style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.85)", cursor: "pointer" }}
-                        >
-                          {t(locale, "emailCapture", "submit")}
-                        </button>
-                      </form>
-                    )}
-                    {!emailCaptured && !(authUser?.email) && (
-                      <p className="text-xs mb-3 -mt-1" style={{ color: "rgba(255,255,255,0.32)" }}>
-                        {t(locale, "emailCapture", "prompt")}
-                      </p>
-                    )}
-                    {emailCaptured && (
-                      <p className="text-xs mb-3" style={{ color: "rgba(255,200,100,0.7)" }}>
-                        {t(locale, "emailCapture", "confirmed")}
-                      </p>
-                    )}
+
+                    {/* PRIMARY: Share */}
                     <button
                       onClick={() => finalWinner && handleShare(finalWinner.title)}
-                      className="w-full py-3 rounded-xl text-sm font-medium mb-2"
-                      style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.72)", cursor: "pointer" }}
+                      className="w-full py-3 rounded-xl text-sm font-semibold mb-4"
+                      style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.85)", cursor: "pointer" }}
                     >
                       {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "share")}
                     </button>
-                    <button
-                      onClick={handleShareStory}
-                      className="w-full py-2.5 rounded-xl text-xs font-medium mb-3 sm:hidden"
-                      style={{ background: "rgba(255,42,42,0.08)", border: "1px solid rgba(255,42,42,0.15)", color: "rgba(255,255,255,0.55)", cursor: "pointer" }}
-                    >
-                      {t(locale, "winner", "shareStory")}
-                    </button>
-                    {authUser && (
-                      <div className="flex gap-2 mb-3 w-full">
-                        <button
-                          onClick={handleAddWatchlist}
-                          disabled={watchlistAdded || watchlistLoading}
-                          className="flex-1 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-60"
-                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: watchlistAdded ? "rgba(52,211,153,0.8)" : "rgba(255,255,255,0.5)" }}
-                        >
-                          {watchlistLoading ? "..." : watchlistAdded ? t(locale, "winner", "addedWatchlist") : t(locale, "winner", "addWatchlist")}
-                        </button>
-                        <button
-                          onClick={handleMarkWatched}
-                          disabled={watchedLogged || watchedLoading}
-                          className="flex-1 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-60"
-                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: watchedLogged ? "rgba(52,211,153,0.8)" : "rgba(255,255,255,0.5)" }}
-                        >
-                          {watchedLoading ? "..." : watchedLogged ? t(locale, "winner", "markedWatched") : t(locale, "winner", "markWatched")}
-                        </button>
-                      </div>
-                    )}
-                    {!authUser && (
-                      <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px", marginBottom: 12, textAlign: "center" }}>
-                        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.5, marginBottom: 10 }}>
-                          {t(locale, "winner", "guestSignupText")}
-                        </p>
-                        <a
-                          href={`/login?from=together&mode=signup${sessionCode ? `&wt_code=${sessionCode}` : ""}`}
-                          style={{ display: "block", padding: "10px 0", background: "#ff2a2a", color: "#fff", borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: "none", marginBottom: 6 }}
-                        >
-                          {t(locale, "winner", "guestSignupBtn")}
-                        </a>
-                        <a
-                          href={`/login?from=together&mode=login${sessionCode ? `&wt_code=${sessionCode}` : ""}`}
-                          style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", textDecoration: "underline", textUnderlineOffset: 2 }}
-                        >
-                          {t(locale, "winner", "guestLoginBtn")}
-                        </a>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => {
-                        const titleName = finalWinner?.title ?? "en film";
-                        const text = t(locale, "winner", "tryAnotherFriendShareText").replace("{title}", titleName);
-                        const url = "https://logflix.app/together";
-                        if (navigator.share) {
-                          navigator.share({ title: "Logflix — Se Sammen", text, url }).then(() => { track("viral_try_another_friend", { session_id: sessionId, tmdb_id: finalWinner?.tmdb_id, method: "native_share" }); }).catch(() => {});
-                        } else {
-                          navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
-                          track("viral_try_another_friend", { session_id: sessionId, tmdb_id: finalWinner?.tmdb_id, method: "copy" });
-                        }
-                      }}
-                      className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer"
-                      style={{ color: "rgba(255,255,255,0.4)" }}
-                    >
-                      {t(locale, "winner", "tryAnotherFriend")}
-                    </button>
-                    <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>
-                      {t(locale, "winner", "playAgain")}
-                    </button>
-                    {authUser && matchCount >= 3 && (
-                      <Link href="/couple-report" className="block w-full py-2 text-xs font-medium text-center" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none" }} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}>
-                        {t(locale, "winner", "coupleReportWithCount").replace("{n}", String(matchCount))}
-                      </Link>
-                    )}
-                    {mode === "solo" && (
+
+                    {/* Separator with "More" toggle */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
                       <button
-                        onClick={() => {
-                          const text = t(locale, "winner", "soloInviteCta");
-                          const url = `${window.location.origin}/together`;
-                          if (navigator.share) {
-                            navigator.share({ title: "Logflix — Se Sammen", text, url }).then(() => { track("invite_shared", { session_id: sessionId, method: "native_share" }); }).catch(() => {});
-                          } else {
-                            navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
-                            track("invite_copy_link", { session_id: sessionId, method: "copy" });
-                          }
-                        }}
-                        className="w-full py-3 mt-2 rounded-xl text-sm font-medium"
-                        style={{ background: "rgba(255,42,42,0.12)", border: "1px solid rgba(255,42,42,0.25)", color: "rgba(255,255,255,0.85)", cursor: "pointer" }}
+                        onClick={() => setMatchMoreOpen((o) => !o)}
+                        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "rgba(255,255,255,0.35)", padding: "2px 8px", transition: "color 0.2s" }}
                       >
-                        {t(locale, "winner", "soloInviteCta")}
+                        {matchMoreOpen ? (locale === "no" ? "Mindre ↑" : "Less ↑") : (locale === "no" ? "Mer ↓" : "More ↓")}
                       </button>
+                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+                    </div>
+
+                    {/* Collapsible section */}
+                    {matchMoreOpen && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {/* Share as Story — mobile only */}
+                        <button
+                          onClick={handleShareStory}
+                          className="w-full py-2.5 rounded-xl text-xs font-medium sm:hidden"
+                          style={{ background: "rgba(255,42,42,0.08)", border: "1px solid rgba(255,42,42,0.15)", color: "rgba(255,255,255,0.55)", cursor: "pointer" }}
+                        >
+                          {t(locale, "winner", "shareStory")}
+                        </button>
+
+                        {/* Email capture — guests only */}
+                        {!emailCaptured && !(authUser?.email) && (
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              const email = emailValue.trim();
+                              if (!email) return;
+                              setEmailCaptured(true);
+                              track("together_email_captured", { tmdb_id: finalWinner.tmdb_id, title: finalWinner.title });
+                              fetch("/api/email-capture", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ email, tmdb_id: finalWinner.tmdb_id, title: finalWinner.title, type: finalWinner.type }),
+                              }).catch(() => {});
+                            }}
+                            className="flex gap-2"
+                          >
+                            <input type="email" required placeholder={t(locale, "emailCapture", "placeholder")} value={emailValue} onChange={(e) => setEmailValue(e.target.value)}
+                              className="flex-1 min-w-0 px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", outline: "none" }} />
+                            <button type="submit" className="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.85)", cursor: "pointer" }}>
+                              {t(locale, "emailCapture", "submit")}
+                            </button>
+                          </form>
+                        )}
+                        {!emailCaptured && !(authUser?.email) && (
+                          <p className="text-xs" style={{ color: "rgba(255,255,255,0.32)" }}>{t(locale, "emailCapture", "prompt")}</p>
+                        )}
+                        {emailCaptured && (
+                          <p className="text-xs" style={{ color: "rgba(255,200,100,0.7)" }}>{t(locale, "emailCapture", "confirmed")}</p>
+                        )}
+
+                        {/* Watchlist + Watched — auth only */}
+                        {authUser && (
+                          <div className="flex gap-2 w-full">
+                            <button onClick={handleAddWatchlist} disabled={watchlistAdded || watchlistLoading}
+                              className="flex-1 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-60"
+                              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: watchlistAdded ? "rgba(52,211,153,0.8)" : "rgba(255,255,255,0.5)" }}>
+                              {watchlistLoading ? "..." : watchlistAdded ? t(locale, "winner", "addedWatchlist") : t(locale, "winner", "addWatchlist")}
+                            </button>
+                            <button onClick={handleMarkWatched} disabled={watchedLogged || watchedLoading}
+                              className="flex-1 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-60"
+                              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: watchedLogged ? "rgba(52,211,153,0.8)" : "rgba(255,255,255,0.5)" }}>
+                              {watchedLoading ? "..." : watchedLogged ? t(locale, "winner", "markedWatched") : t(locale, "winner", "markWatched")}
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Guest signup */}
+                        {!authUser && (
+                          <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px", textAlign: "center" }}>
+                            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.5, marginBottom: 10 }}>{t(locale, "winner", "guestSignupText")}</p>
+                            <a href={`/login?from=together&mode=signup${sessionCode ? `&wt_code=${sessionCode}` : ""}`} style={{ display: "block", padding: "10px 0", background: "#ff2a2a", color: "#fff", borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: "none", marginBottom: 6 }}>{t(locale, "winner", "guestSignupBtn")}</a>
+                            <a href={`/login?from=together&mode=login${sessionCode ? `&wt_code=${sessionCode}` : ""}`} style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", textDecoration: "underline", textUnderlineOffset: 2 }}>{t(locale, "winner", "guestLoginBtn")}</a>
+                          </div>
+                        )}
+
+                        {/* Try another friend */}
+                        <button
+                          onClick={() => {
+                            const titleName = finalWinner?.title ?? "en film";
+                            const text = t(locale, "winner", "tryAnotherFriendShareText").replace("{title}", titleName);
+                            const url = "https://logflix.app/together";
+                            if (navigator.share) {
+                              navigator.share({ title: "Logflix — Se Sammen", text, url }).then(() => { track("viral_try_another_friend", { session_id: sessionId, tmdb_id: finalWinner?.tmdb_id, method: "native_share" }); }).catch(() => {});
+                            } else {
+                              navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
+                              track("viral_try_another_friend", { session_id: sessionId, tmdb_id: finalWinner?.tmdb_id, method: "copy" });
+                            }
+                          }}
+                          className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.4)" }}>
+                          {t(locale, "winner", "tryAnotherFriend")}
+                        </button>
+
+                        {/* Play again */}
+                        <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>
+                          {t(locale, "winner", "playAgain")}
+                        </button>
+
+                        {/* Couple report */}
+                        {authUser && matchCount >= 3 && (
+                          <Link href="/couple-report" className="block w-full py-2 text-xs font-medium text-center" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none" }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}>
+                            {t(locale, "winner", "coupleReportWithCount").replace("{n}", String(matchCount))}
+                          </Link>
+                        )}
+
+                        {/* Solo invite */}
+                        {mode === "solo" && (
+                          <button
+                            onClick={() => {
+                              const text = t(locale, "winner", "soloInviteCta");
+                              const url = `${window.location.origin}/together`;
+                              if (navigator.share) {
+                                navigator.share({ title: "Logflix — Se Sammen", text, url }).then(() => { track("invite_shared", { session_id: sessionId, method: "native_share" }); }).catch(() => {});
+                              } else {
+                                navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
+                                track("invite_copy_link", { session_id: sessionId, method: "copy" });
+                              }
+                            }}
+                            className="w-full py-3 rounded-xl text-sm font-medium"
+                            style={{ background: "rgba(255,42,42,0.12)", border: "1px solid rgba(255,42,42,0.25)", color: "rgba(255,255,255,0.85)", cursor: "pointer" }}>
+                            {t(locale, "winner", "soloInviteCta")}
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
