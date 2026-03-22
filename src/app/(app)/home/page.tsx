@@ -659,13 +659,16 @@ export default function HomePage() {
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl"
               style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(2px)" }}>
               <div className="text-center px-4">
-                <p className="text-sm font-bold text-white mb-1">🔒 Tonight&apos;s Pick</p>
+                <p className="text-sm font-bold text-white mb-1">🔓 Tonight&apos;s Pick</p>
                 <p className="text-xs text-white/60 mb-3">Daglig film + serie basert på smaken din</p>
                 <Link href="/premium"
                   className="block px-4 py-2 rounded-xl text-xs font-bold transition-all"
                   style={{ background: "rgba(245,200,66,0.15)", border: "0.5px solid rgba(245,200,66,0.4)", color: "#F5C842" }}>
-                  Logflix Par — 29 kr/mnd
+                  {locale === "no" ? "🔓 Lås opp Tonight's Pick" : "🔓 Unlock Tonight's Pick"}
                 </Link>
+                <p style={{ fontSize: 11, color: "rgba(245,200,66,0.7)", marginTop: 6, textAlign: "center" }}>
+                  {locale === "no" ? "29 kr/mnd · Partneren din får det gratis" : "29 NOK/mo · Your partner gets it for free"}
+                </p>
               </div>
             </div>
           </div>

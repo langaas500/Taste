@@ -845,6 +845,9 @@ function OnboardingContent() {
                         <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">{s.parTitle}</p>
                         <p className="text-xs text-[var(--text-tertiary)] leading-relaxed mb-2">{s.parDesc}</p>
                         <span className="text-xs font-semibold" style={{ color: "#E50914" }}>{s.parCta}</span>
+                        <p style={{ fontSize: 11, color: "rgba(245,200,66,0.7)", marginTop: 4 }}>
+                          💑 {locale === "no" || locale === "dk" ? "Partneren din får det gratis — 14,50 kr per person" : locale === "se" ? "Din partner får det gratis — 14,50 kr per person" : locale === "fi" ? "Kumppanisi saa sen ilmaiseksi — 14,50 kr per henkilö" : "Your partner gets it for free — 7 NOK per person"}
+                        </p>
                       </div>
                     </div>
                   </button>
