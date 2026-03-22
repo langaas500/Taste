@@ -23,7 +23,7 @@ function wrap(body: string): string {
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:${CARD_BG};border-radius:16px;border:1px solid ${BORDER};padding:40px 32px;">
         <tr><td align="center" style="padding-bottom:28px;">
-          <span style="font-size:24px;font-weight:800;color:${RED};letter-spacing:2px;">LOGFLIX</span>
+          <img src="https://logflix.app/logo.png" alt="Logflix" width="120" height="36" style="display:block;margin:0 auto;" />
         </td></tr>
         ${body}
       </table>
@@ -550,5 +550,122 @@ export async function sendWeeklyDigestEmail(
     });
   } catch (err) {
     console.error("Failed to send weekly digest email:", err);
+  }
+}
+
+/* ── 6. Daily Tonight's Pick ──────────────────────────── */
+
+const dailyPickStrings: Record<string, {
+  subject: string;
+  heading: string;
+  movieLabel: string;
+  seriesLabel: string;
+  cta: string;
+  footer: string;
+  unsub: string;
+}> = {
+  no: {
+    subject: "🎬 Tonight's Pick er klar",
+    heading: "Kveldens valg for deg",
+    movieLabel: "Film i kveld",
+    seriesLabel: "Serie i kveld",
+    cta: "Åpne Logflix",
+    footer: "Du mottar dette fordi du valgte daglig Tonight's Pick.",
+    unsub: "Avslutt abonnement",
+  },
+  en: {
+    subject: "🎬 Tonight's Pick is ready",
+    heading: "Tonight's picks for you",
+    movieLabel: "Movie tonight",
+    seriesLabel: "Series tonight",
+    cta: "Open Logflix",
+    footer: "You're receiving this because you opted in to daily Tonight's Pick.",
+    unsub: "Unsubscribe",
+  },
+  se: {
+    subject: "🎬 Tonight's Pick är redo",
+    heading: "Kvällens val för dig",
+    movieLabel: "Film ikväll",
+    seriesLabel: "Serie ikväll",
+    cta: "Öppna Logflix",
+    footer: "Du får detta för att du valde daglig Tonight's Pick.",
+    unsub: "Avsluta prenumeration",
+  },
+  dk: {
+    subject: "🎬 Tonight's Pick er klar",
+    heading: "Aftenens valg til dig",
+    movieLabel: "Film i aften",
+    seriesLabel: "Serie i aften",
+    cta: "Åbn Logflix",
+    footer: "Du modtager dette fordi du valgte daglig Tonight's Pick.",
+    unsub: "Afmeld",
+  },
+  fi: {
+    subject: "🎬 Tonight's Pick on valmis",
+    heading: "Illan valinnat sinulle",
+    movieLabel: "Elokuva tänään",
+    seriesLabel: "Sarja tänään",
+    cta: "Avaa Logflix",
+    footer: "Saat tämän koska valitsit päivittäisen Tonight's Pick -palvelun.",
+    unsub: "Peruuta tilaus",
+  },
+};
+
+export async function sendDailyPickEmail(
+  email: string,
+  locale: string,
+  movie: { title: string; poster_path: string | null; match_score: number | null } | null,
+  series: { title: string; poster_path: string | null; match_score: number | null } | null,
+): Promise<void> {
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set — skipping daily pick email");
+    return;
+  }
+
+  const t = dailyPickStrings[locale] || dailyPickStrings.en;
+
+  let cardsHtml = "";
+  if (movie || series) {
+    const movieHtml = movie
+      ? posterCard(
+          `🎬 ${t.movieLabel}`,
+          `${movie.title}${movie.match_score ? ` — ★ ${movie.match_score}%` : ""}`,
+          movie.poster_path ? `https://image.tmdb.org/t/p/w300${movie.poster_path}` : "",
+        )
+      : "";
+    const seriesHtml = series
+      ? posterCard(
+          `📺 ${t.seriesLabel}`,
+          `${series.title}${series.match_score ? ` — ★ ${series.match_score}%` : ""}`,
+          series.poster_path ? `https://image.tmdb.org/t/p/w300${series.poster_path}` : "",
+        )
+      : "";
+    cardsHtml = `<tr><td style="padding-bottom:24px;">
+      <table width="100%" cellpadding="0" cellspacing="0"><tr>${movieHtml}${seriesHtml}</tr></table>
+    </td></tr>`;
+  }
+
+  try {
+    await resend.emails.send({
+      from: "Logflix <hei@logflix.app>",
+      to: email,
+      subject: t.subject,
+      html: wrap(`
+        <tr><td align="center" style="padding-bottom:8px;">
+          <p style="margin:0;font-size:11px;font-weight:700;color:${RED};letter-spacing:1.5px;text-transform:uppercase;">TONIGHT'S PICK</p>
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:24px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:700;">${t.heading}</h1>
+        </td></tr>
+        ${cardsHtml}
+        ${ctaButton(t.cta, "https://logflix.app/home")}
+        ${footer(
+          t.footer,
+          '<a href="https://logflix.app/settings" style="color:' + TEXT_DIM + ';text-decoration:underline;">' + t.unsub + "</a>"
+        )}
+      `),
+    });
+  } catch (err) {
+    console.error("Failed to send daily pick email:", err);
   }
 }
