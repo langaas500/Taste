@@ -1952,7 +1952,78 @@ export default function WTBetaPage() {
                     100% { opacity: 0; }
                   }
                   @keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+                  @keyframes poster-zoom { from { transform: scale(1.0); } to { transform: scale(1.06); } }
+                  @keyframes match-pop {
+                    0% { transform: scale(0.5); opacity: 0; }
+                    60% { transform: scale(1.2); opacity: 1; }
+                    80% { transform: scale(0.95); }
+                    100% { transform: scale(1); opacity: 1; }
+                  }
+                  @keyframes match-glow {
+                    0%, 100% { text-shadow: 0 0 20px rgba(255,42,42,0.8); }
+                    50% { text-shadow: 0 0 40px rgba(255,42,42,1), 0 0 80px rgba(255,42,42,0.4); }
+                  }
+                  @keyframes ring-expand {
+                    from { transform: scale(0); opacity: 0.6; }
+                    to { transform: scale(3); opacity: 0; }
+                  }
                 `}} />
+
+                {/* Confetti canvas */}
+                {matchRevealPhase >= 1 && (
+                  <canvas
+                    className="fixed inset-0 z-40 pointer-events-none"
+                    style={{ width: "100%", height: "100%" }}
+                    ref={(canvas) => {
+                      if (!canvas || canvas.dataset.started) return;
+                      canvas.dataset.started = "1";
+                      const ctx = canvas.getContext("2d");
+                      if (!ctx) return;
+                      canvas.width = window.innerWidth * window.devicePixelRatio;
+                      canvas.height = window.innerHeight * window.devicePixelRatio;
+                      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+                      const W = window.innerWidth, H = window.innerHeight;
+                      const colors = ["#ff2a2a", "#ff6b6b", "#ffd700", "#ffffff", "#ff9500"];
+                      const particles = Array.from({ length: 150 }, () => ({
+                        x: Math.random() * W, y: -10 - Math.random() * H * 0.3,
+                        w: 4 + Math.random() * 6, h: 4 + Math.random() * 6,
+                        vx: (Math.random() - 0.5) * 4, vy: 2 + Math.random() * 4,
+                        rot: Math.random() * Math.PI * 2, vr: (Math.random() - 0.5) * 0.15,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        gravity: 0.08 + Math.random() * 0.04,
+                      }));
+                      const start = performance.now();
+                      const loop = (now: number) => {
+                        const elapsed = now - start;
+                        if (elapsed > 3500) { ctx.clearRect(0, 0, W, H); return; }
+                        ctx.clearRect(0, 0, W, H);
+                        for (const p of particles) {
+                          p.vy += p.gravity; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+                          ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+                          ctx.fillStyle = p.color;
+                          ctx.globalAlpha = Math.max(0, 1 - elapsed / 3500);
+                          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                          ctx.restore();
+                        }
+                        requestAnimationFrame(loop);
+                      };
+                      requestAnimationFrame(loop);
+                    }}
+                  />
+                )}
+
+                {/* Ring animations */}
+                {matchRevealPhase >= 1 && [400, 600, 800].map((delay, i) => (
+                  <div key={i} className="fixed pointer-events-none" style={{
+                    top: "50%", left: "50%", width: "100vw", height: "100vw",
+                    marginTop: "-50vw", marginLeft: "-50vw",
+                    borderRadius: "50%", border: "2px solid rgba(255,42,42,0.5)",
+                    background: "rgba(255,42,42,0.15)",
+                    animation: `ring-expand 1.2s ease-out ${delay}ms both`,
+                    zIndex: 35,
+                  }} />
+                ))}
+
                 <div className="absolute inset-0" style={{ background: getGenreColor(finalWinner.genre_ids) }} />
                 {/* Desktop-only poster mosaic background */}
                 {isDesktop && ribbonPosters.length > 0 && (
@@ -1972,7 +2043,7 @@ export default function WTBetaPage() {
                     alt=""
                     className="absolute inset-0 w-full h-full object-cover md:object-contain"
                     style={{
-                      animation: "poster-fadein 600ms ease-out forwards, poster-reveal 1s ease-out 600ms forwards",
+                      animation: "poster-fadein 600ms ease-out forwards, poster-reveal 1s ease-out 600ms forwards, poster-zoom 4s ease-in-out 600ms forwards",
                       filter: matchRevealPhase >= 1 ? "brightness(0.95)" : "brightness(1)",
                       transition: "filter 600ms ease",
                     }}
@@ -1983,16 +2054,25 @@ export default function WTBetaPage() {
                 <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "rgba(255,42,42,1)", animation: "glow-overlay 1.2s ease-out 600ms both" }} />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0.88) 65%, rgba(0,0,0,1) 100%)" }} />
                 <div className="relative z-10 w-full max-w-sm md:mx-auto">
-                  {/* Phase 1: label */}
+                  {/* Phase 1: label with pop + glow */}
                   <div style={{
                     fontSize: "clamp(1.5rem, 4vw, 2.5rem)", fontWeight: 800, letterSpacing: "-0.02em",
-                    color: "#fff", marginBottom: 12,
-                    textShadow: "0 0 20px rgba(255,42,42,0.55)",
-                    opacity: matchRevealPhase >= 1 ? 1 : 0,
-                    transition: "opacity 600ms ease",
+                    color: "#fff", marginBottom: 4,
+                    animation: matchRevealPhase >= 1 ? "match-pop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards, match-glow 1.5s ease-in-out 0.6s infinite" : "none",
+                    opacity: matchRevealPhase >= 1 ? undefined : 0,
                   }}>
                     {mode === "solo" ? t(locale, "winner", "soloPhase1") : t(locale, "winner", "phase1")}
                   </div>
+                  {/* Match streak counter */}
+                  {matchRevealPhase >= 1 && matchCount >= 2 && (
+                    <div style={{
+                      fontSize: "0.85rem", fontWeight: 700, color: "#ff9500", marginBottom: 12,
+                      opacity: 0, animation: "poster-fadein 0.3s ease 0.7s forwards",
+                    }}>
+                      {matchCount}. match {locale === "no" || locale === "dk" ? "i kveld" : locale === "se" ? "ikväll" : locale === "fi" ? "tänä iltana" : "tonight"}! 🔥
+                    </div>
+                  )}
+                  {matchCount < 2 && <div style={{ marginBottom: 12 }} />}
                   {/* Phase 2: title + meta */}
                   <div style={{ opacity: matchRevealPhase >= 2 ? 1 : 0, transition: "opacity 600ms ease" }}>
                     <h2 className="text-3xl font-black text-white leading-tight mb-1">{finalWinner.title}</h2>
