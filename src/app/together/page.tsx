@@ -1228,7 +1228,10 @@ export default function WTBetaPage() {
                 }}
               >
                 <svg width="28" height="20" viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="7" cy="6" r="3"/><path d="M12 21v-1.5a3.5 3.5 0 0 0-3.5-3.5h-3A3.5 3.5 0 0 0 2 19.5V21"/><line x1="16" y1="10" x2="16" y2="14"/><line x1="14" y1="12" x2="18" y2="12"/><circle cx="25" cy="6" r="3"/><path d="M30 21v-1.5a3.5 3.5 0 0 0-3.5-3.5h-3A3.5 3.5 0 0 0 20 19.5V21"/></svg>
-                {titlesLoading ? t(locale, "intro", "loading") : t(locale, "intro", "startSwiping")}
+                <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  <span>{titlesLoading ? t(locale, "intro", "loading") : t(locale, "intro", "startSwiping")}</span>
+                  <span style={{ fontSize: "0.6rem", fontWeight: 400, opacity: 0.6 }}>{t(locale, "intro", "swipeWithPartner")}</span>
+                </span>
               </button>
               {!authUser && (
                 <p className="text-xs text-white/60 text-center" style={{ margin: "4px 0 0" }}>
@@ -1236,18 +1239,40 @@ export default function WTBetaPage() {
                 </p>
               )}
 
-              {/* ── SEKUNDÆR: Solo som hint-tekst ── */}
-              <p
+              {/* ── eller ── */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "10px 0 4px" }}>
+                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+                <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.25)", fontWeight: 400 }}>{t(locale, "intro", "or")}</span>
+                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+              </div>
+
+              {/* ── SEKUNDÆR: Solo — liten knapp ── */}
+              <button
                 onClick={() => {
                   if (titlesLoading || ritualState !== "idle") return;
                   startRitual(() => { setMode("solo"); setSelectedProviders([]); setScreen("providers"); });
                 }}
-                style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.40)", margin: "12px 0 0", textAlign: "center", cursor: "pointer", transition: "color 0.2s" }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.65)"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.40)"; }}
+                disabled={titlesLoading || ritualState !== "idle"}
+                style={{
+                  width: "100%",
+                  padding: "9px 16px",
+                  borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  background: "rgba(255,255,255,0.03)",
+                  cursor: "pointer",
+                  fontSize: "0.8rem",
+                  fontWeight: 500,
+                  color: "rgba(255,255,255,0.50)",
+                  transition: "all 0.2s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                }}
               >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
                 {t(locale, "intro", "soloInviteHint")}
-              </p>
+              </button>
 
               {/* ── TERTIÆR: Code + Group — side by side buttons ── */}
               <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
@@ -1305,6 +1330,9 @@ export default function WTBetaPage() {
                   }}>{t(locale, "intro", "soon")}</span>
                 </button>
               </div>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", textAlign: "center", marginTop: 24 }}>
+                {locale === "no" ? "Hundrevis av par har allerede funnet noe å se sammen" : "Hundreds of couples have already found something to watch"}
+              </p>
               {sessionError && <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: 4, textAlign: "center" }}>{sessionError}</p>}
 
 
