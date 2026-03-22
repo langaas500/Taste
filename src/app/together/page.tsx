@@ -76,6 +76,7 @@ export default function WTBetaPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionCode, setSessionCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [refMatchTitle, setRefMatchTitle] = useState("");
   const [partnerJoined, setPartnerJoined] = useState(false);
   const [partnerSwipeCount, setPartnerSwipeCount] = useState(0);
   const [sessionError, setSessionError] = useState("");
@@ -263,6 +264,10 @@ export default function WTBetaPage() {
         setJoinCode(codeParam.toUpperCase());
         setScreen("join");
         window.setTimeout(() => joinSession(codeParam.toUpperCase()), 50);
+      }
+      // ?ref=match&title=X → personalisert intro-banner
+      if (urlParams.get("ref") === "match" && urlParams.get("title")) {
+        setRefMatchTitle(decodeURIComponent(urlParams.get("title")!));
       }
       // DEBUG: ?winner=1 → viser winner-skjermen direkte
       if (urlParams.get("winner") === "1") {
@@ -1202,6 +1207,21 @@ export default function WTBetaPage() {
             {/* ── Hero block — flex-1, no scroll ── */}
             <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "18px 24px 4px", position: "relative", zIndex: 1, overflow: "hidden" }}>
             <div className="intro-content" style={{ width: "100%", maxWidth: 340, textAlign: "center" }}>
+
+              {/* Match referral banner */}
+              {refMatchTitle && (
+                <div style={{ background: "rgba(255,42,42,0.08)", border: "0.5px solid rgba(255,42,42,0.25)", borderRadius: 12, padding: "14px 16px", marginBottom: 20, textAlign: "center" }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>
+                    🎬 {locale === "no" ? `Noen matchet på ${refMatchTitle}!` : `Someone matched on ${refMatchTitle}!`}
+                  </p>
+                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", margin: "0 0 2px" }}>
+                    {locale === "no" ? "Klarer dere å finne kveldens film raskere?" : "Can you find tonight's movie faster?"}
+                  </p>
+                  <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: 0 }}>
+                    {locale === "no" ? "Start Se Sammen under ↓" : "Start Watch Together below ↓"}
+                  </p>
+                </div>
+              )}
 
               {/* Headline */}
               <h1 className="intro-headline" style={{
