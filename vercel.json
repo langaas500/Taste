@@ -21,6 +21,10 @@
       "schedule": "0 14 * * *"
     },
     {
+      "path": "/api/cron/daily-pick-email",
+      "schedule": "0 17 * * *"
+    },
+    {
       "path": "/api/cron/friday-pick",
       "schedule": "0 17 * * 5"
     },
