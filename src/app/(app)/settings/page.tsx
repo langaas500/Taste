@@ -530,9 +530,25 @@ function SettingsContent() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [authProvider, setAuthProvider] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
+  const [inviteSuccess, setInviteSuccess] = useState(false);
 
   const traktMsg = searchParams.get("trakt");
   const errorMsg = searchParams.get("error");
+
+  // Auto-accept ?invite= param
+  useEffect(() => {
+    const code = searchParams.get("invite");
+    if (!code) return;
+    acceptInvite(code)
+      .then((data) => {
+        if (data.link) {
+          setInviteSuccess(true);
+          loadProfile();
+          window.history.replaceState({}, "", "/settings");
+        }
+      })
+      .catch(() => {});
+  }, [searchParams]);
 
   useEffect(() => {
     loadProfile();
@@ -753,6 +769,14 @@ function SettingsContent() {
       >
         {s.settings}
       </h2>
+
+      {inviteSuccess && (
+        <div className="rounded-xl px-4 py-3 mb-6" style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.3)" }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "#34d399", margin: 0 }}>
+            💑 {locale === "no" ? "Dere er nå koblet! Partneren din deler Premium med deg." : "You're now linked! Your partner shares Premium with you."}
+          </p>
+        </div>
+      )}
 
       {errorMsg && (
         <div className="text-sm text-red-400 bg-red-500/10 rounded-xl px-4 py-3 border border-red-500/20 mb-6">
