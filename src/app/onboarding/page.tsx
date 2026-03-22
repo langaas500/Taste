@@ -527,20 +527,24 @@ function OnboardingContent() {
                   </span>
                 )}
               </div>
-              <span className="text-xs text-[var(--text-tertiary)]">
-                {selectionCount} / {minTitles}
+              <span className="text-xs" style={{ color: selectionCount >= minTitles ? "var(--green)" : "var(--text-tertiary)" }}>
+                {selectionCount} {locale === "no" ? "av" : "of"} {minTitles} {locale === "no" ? "valgt" : "selected"}
               </span>
             </div>
 
-            {/* Progress */}
-            <div className="h-1 bg-[var(--bg-surface)] rounded-full mb-5 overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-300"
-                style={{
-                  width: `${Math.min((selectionCount / minTitles) * 100, 100)}%`,
-                  background: selectionCount >= minTitles ? "var(--green)" : "var(--accent)",
-                }}
-              />
+            {/* Segmented progress */}
+            <div className="flex gap-1.5 mb-5">
+              {Array.from({ length: minTitles }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-1.5 flex-1 rounded-full transition-all duration-300"
+                  style={{
+                    background: i < selectionCount
+                      ? selectionCount >= minTitles ? "var(--green)" : "var(--accent)"
+                      : "var(--bg-surface)",
+                  }}
+                />
+              ))}
             </div>
 
             {/* Grid */}
@@ -619,19 +623,23 @@ function OnboardingContent() {
               </div>
             )}
 
-            {/* Fixed bottom bar */}
+            {/* Sticky bottom bar — all screen sizes */}
             <div
-              className="fixed bottom-0 left-0 right-0 z-40 p-4"
+              className="fixed bottom-0 left-0 right-0 z-40"
               style={{
-                background: "linear-gradient(to top, var(--bg-base) 70%, transparent)",
-                paddingBottom: "calc(var(--safe-bottom) + 16px)",
+                padding: "16px 24px",
+                paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
+                background: "rgba(10,10,12,0.9)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                borderTop: "1px solid rgba(255,255,255,0.06)",
               }}
             >
-              <div className="max-w-3xl mx-auto">
+              <div style={{ maxWidth: 480, margin: "0 auto" }}>
                 <button
                   onClick={() => setStep(2)}
                   disabled={selectionCount < minTitles}
-                  className="btn-press w-full py-3 bg-[var(--accent)] hover:brightness-110 text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all disabled:opacity-30 disabled:pointer-events-none"
+                  className="btn-press w-full py-3.5 bg-[var(--accent)] hover:brightness-110 text-white rounded-[var(--radius-md)] font-semibold text-sm transition-all disabled:opacity-30 disabled:pointer-events-none"
                 >
                   {s.continue} ({selectionCount}/{minTitles})
                 </button>
