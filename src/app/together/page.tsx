@@ -1208,12 +1208,12 @@ export default function WTBetaPage() {
                 </p>
               </div>
 
-              {/* ── Solo CTA — primary big red button ── */}
+              {/* ── PRIMÆR: Duo CTA — stor rød knapp ── */}
               <button
                 className="cta-btn button"
                 onClick={() => {
                   if (titlesLoading || ritualState !== "idle") return;
-                  startRitual(() => { setMode("solo"); setSelectedProviders([]); setScreen("providers"); });
+                  startRitual(() => { setMode("paired"); setSelectedProviders([]); setScreen("providers"); });
                 }}
                 disabled={titlesLoading || ritualState !== "idle"}
                 style={{
@@ -1227,59 +1227,29 @@ export default function WTBetaPage() {
                   gap: 8,
                 }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+                <svg width="28" height="20" viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="7" cy="6" r="3"/><path d="M12 21v-1.5a3.5 3.5 0 0 0-3.5-3.5h-3A3.5 3.5 0 0 0 2 19.5V21"/><line x1="16" y1="10" x2="16" y2="14"/><line x1="14" y1="12" x2="18" y2="12"/><circle cx="25" cy="6" r="3"/><path d="M30 21v-1.5a3.5 3.5 0 0 0-3.5-3.5h-3A3.5 3.5 0 0 0 20 19.5V21"/></svg>
                 {titlesLoading ? t(locale, "intro", "loading") : t(locale, "intro", "startSwiping")}
               </button>
-              <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.60)", margin: "6px 0 0", textAlign: "center" }}>
-                {t(locale, "intro", "soloInviteHint")}
-              </p>
               {!authUser && (
                 <p className="text-xs text-white/60 text-center" style={{ margin: "4px 0 0" }}>
                   {t(locale, "intro", "noAccountNeeded")}
                 </p>
               )}
 
-              {/* ── Divider ── */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "10px 0 4px" }}>
-                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.10)" }} />
-                <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.30)", fontWeight: 400 }}>{t(locale, "intro", "or")}</span>
-                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.10)" }} />
-              </div>
-
-              {/* ── Duo — secondary button ── */}
-              <button
+              {/* ── SEKUNDÆR: Solo som hint-tekst ── */}
+              <p
                 onClick={() => {
                   if (titlesLoading || ritualState !== "idle") return;
-                  startRitual(() => { setMode("paired"); setSelectedProviders([]); setScreen("providers"); });
+                  startRitual(() => { setMode("solo"); setSelectedProviders([]); setScreen("providers"); });
                 }}
-                disabled={titlesLoading || ritualState !== "idle"}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  padding: "10px 16px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.10)",
-                  background: "rgba(255,255,255,0.04)",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                  color: "rgba(255,255,255,0.70)",
-                  fontSize: "0.85rem",
-                  fontWeight: 500,
-                }}
+                style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.40)", margin: "12px 0 0", textAlign: "center", cursor: "pointer", transition: "color 0.2s" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.65)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.40)"; }}
               >
-                <svg width="28" height="20" viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="7" cy="6" r="3"/><path d="M12 21v-1.5a3.5 3.5 0 0 0-3.5-3.5h-3A3.5 3.5 0 0 0 2 19.5V21"/><line x1="16" y1="10" x2="16" y2="14"/><line x1="14" y1="12" x2="18" y2="12"/><circle cx="25" cy="6" r="3"/><path d="M30 21v-1.5a3.5 3.5 0 0 0-3.5-3.5h-3A3.5 3.5 0 0 0 20 19.5V21"/></svg>
-                <span>{t(locale, "intro", "swipeWithPartner")}</span>
-              </button>
-
-              {/* ── Social proof ── */}
-              <p style={{ fontSize: "0.7rem", fontWeight: 400, color: "rgba(255,255,255,0.50)", margin: "6px auto 0", textAlign: "center" }}>
-                {t(locale, "intro", "socialProof")} <span style={{ color: "rgba(255,255,255,0.60)" }}>Log</span><span style={{ color: "rgba(229,9,20,0.50)" }}>flix</span>
+                {t(locale, "intro", "soloInviteHint")}
               </p>
 
-              {/* ── Code + Group — side by side buttons ── */}
+              {/* ── TERTIÆR: Code + Group — side by side buttons ── */}
               <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                 <button
                   onClick={() => setScreen("join")}
@@ -1337,16 +1307,6 @@ export default function WTBetaPage() {
               </div>
               {sessionError && <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: 4, textAlign: "center" }}>{sessionError}</p>}
 
-              {/* ── SEO crawlable text ── */}
-              <p style={{ fontSize: "0.8rem", fontWeight: 400, color: "rgba(255,255,255,0.60)", lineHeight: 1.5, margin: "16px auto 0", maxWidth: "28rem", textAlign: "center" }}>
-                {t(locale, "intro", "seoText")}{" "}
-                <a
-                  href={locale === "no" ? "/no/film-a-se-med-kjaeresten" : locale === "dk" ? "/dk/film-a-se-med-kjaeresten" : locale === "se" ? "/se/film-att-se-med-partnern" : locale === "fi" ? "/fi/elokuvia-katsottavaksi-yhdessa" : "/en/what-should-we-watch-tonight"}
-                  style={{ color: "rgba(255,255,255,0.60)", textDecoration: "underline", textUnderlineOffset: 2 }}
-                >
-                  {t(locale, "intro", "movieNightTips")}
-                </a>
-              </p>
 
               {/* Couple streak */}
               {streakData && streakData.current_streak > 0 && (
@@ -1386,14 +1346,6 @@ export default function WTBetaPage() {
                 </div>
               )}
 
-              {authUser && (
-                <Link
-                  href="/together/history"
-                  style={{ display: "block", fontSize: "0.7rem", color: "rgba(255,255,255,0.28)", textDecoration: "none", marginTop: 12, textAlign: "center" }}
-                >
-                  {t(locale, "intro", "matchHistory")} →
-                </Link>
-              )}
 
             </div>
             </div>
