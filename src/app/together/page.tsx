@@ -2122,6 +2122,32 @@ export default function WTBetaPage() {
                       {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "share")}
                     </button>
 
+                    {/* Premium teaser — non-premium only */}
+                    {!authUser?.email && (
+                      <Link
+                        href="/premium"
+                        style={{
+                          display: "block",
+                          background: "rgba(245,200,66,0.06)",
+                          border: "0.5px solid rgba(245,200,66,0.2)",
+                          borderRadius: 12,
+                          padding: "12px 16px",
+                          marginBottom: 12,
+                          textDecoration: "none",
+                        }}
+                      >
+                        <p style={{ fontSize: 12, fontWeight: 700, color: "#F5C842", margin: "0 0 2px" }}>
+                          💑 {locale === "no" ? "Lagre matcher + se par-rapport" : locale === "se" ? "Spara matcher + se parrapport" : locale === "dk" ? "Gem matcher + se parrapport" : locale === "fi" ? "Tallenna matchit + katso pariraportti" : "Save matches + see couple report"}
+                        </p>
+                        <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", margin: "0 0 8px" }}>
+                          {locale === "no" ? "Tonight's Pick, Curator ubegrenset + partneren får det gratis" : locale === "se" ? "Tonight's Pick, Curator obegränsat + partnern får det gratis" : locale === "dk" ? "Tonight's Pick, Curator ubegrænset + partneren får det gratis" : locale === "fi" ? "Tonight's Pick, Curator rajaton + kumppanisi saa sen ilmaiseksi" : "Tonight's Pick, unlimited Curator + your partner gets it free"}
+                        </p>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "#F5C842" }}>
+                          {locale === "no" ? "Logflix Par — 29 kr/mnd →" : "Logflix Par — 29 NOK/mo →"}
+                        </span>
+                      </Link>
+                    )}
+
                     {/* Separator with "More" toggle */}
                     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
                       <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />

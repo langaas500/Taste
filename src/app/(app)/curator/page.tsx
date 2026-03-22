@@ -475,24 +475,29 @@ export default function CuratorPage() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Message counter */}
+        {/* Message counter + upgrade banner */}
         {isPremium === false && userMessageCount > 0 && userMessageCount < FREE_MESSAGE_LIMIT && (
-          <div className="px-6 pb-1 text-center">
-            <p style={{
-              fontSize: 11,
-              fontWeight: 500,
-              color: userMessageCount >= 4
-                ? "rgba(239,68,68,0.7)"
-                : userMessageCount >= 3
-                ? "rgba(250,204,21,0.6)"
-                : "rgba(255,255,255,0.25)",
-            }}>
-              {userMessageCount >= 4
-                ? t.counterLast
-                : userMessageCount >= 3
-                ? t.counterWarning(FREE_MESSAGE_LIMIT - userMessageCount)
-                : t.counterUsed(userMessageCount)}
-            </p>
+          <div className="px-6 pb-1">
+            {userMessageCount >= 3 ? (
+              <div
+                className="rounded-xl px-4 py-2.5 flex items-center justify-between gap-3"
+                style={{ background: "rgba(245,200,66,0.08)", border: "0.5px solid rgba(245,200,66,0.2)" }}
+              >
+                <p style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.7)", margin: 0 }}>
+                  {userMessageCount >= 4 ? t.counterLast : t.counterWarning(FREE_MESSAGE_LIMIT - userMessageCount)}
+                </p>
+                <button
+                  onClick={() => setShowPremium(true)}
+                  style={{ fontSize: 11, fontWeight: 700, color: "#F5C842", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+                >
+                  {lang === "no" ? "Få ubegrenset →" : lang === "se" ? "Få obegränsat →" : lang === "dk" ? "Få ubegrænset →" : "Get unlimited →"}
+                </button>
+              </div>
+            ) : (
+              <p className="text-center" style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.25)" }}>
+                {t.counterUsed(userMessageCount)}
+              </p>
+            )}
           </div>
         )}
 

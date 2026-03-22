@@ -352,6 +352,26 @@ export default function RecommendationsPage() {
         </GlowButton>
       </div>
 
+      {/* ── Forvarsel: nær limit ── */}
+      {!isPremium && loaded && allVisible.length > 0 && allVisible.length <= FREE_REC_LIMIT && allVisible.length >= FREE_REC_LIMIT - 2 && (
+        <div
+          className="mb-5 rounded-xl px-4 py-3 flex items-center justify-between gap-3"
+          style={{ background: "rgba(245,200,66,0.08)", border: "0.5px solid rgba(245,200,66,0.2)" }}
+        >
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", margin: 0 }}>
+            {locale === "no"
+              ? `Du har ${FREE_REC_LIMIT - dismissed.size} anbefalinger igjen. Premium = ubegrenset + Tonight's Pick`
+              : `You have ${FREE_REC_LIMIT - dismissed.size} recommendations left. Premium = unlimited + Tonight's Pick`}
+          </p>
+          <button
+            onClick={() => setShowPremiumModal(true)}
+            style={{ fontSize: 12, fontWeight: 700, color: "#F5C842", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+          >
+            {locale === "no" ? "Oppgrader →" : "Upgrade →"}
+          </button>
+        </div>
+      )}
+
       {/* ── Type filter ── */}
       {loaded && recs.length > 0 && (
         <div className="flex items-center gap-2 mb-5 flex-wrap">
