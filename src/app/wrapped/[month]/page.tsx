@@ -337,7 +337,7 @@ function SlideTopGenre({ stats, locale }: { stats: WrappedStats; locale: WLocale
       <p className="text-base text-white/50 mb-8">{t.enthusiast(top.name)}</p>
       <div className="w-full max-w-xs space-y-2.5">
         {stats.topGenres.map((g, i) => (
-          <div key={g.name} className="flex items-center gap-3">
+          <div key={`${g.name}-${i}`} className="flex items-center gap-3">
             <span className="text-xs text-white/30 w-5 text-right font-mono">{i + 1}</span>
             <div className="flex-1">
               <div className="flex justify-between mb-1">
