@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import SeoGuideLayout, { FaqSection } from "@/components/SeoGuideLayout";
 
 export const metadata: Metadata = {
-  title: "Film å se med kjæresten – Finn en dere begge liker",
+  title: "Filmer å se med kjæresten 2026 – Finn en dere begge liker",
   description:
-    "Unngå klein stemning og bomvalg. Finn en film dere begge har lyst til å se – uten å gjette eller krangle.",
+    "Slutt å krangle om hva dere skal se. Sveip hver for dere og match på filmer begge vil se — under 3 minutter, alltid gratis.",
   alternates: {
     canonical: "https://logflix.app/no/film-a-se-med-kjaeresten",
     languages: {
