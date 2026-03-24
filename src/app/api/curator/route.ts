@@ -318,6 +318,19 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
     }
   }
 
+  // Inject AI-generated taste_summary if available (richer than genre stats)
+  try {
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("taste_summary")
+      .eq("id", user.id)
+      .single();
+    const ts = profileRow?.taste_summary;
+    if (ts && typeof ts === "string" && ts.length > 10) {
+      tasteContext += `\nAI taste profile: ${ts}`;
+    }
+  } catch { /* non-fatal — continue without taste_summary */ }
+
   // Watchlist context — title names from cache
   const watchlistRows = watchlistRes.data ?? [];
   if (watchlistRows.length > 0) {
