@@ -10,7 +10,10 @@ export const metadata: Metadata = {
     languages: {
       en: "https://logflix.app/en/tv-shows-to-watch-together",
       nb: "https://logflix.app/no/serie-a-se-sammen",
-      "x-default": "https://logflix.app/no/serie-a-se-sammen",
+      sv: "https://logflix.app/se/",
+      da: "https://logflix.app/dk/",
+      fi: "https://logflix.app/fi/",
+      "x-default": "https://logflix.app/en/tv-shows-to-watch-together",
     },
   },
 };
@@ -37,6 +40,20 @@ const faqItems = [
 export default function TvShowsTogetherPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Logflix", item: "https://logflix.app" },
+              { "@type": "ListItem", position: 2, name: "Watch Together", item: "https://logflix.app/en/watch-together" },
+              { "@type": "ListItem", position: 3, name: "TV Shows to Watch Together", item: "https://logflix.app/en/tv-shows-to-watch-together" },
+            ],
+          }),
+        }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

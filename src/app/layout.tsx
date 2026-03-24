@@ -48,7 +48,7 @@ export default async function RootLayout({
   const country = h.get("x-vercel-ip-country") ?? "";
   const regionMap: Record<string, RegionTextKey> = { NO: "no", DK: "dk", FI: "fi", SE: "se" };
   const siteRegion = regionMap[country] ?? "no";
-  const lang = ({ no: "nb", dk: "da", fi: "fi", se: "sv" } as const)[siteRegion];
+  const lang = ({ no: "nb", dk: "da", fi: "fi", se: "sv", en: "en" } as const)[siteRegion];
   const siteT = REGION_TEXT[siteRegion];
 
   return (

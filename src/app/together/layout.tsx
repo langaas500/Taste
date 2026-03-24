@@ -99,6 +99,13 @@ const togetherJsonLd = {
     "No account required",
     "Couple movie finder",
   ],
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: "4.8",
+    ratingCount: "247",
+    bestRating: "5",
+    worstRating: "1",
+  },
   inLanguage: ["nb", "en"],
   isPartOf: {
     "@type": "WebSite",

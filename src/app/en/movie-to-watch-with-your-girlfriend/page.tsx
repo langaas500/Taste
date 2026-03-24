@@ -10,7 +10,10 @@ export const metadata: Metadata = {
     languages: {
       en: "https://logflix.app/en/movie-to-watch-with-your-girlfriend",
       nb: "https://logflix.app/no/film-a-se-med-kjaeresten",
-      "x-default": "https://logflix.app/no/film-a-se-med-kjaeresten",
+      sv: "https://logflix.app/se/",
+      da: "https://logflix.app/dk/",
+      fi: "https://logflix.app/fi/",
+      "x-default": "https://logflix.app/en/movie-to-watch-with-your-girlfriend",
     },
   },
 };
@@ -37,6 +40,20 @@ const faqItems = [
 export default function MovieWithGirlfriendPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Logflix", item: "https://logflix.app" },
+              { "@type": "ListItem", position: 2, name: "Watch Together", item: "https://logflix.app/en/watch-together" },
+              { "@type": "ListItem", position: 3, name: "Movie to Watch with Your Girlfriend", item: "https://logflix.app/en/movie-to-watch-with-your-girlfriend" },
+            ],
+          }),
+        }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

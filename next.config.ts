@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      { source: "/en/par-rapport", destination: "/en/couple-report", permanent: true },
+    ];
+  },
   async rewrites() {
     return [
       { source: "/sitemap.xml", destination: "/api/sitemap" },

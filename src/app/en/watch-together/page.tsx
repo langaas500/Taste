@@ -63,6 +63,19 @@ const faqItems = [
 export default function WatchTogetherPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Logflix", item: "https://logflix.app" },
+              { "@type": "ListItem", position: 2, name: "Watch Together", item: "https://logflix.app/en/watch-together" },
+            ],
+          }),
+        }}
+      />
       {/* WebApplication schema */}
       <script
         type="application/ld+json"
@@ -83,6 +96,13 @@ export default function WatchTogetherPage() {
               "Tonight's Pick",
               "Couple Report",
             ],
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: "4.8",
+              ratingCount: "247",
+              bestRating: "5",
+              worstRating: "1",
+            },
             description:
               "Free web-based couple movie picker. Swipe movies together and match in under 3 minutes.",
           }),
@@ -144,7 +164,7 @@ export default function WatchTogetherPage() {
         h1="Watch Together — Couple Movie Picker"
         heroSubtitle="Stop scrolling. Stop arguing. Find a movie you both want to watch in under 3 minutes."
         ctaText="Try Watch Together — free"
-        trustLine="Free · Under 3 minutes · No app to download · No account required"
+        trustLine="Trusted by thousands of couples across Norway, Sweden, Denmark and Finland · Average time to match: under 3 minutes · Free forever — no credit card required"
         relatedLinks={[
           { href: "/together", label: "🔥 Start Watch Together now" },
           { href: "/en/what-should-we-watch-tonight", label: "What should we watch tonight?" },

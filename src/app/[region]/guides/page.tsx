@@ -14,19 +14,19 @@ type Params = { region: string };
 const CATEGORIES: Record<string, { slugs: string[]; label: Record<Region, string> }> = {
   duo: {
     slugs: ["filmkveld-for-to", "perfekt-fredagskveld", "imponér-gjestene"],
-    label: { no: "For to", se: "För två", dk: "For to", fi: "Kahdelle" },
+    label: { no: "For to", se: "För två", dk: "For to", fi: "Kahdelle", en: "For Two" },
   },
   solo: {
     slugs: ["se-alene-i-morket", "sen-kveld-alene", "kort-og-konsist"],
-    label: { no: "Alene", se: "Ensam", dk: "Alene", fi: "Yksin" },
+    label: { no: "Alene", se: "Ensam", dk: "Alene", fi: "Yksin", en: "Solo" },
   },
   family: {
     slugs: ["bra-for-hele-familien", "familiekos", "barnefilm", "hyttekveld"],
-    label: { no: "Familie & venner", se: "Familj & vänner", dk: "Familie & venner", fi: "Perhe & ystävät" },
+    label: { no: "Familie & venner", se: "Familj & vänner", dk: "Familie & venner", fi: "Perhe & ystävät", en: "Family & Friends" },
   },
   mood: {
     slugs: [], // filled dynamically with the rest
-    label: { no: "Stemning & sjanger", se: "Stämning & genre", dk: "Stemning & genre", fi: "Tunnelma & genre" },
+    label: { no: "Stemning & sjanger", se: "Stämning & genre", dk: "Stemning & genre", fi: "Tunnelma & genre", en: "Mood & Genre" },
   },
 };
 
@@ -63,6 +63,12 @@ const STRINGS: Record<Region, { title: string; description: string; h1: string; 
     description: "Tutustu kuratoituihin elokuvaoppaisiin jokaiseen tunnelmaan. Perjantai-ilta, treffit, perheen yhteinen ilta ja paljon muuta.",
     h1: "Elokuvaoppaat",
     intro: "Kuratoituja kokoelmia jokaiseen tunnelmaan. Valitse opas ja löydä seuraava elokuvasi tai sarjasi.",
+  },
+  en: {
+    title: "Movie Guides – Find the Perfect Movie | Logflix",
+    description: "Explore curated movie guides for every mood. Friday night, date night, family time and more.",
+    h1: "Movie Guides",
+    intro: "Curated collections for every mood. Pick a guide and find your next movie or series.",
   },
 };
 
@@ -204,7 +210,7 @@ export default async function GuidesHubPage({ params }: { params: Promise<Params
               >
                 {guides.map((guide) => {
                   if (!guide) return null;
-                  const locale = guide.locales[r];
+                  const locale = guide.locales[r]!;
                   const excerpt =
                     locale.intro.length > 120
                       ? locale.intro.slice(0, 117) + "..."

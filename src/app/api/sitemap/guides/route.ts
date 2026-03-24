@@ -14,6 +14,21 @@ const pairs: [string, string][] = [
   ["/no/filmer-a-se-med-familien", "/en/movies-to-watch-with-the-family"],
 ];
 
+/* ── English-only keyword pages (no Norwegian counterpart) ── */
+const enOnlyPages: string[] = [
+  "/en/couple-movie-picker",
+  "/en/tinder-for-movies",
+  "/en/swipe-movies-together",
+  "/en/movie-matching-app-for-couples",
+  "/en/stop-arguing-about-what-to-watch",
+  "/en/movie-picker-for-two",
+  "/en/date-night-movie-picker",
+  "/en/movie-night-game-for-couples",
+  "/en/solo-to-duo",
+  "/en/group-movie-picker",
+  "/en/pricing",
+];
+
 /* ── Legacy påskekrim entries (separate slug per region) ── */
 const paskekrim: Record<string, string> = {
   "nb-NO": "/no/guides/paskekrim-2026",
@@ -51,7 +66,7 @@ export function GET() {
 
   const urls = [
     entry(`${base}/`, lastmod, "weekly", "1", { nb: `${base}/`, en: `${base}/`, "x-default": `${base}/` }),
-    entry(`${base}/together`, lastmod, "weekly", "0.9", { nb: `${base}/together`, en: `${base}/together`, "x-default": `${base}/together` }),
+    entry(`${base}/together`, lastmod, "weekly", "1", { nb: `${base}/together`, en: `${base}/en/watch-together`, "x-default": `${base}/together` }),
     ...hubUrls,
     ...pairs.flatMap(([no, en]) => [
       entry(`${base}${no}`, lastmod, "weekly", "0.85", { nb: `${base}${no}`, en: `${base}${en}`, "x-default": `${base}${en}` }),
@@ -62,7 +77,13 @@ export function GET() {
       entry(`${base}/${r}/ai-curator`, lastmod, "monthly", "0.7", { nb: `${base}/no/ai-curator`, sv: `${base}/se/ai-curator`, da: `${base}/dk/ai-curator`, fi: `${base}/fi/ai-curator`, en: `${base}/en/ai-curator`, "x-default": `${base}/en/ai-curator` }),
       entry(`${base}/${r === "en" ? "en/couple-report" : `${r}/par-rapport`}`, lastmod, "monthly", "0.7", { nb: `${base}/no/par-rapport`, sv: `${base}/se/par-rapport`, da: `${base}/dk/par-rapport`, fi: `${base}/fi/par-rapport`, en: `${base}/en/couple-report`, "x-default": `${base}/en/couple-report` }),
     ]),
-    entry(`${base}/en/watch-together`, lastmod, "weekly", "0.9", { en: `${base}/en/watch-together`, nb: `${base}/together`, "x-default": `${base}/en/watch-together` }),
+    entry(`${base}/en/watch-together`, lastmod, "weekly", "0.9", { en: `${base}/en/watch-together`, nb: `${base}/together`, sv: `${base}/se/`, da: `${base}/dk/`, fi: `${base}/fi/`, "x-default": `${base}/en/watch-together` }),
+    ...enOnlyPages.map((path) =>
+      entry(`${base}${path}`, lastmod, "weekly", "0.85", { en: `${base}${path}`, nb: `${base}/no/`, sv: `${base}/se/`, da: `${base}/dk/`, fi: `${base}/fi/`, "x-default": `${base}${path}` }),
+    ),
+    entry(`${base}/en/taste-profile`, lastmod, "monthly", "0.7", { en: `${base}/en/taste-profile`, "x-default": `${base}/en/taste-profile` }),
+    entry(`${base}/en/couple-streak`, lastmod, "monthly", "0.7", { en: `${base}/en/couple-streak`, "x-default": `${base}/en/couple-streak` }),
+    entry(`${base}/en/wrapped`, lastmod, "monthly", "0.7", { en: `${base}/en/wrapped`, "x-default": `${base}/en/wrapped` }),
     entry(`${base}/privacy`, lastmod, "monthly", "0.3"),
     entry(`${base}/contact`, lastmod, "monthly", "0.3"),
     entry(`${base}/terms`, lastmod, "monthly", "0.3"),

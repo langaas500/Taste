@@ -15,7 +15,7 @@ type Params = { region: string; slug: string };
 
 export function generateStaticParams() {
   return REGIONS.flatMap((region) =>
-    MOOD_GUIDES.map((g) => ({ region, slug: g.slug })),
+    MOOD_GUIDES.filter((g) => g.locales[region]).map((g) => ({ region, slug: g.slug })),
   );
 }
 
@@ -30,7 +30,7 @@ export async function generateMetadata({
   const guide = MOOD_GUIDES.find((g) => g.slug === slug);
   if (!guide || !REGIONS.includes(region as Region)) return {};
 
-  const t = guide.locales[region as Region];
+  const t = guide.locales[region as Region]!;
   const canonical = `${BASE}/${region}/guides/${slug}`;
   const languages: Record<string, string> = {};
   for (const r of REGIONS) {
@@ -75,7 +75,7 @@ export default async function GuidePage({
   const guide = MOOD_GUIDES.find((g) => g.slug === slug);
   if (!guide || !REGIONS.includes(region as Region)) notFound();
 
-  const t = guide.locales[region as Region];
+  const t = guide.locales[region as Region]!;
   const admin = createSupabaseAdmin();
 
   const { data } = await admin

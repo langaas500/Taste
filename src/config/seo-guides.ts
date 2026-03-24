@@ -1,4 +1,4 @@
-export type Region = "no" | "se" | "dk" | "fi";
+export type Region = "no" | "se" | "dk" | "fi" | "en";
 
 export interface GuideLocale {
   title: string;
@@ -20,16 +20,17 @@ export interface GuideLocale {
 export interface GuideConfig {
   slug: string;
   mood_tags: string[];
-  locales: Record<Region, GuideLocale>;
+  locales: Partial<Record<Region, GuideLocale>>;
 }
 
-export const REGIONS: Region[] = ["no", "se", "dk", "fi"];
+export const REGIONS: Region[] = ["no", "se", "dk", "fi", "en"];
 
 export const REGION_HREFLANG: Record<Region, string> = {
   no: "nb-NO",
   se: "sv-SE",
   dk: "da-DK",
   fi: "fi-FI",
+  en: "en",
 };
 
 const BREADCRUMBS: Record<Region, { home: string; guides: string }> = {
@@ -37,6 +38,7 @@ const BREADCRUMBS: Record<Region, { home: string; guides: string }> = {
   se: { home: "Hem", guides: "Guider" },
   dk: { home: "Hjem", guides: "Guider" },
   fi: { home: "Etusivu", guides: "Oppaat" },
+  en: { home: "Home", guides: "Guides" },
 };
 
 function bc(r: Region) {
@@ -1296,6 +1298,149 @@ export const MOOD_GUIDES: GuideConfig[] = [
       se: { title: "Serier att se när det är kallt ute | Logflix", description: "Serier perfekta för kalla kvällar.", h1: "Serier att se när det är kallt ute", intro: "Kylan biter ute, men inne är det varmt. Här är serierna som gör vinterkvällar perfekta.", cta_heading: "Vintermys?", cta_body: "Matcha på en vinterserie med Se Sammen.", faq_question: "Vilka är bra serier för kalla kvällar?", faq_answer: "Logflix kuraterar serier perfekta för kalla vinterkvällar.", empty: "Inga titlar hittades ännu. Kolla tillbaka snart!", breadcrumb_home: bc("se").home, breadcrumb_guides: bc("se").guides, faq_heading: "Vanliga frågor", bottom_heading: "Redo för vintermys?", bottom_body: "Skapa ett gratis konto och börja logga dina favoriter." },
       dk: { title: "Serier at se når det er koldt udenfor | Logflix", description: "Serier perfekte til kolde aftener.", h1: "Serier at se når det er koldt udenfor", intro: "Kulden bider udenfor, men indendøre er der varmt. Her er serierne der gør vinteraftener perfekte.", cta_heading: "Vinterhygge?", cta_body: "Match på en vinterserie med Se Sammen.", faq_question: "Hvad er gode serier til kolde aftener?", faq_answer: "Logflix kuraterer serier perfekte til kolde vinteraftener.", empty: "Ingen titler fundet endnu. Tjek tilbage snart!", breadcrumb_home: bc("dk").home, breadcrumb_guides: bc("dk").guides, faq_heading: "Ofte stillede spørgsmål", bottom_heading: "Klar til vinterhygge?", bottom_body: "Opret en gratis konto og begynd at logge dine favoritter." },
       fi: { title: "Sarjoja kun ulkona on kylmä | Logflix", description: "Sarjoja kylmille illoille.", h1: "Sarjoja kun ulkona on kylmä", intro: "Ulkona pakkanen puree, mutta sisällä on lämmin. Tässä sarjat jotka tekevät talvi-illoista täydellisiä.", cta_heading: "Talvitunnelmaa?", cta_body: "Matchaa talvisarjaan Se Sammenilla.", faq_question: "Mitkä ovat hyviä sarjoja kylmille illoille?", faq_answer: "Logflix kuratoi sarjoja kylmille talvi-illoille.", empty: "Nimikkeitä ei löytynyt vielä. Tarkista myöhemmin!", breadcrumb_home: bc("fi").home, breadcrumb_guides: bc("fi").guides, faq_heading: "Usein kysytyt kysymykset", bottom_heading: "Valmis talvitunnelmaan?", bottom_body: "Luo ilmainen tili ja aloita suosikkiesi kirjaaminen." },
+    },
+  },
+
+  /* ── English couple guides ────────────────────────────── */
+
+  {
+    slug: "movies-for-date-night-at-home",
+    mood_tags: ["Filmkveld for to"],
+    locales: {
+      en: { title: "Movies for Date Night at Home – Best Picks | Logflix", description: "Curated movies perfect for a cozy date night at home. Find the one you both want to watch.", h1: "Movies for Date Night at Home", intro: "Skip the endless scrolling. These movies are handpicked for couples who want a great date night without leaving the couch — romantic, exciting, or somewhere in between.", cta_heading: "Can't agree on a movie?", cta_body: "Use Watch Together — swipe separately and find the movie you both want to see.", faq_question: "What are the best movies for a date night at home?", faq_answer: "Logflix curates movies tagged for couples and date nights — titles that set the right mood and keep both of you engaged.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready for date night?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "movies-for-couples-who-disagree",
+    mood_tags: ["Filmkveld for to"],
+    locales: {
+      en: { title: "Movies for Couples Who Can Never Agree | Logflix", description: "Movies that bridge different tastes. Perfect for couples who always argue about what to watch.", h1: "Movies for Couples Who Can Never Agree", intro: "One wants action, the other wants romance. These are the movies that somehow satisfy both — crowd-pleasers that work across different tastes.", cta_heading: "Still can't decide?", cta_body: "Let Watch Together settle it — swipe independently and match on the movie you both like.", faq_question: "What movies work when couples disagree?", faq_answer: "Logflix curates genre-crossing movies that appeal to different tastes — the kind both of you will enjoy.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "End the debate tonight", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "feel-good-movies-to-watch-together",
+    mood_tags: ["Lett og morsom"],
+    locales: {
+      en: { title: "Feel-Good Movies to Watch Together | Logflix", description: "The best feel-good movies for couples. Light, warm, and perfect for a relaxed evening together.", h1: "Feel-Good Movies to Watch Together", intro: "Sometimes you just need something warm and uplifting. These feel-good movies are perfect for couples who want to laugh, smile, and end the night on a high note.", cta_heading: "Want to find one together?", cta_body: "Use Watch Together to swipe and match on a feel-good movie you both love.", faq_question: "What are the best feel-good movies for couples?", faq_answer: "Logflix curates light-hearted, uplifting movies perfect for watching together — guaranteed good vibes.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready for good vibes?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "thriller-movies-for-couples",
+    mood_tags: ["Grøsser"],
+    locales: {
+      en: { title: "Thriller Movies for Couples – Edge-of-Your-Seat Picks | Logflix", description: "The best thriller movies to watch as a couple. Suspenseful, gripping, and perfect for movie night.", h1: "Thriller Movies for Couples", intro: "Nothing brings you closer than gripping suspense. These thrillers are perfect for couples who love twists, tension, and grabbing each other during the scary parts.", cta_heading: "Can't pick a thriller?", cta_body: "Use Watch Together to swipe and match on the thriller you both want.", faq_question: "What are good thrillers for couples?", faq_answer: "Logflix curates suspenseful thrillers ideal for couples — movies that keep both of you on the edge of your seats.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready for suspense?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "comedy-movies-for-couples-2026",
+    mood_tags: ["Lett og morsom"],
+    locales: {
+      en: { title: "Best Comedy Movies for Couples 2026 | Logflix", description: "The funniest movies for couples in 2026. Laugh together with these top comedy picks.", h1: "Best Comedy Movies for Couples 2026", intro: "Laughter is the best date night ingredient. These are the funniest movies for couples this year — from sharp rom-coms to absurd comedies that'll have you both in tears.", cta_heading: "Can't agree on a comedy?", cta_body: "Use Watch Together to swipe and find the comedy you both want to see.", faq_question: "What are the best comedy movies for couples in 2026?", faq_answer: "Logflix curates the funniest couple-friendly comedies of 2026 — movies guaranteed to make you both laugh.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready to laugh together?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "romantic-movies-netflix-2026",
+    mood_tags: ["Filmkveld for to"],
+    locales: {
+      en: { title: "Best Romantic Movies on Netflix 2026 | Logflix", description: "Top romantic movies streaming on Netflix in 2026. Perfect for couples and date nights.", h1: "Romantic Movies on Netflix 2026", intro: "Looking for romance on Netflix? These are the best romantic movies streaming right now — from sweeping love stories to modern rom-coms perfect for date night.", cta_heading: "Can't pick a romantic movie?", cta_body: "Use Watch Together to swipe and match on the perfect romantic film.", faq_question: "What are the best romantic movies on Netflix in 2026?", faq_answer: "Logflix curates the top romantic movies currently streaming on Netflix — perfect for couples and date nights.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready for romance?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "movies-for-couples-who-like-different-genres",
+    mood_tags: ["Filmkveld for to"],
+    locales: {
+      en: { title: "Movies for Couples Who Like Different Genres | Logflix", description: "Genre-crossing movies that work for couples with different tastes. Something for everyone.", h1: "Movies for Couples Who Like Different Genres", intro: "When your tastes don't overlap, you need movies that transcend genres. These films blend action, drama, comedy, and romance in ways that satisfy everyone.", cta_heading: "Different tastes?", cta_body: "Watch Together helps you find common ground — swipe separately and match on what works for both.", faq_question: "What movies work for couples with different genre preferences?", faq_answer: "Logflix curates genre-blending movies that appeal across tastes — the sweet spot between your preferences.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Find your overlap", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "short-series-to-watch-together",
+    mood_tags: ["Kort og konsist"],
+    locales: {
+      en: { title: "Short Series to Watch Together – Binge-Worthy Picks | Logflix", description: "The best short series for couples. Easy to binge, hard to stop watching.", h1: "Short Series to Watch Together", intro: "Don't have time for a 7-season commitment? These short series are perfect for couples — binge-worthy shows you can finish in a weekend or two.", cta_heading: "Can't agree on a series?", cta_body: "Use Watch Together to swipe and match on a series you both want to binge.", faq_question: "What are the best short series for couples?", faq_answer: "Logflix curates short, binge-worthy series perfect for watching together — typically 1-2 seasons.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready to binge?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "best-series-for-couples-2026",
+    mood_tags: ["Filmkveld for to"],
+    locales: {
+      en: { title: "Best Series for Couples 2026 | Logflix", description: "Top series for couples to watch in 2026. From drama to comedy, find your next binge.", h1: "Best Series for Couples 2026", intro: "Looking for your next series to watch together? These are the best shows for couples in 2026 — gripping dramas, sharp comedies, and addictive thrillers you'll both love.", cta_heading: "Can't agree on a series?", cta_body: "Use Watch Together to swipe and find the perfect series for both of you.", faq_question: "What are the best series for couples in 2026?", faq_answer: "Logflix curates the top couple-friendly series of 2026 — shows you'll both want to keep watching.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Find your next binge", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "movies-to-watch-on-a-rainy-day-together",
+    mood_tags: ["Perfekt for fredagskveld"],
+    locales: {
+      en: { title: "Movies to Watch on a Rainy Day Together | Logflix", description: "The best rainy day movies for couples. Cozy, atmospheric, and perfect for staying in.", h1: "Movies to Watch on a Rainy Day Together", intro: "Rain outside, blankets inside. These movies match the mood perfectly — cozy, atmospheric picks that make staying in feel like the best plan ever.", cta_heading: "Rainy day plans?", cta_body: "Use Watch Together to swipe and match on the perfect rainy day movie.", faq_question: "What are good rainy day movies for couples?", faq_answer: "Logflix curates cozy, atmospheric movies perfect for rainy days — the kind that make you glad you stayed in.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Perfect rainy day ahead?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "horror-movies-for-couples",
+    mood_tags: ["Grøsser"],
+    locales: {
+      en: { title: "Horror Movies for Couples – Scary Date Night | Logflix", description: "The best horror movies to watch as a couple. Scary enough to cuddle, good enough to enjoy.", h1: "Horror Movies for Couples", intro: "Nothing says date night like a good scare. These horror movies are perfect for couples — creepy enough to make you hold each other, well-crafted enough to actually enjoy.", cta_heading: "Dare to pick one together?", cta_body: "Use Watch Together to swipe and match on the horror movie you both want.", faq_question: "What are good horror movies for couples?", faq_answer: "Logflix curates horror movies that work for couples — scary but not too extreme, with great atmosphere and storytelling.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready to be scared together?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "action-movies-both-will-enjoy",
+    mood_tags: ["Krever full oppmerksomhet"],
+    locales: {
+      en: { title: "Action Movies Both of You Will Enjoy | Logflix", description: "Action movies that work for couples. Exciting, well-made, and appealing to all tastes.", h1: "Action Movies Both of You Will Enjoy", intro: "Not everyone loves action movies — but these ones transcend the genre. Great characters, real stakes, and enough heart to win over even the most skeptical partner.", cta_heading: "Can't agree on an action movie?", cta_body: "Use Watch Together to swipe and find the action movie you both want.", faq_question: "What action movies work for couples?", faq_answer: "Logflix curates action movies with broad appeal — exciting enough for action fans, well-crafted enough for everyone else.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready for action?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "classic-movies-for-couples",
+    mood_tags: ["Nostalgisk perle"],
+    locales: {
+      en: { title: "Classic Movies for Couples – Timeless Date Night | Logflix", description: "Timeless classic movies perfect for couples. From golden age romance to iconic dramas.", h1: "Classic Movies for Couples", intro: "Some movies never get old. These timeless classics are perfect for couples — whether you're rewatching a favorite or discovering something iconic for the first time together.", cta_heading: "Discover a classic together?", cta_body: "Use Watch Together to swipe and match on a classic you both want to see.", faq_question: "What are the best classic movies for couples?", faq_answer: "Logflix curates timeless classic movies ideal for couples — from golden age romance to iconic dramas and comedies.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready for a classic?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "sci-fi-series-for-couples",
+    mood_tags: ["Krever full oppmerksomhet"],
+    locales: {
+      en: { title: "Sci-Fi Series for Couples – Best Picks | Logflix", description: "The best sci-fi series to watch as a couple. Mind-bending, exciting, and binge-worthy.", h1: "Sci-Fi Series for Couples", intro: "Love exploring other worlds together? These sci-fi series are perfect for couples — from mind-bending mysteries to epic space operas you'll both get hooked on.", cta_heading: "Can't agree on a sci-fi series?", cta_body: "Use Watch Together to swipe and match on the perfect sci-fi binge.", faq_question: "What are the best sci-fi series for couples?", faq_answer: "Logflix curates sci-fi series that work for couples — engaging stories with strong characters, not just special effects.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready to explore?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "drama-series-for-couples",
+    mood_tags: ["Tung og tankevekkende"],
+    locales: {
+      en: { title: "Drama Series for Couples – Deep & Engaging | Logflix", description: "The best drama series for couples. Deep, engaging shows you'll both want to keep watching.", h1: "Drama Series for Couples", intro: "Great drama brings you closer. These series offer compelling stories, complex characters, and the kind of episodes that make you both say 'just one more.'", cta_heading: "Can't pick a drama?", cta_body: "Use Watch Together to swipe and match on the perfect drama series.", faq_question: "What are the best drama series for couples?", faq_answer: "Logflix curates drama series perfect for couples — shows with depth, great writing, and characters you'll both care about.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready for great drama?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "cozy-movies-for-couples",
+    mood_tags: ["Perfekt for fredagskveld"],
+    locales: {
+      en: { title: "Cozy Movies for Couples – Perfect for a Quiet Night | Logflix", description: "The coziest movies for couples. Warm, comforting, and perfect for a quiet night in.", h1: "Cozy Movies for Couples", intro: "Blankets, snacks, and the right movie. These cozy picks are warm, comforting, and perfect for couples who want a relaxed, feel-good evening together.", cta_heading: "Want to find a cozy movie together?", cta_body: "Use Watch Together to swipe and match on the perfect cozy night movie.", faq_question: "What are the coziest movies for couples?", faq_answer: "Logflix curates warm, comforting movies perfect for cozy nights — the kind that make you feel good inside.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready for a cozy night?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "movies-for-couples-who-like-true-stories",
+    mood_tags: ["Basert på en sann historie"],
+    locales: {
+      en: { title: "Movies for Couples Who Love True Stories | Logflix", description: "The best true story movies for couples. Inspiring, moving, and based on real events.", h1: "Movies for Couples Who Love True Stories", intro: "There's something special about watching a true story together. These movies are based on real events — inspiring, moving, and perfect for couples who love saying 'I can't believe that actually happened.'", cta_heading: "Can't pick a true story?", cta_body: "Use Watch Together to swipe and match on a true story you both want to see.", faq_question: "What are the best true story movies for couples?", faq_answer: "Logflix curates movies based on true stories that work for couples — inspiring, emotional, and conversation-starting.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready for a true story?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "best-netflix-originals-for-couples-2026",
+    mood_tags: ["Filmkveld for to"],
+    locales: {
+      en: { title: "Best Netflix Originals for Couples 2026 | Logflix", description: "Top Netflix originals for couples in 2026. The best exclusive movies and series to watch together.", h1: "Best Netflix Originals for Couples 2026", intro: "Netflix keeps delivering. These are the best Netflix originals for couples this year — from binge-worthy series to standout movies you won't find anywhere else.", cta_heading: "Too many choices on Netflix?", cta_body: "Use Watch Together to swipe through Netflix picks and match on one you both want.", faq_question: "What are the best Netflix originals for couples in 2026?", faq_answer: "Logflix curates the top Netflix originals for couples — the best exclusive content for date nights and cozy evenings.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Ready to explore Netflix?", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "movies-to-watch-when-you-cant-agree",
+    mood_tags: ["Filmkveld for to"],
+    locales: {
+      en: { title: "Movies to Watch When You Can't Agree | Logflix", description: "End the movie night debate. These crowd-pleasing movies work when you just can't decide.", h1: "Movies to Watch When You Can't Agree", intro: "We've all been there — 30 minutes of scrolling, zero decisions. These movies are proven crowd-pleasers that end the debate and start the fun.", cta_heading: "Let us settle it", cta_body: "Watch Together picks the movie for you — swipe independently and match in under 3 minutes.", faq_question: "What movies should you watch when you can't agree?", faq_answer: "Logflix curates universally appealing movies — the kind that work no matter what mood you're both in.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "End the scroll tonight", bottom_body: "Create a free account and start logging your favorites." },
+    },
+  },
+  {
+    slug: "date-night-series-2026",
+    mood_tags: ["Filmkveld for to"],
+    locales: {
+      en: { title: "Date Night Series 2026 – Best Shows for Couples | Logflix", description: "The best series for date nights in 2026. Find your next show to binge together.", h1: "Date Night Series 2026", intro: "Movies are great, but sometimes you want a series you can come back to every night. These are the best date night series of 2026 — addictive shows perfect for watching together.", cta_heading: "Can't pick a series?", cta_body: "Use Watch Together to swipe and match on the perfect date night series.", faq_question: "What are the best date night series in 2026?", faq_answer: "Logflix curates the best couple-friendly series of 2026 — shows you'll both look forward to watching every night.", empty: "No titles found yet. Check back soon!", breadcrumb_home: bc("en").home, breadcrumb_guides: bc("en").guides, faq_heading: "Frequently Asked Questions", bottom_heading: "Find your next series", bottom_body: "Create a free account and start logging your favorites." },
     },
   },
 ];
