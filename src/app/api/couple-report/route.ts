@@ -32,13 +32,13 @@ export async function GET() {
     // 2. Fetch partner profile
     const { data: partnerProfile } = await admin
       .from("profiles")
-      .select("display_name, founding_member")
+      .select("display_name, founding_member, taste_summary")
       .eq("id", partnerId)
       .single();
 
     const { data: myProfile } = await admin
       .from("profiles")
-      .select("display_name, founding_member, is_premium")
+      .select("display_name, founding_member, is_premium, taste_summary")
       .eq("id", user.id)
       .single();
 
@@ -149,6 +149,71 @@ export async function GET() {
       .eq("generated_at", today)
       .single();
 
+    // 13. Taste compatibility from taste_summary
+    let tasteCompatibility: {
+      score: number;
+      match_rate: string;
+      shared_genres: string[];
+      diverging_genres: string[];
+      label: string;
+    } | null = null;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const myTaste = myProfile?.taste_summary as any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const partnerTaste = partnerProfile?.taste_summary as any;
+      if (myTaste && typeof myTaste === "object" && partnerTaste && typeof partnerTaste === "object") {
+        const extractGenres = (t: { youLike?: string; avoid?: string }): string[] => {
+          const text = [t.youLike || "", t.avoid || ""].join(" ").toLowerCase();
+          const known = ["thriller", "drama", "komedie", "comedy", "action", "sci-fi", "horror",
+            "romantikk", "romance", "dokumentar", "documentary", "fantasy", "animasjon", "animation",
+            "krim", "crime", "eventyr", "adventure", "musikal", "musical", "western", "mystery",
+            "historie", "history", "familie", "family", "krigsfilm", "war"];
+          return known.filter((g) => text.includes(g));
+        };
+
+        const myGenresList = extractGenres(myTaste);
+        const partnerGenresList = extractGenres(partnerTaste);
+        const sharedGenres = myGenresList.filter((g) => partnerGenresList.includes(g));
+        const diverging = [
+          ...myGenresList.filter((g) => !partnerGenresList.includes(g)),
+          ...partnerGenresList.filter((g) => !myGenresList.includes(g)),
+        ].filter((g, i, arr) => arr.indexOf(g) === i);
+
+        // Match rate from Se Sammen sessions
+        const mrLabel = matchRate >= 70 ? "høy" : matchRate >= 40 ? "middels" : "lav";
+        const matchRateScore = Math.min(matchedSessions.length / 10, 1) * 50;
+
+        // Genre overlap score
+        const genreScore = Math.min(sharedGenres.length / 3, 1) * 30;
+
+        // Pacing match
+        const pacingMatch = myTaste.pacing && partnerTaste.pacing && myTaste.pacing === partnerTaste.pacing ? 20 : 10;
+
+        const score = Math.round(matchRateScore + genreScore + pacingMatch);
+
+        // Build label
+        let label: string;
+        if (sharedGenres.length > 0 && diverging.length > 0) {
+          label = `Dere møtes på ${sharedGenres.slice(0, 2).join(" og ")}, men spriker på ${diverging.slice(0, 2).join(" og ")}`;
+        } else if (sharedGenres.length > 0) {
+          label = `Dere deler en forkjærlighet for ${sharedGenres.slice(0, 3).join(", ")}`;
+        } else if (diverging.length > 0) {
+          label = `Ulik smak — men det betyr flere overraskelser å finne sammen`;
+        } else {
+          label = `Utforsk filmer sammen for å bygge smaksprofilen`;
+        }
+
+        tasteCompatibility = {
+          score,
+          match_rate: mrLabel,
+          shared_genres: sharedGenres.slice(0, 5),
+          diverging_genres: diverging.slice(0, 5),
+          label,
+        };
+      }
+    } catch { /* non-fatal — taste_compatibility stays null */ }
+
     return NextResponse.json({
       compatibility_score: compatibilityScore,
       genre_overlap: genreOverlap,
@@ -165,6 +230,7 @@ export async function GET() {
       my_founding: !!myProfile?.founding_member,
       is_premium: !!myProfile?.is_premium,
       tonight_pick: pick || null,
+      taste_compatibility: tasteCompatibility,
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
