@@ -339,6 +339,31 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
     }
   } catch { /* non-fatal — continue without taste_summary */ }
 
+  // Contextual timing (UTC+1 for Nordic users)
+  {
+    const now = new Date(Date.now() + 3600000); // UTC+1
+    const hour = now.getUTCHours();
+    const day = now.getUTCDay();
+    const isWeekend = day === 0 || day === 6;
+    const isFriday = day === 5;
+
+    let timeContext = "";
+    if (isFriday && hour >= 17) {
+      timeContext = "Det er fredagskveld — brukeren vil sannsynligvis ha en god filmopplevelse å se frem til i kveld eller helgen.";
+    } else if (isWeekend && hour < 12) {
+      timeContext = "Det er helgeformiddag — rolige, koselige anbefalinger passer godt.";
+    } else if (isWeekend) {
+      timeContext = "Det er helg — brukeren har tid til lengre filmer eller serier.";
+    } else if (hour >= 22) {
+      timeContext = "Det er sent på kvelden — korte filmer eller episoder kan passe bedre.";
+    } else if (hour < 9) {
+      timeContext = "Det er tidlig morgen — lett underholdning eller dokumentar kan passe.";
+    } else {
+      timeContext = "Vanlig hverdag — tilpass anbefalinger til brukerens smak.";
+    }
+    tasteContext += `\nTidskontekst: ${timeContext}`;
+  }
+
   // Watchlist context — title names from cache
   const watchlistRows = watchlistRes.data ?? [];
   if (watchlistRows.length > 0) {
