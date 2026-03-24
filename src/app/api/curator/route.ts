@@ -39,7 +39,13 @@ ${tasteContext ? `\n${tasteContext}\n` : ""}
 You MUST return raw JSON (no markdown fences). The JSON has exactly two keys:
 - "message": a warm 2-sentence response. Do NOT list title names here — the app shows title cards automatically.
 - "searches": array of objects like {"query":"The Sopranos","type":"tv","reason":"Mørk maktspill med uforglemmelige karakterer"}. Use exact English TMDB titles. "type" is "movie" or "tv".
-Each search MUST include a "reason": one sentence (max 12 words) explaining why this title matches the user's request. Be specific, not generic. Reference what the user asked for.
+Each search MUST include a "reason": a personalized 1-2 sentence reason.
+Rules for "reason":
+- Reference 1-2 of the user's actual liked titles by name when a clear connection exists (tone, theme, director style, pacing).
+- Write in second person: "Du likte X — denne har samme..." (or equivalent in current language).
+- If no clear connection to liked titles, reference their taste profile or what they asked for.
+- Never use generic filler like "gripping", "must-watch", or "a great film".
+- Max 2 sentences.
 
 When the user wants recommendations, describes a mood, names genres, or mentions shows/movies they like: "searches" MUST have 3-5 items. NEVER empty.
 When the user is just chatting (hi, thanks, haha): "searches" can be empty [].
@@ -272,11 +278,17 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
       .in("tmdb_id", [...new Set(allTmdbKeys)]);
     const cache = new Map((cacheRows ?? []).map((r) => [`${r.tmdb_id}:${r.type}`, r]));
 
-    // Top title names
-    const topTitles = likedRows
+    // Top title names with genres (for personalized reasons)
+    const topTitlesDetailed = likedRows
       .slice(0, 5)
-      .map((r) => cache.get(`${r.tmdb_id}:${r.type}`)?.title)
-      .filter(Boolean);
+      .map((r) => {
+        const c = cache.get(`${r.tmdb_id}:${r.type}`);
+        if (!c?.title) return null;
+        const genres = Array.isArray(c.genres) ? (c.genres as { name: string }[]).map((g) => g.name).join(", ") : "";
+        return { title: c.title as string, genres };
+      })
+      .filter((t): t is { title: string; genres: string } => t !== null);
+    const topTitles = topTitlesDetailed.map((t) => t.title);
 
     // Genre frequency for liked
     const likedGenres: Record<string, number> = {};
@@ -315,6 +327,9 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
 
     if (parts.length > 0) {
       tasteContext = `${username ? `${username}'s` : "User's"} taste — ${parts.join(" ")} Use this to personalize suggestions, but don't mention it explicitly unless relevant.`;
+    }
+    if (topTitlesDetailed.length > 0) {
+      tasteContext += `\nReference these liked titles in your "reason" fields when relevant:\n${topTitlesDetailed.map((t) => `- ${t.title}${t.genres ? ` (${t.genres})` : ""}`).join("\n")}`;
     }
   }
 
