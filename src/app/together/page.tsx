@@ -2528,12 +2528,12 @@ export default function WTBetaPage() {
                         >
                           {top.title}{top.year ? ` \u2022 ${top.year}` : ""}
                         </div>
-                        {(top.reason || top.overview) && (
+                        {(top.curator_hook || top.overview) && (
                           <div
-                            className="mt-1 line-clamp-1"
-                            style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.68)", lineHeight: 1.4 }}
+                            className="mt-1.5 line-clamp-2"
+                            style={{ fontSize: "0.8rem", color: top.curator_hook ? "rgba(255,220,160,0.85)" : "rgba(255,255,255,0.6)", lineHeight: 1.45 }}
                           >
-                            {top.reason || top.overview}
+                            {top.curator_hook || (top.overview.length > 100 ? top.overview.slice(0, 100) + "..." : top.overview)}
                           </div>
                         )}
                       </div>

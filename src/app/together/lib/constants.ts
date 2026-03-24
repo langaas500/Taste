@@ -103,6 +103,7 @@ export interface WTTitle {
   poster_path: string | null;
   vote_average: number | null;
   reason?: string;
+  curator_hook?: string;
 }
 
 export interface TitlesCacheEntry {

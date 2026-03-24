@@ -1,4 +1,5 @@
 import { tmdbTrending, tmdbDiscover, tmdbSimilar, parseTitleFromTMDB } from "@/lib/tmdb";
+import { createSupabaseAdmin } from "@/lib/supabase-server";
 
 /* ── types ─────────────────────────────────────────────── */
 
@@ -14,6 +15,7 @@ export interface WTTitle {
   poster_path: string | null;
   vote_average: number | null;
   reason: string;
+  curator_hook?: string;
 }
 
 export interface FetchWTOptions {
@@ -443,6 +445,27 @@ export async function buildWtDeck(options: BuildWtDeckOptions = {}): Promise<WtD
   if (titles.length < 20) {
     console.warn(`[buildWtDeck] WARNING: small deck (${titles.length} titles) — providerIds=${JSON.stringify(providerIds)} region=${region}`);
   }
+
+  // Enrich with curator_hook from titles_cache (batch, non-blocking)
+  try {
+    const admin = createSupabaseAdmin();
+    const tmdbIds = titles.map((t) => t.tmdb_id);
+    const { data: hooks } = await admin
+      .from("titles_cache")
+      .select("tmdb_id, curator_hook")
+      .in("tmdb_id", tmdbIds)
+      .not("curator_hook", "is", null);
+    if (hooks && hooks.length > 0) {
+      const hookMap = new Map<number, string>();
+      for (const h of hooks as { tmdb_id: number; curator_hook: string }[]) {
+        hookMap.set(h.tmdb_id, h.curator_hook);
+      }
+      for (const t of titles) {
+        const hook = hookMap.get(t.tmdb_id);
+        if (hook) t.curator_hook = hook as string;
+      }
+    }
+  } catch { /* non-fatal */ }
 
   return { titles, meta: { seed, mood } };
 }
