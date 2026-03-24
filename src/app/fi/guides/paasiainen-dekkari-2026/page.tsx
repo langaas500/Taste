@@ -91,6 +91,8 @@ export default async function PaasiainenDekkariPage() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "FAQPage",
+            datePublished: "2026-03-09",
+            dateModified: "2026-03-24",
             mainEntity: faqItems.map((item) => ({
               "@type": "Question",
               name: item.q,

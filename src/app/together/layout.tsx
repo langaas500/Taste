@@ -112,11 +112,40 @@ export default function TogetherLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const howToJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "Hvordan finne en film å se sammen",
+    description:
+      "Bruk Se Sammen på Logflix for å matche med partneren din på under 3 minutter.",
+    step: [
+      {
+        "@type": "HowToStep",
+        name: "Opprett en sesjon",
+        text: "Gå til logflix.app/together og trykk 'Start med partner'. Del koden med partneren din.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Sveip hver for dere",
+        text: "Dere sveiper uavhengig gjennom filmer og serier. Ingen ser hva den andre velger.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Se matchen",
+        text: "Når dere begge liker samme tittel blir det en match. Start filmkvelden.",
+      },
+    ],
+  };
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(togetherJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
       />
       {children}
     </>

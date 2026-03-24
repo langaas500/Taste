@@ -67,6 +67,25 @@ export default async function RootLayout({
             }),
           }}
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Logflix",
+              url: "https://logflix.app",
+              logo: "https://logflix.app/logo.png",
+              foundingDate: "2024",
+              sameAs: [
+                "https://www.facebook.com/logflix",
+                "https://www.instagram.com/logflix",
+              ],
+              description:
+                "Norsk film- og serietjeneste for par. Finn noe å se sammen med Se Sammen — swipe-matching som Tinder, men for filmer.",
+            }),
+          }}
+        />
         <PostHogProvider>
           <ToastProvider>
             <div className="relative z-10">{children}</div>

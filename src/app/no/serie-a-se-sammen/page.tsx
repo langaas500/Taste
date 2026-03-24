@@ -43,6 +43,8 @@ export default function SerieASeSammenPage() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "FAQPage",
+            datePublished: "2025-01-01",
+            dateModified: "2026-03-24",
             mainEntity: faqItems.map((item) => ({
               "@type": "Question",
               name: item.question,

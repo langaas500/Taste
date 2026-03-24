@@ -97,6 +97,8 @@ export default async function GuidePage({
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "FAQPage",
+            datePublished: "2025-01-01",
+            dateModified: "2026-03-24",
             mainEntity: [
               {
                 "@type": "Question",
@@ -148,6 +150,9 @@ export default async function GuidePage({
           </h1>
           <p className="max-w-xl text-sm leading-relaxed text-white/55">
             {t.intro}
+          </p>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 8 }}>
+            {({ no: "Oppdatert mars 2026", se: "Uppdaterad mars 2026", dk: "Opdateret marts 2026", fi: "Päivitetty maaliskuu 2026" } as Record<string, string>)[region] ?? "Oppdatert mars 2026"}
           </p>
         </header>
 
