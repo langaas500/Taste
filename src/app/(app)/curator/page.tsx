@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import PremiumModal from "@/components/PremiumModal";
+import StreamingModal from "@/components/StreamingModal";
 import { track } from "@/lib/posthog";
 import type { Locale } from "@/lib/i18n";
 
@@ -300,6 +301,7 @@ export default function CuratorPage() {
   const [username, setUsername] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const [showPremium, setShowPremium] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState<{ tmdb_id: number; type: "movie" | "tv"; title: string; poster_path: string | null } | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -440,7 +442,7 @@ export default function CuratorPage() {
               {msg.movies && msg.movies.length > 0 && (
                 <div className="flex flex-col gap-3.5 mt-4 pl-11">
                   {msg.movies.map((movie) => (
-                    <MovieCard key={`${movie.tmdb_id}:${movie.type}`} movie={movie} />
+                    <MovieCard key={`${movie.tmdb_id}:${movie.type}`} movie={movie} onClick={() => setSelectedMovie({ tmdb_id: movie.tmdb_id, type: movie.type, title: movie.title, poster_path: movie.poster_path })} />
                   ))}
                 </div>
               )}
@@ -555,6 +557,16 @@ export default function CuratorPage() {
 
       <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="curator" />
 
+      {selectedMovie && (
+        <StreamingModal
+          tmdbId={selectedMovie.tmdb_id}
+          type={selectedMovie.type}
+          title={selectedMovie.title}
+          posterPath={selectedMovie.poster_path}
+          onClose={() => setSelectedMovie(null)}
+        />
+      )}
+
       <style>{`
         @keyframes curator-breathe {
           0%, 100% { opacity: 0.3; transform: scale(0.8); }
@@ -570,13 +582,13 @@ export default function CuratorPage() {
 
 /* ── MovieCard ───────────────────────────────────────── */
 
-function MovieCard({ movie }: { movie: CuratorMovie }) {
+function MovieCard({ movie, onClick }: { movie: CuratorMovie; onClick?: () => void }) {
   const imgSrc = movie.poster_path ? `https://image.tmdb.org/t/p/w154${movie.poster_path}` : null;
   const flatrate = movie.providers.filter((p) => p.type === "flatrate");
   const rentBuy = movie.providers.filter((p) => p.type === "rent" || p.type === "buy");
 
   return (
-    <div className="flex gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-md hover:bg-white/[0.05] hover:border-white/10 transition-all group">
+    <div onClick={onClick} className="flex gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-md hover:bg-white/[0.05] hover:border-white/10 transition-all group cursor-pointer">
       {imgSrc && (
         <div className="w-[85px] h-[125px] rounded-xl overflow-hidden flex-shrink-0 relative shadow-2xl group-hover:scale-[1.02] transition-transform">
           <Image src={imgSrc} alt={movie.title} fill sizes="85px" style={{ objectFit: "cover" }} />
