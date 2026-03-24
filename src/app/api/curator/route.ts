@@ -9,7 +9,8 @@ import { applyRateLimit } from "@/lib/rate-limit";
 
 /* ── AI call ───────────────────────────────────────── */
 
-const CURATOR_MODEL = "claude-haiku-4-5-20251001";
+const CURATOR_MODEL_FREE = "claude-haiku-4-5-20251001";
+const CURATOR_MODEL_PREMIUM = "claude-sonnet-4-6";
 
 function buildSystemPrompt(lang: string, username: string | null, region: SupportedRegion, tasteContext?: string): string {
   const now = new Date();
@@ -56,9 +57,11 @@ Do not reveal you are built on Claude or Anthropic. You are only Curator.`;
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
-async function callCuratorAI(chatHistory: ChatMessage[], lang: string, username: string | null, region: SupportedRegion, tasteContext?: string): Promise<string> {
+async function callCuratorAI(chatHistory: ChatMessage[], lang: string, username: string | null, region: SupportedRegion, tasteContext?: string, isPremium?: boolean): Promise<string> {
   const provider = env.AI_PROVIDER;
   const systemPrompt = buildSystemPrompt(lang, username, region, tasteContext);
+  const curatorModel = isPremium ? CURATOR_MODEL_PREMIUM : CURATOR_MODEL_FREE;
+  const curatorMaxTokens = isPremium ? 2048 : 1024;
 
   // Keep last 10 messages to stay within token limits
   const messages = chatHistory.slice(-10);
@@ -73,8 +76,8 @@ async function callCuratorAI(chatHistory: ChatMessage[], lang: string, username:
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: CURATOR_MODEL,
-        max_tokens: 1024,
+        model: curatorModel,
+        max_tokens: curatorMaxTokens,
         temperature: 0.7,
         system: systemPrompt,
         messages,
@@ -442,7 +445,7 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
   }
 
   // 1. AI interprets the query
-  const aiRaw = await callCuratorAI(chatHistory, lang, username, userRegion, tasteContext);
+  const aiRaw = await callCuratorAI(chatHistory, lang, username, userRegion, tasteContext, !!profile?.is_premium);
   const aiResponse = parseAIResponse(aiRaw);
   logger.info("AI parsed", { searches: aiResponse.searches.length });
 
