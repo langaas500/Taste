@@ -326,8 +326,16 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
       .eq("id", user.id)
       .single();
     const ts = profileRow?.taste_summary;
-    if (ts && typeof ts === "string" && ts.length > 10) {
-      tasteContext += `\nAI taste profile: ${ts}`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (ts && typeof ts === "object") {
+      const t = ts as any;
+      const parts: string[] = [];
+      if (t.youLike) parts.push(`Liker: ${t.youLike}`);
+      if (t.avoid) parts.push(`Unngår: ${t.avoid}`);
+      if (t.pacing) parts.push(`Tempo: ${t.pacing}`);
+      if (parts.length > 0) {
+        tasteContext += `\nBrukerens smaksprofil:\n${parts.join("\n")}`;
+      }
     }
   } catch { /* non-fatal — continue without taste_summary */ }
 
