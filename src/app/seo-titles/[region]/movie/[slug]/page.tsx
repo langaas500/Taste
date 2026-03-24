@@ -123,6 +123,15 @@ async function fetchProviders(tmdbId: number, country: string): Promise<WatchPro
   }
 }
 
+/* ── Partner signal ───────────────────────────────────── */
+
+const PARTNER_SIGNAL: Record<string, string> = {
+  no: " Sveip med partneren din og se om dere matcher.",
+  se: " Svajpa med din partner och se om ni matchar.",
+  dk: " Swipe med din partner og se om I matcher.",
+  fi: " Pyyhkäise kumppaninsi kanssa ja katso, matchaatteko.",
+};
+
 /* ── Metadata ─────────────────────────────────────────── */
 
 export async function generateMetadata({
@@ -142,9 +151,13 @@ export async function generateMetadata({
   const t = REGION_TEXT[region as RegionTextKey] ?? REGION_TEXT.no;
   const displayTitle = `${title.title}${title.year ? ` (${title.year})` : ""}`;
   const pageTitle = t.metaTitle(displayTitle, regionName);
-  const description = title.overview
+  const baseDescription = title.overview
     ? `${t.metaDesc(title.title, regionName)} ${title.overview.slice(0, 140)}...`
     : t.metaDescFallback(title.title, regionName);
+  const signal = PARTNER_SIGNAL[region] ?? " Swipe with your partner and see if you match.";
+  const description = /partner|sveip/i.test(baseDescription)
+    ? baseDescription
+    : baseDescription + signal;
 
   const country = REGION_COUNTRY[region] || "NO";
   const providers = await fetchProviders(title.tmdb_id, country);
@@ -282,28 +295,48 @@ export default async function MoviePage({
     }
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Movie",
+    name: title.title,
+    ...(title.year ? { datePublished: String(title.year) } : {}),
+    ...(title.overview ? { description: title.overview } : {}),
+    ...(title.poster_path ? { image: `https://image.tmdb.org/t/p/w500${title.poster_path}` } : {}),
+    potentialAction: {
+      "@type": "ViewAction",
+      name: "Sveip med partner på Logflix",
+      target: "https://logflix.app/together",
+    },
+  };
+
   return (
-    <TitlePageContent
-      title={title.title}
-      originalTitle={title.original_title}
-      year={title.year}
-      overview={title.overview}
-      tagline={tagline}
-      posterPath={title.poster_path}
-      backdropPath={title.backdrop_path}
-      genres={genres}
-      voteAverage={title.vote_average}
-      voteCount={title.vote_count ?? null}
-      type="movie"
-      tmdbId={title.tmdb_id}
-      slug={title.slug || slug}
-      region={region}
-      providers={providers}
-      curatorHook={curatorHook}
-      curatorBody={curatorBody}
-      curatorVerdict={curatorVerdict}
-      moodTags={title.mood_tags ?? null}
-      similarTitles={similarTitles}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <TitlePageContent
+        title={title.title}
+        originalTitle={title.original_title}
+        year={title.year}
+        overview={title.overview}
+        tagline={tagline}
+        posterPath={title.poster_path}
+        backdropPath={title.backdrop_path}
+        genres={genres}
+        voteAverage={title.vote_average}
+        voteCount={title.vote_count ?? null}
+        type="movie"
+        tmdbId={title.tmdb_id}
+        slug={title.slug || slug}
+        region={region}
+        providers={providers}
+        curatorHook={curatorHook}
+        curatorBody={curatorBody}
+        curatorVerdict={curatorVerdict}
+        moodTags={title.mood_tags ?? null}
+        similarTitles={similarTitles}
+      />
+    </>
   );
 }
