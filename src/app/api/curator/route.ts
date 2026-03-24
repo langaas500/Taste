@@ -212,7 +212,7 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
   const supabase = await createSupabaseServer();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_premium, preferred_region")
+    .select("is_premium, preferred_region, partner_user_id")
     .eq("id", user.id)
     .single();
 
@@ -356,6 +356,35 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
       }
     }
   } catch { /* non-fatal — continue without taste_summary */ }
+
+  // Partner taste context — recommend in the intersection of both tastes
+  try {
+    const partnerId = (profile as { partner_user_id?: string | null })?.partner_user_id;
+    if (partnerId) {
+      const { data: partnerRow } = await supabase
+        .from("profiles")
+        .select("taste_summary, display_name")
+        .eq("id", partnerId)
+        .single();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pts = partnerRow?.taste_summary as any;
+      if (pts && typeof pts === "object") {
+        const partnerParts: string[] = [];
+        if (pts.youLike) partnerParts.push(`Liker: ${pts.youLike}`);
+        if (pts.avoid) partnerParts.push(`Unngår: ${pts.avoid}`);
+        if (pts.pacing) partnerParts.push(`Tempo: ${pts.pacing}`);
+        if (partnerParts.length > 0) {
+          const partnerName = partnerRow?.display_name || "partneren";
+          tasteContext += `\n\nCOUPLE MODE — this user has a partner (${partnerName}). Recommend titles that work for BOTH:
+Partnerens smaksprofil:
+${partnerParts.join("\n")}
+Find titles in the intersection — something both will enjoy based on shared preferences.
+If tastes are very different, prioritize titles with broad appeal within shared genres.
+When couple context is present, prefix your "message" with "💑" and briefly explain why these picks work for both.`;
+        }
+      }
+    }
+  } catch { /* non-fatal — continue without partner context */ }
 
   // Contextual timing (UTC+1 for Nordic users)
   {
