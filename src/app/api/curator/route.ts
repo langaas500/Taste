@@ -406,7 +406,18 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
   const aiResponse = parseAIResponse(aiRaw);
   logger.info("AI parsed", { searches: aiResponse.searches.length });
 
-  // 2. Search TMDB for each identified title (sequential to respect rate limits)
+  // 2. Fetch user's watched titles to exclude from results
+  let watchedIds = new Set<number>();
+  try {
+    const { data: watchedRows } = await supabase
+      .from("user_titles")
+      .select("tmdb_id")
+      .eq("user_id", user.id)
+      .eq("status", "watched");
+    if (watchedRows) watchedIds = new Set(watchedRows.map((r) => r.tmdb_id));
+  } catch { /* non-fatal */ }
+
+  // 3. Search TMDB for each identified title (sequential to respect rate limits)
   const movies: CuratorMovie[] = [];
   const seen = new Set<string>();
 
@@ -420,6 +431,7 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
 
       const key = `${top.id}:${type}`;
       if (seen.has(key)) continue;
+      if (watchedIds.has(top.id)) continue;
       seen.add(key);
 
       // Fetch watch providers
