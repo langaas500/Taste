@@ -30,11 +30,12 @@ export async function generateMetadata({
   const guide = MOOD_GUIDES.find((g) => g.slug === slug);
   if (!guide || !REGIONS.includes(region as Region)) return {};
 
-  const t = guide.locales[region as Region]!;
+  const t = guide.locales[region as Region];
+  if (!t) return {};
   const canonical = `${BASE}/${region}/guides/${slug}`;
   const languages: Record<string, string> = {};
   for (const r of REGIONS) {
-    languages[REGION_HREFLANG[r]] = `${BASE}/${r}/guides/${slug}`;
+    if (guide.locales[r]) languages[REGION_HREFLANG[r]] = `${BASE}/${r}/guides/${slug}`;
   }
   languages["x-default"] = `${BASE}/no/guides/${slug}`;
 
@@ -75,7 +76,8 @@ export default async function GuidePage({
   const guide = MOOD_GUIDES.find((g) => g.slug === slug);
   if (!guide || !REGIONS.includes(region as Region)) notFound();
 
-  const t = guide.locales[region as Region]!;
+  const t = guide.locales[region as Region];
+  if (!t) notFound();
   const admin = createSupabaseAdmin();
 
   const { data } = await admin

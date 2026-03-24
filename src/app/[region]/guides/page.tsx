@@ -182,7 +182,7 @@ export default async function GuidesHubPage({ params }: { params: Promise<Params
           const cat = CATEGORIES[catKey];
           const guides = cat.slugs
             .map((slug) => MOOD_GUIDES.find((g) => g.slug === slug))
-            .filter(Boolean);
+            .filter((g) => g && g.locales[r]);
 
           if (guides.length === 0) return null;
 
@@ -210,7 +210,8 @@ export default async function GuidesHubPage({ params }: { params: Promise<Params
               >
                 {guides.map((guide) => {
                   if (!guide) return null;
-                  const locale = guide.locales[r]!;
+                  const locale = guide.locales[r];
+                  if (!locale) return null;
                   const excerpt =
                     locale.intro.length > 120
                       ? locale.intro.slice(0, 117) + "..."

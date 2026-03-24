@@ -42,13 +42,15 @@ export function GET() {
 
   /* ── MOOD_GUIDES → sitemap entries ── */
   const guideUrls = MOOD_GUIDES.flatMap((guide) => {
+    const available = REGIONS.filter((r) => guide.locales[r]);
+    if (available.length === 0) return [];
     const alternates: Record<string, string> = {
-      "x-default": `${base}/no/guides/${guide.slug}`,
+      "x-default": `${base}/${available[0]}/guides/${guide.slug}`,
     };
-    for (const r of REGIONS) {
+    for (const r of available) {
       alternates[REGION_HREFLANG[r]] = `${base}/${r}/guides/${guide.slug}`;
     }
-    return REGIONS.map((r) =>
+    return available.map((r) =>
       entry(`${base}/${r}/guides/${guide.slug}`, lastmod, "weekly", "0.7", alternates),
     );
   });
