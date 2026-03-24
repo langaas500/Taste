@@ -444,6 +444,34 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
     }
   }
 
+  // Mood detection — inject emotional context based on user's message
+  const moodSignals: Record<string, string> = {
+    "sliten": "Brukeren er sliten — anbefal lett, tilgjengelig underholdning. Ikke krevende drama.",
+    "trøtt": "Brukeren er trøtt — korte episoder eller feel-good film passer best.",
+    "lei": "Brukeren kjeder seg — noe engasjerende og energisk.",
+    "trist": "Brukeren er trist — varm, oppløftende film. Unngå tunge dramaer.",
+    "date night": "Det er date night — romantisk eller spennende film for to.",
+    "date": "Det er date night — romantisk eller spennende film for to.",
+    "kan ikke sove": "Brukeren kan ikke sove — rolig, ikke for intens film.",
+    "trenger latter": "Brukeren vil le — komedie eller lett underholdning.",
+    "vil gråte": "Brukeren vil ha en film som rører — drama eller romantikk.",
+    "skummelt": "Brukeren vil ha noe skummelt — horror eller thriller.",
+    "tired": "User is tired — light, easy entertainment. Short runtime preferred.",
+    "bored": "User is bored — something engaging and energetic.",
+    "sad": "User is sad — warm, uplifting film. Avoid heavy dramas.",
+    "can't sleep": "User can't sleep — calm, not too intense.",
+    "need to laugh": "User wants to laugh — comedy or light entertainment.",
+    "want to cry": "User wants an emotional film — drama or romance.",
+    "scary": "User wants something scary — horror or thriller.",
+  };
+  const userMessageLower = userMessage.toLowerCase();
+  for (const [signal, context] of Object.entries(moodSignals)) {
+    if (userMessageLower.includes(signal)) {
+      tasteContext += `\nMood-kontekst: ${context}`;
+      break;
+    }
+  }
+
   // 1. AI interprets the query
   const aiRaw = await callCuratorAI(chatHistory, lang, username, userRegion, tasteContext, !!profile?.is_premium);
   const aiResponse = parseAIResponse(aiRaw);
