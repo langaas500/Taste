@@ -473,6 +473,69 @@ When couple context is present, prefix your "message" with "💑" and briefly ex
     }
   }
 
+  // Curator memory — fetch previous conversation for continuity
+  let prevConversationId: string | null = null;
+  let prevRecommendedIds: number[] = [];
+  try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const { data: prevConv } = await supabase
+      .from("curator_conversations")
+      .select("id, messages, recommended_tmdb_ids, session_summary")
+      .eq("user_id", user.id)
+      .gte("updated_at", sevenDaysAgo)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (prevConv) {
+      prevConversationId = prevConv.id;
+      prevRecommendedIds = Array.isArray(prevConv.recommended_tmdb_ids) ? prevConv.recommended_tmdb_ids : [];
+
+      if (prevRecommendedIds.length > 0) {
+        // Fetch title names for previous recommendations
+        const { data: prevTitles } = await supabase
+          .from("titles_cache")
+          .select("tmdb_id, title")
+          .in("tmdb_id", prevRecommendedIds.slice(0, 10));
+        const prevTitleMap = new Map((prevTitles ?? []).map((r) => [r.tmdb_id, r.title as string]));
+
+        // Check which ones the user has since watched
+        const { data: watchedSince } = await supabase
+          .from("user_titles")
+          .select("tmdb_id, sentiment, rating")
+          .eq("user_id", user.id)
+          .eq("status", "watched")
+          .in("tmdb_id", prevRecommendedIds);
+        const watchedMap = new Map((watchedSince ?? []).map((r) => [r.tmdb_id, r]));
+
+        const recNames = prevRecommendedIds
+          .map((id) => prevTitleMap.get(id))
+          .filter(Boolean)
+          .slice(0, 5);
+        const watchedLines = prevRecommendedIds
+          .filter((id) => watchedMap.has(id))
+          .map((id) => {
+            const title = prevTitleMap.get(id);
+            const w = watchedMap.get(id);
+            if (!title) return null;
+            const feedback = w?.sentiment === "liked" ? " (likte den)" : w?.sentiment === "disliked" ? " (likte ikke)" : w?.rating ? ` (${w.rating}/10)` : "";
+            return `${title}${feedback}`;
+          })
+          .filter(Boolean);
+
+        if (recNames.length > 0) {
+          tasteContext += `\n\nCURATOR MEMORY — previous session context:
+Previously recommended: ${recNames.join(", ")}.${watchedLines.length > 0 ? `\nUser has since watched: ${watchedLines.join(", ")}.` : ""}
+Use this feedback loop: avoid re-recommending titles already suggested. If the user watched and liked a recommendation, suggest similar titles. If they disliked it, adjust direction.`;
+        }
+      }
+
+      if (prevConv.session_summary) {
+        tasteContext += `\nPrevious conversation summary: ${prevConv.session_summary}`;
+      }
+    }
+  } catch { /* non-fatal — continue without conversation history */ }
+
   // Mood detection — inject emotional context based on user's message
   const moodSignals: Record<string, string> = {
     "sliten": "Brukeren er sliten — anbefal lett, tilgjengelig underholdning. Ikke krevende drama.",
@@ -561,6 +624,48 @@ When couple context is present, prefix your "message" with "💑" and briefly ex
   // Only return titles that have at least one streaming provider in the user's region
   const available = movies.filter((m) => m.providers.length > 0);
   logger.info("Curator response", { movies: movies.length, available: available.length, elapsed: logger.elapsed() });
+
+  // Fire-and-forget: persist conversation to curator_conversations
+  const newRecommendedIds = available.map((m) => m.tmdb_id);
+  const now = new Date().toISOString();
+  const userMsg = { role: "user", content: userMessage, timestamp: now };
+  const assistantMsg = { role: "assistant", content: aiResponse.message, tmdb_ids: newRecommendedIds, timestamp: now };
+
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  (async () => {
+    try {
+      if (prevConversationId) {
+        // Update existing conversation — append messages, merge recommended IDs
+        const { data: existing } = await supabase
+          .from("curator_conversations")
+          .select("messages, recommended_tmdb_ids")
+          .eq("id", prevConversationId)
+          .single();
+
+        const existingMsgs = Array.isArray(existing?.messages) ? existing.messages : [];
+        const updatedMsgs = [...existingMsgs, userMsg, assistantMsg].slice(-20); // max 20 messages
+        const mergedIds = [...new Set([...prevRecommendedIds, ...newRecommendedIds])];
+
+        await supabase
+          .from("curator_conversations")
+          .update({
+            messages: updatedMsgs,
+            recommended_tmdb_ids: mergedIds,
+            updated_at: now,
+          })
+          .eq("id", prevConversationId);
+      } else {
+        // Insert new conversation
+        await supabase
+          .from("curator_conversations")
+          .insert({
+            user_id: user.id,
+            messages: [userMsg, assistantMsg],
+            recommended_tmdb_ids: newRecommendedIds,
+          });
+      }
+    } catch { /* non-fatal — never block response */ }
+  })();
 
   return NextResponse.json({
     message: aiResponse.message,
