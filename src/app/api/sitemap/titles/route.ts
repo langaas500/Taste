@@ -14,12 +14,12 @@ import { createSupabaseAdmin } from "@/lib/supabase-server";
 export const revalidate = 3600; // 1h ISR
 
 const BASE = "https://logflix.app";
-const REGIONS = ["no", "dk", "fi", "se"] as const;
+const REGIONS = ["no", "dk", "fi", "se", "en"] as const;
 const TYPES = ["movie", "tv"] as const;
 const PER_PAGE = 500;
 
 const REGION_HREFLANG: Record<string, string> = {
-  no: "nb-NO", dk: "da-DK", fi: "fi-FI", se: "sv-SE",
+  no: "nb-NO", dk: "da-DK", fi: "fi-FI", se: "sv-SE", en: "en-US",
 };
 
 export async function GET(req: NextRequest) {

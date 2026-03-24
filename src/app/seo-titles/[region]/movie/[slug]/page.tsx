@@ -11,22 +11,22 @@ export const revalidate = 86400; // 24h ISR
 
 /* ── Region config ────────────────────────────────────── */
 
-const VALID_REGIONS = ["no", "dk", "fi", "se"] as const;
+const VALID_REGIONS = ["no", "dk", "fi", "se", "en"] as const;
 
 const REGION_NAME: Record<string, string> = {
-  no: "Norge", dk: "Danmark", fi: "Finland", se: "Sverige",
+  no: "Norge", dk: "Danmark", fi: "Finland", se: "Sverige", en: "United States",
 };
 
 const REGION_HREFLANG: Record<string, string> = {
-  no: "nb-NO", dk: "da-DK", fi: "fi-FI", se: "sv-SE",
+  no: "nb-NO", dk: "da-DK", fi: "fi-FI", se: "sv-SE", en: "en-US",
 };
 
 const REGION_COUNTRY: Record<string, string> = {
-  no: "NO", dk: "DK", fi: "FI", se: "SE",
+  no: "NO", dk: "DK", fi: "FI", se: "SE", en: "US",
 };
 
 const REGION_LOCALE: Record<string, string> = {
-  no: "nb", se: "sv", dk: "da", fi: "fi",
+  no: "nb", se: "sv", dk: "da", fi: "fi", en: "en",
 };
 
 function regionToLocale(region: string): string {
@@ -130,6 +130,7 @@ const PARTNER_SIGNAL: Record<string, string> = {
   se: " Svajpa med din partner och se om ni matchar.",
   dk: " Swipe med din partner og se om I matcher.",
   fi: " Pyyhkäise kumppaninsi kanssa ja katso, matchaatteko.",
+  en: " Swipe with your partner and see if you match.",
 };
 
 /* ── Metadata ─────────────────────────────────────────── */

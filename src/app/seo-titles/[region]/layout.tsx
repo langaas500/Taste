@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 /** Phase 1 regions: Nordic only */
-const VALID_REGIONS = ["no", "dk", "fi", "se"] as const;
+const VALID_REGIONS = ["no", "dk", "fi", "se", "en"] as const;
 type TitleRegion = (typeof VALID_REGIONS)[number];
 
 const REGION_LANG: Record<TitleRegion, string> = {
@@ -10,6 +10,7 @@ const REGION_LANG: Record<TitleRegion, string> = {
   dk: "da",
   fi: "fi",
   se: "sv",
+  en: "en",
 };
 
 const REGION_LOCALE: Record<TitleRegion, string> = {
@@ -17,6 +18,7 @@ const REGION_LOCALE: Record<TitleRegion, string> = {
   dk: "da_DK",
   fi: "fi_FI",
   se: "sv_SE",
+  en: "en_US",
 };
 
 function isValidRegion(r: string): r is TitleRegion {

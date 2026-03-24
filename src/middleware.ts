@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rewrite /{region}/(movie|tv)/slug → /seo-titles/... to avoid static folder collision
-  if (/^\/(?:no|dk|fi|se)\/(movie|tv)\/[a-z0-9-]+$/.test(request.nextUrl.pathname)) {
+  if (/^\/(?:no|dk|fi|se|en)\/(movie|tv)\/[a-z0-9-]+$/.test(request.nextUrl.pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = `/seo-titles${request.nextUrl.pathname}`;
     return NextResponse.rewrite(url);

@@ -35,6 +35,7 @@ const REGION_NAME: Record<string, string> = {
   dk: "Danmark",
   fi: "Finland",
   se: "Sverige",
+  en: "United States",
 };
 
 const REGION_UNAVAILABLE_TEXT: Record<string, string> = {
@@ -42,6 +43,7 @@ const REGION_UNAVAILABLE_TEXT: Record<string, string> = {
   dk: "Ikke tilgængelig på streamingtjenester i Danmark endnu.",
   fi: "Ei saatavilla suoratoistopalveluissa Suomessa vielä.",
   se: "Inte tillgänglig på streamingtjänster i Sverige ännu.",
+  en: "Not available on streaming services in the United States yet.",
 };
 
 const REGION_HREFLANG: Record<string, string> = {
@@ -49,9 +51,10 @@ const REGION_HREFLANG: Record<string, string> = {
   dk: "da",
   fi: "fi",
   se: "sv",
+  en: "en",
 };
 
-const ALL_REGIONS = ["no", "dk", "fi", "se"] as const;
+const ALL_REGIONS = ["no", "dk", "fi", "se", "en"] as const;
 
 export const REGION_TEXT = {
   no: {
@@ -197,6 +200,42 @@ export const REGION_TEXT = {
     sesammenBody: "Kolla om ni matchar på den här filmen.",
     sesammenButton: "Starta Se Sammen →",
     similarTitles: "Liknande titlar",
+  },
+  en: {
+    streaming: "Streaming in",
+    included: "Included with subscription",
+    rent: "Rent",
+    buy: "Buy",
+    seeAll: "See all options",
+    otherCountries: "in other countries",
+    originaltitle: "Original title",
+    mood: "Mood",
+    ctaTitle: (title: string) => `Log and track ${title} in your library`,
+    ctaBody: "Keep track of what you've watched, create lists, and get personalized recommendations.",
+    ctaButton: "Get started — free",
+    metaTitle: (title: string, region: string) => `${title} – Streaming in the ${region} | Logflix`,
+    metaDesc: (title: string, region: string) => `See where you can stream ${title} in the ${region}.`,
+    metaDescFallback: (title: string, region: string) => `See where you can stream ${title} in the ${region}. Find streaming services, recommendations, and more on Logflix.`,
+    faqQ1: (title: string) => `Where can I watch ${title}?`,
+    faqQ2: (title: string, region: string) => `Is ${title} available on Netflix in the ${region}?`,
+    faqQ3: (title: string) => `Is ${title} worth watching?`,
+    faqQ4: "How do I find a movie we both want to watch?",
+    faqA4: "With Logflix Watch Together, you can connect with a friend or partner. You swipe independently, and Logflix finds the movie you both want to watch — no arguments, just a match.",
+    netflixYes: (title: string, region: string) => `Yes, ${title} is available on Netflix in the ${region}.`,
+    netflixNo: (title: string, provider: string, region: string) => `No, but you can watch ${title} on ${provider} in the ${region}.`,
+    netflixRent: (title: string, provider: string) => `${title} is not included with a subscription, but can be rented on ${provider}.`,
+    netflixNone: "Availability varies. Check logflix.app for updated info.",
+    providerStream: (title: string, provider: string) => `You can stream ${title} on ${provider}.`,
+    providerRent: (title: string, provider: string) => `${title} can be rented on ${provider}.`,
+    providerNone: (title: string) => `We haven't found streaming options for ${title} yet.`,
+    siteDescription: "Find something to watch together. Swipe independently, match on what you both want to see.",
+    home: "Home",
+    movies: "Movies",
+    series: "Series",
+    sesammenTitle: "Want to watch this together?",
+    sesammenBody: "Check if you both match on this movie.",
+    sesammenButton: "Start Watch Together →",
+    similarTitles: "Similar titles",
   },
 };
 
