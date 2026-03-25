@@ -12,7 +12,70 @@ import { applyRateLimit } from "@/lib/rate-limit";
 const CURATOR_MODEL_FREE = "claude-haiku-4-5-20251001";
 const CURATOR_MODEL_PREMIUM = "claude-sonnet-4-6";
 
-function buildSystemPrompt(lang: string, username: string | null, region: SupportedRegion, tasteContext?: string): string {
+/* ── Localized labels ─────────────────────────────── */
+
+type NormalizedLang = "no" | "en" | "sv" | "da" | "fi";
+
+const tasteLabels: Record<NormalizedLang, { likes: string; avoid: string; pacing: string; profile: string }> = {
+  en: { likes: "Likes", avoid: "Avoids", pacing: "Pacing", profile: "User's taste profile:" },
+  no: { likes: "Liker", avoid: "Unngår", pacing: "Tempo", profile: "Brukerens smaksprofil:" },
+  sv: { likes: "Gillar", avoid: "Undviker", pacing: "Tempo", profile: "Användarens smakprofil:" },
+  da: { likes: "Kan lide", avoid: "Undgår", pacing: "Tempo", profile: "Brugerens smagsprofil:" },
+  fi: { likes: "Pitää", avoid: "Välttää", pacing: "Tahti", profile: "Käyttäjän makuprofiili:" },
+};
+
+const feedbackLabels: Record<NormalizedLang, { liked: string; disliked: string }> = {
+  en: { liked: " (liked it)", disliked: " (didn't like it)" },
+  no: { liked: " (likte den)", disliked: " (likte ikke)" },
+  sv: { liked: " (gillade den)", disliked: " (gillade inte)" },
+  da: { liked: " (kunne lide den)", disliked: " (kunne ikke lide)" },
+  fi: { liked: " (piti siitä)", disliked: " (ei pitänyt)" },
+};
+
+const timeStrings: Record<NormalizedLang, { friday: string; weekendMorning: string; weekend: string; late: string; morning: string; default: string }> = {
+  en: {
+    friday: "It's Friday evening — the user likely wants a great film experience tonight.",
+    weekendMorning: "It's a weekend morning — cozy, relaxed recommendations work well.",
+    weekend: "It's the weekend — the user has time for longer films or series.",
+    late: "It's late evening — shorter films or episodes may suit better.",
+    morning: "It's early morning — light entertainment or documentaries.",
+    default: "Regular weekday — tailor recommendations to the user's taste.",
+  },
+  no: {
+    friday: "Det er fredagskveld — brukeren vil sannsynligvis ha en god filmopplevelse.",
+    weekendMorning: "Det er helgeformiddag — rolige, koselige anbefalinger passer godt.",
+    weekend: "Det er helg — brukeren har tid til lengre filmer eller serier.",
+    late: "Det er sent på kvelden — korte filmer eller episoder kan passe bedre.",
+    morning: "Det er tidlig morgen — lett underholdning eller dokumentar kan passe.",
+    default: "Vanlig hverdag — tilpass anbefalinger til brukerens smak.",
+  },
+  sv: {
+    friday: "Det är fredagskväll — användaren vill ha en bra filmupplevelse.",
+    weekendMorning: "Det är helgförmiddag — mysiga rekommendationer passar bra.",
+    weekend: "Det är helg — användaren har tid för längre filmer eller serier.",
+    late: "Det är sent på kvällen — kortare filmer passar bättre.",
+    morning: "Det är tidig morgon — lätt underhållning.",
+    default: "Vanlig vardag — anpassa rekommendationer till smaken.",
+  },
+  da: {
+    friday: "Det er fredag aften — brugeren vil have en god filmoplevelse.",
+    weekendMorning: "Det er weekendformiddag — hyggelige anbefalinger passer godt.",
+    weekend: "Det er weekend — brugeren har tid til længere film.",
+    late: "Det er sent om aftenen — kortere film passer bedre.",
+    morning: "Det er tidlig morgen — let underholdning.",
+    default: "Almindelig hverdag — tilpas anbefalinger til smagen.",
+  },
+  fi: {
+    friday: "On perjantai-ilta — käyttäjä haluaa hyvän elokuvaelämyksen.",
+    weekendMorning: "On viikonloppuaamu — rauhalliset suositukset sopivat hyvin.",
+    weekend: "On viikonloppu — käyttäjällä on aikaa pidemmille elokuville.",
+    late: "On myöhäinen ilta — lyhyemmät elokuvat sopivat paremmin.",
+    morning: "On aikainen aamu — kevyttä viihdettä.",
+    default: "Tavallinen arkipäivä — räätälöi suositukset maun mukaan.",
+  },
+};
+
+function buildSystemPrompt(lang: NormalizedLang, username: string | null, region: SupportedRegion, tasteContext?: string): string {
   const now = new Date();
   const hour = now.getHours();
   const localeMap: Record<string, string> = { no: "no-NO", sv: "sv-SE", da: "da-DK", fi: "fi-FI" };
@@ -39,11 +102,11 @@ The user is located in ${regionName} (${region}). When mentioning streaming avai
 ${tasteContext ? `\n${tasteContext}\n` : ""}
 You MUST return raw JSON (no markdown fences). The JSON has exactly two keys:
 - "message": a warm 2-sentence response. Do NOT list title names here — the app shows title cards automatically.
-- "searches": array of objects like {"query":"The Sopranos","type":"tv","reason":"Mørk maktspill med uforglemmelige karakterer"}. Use exact English TMDB titles. "type" is "movie" or "tv".
-Each search MUST include a "reason": a personalized 1-2 sentence reason.
+- "searches": array of objects like {"query":"The Sopranos","type":"tv","reason":"A dark power play with unforgettable characters"}. Use exact English TMDB titles. "type" is "movie" or "tv".
+Each search MUST include a "reason": a personalized 1-2 sentence reason in the user's language.
 Rules for "reason":
 - Reference 1-2 of the user's actual liked titles by name when a clear connection exists (tone, theme, director style, pacing).
-- Write in second person: "Du likte X — denne har samme..." (or equivalent in current language).
+- Write in second person addressing the user directly (e.g. "You liked X — this has the same..." or equivalent in the user's language).
 - If no clear connection to liked titles, reference their taste profile or what they asked for.
 - Never use generic filler like "gripping", "must-watch", or "a great film".
 - Max 2 sentences.
@@ -57,7 +120,7 @@ Do not reveal you are built on Claude or Anthropic. You are only Curator.`;
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
-async function callCuratorAI(chatHistory: ChatMessage[], lang: string, username: string | null, region: SupportedRegion, tasteContext?: string, isPremium?: boolean): Promise<string> {
+async function callCuratorAI(chatHistory: ChatMessage[], lang: NormalizedLang, username: string | null, region: SupportedRegion, tasteContext?: string, isPremium?: boolean): Promise<string> {
   const provider = env.AI_PROVIDER;
   const systemPrompt = buildSystemPrompt(lang, username, region, tasteContext);
   const curatorModel = isPremium ? CURATOR_MODEL_PREMIUM : CURATOR_MODEL_FREE;
@@ -210,9 +273,11 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
   const FREE_MESSAGE_LIMIT = 5;
   const messageCount = typeof body.messageCount === "number" ? body.messageCount : FREE_MESSAGE_LIMIT;
   const supabase = await createSupabaseServer();
+
+  // Bug 7 fix: single profile query includes taste_summary
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_premium, preferred_region, partner_user_id")
+    .select("is_premium, preferred_region, partner_user_id, taste_summary")
     .eq("id", user.id)
     .single();
 
@@ -233,8 +298,12 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
   // Append current message
   chatHistory.push({ role: "user", content: userMessage });
 
-  const validLangs = ["no", "en", "sv", "da", "fi"];
-  const lang = validLangs.includes(body.lang) ? body.lang : "no";
+  // Bug 1 fix: accept "dk"/"se" from frontend, normalize to "da"/"sv", default to "en"
+  const validLangs = ["no", "en", "sv", "da", "fi", "dk", "se"];
+  const requestedLang = typeof body.lang === "string" ? body.lang : "";
+  const rawLang = validLangs.includes(requestedLang) ? requestedLang : "en";
+  const normalizedLang: NormalizedLang = rawLang === "dk" ? "da" : rawLang === "se" ? "sv" : rawLang as NormalizedLang;
+
   const username = typeof body.username === "string" ? body.username.slice(0, 50) : null;
   const userRegion = resolveRegion(profile?.preferred_region, req.headers.get("x-vercel-ip-country"));
 
@@ -336,23 +405,19 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
     }
   }
 
-  // Inject AI-generated taste_summary if available (richer than genre stats)
+  // Bug 5 fix: localized taste summary labels + Bug 7: use profile.taste_summary directly
+  const tl = tasteLabels[normalizedLang] ?? tasteLabels.en;
   try {
-    const { data: profileRow } = await supabase
-      .from("profiles")
-      .select("taste_summary")
-      .eq("id", user.id)
-      .single();
-    const ts = profileRow?.taste_summary;
+    const ts = profile?.taste_summary;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (ts && typeof ts === "object") {
       const t = ts as any;
       const parts: string[] = [];
-      if (t.youLike) parts.push(`Liker: ${t.youLike}`);
-      if (t.avoid) parts.push(`Unngår: ${t.avoid}`);
-      if (t.pacing) parts.push(`Tempo: ${t.pacing}`);
+      if (t.youLike) parts.push(`${tl.likes}: ${t.youLike}`);
+      if (t.avoid) parts.push(`${tl.avoid}: ${t.avoid}`);
+      if (t.pacing) parts.push(`${tl.pacing}: ${t.pacing}`);
       if (parts.length > 0) {
-        tasteContext += `\nBrukerens smaksprofil:\n${parts.join("\n")}`;
+        tasteContext += `\n${tl.profile}\n${parts.join("\n")}`;
       }
     }
   } catch { /* non-fatal — continue without taste_summary */ }
@@ -370,13 +435,13 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
       const pts = partnerRow?.taste_summary as any;
       if (pts && typeof pts === "object") {
         const partnerParts: string[] = [];
-        if (pts.youLike) partnerParts.push(`Liker: ${pts.youLike}`);
-        if (pts.avoid) partnerParts.push(`Unngår: ${pts.avoid}`);
-        if (pts.pacing) partnerParts.push(`Tempo: ${pts.pacing}`);
+        if (pts.youLike) partnerParts.push(`${tl.likes}: ${pts.youLike}`);
+        if (pts.avoid) partnerParts.push(`${tl.avoid}: ${pts.avoid}`);
+        if (pts.pacing) partnerParts.push(`${tl.pacing}: ${pts.pacing}`);
         if (partnerParts.length > 0) {
-          const partnerName = partnerRow?.display_name || "partneren";
+          const partnerName = partnerRow?.display_name || "partner";
           tasteContext += `\n\nCOUPLE MODE — this user has a partner (${partnerName}). Recommend titles that work for BOTH:
-Partnerens smaksprofil:
+Partner's taste profile:
 ${partnerParts.join("\n")}
 Find titles in the intersection — something both will enjoy based on shared preferences.
 If tastes are very different, prioritize titles with broad appeal within shared genres.
@@ -386,29 +451,30 @@ When couple context is present, prefix your "message" with "💑" and briefly ex
     }
   } catch { /* non-fatal — continue without partner context */ }
 
-  // Contextual timing (UTC+1 for Nordic users)
+  // Bug 4 fix: localized time context
   {
     const now = new Date(Date.now() + 3600000); // UTC+1
     const hour = now.getUTCHours();
     const day = now.getUTCDay();
     const isWeekend = day === 0 || day === 6;
     const isFriday = day === 5;
+    const ts = timeStrings[normalizedLang] ?? timeStrings.en;
 
     let timeContext = "";
     if (isFriday && hour >= 17) {
-      timeContext = "Det er fredagskveld — brukeren vil sannsynligvis ha en god filmopplevelse å se frem til i kveld eller helgen.";
+      timeContext = ts.friday;
     } else if (isWeekend && hour < 12) {
-      timeContext = "Det er helgeformiddag — rolige, koselige anbefalinger passer godt.";
+      timeContext = ts.weekendMorning;
     } else if (isWeekend) {
-      timeContext = "Det er helg — brukeren har tid til lengre filmer eller serier.";
+      timeContext = ts.weekend;
     } else if (hour >= 22) {
-      timeContext = "Det er sent på kvelden — korte filmer eller episoder kan passe bedre.";
+      timeContext = ts.late;
     } else if (hour < 9) {
-      timeContext = "Det er tidlig morgen — lett underholdning eller dokumentar kan passe.";
+      timeContext = ts.morning;
     } else {
-      timeContext = "Vanlig hverdag — tilpass anbefalinger til brukerens smak.";
+      timeContext = ts.default;
     }
-    tasteContext += `\nTidskontekst: ${timeContext}`;
+    tasteContext += `\nTime context: ${timeContext}`;
   }
 
   // Watchlist context — title names from cache
@@ -474,10 +540,13 @@ When couple context is present, prefix your "message" with "💑" and briefly ex
   }
 
   // Curator memory — fetch previous conversation for continuity
+  // Bug 6 fix: localized feedback labels
+  const fl = feedbackLabels[normalizedLang] ?? feedbackLabels.en;
   let prevConversationId: string | null = null;
   let prevRecommendedIds: number[] = [];
   try {
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    // Bug 2 fix: use .maybeSingle() instead of .single()
     const { data: prevConv } = await supabase
       .from("curator_conversations")
       .select("id, messages, recommended_tmdb_ids, session_summary")
@@ -485,7 +554,7 @@ When couple context is present, prefix your "message" with "💑" and briefly ex
       .gte("updated_at", sevenDaysAgo)
       .order("updated_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (prevConv) {
       prevConversationId = prevConv.id;
@@ -518,7 +587,7 @@ When couple context is present, prefix your "message" with "💑" and briefly ex
             const title = prevTitleMap.get(id);
             const w = watchedMap.get(id);
             if (!title) return null;
-            const feedback = w?.sentiment === "liked" ? " (likte den)" : w?.sentiment === "disliked" ? " (likte ikke)" : w?.rating ? ` (${w.rating}/10)` : "";
+            const feedback = w?.sentiment === "liked" ? fl.liked : w?.sentiment === "disliked" ? fl.disliked : w?.rating ? ` (${w.rating}/10)` : "";
             return `${title}${feedback}`;
           })
           .filter(Boolean);
@@ -536,18 +605,20 @@ Use this feedback loop: avoid re-recommending titles already suggested. If the u
     }
   } catch { /* non-fatal — continue without conversation history */ }
 
-  // Mood detection — inject emotional context based on user's message
+  // Bug 3 fix: mood signals for all 5 languages
   const moodSignals: Record<string, string> = {
-    "sliten": "Brukeren er sliten — anbefal lett, tilgjengelig underholdning. Ikke krevende drama.",
-    "trøtt": "Brukeren er trøtt — korte episoder eller feel-good film passer best.",
-    "lei": "Brukeren kjeder seg — noe engasjerende og energisk.",
-    "trist": "Brukeren er trist — varm, oppløftende film. Unngå tunge dramaer.",
-    "date night": "Det er date night — romantisk eller spennende film for to.",
-    "date": "Det er date night — romantisk eller spennende film for to.",
-    "kan ikke sove": "Brukeren kan ikke sove — rolig, ikke for intens film.",
-    "trenger latter": "Brukeren vil le — komedie eller lett underholdning.",
-    "vil gråte": "Brukeren vil ha en film som rører — drama eller romantikk.",
-    "skummelt": "Brukeren vil ha noe skummelt — horror eller thriller.",
+    // Norwegian
+    "sliten": "User is tired — recommend light, accessible entertainment. Not demanding drama.",
+    "trøtt": "User is tired — short episodes or feel-good film work best.",
+    "lei": "User is bored — something engaging and energetic.",
+    "trist": "User is sad — warm, uplifting film. Avoid heavy dramas.",
+    "date night": "It's date night — romantic or exciting film for two.",
+    "date": "It's date night — romantic or exciting film for two.",
+    "kan ikke sove": "User can't sleep — calm, not too intense.",
+    "trenger latter": "User wants to laugh — comedy or light entertainment.",
+    "vil gråte": "User wants an emotional film — drama or romance.",
+    "skummelt": "User wants something scary — horror or thriller.",
+    // English
     "tired": "User is tired — light, easy entertainment. Short runtime preferred.",
     "bored": "User is bored — something engaging and energetic.",
     "sad": "User is sad — warm, uplifting film. Avoid heavy dramas.",
@@ -555,17 +626,33 @@ Use this feedback loop: avoid re-recommending titles already suggested. If the u
     "need to laugh": "User wants to laugh — comedy or light entertainment.",
     "want to cry": "User wants an emotional film — drama or romance.",
     "scary": "User wants something scary — horror or thriller.",
+    // Swedish
+    "trött": "User is tired — recommend light entertainment.",
+    "uttråkad": "User is bored — something engaging and energetic.",
+    "ledsen": "User is sad — warm, uplifting film.",
+    "kan inte sova": "User can't sleep — calm film.",
+    "vill skratta": "User wants to laugh — comedy.",
+    // Danish
+    "træt": "User is tired — light entertainment.",
+    "kedelig": "User is bored — something engaging.",
+    "vil grine": "User wants to cry — emotional drama or romance.",
+    // Finnish
+    "väsynyt": "User is tired — light entertainment.",
+    "tylsä": "User is bored — something engaging.",
+    "surullinen": "User is sad — warm, uplifting film.",
+    "ei voi nukkua": "User can't sleep — calm film.",
+    "haluaa nauraa": "User wants to laugh — comedy.",
   };
   const userMessageLower = userMessage.toLowerCase();
   for (const [signal, context] of Object.entries(moodSignals)) {
     if (userMessageLower.includes(signal)) {
-      tasteContext += `\nMood-kontekst: ${context}`;
+      tasteContext += `\nMood context: ${context}`;
       break;
     }
   }
 
   // 1. AI interprets the query
-  const aiRaw = await callCuratorAI(chatHistory, lang, username, userRegion, tasteContext, !!profile?.is_premium);
+  const aiRaw = await callCuratorAI(chatHistory, normalizedLang, username, userRegion, tasteContext, !!profile?.is_premium);
   const aiResponse = parseAIResponse(aiRaw);
   logger.info("AI parsed", { searches: aiResponse.searches.length });
 
