@@ -154,6 +154,58 @@ const i18n = {
   },
 } as const;
 
+/* ── Follow-up prompts (shown after each Curator response) ── */
+
+const followUpPrompts: Record<string, string[]> = {
+  no: [
+    "Noe lignende men lysere",
+    "Vis meg serier i stedet",
+    "Noe kortere å se i kveld",
+    "Finn noe for oss begge",
+    "Noe eldre — en klassiker",
+    "Mer action, mindre drama",
+  ],
+  en: [
+    "Something similar but lighter",
+    "Show me series instead",
+    "Something shorter for tonight",
+    "Find something for both of us",
+    "Something older — a classic",
+    "More action, less drama",
+  ],
+  se: [
+    "Något liknande men lättare",
+    "Visa mig serier istället",
+    "Något kortare för ikväll",
+    "Hitta något för oss båda",
+    "Något äldre — en klassiker",
+    "Mer action, mindre drama",
+  ],
+  dk: [
+    "Noget lignende men lettere",
+    "Vis mig serier i stedet",
+    "Noget kortere til i aften",
+    "Find noget til os begge",
+    "Noget ældre — en klassiker",
+    "Mere action, mindre drama",
+  ],
+  fi: [
+    "Jotain samankaltaista mutta kevyempää",
+    "Näytä sarjoja sen sijaan",
+    "Jotain lyhyempää tänä iltana",
+    "Löydä jotain meille molemmille",
+    "Jotain vanhempaa — klassikko",
+    "Enemmän toimintaa, vähemmän draamaa",
+  ],
+};
+
+/** Pick 3 random follow-up prompts for the current language */
+function pickFollowUps(locale: string): string[] {
+  const pool = followUpPrompts[locale] ?? followUpPrompts.en;
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 3);
+}
+
 /* ── Inline SVG icons ──────────────────────────────── */
 
 function SparklesIcon({ size = 18, color = "#E50914" }: { size?: number; color?: string }) {
@@ -304,6 +356,7 @@ export default function CuratorPage() {
   const [selectedMovie, setSelectedMovie] = useState<{ tmdb_id: number; type: "movie" | "tv"; title: string; poster_path: string | null } | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [followUps, setFollowUps] = useState<string[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -347,6 +400,7 @@ export default function CuratorPage() {
     }
 
     setInput("");
+    setFollowUps([]);
     track("curator_message_sent");
 
     const loadingMsg: Message = { role: "bot", text: t.thinking, loading: true };
@@ -400,6 +454,7 @@ export default function CuratorPage() {
             const without = prev.filter((m) => !m.loading);
             return [...without, { role: "bot" as const, text: msgText || t.error, movies }];
           });
+          setFollowUps(pickFollowUps(lang));
           messageShown = true;
           break;
         }
@@ -439,6 +494,7 @@ export default function CuratorPage() {
           const base = lastBot?.role === "bot" && !lastBot.movies ? without.slice(0, -1) : without;
           return [...base, { role: "bot" as const, text: msgText || t.error, movies }];
         });
+        setFollowUps(pickFollowUps(lang));
       }
     } catch (e) {
       const isTimeout = e instanceof DOMException && (e.name === "AbortError" || e.name === "TimeoutError");
@@ -508,6 +564,22 @@ export default function CuratorPage() {
               )}
             </div>
           ))}
+
+          {/* Follow-up prompt pills — after last bot response */}
+          {followUps.length > 0 && !isLoading && !input.trim() && messages.length > 1 && (
+            <div className="flex flex-wrap gap-2 pl-11">
+              {followUps.map((p, i) => (
+                <button
+                  key={i}
+                  onClick={() => { setFollowUps([]); send(p); }}
+                  className="rounded-full px-3.5 py-1.5 text-[11px] text-white/50 hover:text-white/90 hover:border-red-600/30 hover:bg-red-600/10 transition-all cursor-pointer"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Suggested prompts */}
           {messages.length <= 1 && !isLoading && (
@@ -643,36 +715,74 @@ export default function CuratorPage() {
 /* ── MovieCard ───────────────────────────────────────── */
 
 function MovieCard({ movie, onClick }: { movie: CuratorMovie; onClick?: () => void }) {
+  const [fb, setFb] = useState<"liked" | "disliked" | null>(null);
   const imgSrc = movie.poster_path ? `https://image.tmdb.org/t/p/w154${movie.poster_path}` : null;
   const flatrate = movie.providers.filter((p) => p.type === "flatrate");
   const rentBuy = movie.providers.filter((p) => p.type === "rent" || p.type === "buy");
 
+  function sendFeedback(feedback: "liked" | "disliked") {
+    if (fb) return;
+    setFb(feedback);
+    fetch("/api/curator/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tmdb_id: movie.tmdb_id, type: movie.type, feedback }),
+    }).catch(() => {});
+    track("curator_feedback", { tmdb_id: movie.tmdb_id, title: movie.title, feedback });
+  }
+
   return (
-    <div onClick={onClick} className="flex gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-md hover:bg-white/[0.05] hover:border-white/10 transition-all group cursor-pointer">
-      {imgSrc && (
-        <div className="w-[85px] h-[125px] rounded-xl overflow-hidden flex-shrink-0 relative shadow-2xl group-hover:scale-[1.02] transition-transform">
-          <Image src={imgSrc} alt={movie.title} fill sizes="85px" style={{ objectFit: "cover" }} />
-        </div>
-      )}
-      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <span className="text-base font-bold text-white/90">{movie.title}</span>
-          {movie.vote_average > 0 && (
-            <span className="text-xs text-yellow-500 flex items-center gap-1">
-              ★ <span className="text-white/40 font-semibold">{movie.vote_average.toFixed(1)}</span>
-            </span>
+    <div className="rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-md hover:bg-white/[0.05] hover:border-white/10 transition-all group">
+      <div onClick={onClick} className="flex gap-4 p-4 cursor-pointer">
+        {imgSrc && (
+          <div className="w-[85px] h-[125px] rounded-xl overflow-hidden flex-shrink-0 relative shadow-2xl group-hover:scale-[1.02] transition-transform">
+            <Image src={imgSrc} alt={movie.title} fill sizes="85px" style={{ objectFit: "cover" }} />
+          </div>
+        )}
+        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-base font-bold text-white/90">{movie.title}</span>
+            {movie.vote_average > 0 && (
+              <span className="text-xs text-yellow-500 flex items-center gap-1">
+                ★ <span className="text-white/40 font-semibold">{movie.vote_average.toFixed(1)}</span>
+              </span>
+            )}
+          </div>
+          {movie.reason && (
+            <p className="text-sm leading-relaxed text-white/60 m-0 italic">
+              {movie.reason}
+            </p>
+          )}
+          {(flatrate.length > 0 || rentBuy.length > 0) && (
+            <div className="flex flex-wrap gap-2 mt-1">
+              {flatrate.map((p) => <ProviderBadge key={p.name} provider={p} highlight />)}
+              {rentBuy.map((p) => <ProviderBadge key={p.name} provider={p} />)}
+            </div>
           )}
         </div>
-        {movie.reason && (
-          <p className="text-sm leading-relaxed text-white/60 m-0 italic">
-            {movie.reason}
-          </p>
-        )}
-        {(flatrate.length > 0 || rentBuy.length > 0) && (
-          <div className="flex flex-wrap gap-2 mt-1">
-            {flatrate.map((p) => <ProviderBadge key={p.name} provider={p} highlight />)}
-            {rentBuy.map((p) => <ProviderBadge key={p.name} provider={p} />)}
-          </div>
+      </div>
+      <div className="flex items-center gap-1 px-4 pb-3 -mt-1">
+        {fb ? (
+          <span className="text-xs" style={{ color: fb === "liked" ? "rgba(52,211,153,0.8)" : "rgba(248,113,113,0.8)" }}>
+            {fb === "liked" ? "✓ Likte" : "✗ Ikke for meg"}
+          </span>
+        ) : (
+          <>
+            <button
+              onClick={(e) => { e.stopPropagation(); sendFeedback("liked"); }}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
+              style={{ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)", cursor: "pointer" }}
+            >
+              👍
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); sendFeedback("disliked"); }}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
+              style={{ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)", cursor: "pointer" }}
+            >
+              👎
+            </button>
+          </>
         )}
       </div>
     </div>
