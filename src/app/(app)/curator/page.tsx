@@ -364,7 +364,6 @@ export default function CuratorPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, lang, username, messageCount: userMessageCount, history }),
       });
-      const data = await res.json();
 
       if (res.status === 403) {
         setIsPremium(false);
@@ -373,16 +372,74 @@ export default function CuratorPage() {
         return;
       }
 
-      if (!res.ok) throw new Error(data.error || "Error");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: "Error" }));
+        throw new Error(data.error || "Error");
+      }
 
-      setMessages((prev) => {
-        const without = prev.filter((m) => !m.loading);
-        return [...without, {
-          role: "bot" as const,
-          text: data.message || t.error,
-          movies: data.movies || [],
-        }];
-      });
+      // Stream reading: message text comes first, then [CARDS]json
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No response body");
+      const decoder = new TextDecoder();
+      let accumulated = "";
+      let messageShown = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        accumulated += decoder.decode(value, { stream: true });
+
+        // Check for [CARDS] delimiter
+        const cardsIdx = accumulated.indexOf("\n[CARDS]");
+        if (cardsIdx !== -1) {
+          const msgText = accumulated.slice(0, cardsIdx);
+          const cardsJson = accumulated.slice(cardsIdx + 8); // skip "\n[CARDS]"
+          let movies: CuratorMovie[] = [];
+          try { movies = JSON.parse(cardsJson); } catch { /* ignore parse error */ }
+          setMessages((prev) => {
+            const without = prev.filter((m) => !m.loading);
+            return [...without, { role: "bot" as const, text: msgText || t.error, movies }];
+          });
+          messageShown = true;
+          break;
+        }
+
+        // Check for [ERROR] delimiter
+        const errIdx = accumulated.indexOf("\n[ERROR]");
+        if (errIdx !== -1) {
+          throw new Error(accumulated.slice(errIdx + 8) || "Error");
+        }
+
+        // Show message text progressively (before cards arrive)
+        if (!messageShown && accumulated.length > 0) {
+          setMessages((prev) => {
+            const without = prev.filter((m) => !m.loading);
+            const existing = without[without.length - 1];
+            if (existing?.role === "bot" && !existing.movies) {
+              // Update existing streaming message
+              return [...without.slice(0, -1), { role: "bot" as const, text: accumulated }];
+            }
+            return [...without, { role: "bot" as const, text: accumulated }];
+          });
+        }
+      }
+
+      // If stream ended without [CARDS] (e.g. no searches), finalize
+      if (!messageShown) {
+        const cardsIdx = accumulated.indexOf("\n[CARDS]");
+        const msgText = cardsIdx !== -1 ? accumulated.slice(0, cardsIdx) : accumulated;
+        let movies: CuratorMovie[] = [];
+        if (cardsIdx !== -1) {
+          try { movies = JSON.parse(accumulated.slice(cardsIdx + 8)); } catch { /* ignore */ }
+        }
+        setMessages((prev) => {
+          const without = prev.filter((m) => !m.loading);
+          // Remove the streaming partial message if it exists
+          const lastBot = without[without.length - 1];
+          const base = lastBot?.role === "bot" && !lastBot.movies ? without.slice(0, -1) : without;
+          return [...base, { role: "bot" as const, text: msgText || t.error, movies }];
+        });
+      }
     } catch (e) {
       const isTimeout = e instanceof DOMException && (e.name === "AbortError" || e.name === "TimeoutError");
       const errorText = isTimeout
@@ -390,7 +447,10 @@ export default function CuratorPage() {
         : t.error;
       setMessages((prev) => {
         const without = prev.filter((m) => !m.loading);
-        return [...without, { role: "bot" as const, text: errorText }];
+        // Remove partial streaming message if present
+        const lastBot = without[without.length - 1];
+        const base = lastBot?.role === "bot" && !lastBot.movies ? without.slice(0, -1) : without;
+        return [...base, { role: "bot" as const, text: errorText }];
       });
     }
 

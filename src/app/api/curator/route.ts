@@ -120,13 +120,43 @@ Do not reveal you are built on Claude or Anthropic. You are only Curator.`;
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
-async function callCuratorAI(chatHistory: ChatMessage[], lang: NormalizedLang, username: string | null, region: SupportedRegion, tasteContext?: string, isPremium?: boolean): Promise<string> {
+/** Stream Anthropic SSE and yield text deltas */
+async function* readAnthropicSSE(body: ReadableStream<Uint8Array>): AsyncGenerator<string> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop() || "";
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const json = line.slice(6);
+        if (json === "[DONE]") return;
+        try {
+          const evt = JSON.parse(json);
+          if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+            yield evt.delta.text;
+          }
+        } catch { /* skip malformed lines */ }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+async function callCuratorAIStreaming(
+  chatHistory: ChatMessage[], lang: NormalizedLang, username: string | null,
+  region: SupportedRegion, tasteContext?: string, isPremium?: boolean,
+): Promise<string> {
   const provider = env.AI_PROVIDER;
   const systemPrompt = buildSystemPrompt(lang, username, region, tasteContext);
   const curatorModel = isPremium ? CURATOR_MODEL_PREMIUM : CURATOR_MODEL_FREE;
   const curatorMaxTokens = isPremium ? 2048 : 1024;
-
-  // Keep last 10 messages to stay within token limits
   const messages = chatHistory.slice(-10);
 
   if (provider === "anthropic") {
@@ -142,14 +172,19 @@ async function callCuratorAI(chatHistory: ChatMessage[], lang: NormalizedLang, u
         model: curatorModel,
         max_tokens: curatorMaxTokens,
         temperature: 0.7,
+        stream: true,
         system: systemPrompt,
         messages,
       }),
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(25_000),
     });
     if (!res.ok) throw new Error(`Anthropic API error ${res.status}`);
-    const data = await res.json();
-    return data.content[0]?.text || "";
+    if (!res.body) throw new Error("No response body");
+    let full = "";
+    for await (const chunk of readAnthropicSSE(res.body)) {
+      full += chunk;
+    }
+    return full;
   }
 
   if (provider === "openai") {
@@ -162,10 +197,7 @@ async function callCuratorAI(chatHistory: ChatMessage[], lang: NormalizedLang, u
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
+        messages: [{ role: "system", content: systemPrompt }, ...messages],
         temperature: 0.7,
         max_tokens: 1024,
       }),
@@ -651,8 +683,8 @@ Use this feedback loop: avoid re-recommending titles already suggested. If the u
     }
   }
 
-  // 1. AI interprets the query
-  const aiRaw = await callCuratorAI(chatHistory, normalizedLang, username, userRegion, tasteContext, !!profile?.is_premium);
+  // 1. AI interprets the query (streaming for faster time-to-completion)
+  const aiRaw = await callCuratorAIStreaming(chatHistory, normalizedLang, username, userRegion, tasteContext, !!profile?.is_premium);
   const aiResponse = parseAIResponse(aiRaw);
   logger.info("AI parsed", { searches: aiResponse.searches.length });
 
@@ -667,95 +699,104 @@ Use this feedback loop: avoid re-recommending titles already suggested. If the u
     if (watchedRows) watchedIds = new Set(watchedRows.map((r) => r.tmdb_id));
   } catch { /* non-fatal */ }
 
-  // 3. Search TMDB for each identified title (sequential to respect rate limits)
-  const movies: CuratorMovie[] = [];
-  const seen = new Set<string>();
+  // 3. Stream response: send message text immediately, then movie cards after TMDB lookups
+  const encoder = new TextEncoder();
+  const readable = new ReadableStream({
+    async start(controller) {
+      try {
+        // Send message text immediately — user sees this within ~1s
+        controller.enqueue(encoder.encode(aiResponse.message));
 
-  for (const search of aiResponse.searches) {
-    try {
-      const type = search.type === "tv" ? "tv" : "movie";
-      const results = await tmdbSearch(search.query, type);
-      // tmdbSearch returns a filtered array directly, not {results: [...]}
-      const top = Array.isArray(results) ? results[0] : results?.results?.[0];
-      if (!top) continue;
+        // Now do TMDB lookups (the slow part — 1-2s)
+        const movies: CuratorMovie[] = [];
+        const seen = new Set<string>();
 
-      const key = `${top.id}:${type}`;
-      if (seen.has(key)) continue;
-      if (watchedIds.has(top.id)) continue;
-      seen.add(key);
+        for (const search of aiResponse.searches) {
+          try {
+            const type = search.type === "tv" ? "tv" : "movie";
+            const results = await tmdbSearch(search.query, type);
+            const top = Array.isArray(results) ? results[0] : results?.results?.[0];
+            if (!top) continue;
 
-      // Fetch watch providers
-      const providersData = await tmdbWatchProviders(top.id, type);
-      const providers = extractProviders(providersData, userRegion);
+            const key = `${top.id}:${type}`;
+            if (seen.has(key)) continue;
+            if (watchedIds.has(top.id)) continue;
+            seen.add(key);
 
-      movies.push({
-        tmdb_id: top.id,
-        title: top.title || top.name || search.query,
-        type,
-        year: (top.release_date || top.first_air_date)?.slice(0, 4)
-          ? parseInt((top.release_date || top.first_air_date).slice(0, 4))
-          : null,
-        poster_path: top.poster_path || null,
-        overview: top.overview || "",
-        vote_average: top.vote_average || 0,
-        providers,
-        reason: search.reason || "",
-      });
-    } catch (e) {
-      logger.warn(`TMDB search failed for "${search.query}"`, {
-        error: e instanceof Error ? e.message : String(e),
-      });
-    }
-  }
+            const providersData = await tmdbWatchProviders(top.id, type);
+            const providers = extractProviders(providersData, userRegion);
 
-  // Only return titles that have at least one streaming provider in the user's region
-  const available = movies.filter((m) => m.providers.length > 0);
-  logger.info("Curator response", { movies: movies.length, available: available.length, elapsed: logger.elapsed() });
+            movies.push({
+              tmdb_id: top.id,
+              title: top.title || top.name || search.query,
+              type,
+              year: (top.release_date || top.first_air_date)?.slice(0, 4)
+                ? parseInt((top.release_date || top.first_air_date).slice(0, 4))
+                : null,
+              poster_path: top.poster_path || null,
+              overview: top.overview || "",
+              vote_average: top.vote_average || 0,
+              providers,
+              reason: search.reason || "",
+            });
+          } catch (e) {
+            logger.warn(`TMDB search failed for "${search.query}"`, {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
 
-  // Fire-and-forget: persist conversation to curator_conversations
-  const newRecommendedIds = available.map((m) => m.tmdb_id);
-  const now = new Date().toISOString();
-  const userMsg = { role: "user", content: userMessage, timestamp: now };
-  const assistantMsg = { role: "assistant", content: aiResponse.message, tmdb_ids: newRecommendedIds, timestamp: now };
+        const available = movies.filter((m) => m.providers.length > 0);
+        logger.info("Curator response", { movies: movies.length, available: available.length, elapsed: logger.elapsed() });
 
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  (async () => {
-    try {
-      if (prevConversationId) {
-        // Update existing conversation — append messages, merge recommended IDs
-        const { data: existing } = await supabase
-          .from("curator_conversations")
-          .select("messages, recommended_tmdb_ids")
-          .eq("id", prevConversationId)
-          .single();
+        // Send movie cards after delimiter
+        controller.enqueue(encoder.encode(`\n[CARDS]${JSON.stringify(available)}`));
 
-        const existingMsgs = Array.isArray(existing?.messages) ? existing.messages : [];
-        const updatedMsgs = [...existingMsgs, userMsg, assistantMsg].slice(-20); // max 20 messages
-        const mergedIds = [...new Set([...prevRecommendedIds, ...newRecommendedIds])];
+        // Fire-and-forget: persist conversation
+        const newRecommendedIds = available.map((m) => m.tmdb_id);
+        const now = new Date().toISOString();
+        const userMsg = { role: "user", content: userMessage, timestamp: now };
+        const assistantMsg = { role: "assistant", content: aiResponse.message, tmdb_ids: newRecommendedIds, timestamp: now };
 
-        await supabase
-          .from("curator_conversations")
-          .update({
-            messages: updatedMsgs,
-            recommended_tmdb_ids: mergedIds,
-            updated_at: now,
-          })
-          .eq("id", prevConversationId);
-      } else {
-        // Insert new conversation
-        await supabase
-          .from("curator_conversations")
-          .insert({
-            user_id: user.id,
-            messages: [userMsg, assistantMsg],
-            recommended_tmdb_ids: newRecommendedIds,
-          });
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        (async () => {
+          try {
+            if (prevConversationId) {
+              const { data: existing } = await supabase
+                .from("curator_conversations")
+                .select("messages, recommended_tmdb_ids")
+                .eq("id", prevConversationId)
+                .single();
+
+              const existingMsgs = Array.isArray(existing?.messages) ? existing.messages : [];
+              const updatedMsgs = [...existingMsgs, userMsg, assistantMsg].slice(-20);
+              const mergedIds = [...new Set([...prevRecommendedIds, ...newRecommendedIds])];
+
+              await supabase
+                .from("curator_conversations")
+                .update({ messages: updatedMsgs, recommended_tmdb_ids: mergedIds, updated_at: now })
+                .eq("id", prevConversationId);
+            } else {
+              await supabase
+                .from("curator_conversations")
+                .insert({ user_id: user.id, messages: [userMsg, assistantMsg], recommended_tmdb_ids: newRecommendedIds });
+            }
+          } catch { /* non-fatal */ }
+        })();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Error";
+        controller.enqueue(encoder.encode(`\n[ERROR]${msg}`));
+      } finally {
+        controller.close();
       }
-    } catch { /* non-fatal — never block response */ }
-  })();
+    },
+  });
 
-  return NextResponse.json({
-    message: aiResponse.message,
-    movies: available,
+  return new NextResponse(readable, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-cache",
+      "X-Content-Type-Options": "nosniff",
+    },
   });
 });
