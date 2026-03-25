@@ -83,6 +83,10 @@ export function GET() {
       entry(`${base}/${r}/couple-streak`, lastmod, "monthly", "0.7", { nb: `${base}/no/couple-streak`, sv: `${base}/se/couple-streak`, da: `${base}/dk/couple-streak`, fi: `${base}/fi/couple-streak`, en: `${base}/en/couple-streak`, "x-default": `${base}/en/couple-streak` }),
       entry(`${base}/${r}/wrapped`, lastmod, "monthly", "0.7", { nb: `${base}/no/wrapped`, sv: `${base}/se/wrapped`, da: `${base}/dk/wrapped`, fi: `${base}/fi/wrapped`, en: `${base}/en/wrapped`, "x-default": `${base}/en/wrapped` }),
     ]),
+    entry(`${base}/en/import`, lastmod, "monthly", "0.7", { nb: `${base}/no/importer`, en: `${base}/en/import`, "x-default": `${base}/en/import` }),
+    entry(`${base}/no/importer`, lastmod, "monthly", "0.7", { nb: `${base}/no/importer`, en: `${base}/en/import`, "x-default": `${base}/en/import` }),
+    entry(`${base}/en/library`, lastmod, "monthly", "0.7", { nb: `${base}/no/bibliotek`, en: `${base}/en/library`, "x-default": `${base}/en/library` }),
+    entry(`${base}/no/bibliotek`, lastmod, "monthly", "0.7", { nb: `${base}/no/bibliotek`, en: `${base}/en/library`, "x-default": `${base}/en/library` }),
     entry(`${base}/en/watch-together`, lastmod, "weekly", "0.9", { en: `${base}/en/watch-together`, nb: `${base}/together`, sv: `${base}/se/`, da: `${base}/dk/`, fi: `${base}/fi/`, "x-default": `${base}/en/watch-together` }),
     ...enOnlyPages.map((path) =>
       entry(`${base}${path}`, lastmod, "weekly", "0.85", { en: `${base}${path}`, nb: `${base}/no/`, sv: `${base}/se/`, da: `${base}/dk/`, fi: `${base}/fi/`, "x-default": `${base}${path}` }),
