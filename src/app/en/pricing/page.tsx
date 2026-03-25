@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://logflix.app/en/pricing",
     languages: {
+      nb: "https://logflix.app/no/priser",
+      sv: "https://logflix.app/se/priser",
+      da: "https://logflix.app/dk/priser",
+      fi: "https://logflix.app/fi/hinnat",
       en: "https://logflix.app/en/pricing",
       "x-default": "https://logflix.app/en/pricing",
     },

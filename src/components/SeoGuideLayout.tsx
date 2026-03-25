@@ -15,7 +15,7 @@ interface RelatedLink {
 interface SeoGuideLayoutProps {
   h1: string;
   heroSubtitle: string;
-  locale?: "no" | "en";
+  locale?: "no" | "en" | "se" | "dk" | "fi";
   ctaText?: string;
   trustLine?: string;
   relatedLinks?: RelatedLink[];
@@ -78,7 +78,7 @@ export default function SeoGuideLayout({
           maxWidth: 480, margin: "0 auto", padding: "0 24px 32px",
           display: "flex", justifyContent: "center",
         }}>
-          <SwipeMatchDemo locale={locale} speedMultiplier={0.7} />
+          <SwipeMatchDemo locale={locale === "no" ? "no" : "en"} speedMultiplier={0.7} />
         </div>
 
         {/* Primary CTA */}
