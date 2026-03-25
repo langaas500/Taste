@@ -674,3 +674,122 @@ export async function sendDailyPickEmail(
     console.error("Failed to send daily pick email:", err);
   }
 }
+
+/* ── 7. Curator Weekly ───────────────────────────────── */
+
+const curatorWeeklyStrings: Record<string, {
+  subject: string;
+  heading: string;
+  intro: string;
+  cta: string;
+  footerText: string;
+  unsub: string;
+}> = {
+  no: {
+    subject: "🎬 Dine ukentlige filmtips fra Curator",
+    heading: "Curator har 3 tips til deg denne helgen",
+    intro: "Basert på filmsmaken din har Curator funnet noe du vil elske:",
+    cta: "Chat med Curator for mer →",
+    footerText: "Du mottar denne fordi du har Logflix Premium med e-postvarsler aktivert.",
+    unsub: "Skru av ukentlige tips",
+  },
+  en: {
+    subject: "🎬 Your weekly film picks from Curator",
+    heading: "Curator has 3 picks for you this weekend",
+    intro: "Based on your film taste, Curator found something you'll love:",
+    cta: "Chat with Curator for more →",
+    footerText: "You're receiving this because you have Logflix Premium with email notifications enabled.",
+    unsub: "Turn off weekly picks",
+  },
+  se: {
+    subject: "🎬 Dina veckovisa filmtips från Curator",
+    heading: "Curator har 3 tips till dig denna helg",
+    intro: "Baserat på din filmsmak har Curator hittat något du kommer älska:",
+    cta: "Chatta med Curator för mer →",
+    footerText: "Du får detta för att du har Logflix Premium med e-postaviseringar aktiverade.",
+    unsub: "Stäng av veckovisa tips",
+  },
+  dk: {
+    subject: "🎬 Dine ugentlige filmtips fra Curator",
+    heading: "Curator har 3 tips til dig denne weekend",
+    intro: "Baseret på din filmsmag har Curator fundet noget du vil elske:",
+    cta: "Chat med Curator for mere →",
+    footerText: "Du modtager denne fordi du har Logflix Premium med e-mailnotifikationer aktiveret.",
+    unsub: "Slå ugentlige tips fra",
+  },
+  fi: {
+    subject: "🎬 Viikkottaiset elokuvavinkkisi Curatorilta",
+    heading: "Curatorilla on 3 vinkkiä sinulle tähän viikonloppuun",
+    intro: "Elokuvamakusi perusteella Curator löysi jotain mistä tulet pitämään:",
+    cta: "Keskustele Curatorin kanssa lisää →",
+    footerText: "Saat tämän koska sinulla on Logflix Premium ja sähköposti-ilmoitukset käytössä.",
+    unsub: "Poista viikkottaiset vinkit käytöstä",
+  },
+};
+
+export async function sendCuratorWeeklyEmail(
+  email: string,
+  name?: string,
+  data?: {
+    recommendations: Array<{ title: string; year?: number; type?: string; reason: string }>;
+    locale?: string;
+  },
+): Promise<void> {
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set — skipping curator weekly email");
+    return;
+  }
+
+  const locale = data?.locale ?? "no";
+  const s = curatorWeeklyStrings[locale] ?? curatorWeeklyStrings.no;
+  const recs = data?.recommendations ?? [];
+  const greeting = name ? (locale === "en" ? `Hi, ${name}!` : `Hei, ${name}!`) : (locale === "en" ? "Hi!" : "Hei!");
+
+  let recsHtml = "";
+  for (const rec of recs) {
+    const yearStr = rec.year ? ` (${rec.year})` : "";
+    const typeStr = rec.type === "tv" ? "📺" : "🎬";
+    recsHtml += `<tr><td style="padding:14px 16px;background:#16161e;border-radius:10px;margin-bottom:8px;">
+      <table width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td style="color:#fff;font-size:15px;font-weight:700;padding-bottom:4px;">
+          ${typeStr}&nbsp; ${rec.title}${yearStr}
+        </td>
+      </tr><tr>
+        <td style="color:${TEXT_DIM};font-size:13px;line-height:1.5;">
+          ${rec.reason}
+        </td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="height:8px;"></td></tr>`;
+  }
+
+  try {
+    await resend.emails.send({
+      from: "Logflix Curator <curator@logflix.app>",
+      to: email,
+      subject: s.subject,
+      html: wrap(`
+        <tr><td align="center" style="padding-bottom:8px;">
+          <span style="font-size:28px;">🤖</span>
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:6px;color:#fff;font-size:20px;font-weight:800;letter-spacing:-0.02em;">
+          ${greeting}
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:20px;color:${TEXT};font-size:15px;line-height:1.6;">
+          ${s.heading}
+        </td></tr>
+        <tr><td style="padding-bottom:8px;color:${TEXT_DIM};font-size:13px;">
+          ${s.intro}
+        </td></tr>
+        ${recsHtml}
+        ${ctaButton(s.cta, "https://logflix.app/curator")}
+        ${footer(
+          s.footerText,
+          `<a href="https://logflix.app/settings" style="color:${TEXT_DIM};text-decoration:underline;">${s.unsub}</a>`,
+        )}
+      `),
+    });
+  } catch (err) {
+    console.error("Failed to send curator weekly email:", err);
+  }
+}
