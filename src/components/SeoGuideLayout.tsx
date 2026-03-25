@@ -18,6 +18,7 @@ interface SeoGuideLayoutProps {
   locale?: "no" | "en" | "se" | "dk" | "fi";
   ctaText?: string;
   trustLine?: string;
+  ctaHref?: string;
   relatedLinks?: RelatedLink[];
   children: React.ReactNode;
 }

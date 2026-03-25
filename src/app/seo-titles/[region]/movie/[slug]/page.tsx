@@ -296,7 +296,7 @@ export default async function MoviePage({
     }
   }
 
-  const jsonLd = {
+  const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Movie",
     name: title.title,
@@ -309,6 +309,16 @@ export default async function MoviePage({
       target: "https://logflix.app/together",
     },
   };
+  if (title.vote_average && title.vote_count && title.vote_count >= 50) {
+    jsonLd.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: Math.round(title.vote_average * 10) / 10,
+      bestRating: 10,
+      worstRating: 1,
+      ratingCount: title.vote_count,
+      reviewCount: title.vote_count,
+    };
+  }
 
   return (
     <>
