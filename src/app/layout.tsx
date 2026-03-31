@@ -53,7 +53,16 @@ export default async function RootLayout({
 
   return (
     <html lang={lang} className={inter.className}>
+      <head>
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <link rel="apple-touch-icon" href="/icon-512.png" />
+      </head>
       <body className="min-h-dvh antialiased">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
