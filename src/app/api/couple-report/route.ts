@@ -112,8 +112,8 @@ export async function GET() {
       .or(`host_id.eq.${user.id},guest_id.eq.${user.id}`);
 
     const matchRate = totalSessions && totalSessions > 0
-      ? Math.round((matchedSessions.length / totalSessions) * 100)
-      : 50;
+      ? (matchedSessions.length / totalSessions)
+      : 0;
 
     // 8. Fetch top 5 match titles
     const matchTmdbIds = matchedSessions.slice(0, 5).map((s) => s.match_tmdb_id);
@@ -127,18 +127,20 @@ export async function GET() {
       .filter(Boolean);
 
     // 9. Compute final compatibility score
-    const compatibilityScore = Math.round(
-      genreOverlap * 0.4 +
-      matchRate * 0.4 +
-      eraScore * 0.2,
-    );
+    // Return null if insufficient data (under 10 swipes per person)
+    const hasEnoughData = mySwipeRows.length >= 10 && partnerSwipeRows.length >= 10;
+    const compatibilityScore = hasEnoughData
+      ? Math.round(((matchRate * 0.6) + (genreOverlap / 100 * 0.4)) * 100)
+      : null;
 
     // 10. Top genres + avoided genres
     const topGenres = getTopGenreNames(myGenreCounts, partnerGenreCounts, titleMap);
     const avoidedGenres = getAvoidedGenres(myTmdbIds, partnerTmdbIds, titleMap);
 
     // 11. Percentile (simplified: based on score)
-    const percentile = Math.min(99, Math.max(1, Math.round(compatibilityScore * 0.95 + 5)));
+    const percentile = compatibilityScore != null
+      ? Math.min(99, Math.max(1, Math.round(compatibilityScore * 0.95 + 5)))
+      : null;
 
     // 12. Tonight's pick
     const today = new Date().toISOString().slice(0, 10);
@@ -181,7 +183,8 @@ export async function GET() {
         ].filter((g, i, arr) => arr.indexOf(g) === i);
 
         // Match rate from Se Sammen sessions
-        const mrLabel = matchRate >= 70 ? "høy" : matchRate >= 40 ? "middels" : "lav";
+        const mrPct = Math.round(matchRate * 100);
+        const mrLabel = mrPct >= 70 ? "høy" : mrPct >= 40 ? "middels" : "lav";
         const matchRateScore = Math.min(matchedSessions.length / 10, 1) * 50;
 
         // Genre overlap score
@@ -217,7 +220,7 @@ export async function GET() {
     return NextResponse.json({
       compatibility_score: compatibilityScore,
       genre_overlap: genreOverlap,
-      tone_score: matchRate,
+      tone_score: Math.round(matchRate * 100),
       era_score: eraScore,
       percentile,
       total_matches: matchedSessions.length,

@@ -112,6 +112,7 @@ export default function WTBetaPage() {
   useEffect(() => () => { if (excludeToastRef.current) clearTimeout(excludeToastRef.current); }, []);
 
   const superLikedIdRef = useRef<number | null>(null);
+  const sessionStartTime = useRef<number>(0);
   const cardStartTime = useRef<number>(0);
   const swipeTimings = useRef<Record<number, number>>({});
   const sessionSwipes = useRef<Record<number, SwipeAction>>({});
@@ -608,6 +609,7 @@ export default function WTBetaPage() {
     setDeck([...ts]);
     setDeckIndex(0);
     setScreen("together");
+    sessionStartTime.current = Date.now();
     firstSwipeTrackedRef.current = false;
     track("together_session_started", { mode: "solo", locale });
     try { localStorage.setItem("ss_last_play_date", new Date().toISOString().slice(0, 10)); } catch { /* ignore */ }
@@ -963,7 +965,7 @@ export default function WTBetaPage() {
       try { localStorage.setItem(TITLES_CACHE_KEY, JSON.stringify({ titles: data.session.titles, mood: "", ts: Date.now() })); } catch {}
       try { localStorage.setItem("wt_session_resume", JSON.stringify({ sessionId: data.session.id, ts: Date.now() })); } catch {}
       endedRoundRef.current = 0; endingRoundRef.current = false;
-      setMode("paired"); setScreen("together");
+      setMode("paired"); setScreen("together"); sessionStartTime.current = Date.now();
       setTimer(ROUND1_DURATION); setTimerRunning(true);
       setChosen(null);
     } catch (e: unknown) {
@@ -1005,7 +1007,7 @@ export default function WTBetaPage() {
             } else {
               setDeckIndex(0);
             }
-            setScreen("together"); setTimer(ROUND1_DURATION); setTimerRunning(true);
+            setScreen("together"); sessionStartTime.current = Date.now(); setTimer(ROUND1_DURATION); setTimerRunning(true);
           }
         }
         const partnerSwiped = Object.keys(data.session.partner_swipes || {}).length;
@@ -2112,6 +2114,15 @@ export default function WTBetaPage() {
                         {PROVIDERS.filter((p) => selectedProviders.includes(p.id)).map((p) => p.name).join(" · ")}
                       </p>
                     )}
+                    {/* Match time */}
+                    {(() => {
+                      const elapsed = sessionStartTime.current > 0 ? Math.round((Date.now() - sessionStartTime.current) / 1000) : 0;
+                      return elapsed > 0 && elapsed < 300 ? (
+                        <p className="text-sm font-semibold mb-2" style={{ color: "rgba(255,200,100,0.85)" }}>
+                          {t(locale, "winner", "matchTime").replace("{x}", String(elapsed))}
+                        </p>
+                      ) : null;
+                    })()}
                     {finalWinner.overview && (
                       <p className="text-sm mb-8 line-clamp-2" style={{ color: "rgba(255,255,255,0.58)", lineHeight: 1.5 }}>
                         {finalWinner.overview}
@@ -2120,27 +2131,27 @@ export default function WTBetaPage() {
                   </div>
                   {/* Phase 3: primary CTAs + collapsible */}
                   <div style={{ opacity: matchRevealPhase >= 3 ? 1 : 0, transition: "opacity 600ms ease" }}>
-                    {/* PRIMARY: Watch */}
+                    {/* PRIMARY: Share */}
+                    <button
+                      onClick={() => finalWinner && handleShare(finalWinner.title)}
+                      className="w-full py-3 rounded-xl text-sm font-semibold mb-3"
+                      style={{ background: "#ff2a2a", border: "none", color: "#fff", cursor: "pointer" }}
+                    >
+                      {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "shareMatch")}
+                    </button>
+
+                    {/* SECONDARY: Watch */}
                     {finalWinner && (() => {
                       const wi = getWatchInfo(finalWinner.title, finalWinner.tmdb_id, finalWinner.type, selectedProviders, winnerProviderIds);
                       const label = wi.providerName
                         ? t(locale, "winner", "watchOn").replace("{provider}", wi.providerName)
                         : t(locale, "winner", "startWatching");
                       return (
-                        <button onClick={() => { track("together_watch_clicked", { provider: wi.providerName, tmdb_id: finalWinner.tmdb_id, title: finalWinner.title }); window.open(wi.url, "_blank", "noopener,noreferrer"); }} className="button" style={{ width: "100%", marginBottom: 10 }}>
+                        <button onClick={() => { track("together_watch_clicked", { provider: wi.providerName, tmdb_id: finalWinner.tmdb_id, title: finalWinner.title }); window.open(wi.url, "_blank", "noopener,noreferrer"); }} className="w-full py-3 rounded-xl text-sm font-semibold mb-4" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.85)", cursor: "pointer" }}>
                           {label}
                         </button>
                       );
                     })()}
-
-                    {/* PRIMARY: Share */}
-                    <button
-                      onClick={() => finalWinner && handleShare(finalWinner.title)}
-                      className="w-full py-3 rounded-xl text-sm font-semibold mb-4"
-                      style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.85)", cursor: "pointer" }}
-                    >
-                      {shareState === "copied" ? t(locale, "winner", "copied") : t(locale, "winner", "share")}
-                    </button>
 
                     {/* Guest signup CTA — before premium teaser */}
                     {!authUser && (

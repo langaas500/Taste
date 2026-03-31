@@ -186,6 +186,8 @@ const strings = {
     coupleReportWithCount: { no: "Dere har matchet {n} ganger 🎬 Se hva dere egentlig liker sammen →", en: "You've matched {n} times 🎬 See what you actually like together →", dk: "I har matchet {n} gange 🎬 Se hvad I egentlig kan lide sammen →", se: "Ni har matchat {n} gånger 🎬 Se vad ni egentligen gillar tillsammans →", fi: "Olette matchanneet {n} kertaa 🎬 Katso mitä oikeasti pidätte yhdessä →" },
     shareStory: { no: "Del som Stories 📸", en: "Share as Story 📸", dk: "Del som Story 📸", se: "Dela som Story 📸", fi: "Jaa tarinana 📸" },
     shareStoryDownload: { no: "Last ned bilde 📸", en: "Download image 📸", dk: "Download billede 📸", se: "Ladda ner bild 📸", fi: "Lataa kuva 📸" },
+    shareMatch: { no: "Del matchen 🎬", en: "Share the match 🎬", dk: "Del matchen 🎬", se: "Dela matchen 🎬", fi: "Jaa ottelu 🎬" },
+    matchTime: { no: "⚡ Dere matchet på {x} sekunder!", en: "⚡ You matched in {x} seconds!", dk: "⚡ I matchede på {x} sekunder!", se: "⚡ Ni matchade på {x} sekunder!", fi: "⚡ Matchasitte {x} sekunnissa!" },
   },
 
   // ============================================
