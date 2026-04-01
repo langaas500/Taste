@@ -1,47 +1,45 @@
 {
+  "id": "/together",
   "name": "Logflix — Watch Together",
   "short_name": "Logflix",
   "description": "Stop arguing about what to watch. Swipe movies together and match in under 3 minutes.",
   "start_url": "/together",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#0a0a0f",
   "background_color": "#0a0a0f",
-  "lang": "en",
   "categories": ["entertainment", "lifestyle"],
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-1024.png",
       "sizes": "1024x1024",
       "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png",
       "purpose": "any"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Watch Together — Swipe and Match"
     }
   ],
   "shortcuts": [
