@@ -1,4 +1,13 @@
 {
+  "headers": [
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" },
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    }
+  ],
   "redirects": [
     { "source": "/film-a-se-med-kjaeresten", "destination": "/no/film-a-se-med-kjaeresten", "permanent": true },
     { "source": "/hva-skal-vi-se-i-kveld", "destination": "/no/hva-skal-vi-se-i-kveld", "permanent": true },
