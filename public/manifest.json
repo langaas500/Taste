@@ -1,30 +1,35 @@
 {
-  "background_color": "#0a0a0f",
-  "description": "Stop arguing about what to watch. Swipe movies together and match in under 3 minutes.",
-  "dir": "ltr",
-  "display": "standalone",
   "name": "Logflix — Watch Together",
-  "orientation": "portrait",
-  "scope": "/",
   "short_name": "Logflix",
+  "description": "Stop arguing about what to watch. Swipe movies together and match in under 3 minutes.",
   "start_url": "/together",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "dir": "ltr",
   "theme_color": "#0a0a0f",
+  "background_color": "#0a0a0f",
+  "lang": "en",
+  "id": "app.logflix.ios",
+  "categories": ["entertainment", "lifestyle"],
   "icons": [
     {
-      "src": "https://logflix.app/icon?ad377c53a23c5601",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "sizes": "512x512"
+      "purpose": "any maskable"
     },
     {
-      "src": "https://logflix.app/apple-touch-icon.png",
+      "src": "/icon-512.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "sizes": "180x180"
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
     }
-  ],
-  "id": "app.logflix.ios",
-  "lang": "en",
-  "categories": [
-    "entertainment",
-    "lifestyle"
   ]
 }
