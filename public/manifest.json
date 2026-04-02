@@ -1,86 +1,30 @@
 {
-  "id": "/together",
-  "name": "Logflix — Watch Together",
-  "short_name": "Logflix",
-  "description": "Stop arguing about what to watch. Swipe movies together and match in under 3 minutes.",
-  "start_url": "/together",
-  "scope": "/",
-  "display": "standalone",
-  "orientation": "portrait",
-  "theme_color": "#0a0a0f",
   "background_color": "#0a0a0f",
-  "categories": ["entertainment", "lifestyle"],
+  "description": "Stop arguing about what to watch. Swipe movies together and match in under 3 minutes.",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Logflix — Watch Together",
+  "orientation": "portrait",
+  "scope": "/",
+  "short_name": "Logflix",
+  "start_url": "/together",
+  "theme_color": "#0a0a0f",
   "icons": [
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
+      "src": "https://logflix.app/icon?ad377c53a23c5601",
       "type": "image/png",
-      "purpose": "any"
+      "sizes": "512x512"
     },
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
+      "src": "https://logflix.app/apple-touch-icon.png",
       "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icon-1024.png",
-      "sizes": "1024x1024",
-      "type": "image/png",
-      "purpose": "any"
+      "sizes": "180x180"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/1-together.png",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Find something to watch together"
-    },
-    {
-      "src": "/2-swipe.png",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Swipe movies separately"
-    },
-    {
-      "src": "/3-match.png",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "It's a match!"
-    },
-    {
-      "src": "/4-tonights-pick.png",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Tonight's Pick — daily recommendation"
-    },
-    {
-      "src": "/5-qr.png",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Invite your partner with QR code"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Watch Together",
-      "short_name": "Together",
-      "description": "Start a couple movie matching session",
-      "url": "/together",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
-    }
+  "id": "app.logflix.ios",
+  "lang": "en",
+  "categories": [
+    "entertainment",
+    "lifestyle"
   ]
 }
