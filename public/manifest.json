@@ -42,6 +42,38 @@
       "purpose": "any"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/1-together.png",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Find something to watch together"
+    },
+    {
+      "src": "/2-swipe.png",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Swipe movies separately"
+    },
+    {
+      "src": "/3-match.png",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "It's a match!"
+    },
+    {
+      "src": "/4-tonights-pick.png",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Tonight's Pick — daily recommendation"
+    },
+    {
+      "src": "/5-qr.png",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Invite your partner with QR code"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Watch Together",
