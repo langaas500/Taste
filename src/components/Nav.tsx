@@ -5,7 +5,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
-import { getLocale, type Locale } from "@/lib/i18n";
+import { type Locale } from "@/lib/i18n";
+import { useLocale } from "@/hooks/useLocale";
 import ConversionWall from "@/components/ConversionWall";
 
 /* ── colors ─────────────────────────────────────────────── */
@@ -133,7 +134,7 @@ export default function Nav() {
   const [isGuest, setIsGuest] = useState(false);
   const [isFoundingMember, setIsFoundingMember] = useState(false);
   const [isPremium, setIsPremium] = useState(true); // default true to hide badge until loaded
-  const [locale, setLocale] = useState<Locale>("en");
+  const locale = useLocale();
   const [region, setRegion] = useState<string>("no");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showAuthWall, setShowAuthWall] = useState(false);
@@ -165,7 +166,6 @@ export default function Nav() {
       .then((r) => r.json())
       .then((data) => {
         if (data.region) {
-          setLocale(getLocale(data.region));
           const r = data.region as string;
           setRegion(["no", "se", "dk", "fi"].includes(r) ? r : "no");
         }
