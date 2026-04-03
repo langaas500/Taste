@@ -68,6 +68,10 @@ const strings = {
     returnDay7Title: "Du har brukt Logflix i en uke 🎉",
     returnDay7Desc: "Nok data til å analysere filmsmaken din nå.",
     returnDay7Cta: "Analyser smaken min",
+    wrappedReady: (month: string) => `Din ${month} Wrapped er klar`,
+    wrappedCta: "Se den →",
+    wrappedCount: (n: number) => `${n} titler logget`,
+    wrappedMonths: ["januar", "februar", "mars", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "desember"],
   },
   en: {
     title: "Home",
@@ -124,6 +128,10 @@ const strings = {
     returnDay7Title: "You've used Logflix for a week 🎉",
     returnDay7Desc: "Enough data to analyze your film taste now.",
     returnDay7Cta: "Analyze my taste",
+    wrappedReady: (month: string) => `Your ${month} Wrapped is ready`,
+    wrappedCta: "View it →",
+    wrappedCount: (n: number) => `${n} titles logged`,
+    wrappedMonths: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
   },
   dk: {
     title: "Hjem",
@@ -180,6 +188,10 @@ const strings = {
     returnDay7Title: "Du har brugt Logflix i en uge 🎉",
     returnDay7Desc: "Nok data til at analysere din filmsmag nu.",
     returnDay7Cta: "Analyser min smag",
+    wrappedReady: (month: string) => `Din ${month} Wrapped er klar`,
+    wrappedCta: "Se den →",
+    wrappedCount: (n: number) => `${n} titler logget`,
+    wrappedMonths: ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"],
   },
   se: {
     title: "Hem",
@@ -236,6 +248,10 @@ const strings = {
     returnDay7Title: "Du har använt Logflix i en vecka 🎉",
     returnDay7Desc: "Tillräckligt med data för att analysera din filmsmak nu.",
     returnDay7Cta: "Analysera min smak",
+    wrappedReady: (month: string) => `Din ${month} Wrapped är klar`,
+    wrappedCta: "Se den →",
+    wrappedCount: (n: number) => `${n} titlar loggade`,
+    wrappedMonths: ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"],
   },
   fi: {
     title: "Koti",
@@ -292,6 +308,10 @@ const strings = {
     returnDay7Title: "Olet käyttänyt Logflixiä viikon 🎉",
     returnDay7Desc: "Tarpeeksi dataa elokuvamakusi analysoimiseen.",
     returnDay7Cta: "Analysoi makuni",
+    wrappedReady: (month: string) => `Sinun ${month} Wrapped on valmis`,
+    wrappedCta: "Katso se →",
+    wrappedCount: (n: number) => `${n} nimikettä kirjattu`,
+    wrappedMonths: ["tammikuu", "helmikuu", "maaliskuu", "huhtikuu", "toukokuu", "kesäkuu", "heinäkuu", "elokuu", "syyskuu", "lokakuu", "marraskuu", "joulukuu"],
   },
 } as const;
 
@@ -339,6 +359,7 @@ export default function HomePage() {
   const [hasPartner, setHasPartner] = useState<boolean | null>(null);
   const [returningBanner, setReturningBanner] = useState<{ type: "day3" | "day7" } | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [wrappedCount, setWrappedCount] = useState(0);
 
   useEffect(() => {
     loadDashboard();
@@ -442,6 +463,13 @@ export default function HomePage() {
     ]);
 
     const userTitles = (titlesRes.data || []) as UserTitle[];
+
+    // Count titles logged this month for Wrapped card
+    const now = new Date();
+    const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    const thisMonthCount = userTitles.filter((t) => t.status === "watched" && (t.updated_at || "") >= monthStart).length;
+    setWrappedCount(thisMonthCount);
+
     const cacheMap = await fetchCacheForTitles(supabase, userTitles.map((t) => ({ tmdb_id: t.tmdb_id, type: t.type })));
 
     const allTitles = userTitles.map((t) => ({
@@ -626,6 +654,42 @@ export default function HomePage() {
         </div>
       </Link>
       </div>
+
+      {/* Wrapped card */}
+      {wrappedCount >= 3 && (() => {
+        const now = new Date();
+        const monthIdx = now.getMonth();
+        const year = now.getFullYear();
+        const monthName = s.wrappedMonths[monthIdx];
+        const slug = `${year}-${String(monthIdx + 1).padStart(2, "0")}`;
+        return (
+          <Link
+            href={`/wrapped/${slug}`}
+            onClick={() => track("wrapped_card_clicked", { month: slug, count: wrappedCount })}
+            className="block rounded-2xl p-4 transition-all hover:scale-[1.02] duration-200"
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,42,42,0.1)", border: "1px solid rgba(255,42,42,0.2)" }}>
+                <span style={{ fontSize: 18 }}>🎬</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-white/90 truncate">{s.wrappedReady(monthName)}</p>
+                  <span className="flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider" style={{ background: "rgba(255,42,42,0.15)", color: "#ff2a2a", border: "1px solid rgba(255,42,42,0.3)" }}>NY</span>
+                </div>
+                <p className="text-xs text-white/40 mt-0.5">{s.wrappedCount(wrappedCount)}</p>
+              </div>
+              <span className="flex-shrink-0 text-xs font-semibold" style={{ color: "#ff2a2a" }}>{s.wrappedCta}</span>
+            </div>
+          </Link>
+        );
+      })()}
 
       {/* Tonight's Pick — premium users (solo + paired) */}
 
