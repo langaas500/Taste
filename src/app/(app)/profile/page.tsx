@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-browser";
 import type { UserTitle } from "@/lib/types";
+import { useLocale } from "@/hooks/useLocale";
 
 /* ── locale strings ─────────────────────────────────────── */
 
@@ -137,14 +138,6 @@ const strings = {
 
 type Locale = "no" | "dk" | "fi" | "se" | "en";
 
-const regionToLocale: Record<string, Locale> = {
-  NO: "no", DK: "dk", FI: "fi", SE: "se",
-};
-
-function getLocale(region: string): Locale {
-  return regionToLocale[region] || "en";
-}
-
 interface Stats {
   totalWatched: number;
   totalWatchlist: number;
@@ -218,7 +211,7 @@ function highlightTerms(text: string): React.ReactNode {
 /* ── Main page ─────────────────────────────────────────── */
 
 export default function ProfilePage() {
-  const [locale, setLocale] = useState<Locale>("no");
+  const locale = useLocale() as Locale;
   const [taste, setTaste] = useState<{ youLike: string; avoid: string; pacing: string } | null>(null);
   const [tasteLoading, setTasteLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -230,14 +223,7 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  useEffect(() => {
-    fetch("/api/together/ribbon")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.region) setLocale(getLocale(data.region));
-      })
-      .catch(() => {});
-  }, []);
+  /* locale now comes from useLocale() */
 
   useEffect(() => {
     (async () => {

@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useLocale } from "@/hooks/useLocale";
 
 /* ── i18n ─────────────────────────────────────────────── */
 
@@ -806,7 +807,7 @@ export default function WrappedMonthPage() {
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [locale] = useState<WLocale>("no"); // Default, could detect from profile
+  const locale = useLocale() as WLocale;
   const touchStartX = useRef(0);
   const shareCardRef = useRef<HTMLDivElement>(null);
 

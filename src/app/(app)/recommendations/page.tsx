@@ -12,7 +12,8 @@ import PremiumModal from "@/components/PremiumModal";
 import { submitFeedback, addExclusion, logTitle } from "@/lib/api";
 import { prefetchNetflixIds } from "@/lib/prefetch-netflix-ids";
 import type { Recommendation, MediaType } from "@/lib/types";
-import { getLocale, type Locale } from "@/lib/i18n";
+import { useLocale } from "@/hooks/useLocale";
+import type { Locale } from "@/lib/i18n";
 
 const FREE_REC_LIMIT = 5;
 
@@ -165,7 +166,7 @@ export default function RecommendationsPage() {
   const [addToListItem, setAddToListItem] = useState<{ tmdb_id: number; type: MediaType; title: string } | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const [locale, setLocale] = useState<Locale>("en");
+  const locale = useLocale();
   const [isPremium, setIsPremium] = useState(true); // default true to avoid flash
   const [showWall, setShowWall] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -177,20 +178,6 @@ export default function RecommendationsPage() {
       .then((d) => { if (d.profile) setIsPremium(!!d.profile.is_premium); })
       .catch(() => {});
     loadRecs();
-    fetch("/api/together/ribbon")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.region) {
-          const params = new URLSearchParams(window.location.search);
-          const langParam = params.get("lang");
-          if (langParam === "no" || langParam === "en") {
-            setLocale(langParam as Locale);
-          } else {
-            setLocale(getLocale(data.region as string));
-          }
-        }
-      })
-      .catch(() => {});
   }, []);
 
   async function loadRecs() {

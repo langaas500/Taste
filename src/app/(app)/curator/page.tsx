@@ -6,6 +6,7 @@ import PremiumModal from "@/components/PremiumModal";
 import StreamingModal from "@/components/StreamingModal";
 import { track } from "@/lib/posthog";
 import type { Locale } from "@/lib/i18n";
+import { useLocale } from "@/hooks/useLocale";
 
 /* ── Types ─────────────────────────────────────────── */
 
@@ -36,15 +37,7 @@ interface Message {
 
 /* ── i18n ──────────────────────────────────────────── */
 
-function getUserLanguage(): Locale {
-  if (typeof window === "undefined") return "no";
-  const lang = navigator.language || "";
-  if (lang.startsWith("nb") || lang.startsWith("no") || lang.startsWith("nn")) return "no";
-  if (lang.startsWith("da")) return "dk";
-  if (lang.startsWith("sv")) return "se";
-  if (lang.startsWith("fi")) return "fi";
-  return "en";
-}
+/* locale now comes from useLocale() hook */
 
 const i18n = {
   no: {
@@ -349,7 +342,7 @@ function PremiumUnlock({ lang, onUpgrade }: { lang: Locale; onUpgrade: () => voi
 /* ── Main page ─────────────────────────────────────── */
 
 export default function CuratorPage() {
-  const [lang] = useState<Locale>(getUserLanguage);
+  const lang = useLocale() as Locale;
   const [username, setUsername] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const [showPremium, setShowPremium] = useState(false);

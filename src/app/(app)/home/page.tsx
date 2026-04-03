@@ -9,7 +9,8 @@ import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-brows
 import { prefetchNetflixIds } from "@/lib/prefetch-netflix-ids";
 import type { UserTitle, TitleCache, MediaType, Recommendation } from "@/lib/types";
 import { track } from "@/lib/posthog";
-import { getLocale, type Locale } from "@/lib/i18n";
+import { useLocale } from "@/hooks/useLocale";
+import type { Locale } from "@/lib/i18n";
 
 const strings = {
   no: {
@@ -321,7 +322,7 @@ export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
-  const [locale, setLocale] = useState<Locale>("en");
+  const locale = useLocale();
   const [hasTaste, setHasTaste] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const [homeRecs, setHomeRecs] = useState<Recommendation[]>(() => {
@@ -344,14 +345,7 @@ export default function HomePage() {
     loadTasteAndRecs();
   }, []);
 
-  useEffect(() => {
-    fetch("/api/together/ribbon")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.region) setLocale(getLocale(data.region));
-      })
-      .catch(() => {});
-  }, []);
+  /* locale now comes from useLocale() */
 
   // Returning user hook — day 3/7 banner
   useEffect(() => {
