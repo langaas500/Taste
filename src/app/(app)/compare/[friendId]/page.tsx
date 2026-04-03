@@ -35,7 +35,7 @@ function PosterRow({ items, label }: { items: CacheItem[]; label: string }) {
   return (
     <div className="mb-6">
       <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">{label}</h3>
-      <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+      <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", overscrollBehaviorX: "contain" }}>
         {items.map((item) => (
           <div key={item.key} className="flex-shrink-0 w-[90px]">
             <div className="aspect-[2/3] rounded-[var(--radius-sm)] overflow-hidden bg-[var(--bg-surface)] mb-1">

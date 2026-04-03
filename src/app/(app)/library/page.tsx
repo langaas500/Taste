@@ -515,7 +515,7 @@ export default function LibraryPage() {
 
       {/* Filter tabs */}
       <div className="mb-6 -mx-1">
-        <div className="flex gap-1 overflow-x-auto no-scrollbar pb-1">
+        <div className="flex gap-1 overflow-x-auto no-scrollbar pb-1" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", overscrollBehaviorX: "contain" }}>
           {filterTabs.map((tab) => {
             const isActive = filter === tab.id;
             return (
@@ -744,6 +744,7 @@ export default function LibraryPage() {
             <div
               ref={scrollRef}
               className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-2 -mx-4 px-4"
+              style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", overscrollBehaviorX: "contain" }}
             >
               {recs.map((rec) => {
                 const imgSrc = rec.poster_path

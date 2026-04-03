@@ -32,7 +32,7 @@ export default function AnimatedTabs({ tabs, active, onChange }: AnimatedTabsPro
 
   return (
     <div className="relative" ref={containerRef}>
-      <div className="flex gap-1 overflow-x-auto no-scrollbar pb-0.5">
+      <div className="flex gap-1 overflow-x-auto no-scrollbar pb-0.5" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", overscrollBehaviorX: "contain" }}>
         {tabs.map((tab) => (
           <button
             key={tab.id}

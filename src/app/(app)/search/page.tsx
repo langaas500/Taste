@@ -96,7 +96,7 @@ function DiscoveryRow({ row, onSelect }: { row: DiscoveryRowData; onSelect: (ite
         <div
           ref={scrollRef}
           className="flex gap-3 overflow-x-auto pb-2 discovery-scroll"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch", touchAction: "pan-x", overscrollBehaviorX: "contain" }}
         >
           {row.results.map((item) => {
             const title = item.title || item.name || "";

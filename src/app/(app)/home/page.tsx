@@ -605,14 +605,14 @@ export default function HomePage() {
         {/* Gradient overlay */}
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.85) 50%,rgba(0,0,0,0.45) 100%)" }} />
         {/* Innhold */}
-        <div style={{ position: "relative", padding: "24px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ position: "relative", padding: "24px 20px" }}>
+          <div>
             <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#ff2a2a" }}>{s.togetherLabel}</p>
             <h2 style={{ margin: "0 0 6px", fontSize: 20, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
               {s.togetherHeadline}<br />{s.togetherHeadline2}
             </h2>
             <p style={{ margin: "0 0 14px", fontSize: 13, color: "rgba(255,120,120,0.7)", lineHeight: 1.5 }}>{s.togetherSub}</p>
-            <div style={{ display: "flex", gap: 14 }}>
+            <div style={{ display: "flex", gap: 14, marginBottom: 16 }}>
               {[["❤️", s.togetherSwipe], ["🎬", s.togetherMatch], ["🍿", s.togetherWatch]].map(([icon, label]) => (
                 <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <span style={{ fontSize: 13 }}>{icon}</span>
@@ -620,11 +620,9 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flexShrink: 0 }}>
             <span
               className="transition-all duration-200"
-              style={{ background: "#ff2a2a", color: "#fff", borderRadius: 12, padding: "12px 18px", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 0 20px rgba(255,42,42,0.4)", display: "block" }}
+              style={{ background: "#ff2a2a", color: "#fff", borderRadius: 12, padding: "12px 18px", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 0 20px rgba(255,42,42,0.4)", display: "inline-block" }}
               onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = "0 0 30px rgba(255,42,42,0.6)"; el.style.background = "#e02424"; el.style.transform = "translateY(-1px)"; }}
               onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = "0 0 20px rgba(255,42,42,0.4)"; el.style.background = "#ff2a2a"; el.style.transform = "translateY(0)"; }}
             >
@@ -1012,7 +1010,7 @@ function HorizontalScroll({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   return (
     <div className="relative">
-      <div ref={ref} className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth -mx-4 px-4 pb-1" style={{ scrollSnapType: "x mandatory" }}>
+      <div ref={ref} className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth -mx-4 px-4 pb-1" style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", touchAction: "pan-x", overscrollBehaviorX: "contain" }}>
         {children}
       </div>
     </div>

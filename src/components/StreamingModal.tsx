@@ -524,7 +524,7 @@ export default function StreamingModal({ tmdbId, type, title, posterPath, onClos
                 {topCast.length > 0 && (
                   <div>
                     <p className="text-[11px] text-white/30 font-semibold uppercase tracking-wider mb-2">{s.cast}</p>
-                    <div className="flex gap-3 overflow-x-auto pb-1 custom-scrollbar">
+                    <div className="flex gap-3 overflow-x-auto pb-1 custom-scrollbar" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", overscrollBehaviorX: "contain" }}>
                       {topCast.map((person) => (
                         <div key={person.id} className="flex-shrink-0 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06]">
                           {person.profile_path ? (

@@ -348,7 +348,7 @@ export default function PremiumHubPage() {
         </div>
 
         {/* 3. 4-column feature grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 14 }} className="sm:grid-cols-4!">
 
           {/* Curator AI */}
           <Link href="/curator" style={{ textDecoration: "none" }}>
