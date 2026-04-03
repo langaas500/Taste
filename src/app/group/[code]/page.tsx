@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useGroupSession } from "@/hooks/useGroupSession";
 import type { GroupPoolItem, GroupStateResponse } from "@/types/group";
-import { getLocale, type Locale } from "@/app/together/strings";
+import { type Locale } from "@/app/together/strings";
+import { useLocale } from "@/hooks/useLocale";
 import { getMessages } from "@/app/together/messages";
 
 /* ── constants ──────────────────────────────────────────── */
@@ -110,7 +111,7 @@ export default function GroupSessionPage() {
   const [waitingFactIndex, setWaitingFactIndex] = useState(0);
 
   // Locale + poster-drift state
-  const [locale, setLocale] = useState<Locale>("en");
+  const locale = useLocale() as Locale;
   const [ribbonPosters, setRibbonPosters] = useState<string[]>([]);
 
   const guestIdRef = useRef("");
@@ -168,18 +169,11 @@ export default function GroupSessionPage() {
     resolve();
   }, [code, sessionId, router]);
 
-  // Fetch trending posters + detect region/locale
+  // Fetch trending posters
   useEffect(() => {
     fetch("/api/together/ribbon")
       .then((r) => r.json())
       .then((data) => {
-        const params = new URLSearchParams(window.location.search);
-        const langParam = params.get("lang");
-        if (langParam === "no" || langParam === "en") {
-          setLocale(langParam as Locale);
-        } else if (data.region) {
-          setLocale(getLocale(data.region as string));
-        }
         if (Array.isArray(data.posters) && data.posters.length > 0) {
           setRibbonPosters(data.posters as string[]);
         }

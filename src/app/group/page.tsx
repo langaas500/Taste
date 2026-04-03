@@ -3,7 +3,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { getLocale, type Locale } from "@/lib/i18n";
+import { type Locale } from "@/lib/i18n";
+import { useLocale } from "@/hooks/useLocale";
 
 /* ── constants ──────────────────────────────────────────── */
 
@@ -68,7 +69,7 @@ export default function GroupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [userRegion, setUserRegion] = useState("US");
-  const [locale, setLocale] = useState<Locale>("en");
+  const locale = useLocale() as Locale;
   const [ribbonPosters, setRibbonPosters] = useState<string[]>([]);
 
   const guestIdRef = useRef("");
@@ -95,13 +96,6 @@ export default function GroupPage() {
       .then((data) => {
         if (data.region) {
           setUserRegion(data.region as string);
-          const params = new URLSearchParams(window.location.search);
-          const langParam = params.get("lang");
-          if (langParam === "no" || langParam === "en") {
-            setLocale(langParam as Locale);
-          } else {
-            setLocale(getLocale(data.region as string));
-          }
         }
         if (Array.isArray(data.posters) && data.posters.length > 0) {
           setRibbonPosters(data.posters as string[]);

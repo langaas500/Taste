@@ -4,7 +4,8 @@ import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { getLocale, type Locale } from "@/lib/i18n";
+import { type Locale } from "@/lib/i18n";
+import { useLocale } from "@/hooks/useLocale";
 import { track } from "@/lib/posthog";
 
 type MediaType = "movie" | "tv";
@@ -249,7 +250,7 @@ function OnboardingContent() {
   const [tasteLoading, setTasteLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [userRegion, setUserRegion] = useState("US");
-  const [locale, setLocale] = useState<Locale>("en");
+  const locale = useLocale();
   const [isPremium, setIsPremium] = useState(false);
   const [emailOptIn, setEmailOptIn] = useState(false);
   const [emailSaving, setEmailSaving] = useState(false);
@@ -310,21 +311,12 @@ function OnboardingContent() {
       .catch(() => {});
   }, [step, isPremium, trialActivated]);
 
-  // Detect region + locale via the ribbon endpoint (same as Se Sammen)
+  // Detect region via the ribbon endpoint
   useEffect(() => {
     fetch("/api/together/ribbon")
       .then((r) => r.json())
       .then((data) => {
-        if (data.region) {
-          setUserRegion(data.region as string);
-          const params = new URLSearchParams(window.location.search);
-          const langParam = params.get("lang");
-          if (langParam === "no" || langParam === "en") {
-            setLocale(langParam as Locale);
-          } else {
-            setLocale(getLocale(data.region as string));
-          }
-        }
+        if (data.region) setUserRegion(data.region as string);
       })
       .catch(() => {});
   }, []);

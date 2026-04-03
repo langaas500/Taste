@@ -6,7 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { track } from "@/lib/posthog";
-import { getLocale, type Locale } from "@/lib/i18n";
+import { type Locale } from "@/lib/i18n";
+import { useLocale } from "@/hooks/useLocale";
 
 /* ── locale strings ──────────────────────────────────────── */
 const strings = {
@@ -251,19 +252,14 @@ function LoginContent() {
   const [oauthLoading, setOauthLoading] = useState(false);
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [locale, setLocale] = useState<Locale>("en");
+  const locale = useLocale();
   const [showReset, setShowReset] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMsg, setResetMsg] = useState("");
   const [resetError, setResetError] = useState("");
 
-  useEffect(() => {
-    fetch("/api/together/ribbon")
-      .then((r) => r.json())
-      .then((data) => { if (data.region) setLocale(getLocale(data.region as string)); })
-      .catch(() => {});
-  }, []);
+  /* locale now comes from useLocale() */
 
   const s = strings[locale] ?? strings.en;
 
