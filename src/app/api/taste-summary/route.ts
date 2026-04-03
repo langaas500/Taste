@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase-server";
-import { generateTasteSummary, regionToAILocale, type TasteInput } from "@/lib/ai";
+import { generateTasteSummary, regionToAILocale, localeToAILocale, type TasteInput } from "@/lib/ai";
 import type { UserTitle, TitleCache } from "@/lib/types";
 import { withLogger } from "@/lib/logger";
 import { applyRateLimit } from "@/lib/rate-limit";
@@ -205,14 +205,16 @@ export const POST = withLogger("/api/taste-summary", async (req, { logger }) => 
     const supabase = await createSupabaseServer();
     const admin = createSupabaseAdmin();
 
-    // Check premium status + region for locale
+    // Check premium status + locale/region
     const { data: prof } = await supabase
       .from("profiles")
-      .select("is_premium, preferred_region")
+      .select("is_premium, preferred_region, preferred_locale")
       .eq("id", user.id)
       .single();
     const isPremium = prof?.is_premium === true;
-    const aiLocale = regionToAILocale(prof?.preferred_region || "");
+    const aiLocale = prof?.preferred_locale
+      ? localeToAILocale(prof.preferred_locale)
+      : regionToAILocale(prof?.preferred_region || "");
 
     // Get user titles
     const { data: userTitles } = await supabase

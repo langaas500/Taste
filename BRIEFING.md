@@ -3,80 +3,65 @@
 > Denne filen er IKKE for kode-agenten (se CLAUDE.md). Den er kun til ekstern AI-assistent for rask kontekst uten kodebase-tilgang.
 
 ## Sist oppdatert
-**18.03.2026**
+**03.04.2026**
 
 ## Git-status
-- **Siste push:** `feat: mobile drawer nav using existing sidebar content` (18.03.2026)
+- **Siste push:** `fix: mobile UX — stack WT banner, horizontal scroll touch isolation, premium 2x2 grid` (03.04.2026)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 
 ## Hva er gjort nylig (siste 10 endringer)
 
-1. [pushet] **Shareable Stories-bilde** — Ny edge API `/api/og/match-share` genererer 1080x1920 Stories-format bilde med filmplakat, "Det er en match! 🎬", tittel og Logflix-branding. "Del som Stories 📸"-knapp på match-skjermen (kun mobil). Bruker Web Share API med file share, fallback til nedlasting. Lokalisert 5 språk.
-2. [pushet] **Konverteringsendringer (runde 2)** — (a) Par-rapport CTA på match-skjerm vises kun etter 3+ matcher, med personlig tekst "Dere har matchet X ganger 🎬". (b) Returning user dag 3/7 banner på home — glassmorphism-seksjon som trigger smaksprofil for brukere uten taste. (c) Streak-belønninger er nå klikkbare lenker til mood-guider (helgevalg→perfekt-fredagskveld, skjulte-perler→skjult-skatt, klassikere→nostalgisk-perle). (d) Onboarding ferdig-skjerm har par-rapport teaser "Har du en filmpartner?" med CTA til /premium. Alt lokalisert 5 språk.
-2. [pushet] **Konverteringsendringer (quick wins)** — Landing headline byttet til emosjonell "Slutt å krangle om hva dere skal se" (5 språk). PremiumModal CTA → "Start Logflix Par — 29 kr/mnd". Guest CTA på match-skjerm → "Lagre matchen" (mer spesifikt). Invite-tekst → "Jeg fant noe vi kan se i kveld 🎬". Weekly digest inkluderer nå par-matchdata (antall matcher + siste match + link til par-rapport) for brukere med koblet partner.
-2. [pushet] **Viral loop på match-skjerm** — "Prøv med en annen venn →" knapp på winner-skjermen. Åpner native share med "Jeg matchet på [tittel] — prøv du også!" + logflix.app/together. Lokalisert 5 språk. Kun synlig etter match.
-2. [pushet] **Feature-seksjon på landing** — Ny scrollbar seksjon under hero som viser verdien av gratis konto: 4 glassmorphism-kort (Logg, AI, Smaksprofil, Venner) i 2×2 grid (mobil) / 4×1 (desktop). Rød signup-CTA. Lokalisert no/en.
-2. [pushet] **Server-side premium gate på taste-summary** — `/api/taste-summary` returnerer nå kun `youLike` for gratisbrukere (avoid/pacing nulles ut server-side). Full data kun for premium. Respons inkluderer `is_premium` boolean. Full summary lagres fortsatt i DB slik at oppgradering gir umiddelbar tilgang.
-2. [pushet] **Guide hub-sider** — Ny `/[region]/guides` side som lister alle 22 guider gruppert i 4 kategorier (For to, Alene, Familie & venner, Stemning & sjanger). Glassmorphism-kort, lokalisert metadata+hreflang, BreadcrumbList JSON-LD. Forbedrer intern oppdagelse av guider.
-2. [pushet] **Sitemap paginering fikset** — Hovednivå sitemapindex (`/api/sitemap`) genererer nå dynamisk alle pages per region×type direkte fra DB-count istedenfor å peke til nested sitemapindex. Google ser nå alle titler.
-2. [pushet] **Sitemap noindex-fix** — Alle sitemap-ruter (index, guides, titles) returnerer nå `X-Robots-Tag: index, follow` og `Cache-Control: public, s-maxage=86400`. Fikser GSC noindex-problem.
-2. [pushet] **OG-image viser provider automatisk** — generateMetadata henter providers og sender første flatrate provider_name til OG-bildet. Vises som "Tilgjengelig på X". Gjelder movie + TV.
-2. [pushet] **Forbedret OG-image layout for tittelsider** — Tittel flyttet til bunn-venstre, provider-tekst vises kun når `?provider=` er satt, Logflix-logo fra public/ nederst høyre.
-2. [pushet] **Dynamisk OG-image + deling for Se Sammen match** — Ny edge API-route `/api/og/match` genererer 1200x630 OG-bilde med poster-bakgrunn, "Det er en match!"-heading, tittel og Logflix-branding. Del-knappen peker nå til tittelens SEO-side (med rik OG) istedenfor generisk /together-lenke.
-3. [pushet] **Dynamisk OG-image for tittelsider** — Ny edge API-route `/api/og/title` genererer 1200x630 OG-bilde med poster-bakgrunn, mørk overlay, tittel, år, TMDB-rating og Logflix-branding. Movie + TV page metadata peker nå hit istedenfor rå TMDB-poster.
-2. [pushet] **Dynamisk OG-image for Wrapped** — Ny edge API-route `/api/og/wrapped` genererer 1200x630 OG-bilde med @vercel/og. Viser antall filmer, topp-sjanger, måned/år og brukernavn. Mørkt design med rød glow. layout.tsx injiserer og:image metadata for alle wrapped/[month]-sider.
-2. [pushet] **WatchAction JSON-LD schema** — Alle tittelsider (movie + TV) har nå Movie/TVSeries schema med AggregateRating og WatchAction. Strømmetjenester mappes til availableChannel. Utelater potentialAction hvis ingen flatrate-providers. Gir potensielt Watch-knapp i Google-søkeresultater.
-2. [pushet] **Personvern, curator rate limit, admin-email** — Personvernsiden nevner nå PostHog. Curator har rate limiting (10 req/60s). ADMIN_EMAILS i env.ts for API-ruter.
-3. [pushet] **Sitemap-optimalisering** — Redusert fra 8 til 2 DB-queries for titles-index. Eliminerer timeout-risiko på Vercel cold-start.
-4. [pushet] **Middleware rewrite alle 4 regioner** — Regex utvidet fra kun `/no/` til `(?:no|dk|fi|se)`. 75% av SEO-sider var 404.
-5. [pushet] **Duplikatkode slettet (~506 linjer)** — Separate page-filer per region fjernet. Konsolidert til `[region]`-parameter under `/seo-titles/`.
-6. [pushet] **Curator viser personlig grunn** — Hver anbefaling inkluderer personlig grunn tilpasset smak. Filmkortene forenklet.
-7. [pushet] **Curator filtrerer utilgjengelige titler** — Kun titler med strømmetjeneste i brukerens region vises.
-8. [pushet] **Påskekrim-guider i sitemap** — Full hreflang for alle 4 regioner.
-9. [pushet] **Curator-modell oppdatert** — `claude-haiku-4-5-20251001` med korrekt anthropic-version header.
+1. [pushet] **Mobile UX-fikser** — (a) Watch Together-banner på home stacker nå vertikalt på mobil så CTA-knappen ikke kuttes av. (b) Alle horisontale scroll-rader (home, library, search, compare, StreamingModal, AnimatedTabs) har nå `touchAction: pan-x` + `overscrollBehaviorX: contain` slik at horisontale swipes kun scroller kortene, ikke hele siden. (c) Premium feature-grid er nå 2×2 på mobil, 4 kolonner på desktop. (d) Dev-server eksponert på LAN med `--hostname 0.0.0.0 --webpack`.
+2. [pushet] **VSCode extensions config** — `.vscode/extensions.json` med ESLint, Tailwind, Prettier, GitLens.
+3. [pushet] **Cache-buster på icon-URLer i manifest** — Fikser manifest.json icon-caching.
+4. [pushet] **Screenshots i manifest.json** — For PWABuilder/App Store.
+5. [pushet] **Oppdaterte app-ikoner** — Ny farge.
+6. [pushet] **Manifest.json synlig for PWABuilder** — Middleware bypass + headers + relative paths.
+7. [pushet] **Apple Store compatible manifest.json** — Spec-compliant.
+8. [pushet] **PWA screenshots i manifest.json**.
+9. [pushet] **Manifest.json spec-compliant per MDN** — Separate purpose, add id/scope.
+10. [pushet] **Manifest.json for PWABuilder og App Store**.
 
 ## Tilstand per modul
 
 - **/together (Se Sammen):** ✅ Stabil. Tinder-sveip for par, Solo→Duo upgrade (CTA etter 3 swipes, solo-swipes replayed til par-sesjon), QR-deling, provider-filtrering, match-deling med rik OG-image. Ingen konto nødvendig.
 - **/group:** ✅ Stabil. Multi-person avstemning (3+), flere runder.
 - **/api:** ✅ Fungerer. Alle ruter har feilhåndtering. Backfill-endepunkter beskyttet med `BACKFILL_SECRET`.
-- **/api/curator:** ✅ Fungerer. Rate limiting lagt til (10 req/60s).
-- **SEO / middleware:** ✅ Fikset. Alle 4 regioner rewritet korrekt. ISR 24t. 3 JSON-LD schemas (FAQPage, BreadcrumbList, Movie/TVSeries+WatchAction). SeoPageTracker sender `seo_page_view` til PostHog.
-- **Premium / Stripe:** ✅ Stabil. 29 kr/mnd Founding Member. Server-side enforcement: `FREE_REC_LIMIT = 5` i recommendations/route.ts, 5 Curator-meldinger, taste-summary gated server-side (kun youLike for gratis).
-- **Lokalisering:** ✅ 5 språk (no, se, dk, fi, en). 22 stemningsguider × 4 regioner = 88 lokaliserte guide-sider + 4 hub-sider.
-- **Analytics / PostHog:** ✅ Integrert app-wide via PostHogProvider i root layout. SeoPageTracker på alle titelsider. Personvernsiden oppdatert til å nevne PostHog.
-- **Settings:** ✅ Stabil. Vennekoblinger, region, strømmetjenester, eksport, Trakt-kobling.
+- **/api/curator:** ✅ Fungerer. Rate limiting (10 req/60s).
+- **SEO / middleware:** ✅ Fikset. Alle 4 regioner rewritet korrekt. ISR 24t. 3 JSON-LD schemas. SeoPageTracker → PostHog.
+- **Premium / Stripe:** ✅ Stabil. 29 kr/mnd Founding Member. Server-side enforcement.
+- **Lokalisering:** ✅ 5 språk (no, se, dk, fi, en). 22 stemningsguider × 4 regioner = 88 guide-sider + 4 hub-sider.
+- **Analytics / PostHog:** ✅ Integrert app-wide.
+- **Settings:** ✅ Stabil.
+- **Mobile UX:** ✅ Forbedret — horisontal scroll touch-isolert, WT-banner stacker på mobil, premium-grid responsive.
 
 ## Åpne TODOs
 
-Ingen eksplisitte TODO/FIXME i kodebasen (kun `placeholder="XXXXXX"` i settings-input, som er tilsiktet).
+Ingen eksplisitte TODO/FIXME i kodebasen.
 
 ## Kjente svakheter og teknisk gjeld
 
 ### Høy prioritet
-- ~~**Personvernsiden** — ✅ Fikset (264a9aa)~~
-- ~~**Curator rate limiting** — ✅ Fikset (264a9aa)~~
-- ~~**Admin-email** — ✅ Delvis fikset (264a9aa) — API-ruter bruker env.ts, klient-side har fortsatt hardkoding~~
+- **Turbopack kræsjer på Windows** — Dev-server bruker `--webpack` som workaround. Turbopack gir "failed to create whole tree" panic.
 
 ### Medium prioritet
-- **13+ console.log i produksjonskode** — Spesielt `buildWtDeck()` i `wt-titles.ts` har 9 stk som kjører for hver Se Sammen-sesjon. Bør fjernes eller gå via logger.
-- **Fire-and-forget promises uten logging** — `sendWelcomeEmail().catch(() => {})` i auth callback, `sendMatchReminderEmail().catch(() => {})` i email-capture. Feiler lydløst uten spor.
-- **Localhost-fallback i trigger-cron** — `"http://localhost:3000"` som fallback hvis env-variabler mangler. Bør kaste error i produksjon.
-- **Unsafe `any` type** — `(providersData as any)` i curator/route.ts med eslint-disable. Bør types korrekt mot TMDB-respons.
+- **13+ console.log i produksjonskode** — Spesielt `buildWtDeck()` i `wt-titles.ts` har 9 stk. Bør fjernes.
+- **Fire-and-forget promises uten logging** — `sendWelcomeEmail().catch(() => {})` etc. Feiler lydløst.
+- **Localhost-fallback i trigger-cron** — Bør kaste error i produksjon.
+- **Unsafe `any` type** — `(providersData as any)` i curator/route.ts.
 
 ### Lav prioritet
-- **Ingen øvre grense på paginering** — Admin-sider godtar vilkårlig høy `page`-parameter (kan gi tung OFFSET-query).
-- **PostHog hardkodet dato** — `defaults: '2026-01-30'` i `lib/posthog.ts`, uklar hensikt.
-- **Error boundaries bruker `console.error`** — 3 error.tsx-filer (root, together, group) går utenom logger-abstraksjonen.
-- **Cache-invalidering udokumentert** — titles_cache oppdateres via fire-and-forget upsert, ingen eksplisitt invalidering ved dataendringer. ISR 24t dekker de fleste tilfeller.
+- **Ingen øvre grense på paginering** — Admin-sider godtar vilkårlig høy `page`.
+- **PostHog hardkodet dato** — `defaults: '2026-01-30'` i `lib/posthog.ts`.
+- **Error boundaries bruker `console.error`** — 3 error.tsx-filer.
+- **Cache-invalidering udokumentert**.
+- **Supabase CLI ikke installert** — Trengs via Scoop/Winget for migrasjoner.
 
 ## Neste prioriteter
 
-Basert på faktisk kode og åpne svakheter:
-
-1. **Rydd console.log fra wt-titles.ts** — 9 debug-linjer som forurenser produksjonslogger ved hver sesjon.
-2. **Legg til logging på fire-and-forget promises** — `.catch((e) => logger.error(...))` istedenfor `.catch(() => {})`.
-3. **Flytt admin-email hardkoding i klient** — `admin/page.tsx` bruker fortsatt hardkodet email.
-4. **Fjern localhost-fallback i trigger-cron** — Bør kaste error i produksjon.
-5. **Type-safe providers i curator** — Fjern `as any` cast.
+1. **Rydd console.log fra wt-titles.ts** — 9 debug-linjer i produksjon.
+2. **Legg til logging på fire-and-forget promises**.
+3. **Flytt admin-email hardkoding i klient**.
+4. **Fjern localhost-fallback i trigger-cron**.
+5. **Type-safe providers i curator**.

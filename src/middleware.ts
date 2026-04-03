@@ -128,15 +128,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Set locale cookie from IP country for client-side useLocale hook
-  const country = request.headers.get("x-vercel-ip-country") || "";
-  const locale = getLocale(country);
-  supabaseResponse.cookies.set("x-locale", locale, {
-    path: "/",
-    sameSite: "lax",
-    httpOnly: false,
-    maxAge: 86400,
-  });
+  // Set locale cookie — respect user's manual choice, fallback to IP detection
+  const existingLocale = request.cookies.get("x-locale")?.value;
+  const hasManualChoice = request.cookies.get("x-locale-manual")?.value === "1";
+  if (!hasManualChoice) {
+    const country = request.headers.get("x-vercel-ip-country") || "";
+    const locale = getLocale(country);
+    supabaseResponse.cookies.set("x-locale", locale, {
+      path: "/",
+      sameSite: "lax",
+      httpOnly: false,
+      maxAge: 86400,
+    });
+  }
 
   return supabaseResponse;
 }

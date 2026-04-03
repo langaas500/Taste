@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest) {
     const user = await requireUser();
     let body;
     try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
-    const allowed = ["display_name", "language", "exploration_slider", "content_filters", "preferred_region"];
+    const allowed = ["display_name", "language", "exploration_slider", "content_filters", "preferred_region", "preferred_locale"];
     const updates: Record<string, unknown> = {};
     for (const key of allowed) {
       if (key in body) updates[key] = body[key];

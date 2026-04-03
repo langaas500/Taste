@@ -106,6 +106,9 @@ const strings = {
     upgradeToPremium: "Oppgrader til Premium",
     region: "Region",
     regionDesc: "Bestemmer strømmetilgjengelighet, trender og anbefalinger.",
+    language: "Språk",
+    languageDesc: "Bestemmer språket på hele Logflix — inkludert AI-anbefalinger og Curator.",
+    languageAuto: "Automatisk (fra region)",
     contentFilters: "Innholdsfiltre",
     contentFiltersDesc: "Ekskluder innhold du ikke er interessert i fra anbefalinger og søk.",
     aiExploration: "AI-utforskning",
@@ -186,6 +189,9 @@ const strings = {
     upgradeToPremium: "Upgrade to Premium",
     region: "Region",
     regionDesc: "Determines streaming availability, trends and recommendations.",
+    language: "Language",
+    languageDesc: "Sets the language for all of Logflix — including AI recommendations and Curator.",
+    languageAuto: "Automatic (from region)",
     contentFilters: "Content filters",
     contentFiltersDesc: "Exclude content you're not interested in from recommendations and search.",
     aiExploration: "AI exploration",
@@ -266,6 +272,9 @@ const strings = {
     upgradeToPremium: "Opgrader til Premium",
     region: "Region",
     regionDesc: "Bestemmer streamingtilgængelighed, trends og anbefalinger.",
+    language: "Sprog",
+    languageDesc: "Bestemmer sproget på hele Logflix — inkl. AI-anbefalinger og Curator.",
+    languageAuto: "Automatisk (fra region)",
     contentFilters: "Indholdsfiltre",
     contentFiltersDesc: "Ekskluder indhold, du ikke er interesseret i, fra anbefalinger og søgning.",
     aiExploration: "AI-udforskning",
@@ -346,6 +355,9 @@ const strings = {
     upgradeToPremium: "Uppgradera till Premium",
     region: "Region",
     regionDesc: "Bestämmer streamingtillgänglighet, trender och rekommendationer.",
+    language: "Språk",
+    languageDesc: "Bestämmer språket på hela Logflix — inklusive AI-rekommendationer och Curator.",
+    languageAuto: "Automatiskt (från region)",
     contentFilters: "Innehållsfilter",
     contentFiltersDesc: "Exkludera innehåll du inte är intresserad av från rekommendationer och sök.",
     aiExploration: "AI-utforskning",
@@ -426,6 +438,9 @@ const strings = {
     upgradeToPremium: "Päivitä Premiumiin",
     region: "Alue",
     regionDesc: "Määrittää suoratoistosaatavuuden, trendit ja suositukset.",
+    language: "Kieli",
+    languageDesc: "Määrittää Logflixin kielen — mukaan lukien AI-suositukset ja Curator.",
+    languageAuto: "Automaattinen (alueesta)",
     contentFilters: "Sisältösuodattimet",
     contentFiltersDesc: "Sulje pois sisältö, josta et ole kiinnostunut, suosituksista ja hausta.",
     aiExploration: "AI-tutkimus",
@@ -520,6 +535,8 @@ function SettingsContent() {
   const [showPremium, setShowPremium] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<SupportedRegion>("US");
   const [savingRegion, setSavingRegion] = useState(false);
+  const [selectedLocale, setSelectedLocale] = useState<string>("");
+  const [savingLocale, setSavingLocale] = useState(false);
   const [showSliderInfo, setShowSliderInfo] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [emailMsg, setEmailMsg] = useState("");
@@ -575,6 +592,7 @@ function SettingsContent() {
         setIsFoundingMember(!!data.profile.founding_member);
         setPremiumSince(data.profile.premium_since || null);
         if (data.profile.preferred_region) setSelectedRegion(data.profile.preferred_region);
+        setSelectedLocale(data.profile.preferred_locale || "");
         const filters = (data.profile.content_filters || {}) as ContentFilters;
         setActivePresets(filtersToPresets(filters));
       }
@@ -664,6 +682,29 @@ function SettingsContent() {
       });
     } catch {}
     setSavingRegion(false);
+  }
+
+  async function saveLocale(locale: string) {
+    setSelectedLocale(locale);
+    setSavingLocale(true);
+    const value = locale || null; // "" means auto
+    try {
+      await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferred_locale: value }),
+      });
+      // Update cookies so useLocale picks it up immediately
+      if (locale) {
+        document.cookie = `x-locale=${locale}; path=/; max-age=86400; samesite=lax`;
+        document.cookie = `x-locale-manual=1; path=/; max-age=86400; samesite=lax`;
+      } else {
+        // Reset to auto — let middleware set it from IP on next request
+        document.cookie = "x-locale=; path=/; max-age=0";
+        document.cookie = "x-locale-manual=; path=/; max-age=0";
+      }
+    } catch {}
+    setSavingLocale(false);
   }
 
   async function handleGenerateInvite() {
@@ -946,6 +987,29 @@ function SettingsContent() {
               </span>
             </div>
             {savingRegion && <p className="text-[10px] text-white/40 mt-2">{s.saving}</p>}
+          </div>
+
+          {/* Language */}
+          <div className={glassCard} style={glassCardStyle}>
+            <p className={sectionLabel}>{s.language}</p>
+            <p className={sectionDesc}>{s.languageDesc}</p>
+            <div className="flex items-center gap-3">
+              <select
+                value={selectedLocale}
+                onChange={(e) => saveLocale(e.target.value)}
+                disabled={savingLocale}
+                className="flex-1 px-3 py-2.5 border border-white/[0.1] rounded-xl text-sm text-white focus:outline-none focus:border-[rgba(229,9,20,0.4)] transition-all duration-200 disabled:opacity-40 appearance-none cursor-pointer"
+                style={{ background: "rgba(255,255,255,0.04)" }}
+              >
+                <option value="" style={{ background: "#0a0a0a", color: "#fff" }}>{s.languageAuto}</option>
+                <option value="no" style={{ background: "#0a0a0a", color: "#fff" }}>Norsk</option>
+                <option value="en" style={{ background: "#0a0a0a", color: "#fff" }}>English</option>
+                <option value="se" style={{ background: "#0a0a0a", color: "#fff" }}>Svenska</option>
+                <option value="dk" style={{ background: "#0a0a0a", color: "#fff" }}>Dansk</option>
+                <option value="fi" style={{ background: "#0a0a0a", color: "#fff" }}>Suomi</option>
+              </select>
+            </div>
+            {savingLocale && <p className="text-[10px] text-white/40 mt-2">{s.saving}</p>}
           </div>
 
           {/* Content Filters (Streaming Preferences) */}

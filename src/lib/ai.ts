@@ -124,6 +124,12 @@ export function regionToAILocale(region: string): string {
   return map[region?.toUpperCase()] ?? "en";
 }
 
+/** Map user-facing locale (no/se/dk/fi/en) to AI locale key (nb/sv/da/fi/en). */
+export function localeToAILocale(locale: string): string {
+  const map: Record<string, string> = { no: "nb", se: "sv", dk: "da", fi: "fi", en: "en" };
+  return map[locale] ?? "en";
+}
+
 function langInstruction(locale: string): string {
   return LANGUAGE_INSTRUCTION[locale] ?? LANGUAGE_INSTRUCTION.en;
 }
