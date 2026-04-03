@@ -12,7 +12,7 @@ const strings = {
     features: [
       { title: "Tonight's Pick daglig", desc: "Film og serie — kuratert for dere begge hver dag" },
       { title: "Par-rapport", desc: "Se hva dere egentlig liker sammen. Vokser over tid." },
-      { title: "Ubegrenset Curator & AI", desc: "Finn alltid noe å se — uten grenser" },
+      { title: "Ikke mist Curator & AI", desc: "Uten Premium mister du tilgang etter 5 meldinger og 5 anbefalinger" },
     ],
     cta: "Start Logflix Par — 29 kr/mnd",
     lockin: "🔒 29 kr låses for alltid. Partner får også premium. Ingen binding.",
@@ -26,7 +26,7 @@ const strings = {
     features: [
       { title: "Tonight's Pick daily", desc: "Movie and series — curated for both of you every day" },
       { title: "Couple report", desc: "See what you actually like together. Grows over time." },
-      { title: "Unlimited Curator & AI", desc: "Always find something to watch — no limits" },
+      { title: "Don't lose Curator & AI", desc: "Without Premium you lose access after 5 messages and 5 recommendations" },
     ],
     cta: "Start Logflix Par — 29 NOK/mo (~€2.50)",
     lockin: "🔒 29 NOK locked forever. Your partner gets premium too. No commitment.",
@@ -40,7 +40,7 @@ const strings = {
     features: [
       { title: "Tonight's Pick dagligt", desc: "Film og serie — kurateret for jer begge hver dag" },
       { title: "Par-rapport", desc: "Se hvad I egentlig kan lide sammen. Vokser over tid." },
-      { title: "Ubegrænset Curator & AI", desc: "Find altid noget at se — uden grænser" },
+      { title: "Mist ikke Curator & AI", desc: "Uden Premium mister du adgang efter 5 beskeder og 5 anbefalinger" },
     ],
     cta: "Start Logflix Par — 29 NOK/md (~€2,50)",
     lockin: "🔒 29 NOK låses for altid. Din partner får også premium. Ingen binding.",
@@ -54,7 +54,7 @@ const strings = {
     features: [
       { title: "Tonight's Pick dagligen", desc: "Film och serie — kuraterat för er båda varje dag" },
       { title: "Par-rapport", desc: "Se vad ni faktiskt gillar tillsammans. Växer över tid." },
-      { title: "Obegränsad Curator & AI", desc: "Hitta alltid något att se — utan gränser" },
+      { title: "Förlora inte Curator & AI", desc: "Utan Premium förlorar du tillgång efter 5 meddelanden och 5 rekommendationer" },
     ],
     cta: "Starta Logflix Par — 29 NOK/mån (~€2,50)",
     lockin: "🔒 29 NOK låses för alltid. Din partner får också premium. Ingen bindningstid.",
@@ -68,7 +68,7 @@ const strings = {
     features: [
       { title: "Tonight's Pick päivittäin", desc: "Elokuva ja sarja — kuratoitu teille molemmille joka päivä" },
       { title: "Pariraportti", desc: "Näe mistä oikeasti pidätte yhdessä. Kasvaa ajan myötä." },
-      { title: "Rajaton Curator & AI", desc: "Löydä aina jotain katsottavaa — ilman rajoja" },
+      { title: "Älä menetä Curatoria & AI:ta", desc: "Ilman Premiumia menetät pääsyn 5 viestin ja 5 suosituksen jälkeen" },
     ],
     cta: "Aloita Logflix Par — 29 NOK/kk (~€2,50)",
     lockin: "🔒 29 NOK lukitaan ikuisesti. Kumppanisi saa myös premiumin. Ei sitoutumista.",

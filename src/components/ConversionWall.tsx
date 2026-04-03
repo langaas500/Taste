@@ -9,41 +9,46 @@ import { useLocale } from "@/hooks/useLocale";
 /* ── locale strings ──────────────────────────────────────── */
 const strings = {
   no: {
-    upgradePremium: "Oppgrader til Premium",
+    upgradePremium: "Du har brukt opp gratiskvoten",
     authTitle: "Krever gratis konto",
-    premiumDesc: "Få ubegrenset tilgang til AI-anbefalinger, smaksprofil-oppdateringer og mer.",
+    premiumDesc: "Du mister tilgang til AI-anbefalinger, smaksprofil og Curator uten Premium.",
+    premiumCta: "Behold tilgangen — 29 kr/mnd",
     authDesc: "For å bruke dette trenger vi å vite hva du har sett og hva du liker. Opprett en gratis konto — det tar under ett minutt.",
     createAccount: "Opprett gratis konto",
     login: "Har allerede konto? Logg inn",
   },
   en: {
-    upgradePremium: "Upgrade to Premium",
+    upgradePremium: "You've used your free quota",
     authTitle: "Free account required",
-    premiumDesc: "Get unlimited access to AI recommendations, taste profile updates and more.",
+    premiumDesc: "You'll lose access to AI recommendations, taste profile and Curator without Premium.",
+    premiumCta: "Keep your access — 29 NOK/mo",
     authDesc: "To use this, we need to know what you've watched and what you like. Create a free account — it takes less than a minute.",
     createAccount: "Create free account",
     login: "Already have an account? Log in",
   },
   dk: {
-    upgradePremium: "Opgrader til Premium",
+    upgradePremium: "Du har brugt din gratis kvote",
     authTitle: "Kræver gratis konto",
-    premiumDesc: "Få ubegrænset adgang til AI-anbefalinger, smagsprofil-opdateringer og mere.",
+    premiumDesc: "Du mister adgang til AI-anbefalinger, smagsprofil og Curator uden Premium.",
+    premiumCta: "Behold adgangen — 29 NOK/md",
     authDesc: "For at bruge dette skal vi vide hvad du har set og hvad du kan lide. Opret en gratis konto — det tager under et minut.",
     createAccount: "Opret gratis konto",
     login: "Har allerede konto? Log ind",
   },
   se: {
-    upgradePremium: "Uppgradera till Premium",
+    upgradePremium: "Du har använt din gratiskvot",
     authTitle: "Kräver gratis konto",
-    premiumDesc: "Få obegränsad tillgång till AI-rekommendationer, smakprofiluppdateringar och mer.",
+    premiumDesc: "Du förlorar tillgång till AI-rekommendationer, smakprofil och Curator utan Premium.",
+    premiumCta: "Behåll tillgången — 29 NOK/mån",
     authDesc: "För att använda detta behöver vi veta vad du har sett och vad du gillar. Skapa ett gratis konto — det tar under en minut.",
     createAccount: "Skapa gratis konto",
     login: "Har redan konto? Logga in",
   },
   fi: {
-    upgradePremium: "Päivitä Premiumiin",
+    upgradePremium: "Ilmaiskiintiösi on käytetty",
     authTitle: "Vaatii ilmaisen tilin",
-    premiumDesc: "Saa rajaton pääsy AI-suosituksiin, makuprofiilipäivityksiin ja muuhun.",
+    premiumDesc: "Menetät pääsyn AI-suosituksiin, makuprofiiliin ja Curatoriin ilman Premiumia.",
+    premiumCta: "Säilytä pääsy — 29 NOK/kk",
     authDesc: "Käyttääksesi tätä meidän täytyy tietää mitä olet katsonut ja mistä pidät. Luo ilmainen tili — se vie alle minuutin.",
     createAccount: "Luo ilmainen tili",
     login: "Onko jo tili? Kirjaudu",
@@ -126,7 +131,7 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
                 <svg width={14} height={14} fill="none" viewBox="0 0 24 24" stroke="#FFD700" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                {s.upgradePremium}
+                {s.premiumCta}
               </button>
             ) : (
               <>

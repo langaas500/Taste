@@ -53,13 +53,13 @@ const i18n = {
     subtitle: "AI Filmekspert",
     error: "Noe gikk galt. Prøv igjen.",
     thinking: "Curator henter frem perlene...",
-    premiumTitle: "Lås opp full filmkunnskap",
-    premiumPerks: ["Dypere emosjonell matching", "Smaksbaserte anbefalinger", "Tilgang til skjulte rariteter"],
-    premiumBody: "Curator har mye mer å by på — dypere innsikt og anbefalinger du ikke finner ellers.",
-    premiumCta: "Oppgrader til Premium →",
+    premiumTitle: "Curator stenger snart",
+    premiumPerks: ["Du mister dypere emosjonell matching", "Du mister smaksbaserte anbefalinger", "Du mister tilgang til skjulte rariteter"],
+    premiumBody: "Du har brukt opp dine gratis meldinger. Uten Premium mister du Curator helt.",
+    premiumCta: "Behold Curator — 29 kr/mnd →",
     counterUsed: (n: number) => `${n} av 5 gratis meldinger brukt`,
-    counterWarning: (n: number) => `${n} meldinger igjen — oppgrader for ubegrenset`,
-    counterLast: "Siste gratis melding neste!",
+    counterWarning: (n: number) => `Bare ${n} meldinger igjen — så mister du tilgang`,
+    counterLast: "Siste gratis melding!",
   },
   en: {
     greeting: (name: string) => `Good evening, ${name}.\n\nThe theater lights have dimmed. What shall we fill the screen with tonight?`,
@@ -74,13 +74,13 @@ const i18n = {
     subtitle: "AI Film Expert",
     error: "Something went wrong. Please try again.",
     thinking: "Curator is finding the gems...",
-    premiumTitle: "Unlock full cinematic knowledge",
-    premiumPerks: ["Deeper emotional matching", "Taste-based recommendations", "Access to hidden rarities"],
-    premiumBody: "Curator has much more to offer — deeper insights and recommendations you won't find elsewhere.",
-    premiumCta: "Upgrade to Premium →",
+    premiumTitle: "Curator is closing soon",
+    premiumPerks: ["You'll lose deeper emotional matching", "You'll lose taste-based recommendations", "You'll lose access to hidden rarities"],
+    premiumBody: "You've used your free messages. Without Premium you'll lose Curator entirely.",
+    premiumCta: "Keep Curator — 29 NOK/mo →",
     counterUsed: (n: number) => `${n} of 5 free messages used`,
-    counterWarning: (n: number) => `${n} messages left — upgrade for unlimited`,
-    counterLast: "Last free message next!",
+    counterWarning: (n: number) => `Only ${n} left — then you lose access`,
+    counterLast: "Last free message!",
   },
   dk: {
     greeting: (name: string) => `God aften, ${name}.\n\nBiografmørket har sænket sig. Hvad skal vi fylde lærredet med i aften?`,
@@ -95,13 +95,13 @@ const i18n = {
     subtitle: "AI Filmekspert",
     error: "Noget gik galt. Prøv igen.",
     thinking: "Curator finder perlerne...",
-    premiumTitle: "Lås op for fuld filmviden",
-    premiumPerks: ["Dybere følelsesmæssig matching", "Smagsbaserede anbefalinger", "Adgang til skjulte rariteter"],
-    premiumBody: "Curator har meget mere at byde på — dybere indsigt og anbefalinger du ikke finder andre steder.",
-    premiumCta: "Opgrader til Premium →",
+    premiumTitle: "Curator lukker snart",
+    premiumPerks: ["Du mister dybere følelsesmæssig matching", "Du mister smagsbaserede anbefalinger", "Du mister adgang til skjulte rariteter"],
+    premiumBody: "Du har brugt dine gratis beskeder. Uden Premium mister du Curator helt.",
+    premiumCta: "Behold Curator — 29 NOK/md →",
     counterUsed: (n: number) => `${n} af 5 gratis beskeder brugt`,
-    counterWarning: (n: number) => `${n} beskeder tilbage — opgrader for ubegrænset`,
-    counterLast: "Sidste gratis besked næste!",
+    counterWarning: (n: number) => `Kun ${n} beskeder tilbage — så mister du adgang`,
+    counterLast: "Sidste gratis besked!",
   },
   se: {
     greeting: (name: string) => `God kväll, ${name}.\n\nBiomörkret har sänkt sig. Vad ska vi fylla duken med ikväll?`,
@@ -116,13 +116,13 @@ const i18n = {
     subtitle: "AI Filmexpert",
     error: "Något gick fel. Försök igen.",
     thinking: "Curator letar fram pärlorna...",
-    premiumTitle: "Lås upp full filmkunskap",
-    premiumPerks: ["Djupare emotionell matchning", "Smakbaserade rekommendationer", "Tillgång till dolda rariteter"],
-    premiumBody: "Curator har mycket mer att erbjuda — djupare insikter och rekommendationer du inte hittar annars.",
-    premiumCta: "Uppgradera till Premium →",
+    premiumTitle: "Curator stänger snart",
+    premiumPerks: ["Du förlorar djupare emotionell matchning", "Du förlorar smakbaserade rekommendationer", "Du förlorar tillgång till dolda rariteter"],
+    premiumBody: "Du har använt dina gratismeddelanden. Utan Premium förlorar du Curator helt.",
+    premiumCta: "Behåll Curator — 29 NOK/mån →",
     counterUsed: (n: number) => `${n} av 5 gratismeddelanden använda`,
-    counterWarning: (n: number) => `${n} meddelanden kvar — uppgradera för obegränsat`,
-    counterLast: "Sista gratismeddelandet härnäst!",
+    counterWarning: (n: number) => `Bara ${n} kvar — sen förlorar du tillgång`,
+    counterLast: "Sista gratismeddelandet!",
   },
   fi: {
     greeting: (name: string) => `Hyvää iltaa, ${name}.\n\nElokuvateatterin valot ovat himmenneet. Mitä täytämme valkokankaalle tänä iltana?`,
@@ -137,13 +137,13 @@ const i18n = {
     subtitle: "AI-elokuvaasiantuntija",
     error: "Jokin meni pieleen. Yritä uudelleen.",
     thinking: "Curator etsii helmiä...",
-    premiumTitle: "Avaa täysi elokuvatietämys",
-    premiumPerks: ["Syvempi tunnepohjainen matchaus", "Makuun perustuvat suositukset", "Pääsy piilotettuihin harvinaisuuksiin"],
-    premiumBody: "Curatorilla on paljon enemmän tarjottavaa — syvempiä oivalluksia ja suosituksia joita et löydä muualta.",
-    premiumCta: "Päivitä Premiumiin →",
+    premiumTitle: "Curator sulkeutuu pian",
+    premiumPerks: ["Menetät syvemmän tunnepohjaisen matchauksen", "Menetät makuun perustuvat suositukset", "Menetät pääsyn piilotettuihin harvinaisuuksiin"],
+    premiumBody: "Ilmaiset viestisi on käytetty. Ilman Premiumia menetät Curatorin kokonaan.",
+    premiumCta: "Säilytä Curator — 29 NOK/kk →",
     counterUsed: (n: number) => `${n} / 5 ilmaista viestiä käytetty`,
-    counterWarning: (n: number) => `${n} viestiä jäljellä — päivitä rajattomaksi`,
-    counterLast: "Viimeinen ilmainen viesti seuraavaksi!",
+    counterWarning: (n: number) => `Vain ${n} jäljellä — sitten menetät pääsyn`,
+    counterLast: "Viimeinen ilmainen viesti!",
   },
 } as const;
 
@@ -611,7 +611,7 @@ export default function CuratorPage() {
                       onClick={() => { track("curator_premium_gate", { action: "smakebit_cta" }); setShowPremium(true); }}
                       style={{ fontSize: 12, fontWeight: 700, color: "#F5C842", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                     >
-                      {lang === "no" ? "Få ubegrenset Curator →" : lang === "se" ? "Få obegränsat Curator →" : lang === "dk" ? "Få ubegrænset Curator →" : "Get unlimited Curator →"}
+                      {lang === "no" ? "Behold Curator →" : lang === "se" ? "Behåll Curator →" : lang === "dk" ? "Behold Curator →" : lang === "fi" ? "Säilytä Curator →" : "Keep Curator →"}
                     </button>
                   </div>
                 );
@@ -629,26 +629,28 @@ export default function CuratorPage() {
         {/* Message counter + upgrade banner */}
         {isPremium === false && userMessageCount > 0 && userMessageCount < FREE_MESSAGE_LIMIT && (
           <div className="px-6 pb-1">
-            {userMessageCount >= 3 ? (
-              <div
-                className="rounded-xl px-4 py-2.5 flex items-center justify-between gap-3"
-                style={{ background: "rgba(245,200,66,0.08)", border: "0.5px solid rgba(245,200,66,0.2)" }}
-              >
-                <p style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.7)", margin: 0 }}>
-                  {userMessageCount >= 4 ? t.counterLast : t.counterWarning(FREE_MESSAGE_LIMIT - userMessageCount)}
-                </p>
-                <button
-                  onClick={() => setShowPremium(true)}
-                  style={{ fontSize: 11, fontWeight: 700, color: "#F5C842", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
-                >
-                  {lang === "no" ? "Få ubegrenset →" : lang === "se" ? "Få obegränsat →" : lang === "dk" ? "Få ubegrænset →" : "Get unlimited →"}
-                </button>
+            <div
+              className="rounded-xl px-4 py-2.5"
+              style={{ background: userMessageCount >= 3 ? "rgba(245,200,66,0.08)" : "rgba(255,255,255,0.03)", border: userMessageCount >= 3 ? "0.5px solid rgba(245,200,66,0.2)" : "0.5px solid rgba(255,255,255,0.06)" }}
+            >
+              {/* Progress bar */}
+              <div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", marginBottom: 8, overflow: "hidden" }}>
+                <div style={{ height: "100%", borderRadius: 2, width: `${(userMessageCount / FREE_MESSAGE_LIMIT) * 100}%`, background: userMessageCount >= 4 ? "#ef4444" : userMessageCount >= 3 ? "#F5C842" : "rgba(255,255,255,0.25)", transition: "width 0.3s ease" }} />
               </div>
-            ) : (
-              <p className="text-center" style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.25)" }}>
-                {t.counterUsed(userMessageCount)}
-              </p>
-            )}
+              <div className="flex items-center justify-between gap-3">
+                <p style={{ fontSize: 11, fontWeight: 500, color: userMessageCount >= 3 ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.35)", margin: 0 }}>
+                  {userMessageCount >= 4 ? t.counterLast : userMessageCount >= 3 ? t.counterWarning(FREE_MESSAGE_LIMIT - userMessageCount) : t.counterUsed(userMessageCount)}
+                </p>
+                {userMessageCount >= 3 && (
+                  <button
+                    onClick={() => setShowPremium(true)}
+                    style={{ fontSize: 11, fontWeight: 700, color: "#F5C842", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+                  >
+                    {lang === "no" ? "Behold tilgang →" : lang === "se" ? "Behåll tillgång →" : lang === "dk" ? "Behold adgang →" : lang === "fi" ? "Säilytä pääsy →" : "Keep access →"}
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
