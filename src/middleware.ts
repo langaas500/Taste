@@ -95,6 +95,7 @@ export async function middleware(request: NextRequest) {
     pathname === "/" ||
     pathname === "/search" ||
     pathname === "/together" ||
+    pathname === "/blinddate" ||
     pathname === "/group" ||
     pathname.startsWith("/group/") ||
     pathname.startsWith("/api/tmdb/") ||
