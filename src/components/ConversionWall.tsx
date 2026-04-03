@@ -10,43 +10,43 @@ import { useLocale } from "@/hooks/useLocale";
 const strings = {
   no: {
     upgradePremium: "Oppgrader til Premium",
-    saveTaste: "Lagre smaken din",
+    authTitle: "Krever gratis konto",
     premiumDesc: "Få ubegrenset tilgang til AI-anbefalinger, smaksprofil-oppdateringer og mer.",
-    signupDesc: "Du har allerede begynt å forme anbefalingene dine. Opprett gratis konto for å lagre fremgangen og få bedre treff.",
+    authDesc: "For å bruke dette trenger vi å vite hva du har sett og hva du liker. Opprett en gratis konto — det tar under ett minutt.",
     createAccount: "Opprett gratis konto",
-    login: "Logg inn",
+    login: "Har allerede konto? Logg inn",
   },
   en: {
     upgradePremium: "Upgrade to Premium",
-    saveTaste: "Save your taste",
+    authTitle: "Free account required",
     premiumDesc: "Get unlimited access to AI recommendations, taste profile updates and more.",
-    signupDesc: "You've already started shaping your recommendations. Create a free account to save your progress and get better matches.",
+    authDesc: "To use this, we need to know what you've watched and what you like. Create a free account — it takes less than a minute.",
     createAccount: "Create free account",
-    login: "Log in",
+    login: "Already have an account? Log in",
   },
   dk: {
     upgradePremium: "Opgrader til Premium",
-    saveTaste: "Gem din smag",
+    authTitle: "Kræver gratis konto",
     premiumDesc: "Få ubegrænset adgang til AI-anbefalinger, smagsprofil-opdateringer og mere.",
-    signupDesc: "Du er allerede begyndt at forme dine anbefalinger. Opret gratis konto for at gemme din fremgang og få bedre matches.",
+    authDesc: "For at bruge dette skal vi vide hvad du har set og hvad du kan lide. Opret en gratis konto — det tager under et minut.",
     createAccount: "Opret gratis konto",
-    login: "Log ind",
+    login: "Har allerede konto? Log ind",
   },
   se: {
     upgradePremium: "Uppgradera till Premium",
-    saveTaste: "Spara din smak",
+    authTitle: "Kräver gratis konto",
     premiumDesc: "Få obegränsad tillgång till AI-rekommendationer, smakprofiluppdateringar och mer.",
-    signupDesc: "Du har redan börjat forma dina rekommendationer. Skapa gratis konto för att spara dina framsteg och få bättre matchningar.",
+    authDesc: "För att använda detta behöver vi veta vad du har sett och vad du gillar. Skapa ett gratis konto — det tar under en minut.",
     createAccount: "Skapa gratis konto",
-    login: "Logga in",
+    login: "Har redan konto? Logga in",
   },
   fi: {
     upgradePremium: "Päivitä Premiumiin",
-    saveTaste: "Tallenna makusi",
+    authTitle: "Vaatii ilmaisen tilin",
     premiumDesc: "Saa rajaton pääsy AI-suosituksiin, makuprofiilipäivityksiin ja muuhun.",
-    signupDesc: "Olet jo alkanut muokata suosituksiasi. Luo ilmainen tili tallentaaksesi edistymisesi ja saadaksesi parempia osumia.",
+    authDesc: "Käyttääksesi tätä meidän täytyy tietää mitä olet katsonut ja mistä pidät. Luo ilmainen tili — se vie alle minuutin.",
     createAccount: "Luo ilmainen tili",
-    login: "Kirjaudu",
+    login: "Onko jo tili? Kirjaudu",
   },
 } as const;
 
@@ -110,10 +110,10 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
           </div>
 
           <h2 className="text-lg font-bold text-white mb-2">
-            {premium ? s.upgradePremium : s.saveTaste}
+            {premium ? s.upgradePremium : s.authTitle}
           </h2>
           <p className="text-sm leading-relaxed mb-6" style={{ color: "rgba(255,255,255,0.5)" }}>
-            {premium ? s.premiumDesc : s.signupDesc}
+            {premium ? s.premiumDesc : s.authDesc}
           </p>
 
           <div className="flex flex-col gap-2.5">

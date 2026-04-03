@@ -20,63 +20,25 @@ const matchTitleTexts: Record<string, (t: string) => string> = {
   fi: (t) => `Matchasimme: ${t}! 🎬`,
 };
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}): Promise<Metadata> {
-  const params = await searchParams;
-  const isMatch = params?.ref === "match";
-  const title = typeof params?.title === "string" ? params.title : "";
-  const poster = typeof params?.poster === "string" ? params.poster : "";
-  const locale = typeof params?.locale === "string" ? params.locale : "no";
-
-  if (isMatch && title) {
-    const ogImage = `https://logflix.app/api/og/match?title=${encodeURIComponent(title)}&poster=${encodeURIComponent(poster)}&locale=${locale}`;
-    const matchTitle = (matchTitleTexts[locale] || matchTitleTexts.no)(title);
-    const challenge = challengeTexts[locale] || challengeTexts.no;
-
-    return {
-      title: matchTitle,
-      description: challenge,
-      alternates: { canonical: "https://logflix.app/together" },
-      openGraph: {
-        title: matchTitle,
-        description: challenge,
-        url: "https://logflix.app/together",
-        siteName: "Logflix",
-        type: "website",
-        images: [{ url: ogImage, width: 1200, height: 630 }],
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: matchTitle,
-        description: challenge,
-        images: [ogImage],
-      },
-    };
-  }
-
-  return {
+export const metadata: Metadata = {
+  title: defaultTitle,
+  description: defaultDescription,
+  alternates: { canonical: "https://logflix.app/together" },
+  openGraph: {
     title: defaultTitle,
     description: defaultDescription,
-    alternates: { canonical: "https://logflix.app/together" },
-    openGraph: {
-      title: defaultTitle,
-      description: defaultDescription,
-      url: "https://logflix.app/together",
-      siteName: "Logflix",
-      type: "website",
-      images: ["/og-v2.png"],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: defaultTitle,
-      description: defaultDescription,
-      images: ["/og-v2.png"],
-    },
-  };
-}
+    url: "https://logflix.app/together",
+    siteName: "Logflix",
+    type: "website",
+    images: ["/og-v2.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: defaultTitle,
+    description: defaultDescription,
+    images: ["/og-v2.png"],
+  },
+};
 
 const togetherJsonLd = {
   "@context": "https://schema.org",
