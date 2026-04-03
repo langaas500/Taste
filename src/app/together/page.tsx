@@ -2165,24 +2165,20 @@ export default function WTBetaPage() {
                           textAlign: "center",
                         }}
                       >
-                        <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>
-                          💾 {locale === "no" ? "Lagre denne matchen for alltid" : locale === "se" ? "Spara denna match för alltid" : locale === "dk" ? "Gem dette match for altid" : locale === "fi" ? "Tallenna tämä match ikuisesti" : "Save this match forever"}
-                        </p>
-                        <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", margin: "0 0 12px" }}>
-                          {locale === "no" ? "Opprett konto på 20 sekunder — Google eller e-post" : locale === "se" ? "Skapa konto på 20 sekunder — Google eller e-post" : locale === "dk" ? "Opret konto på 20 sekunder — Google eller e-mail" : locale === "fi" ? "Luo tili 20 sekunnissa — Google tai sähköposti" : "Create account in 20 seconds — Google or email"}
+                        <p style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", margin: "0 0 10px" }}>
+                          {locale === "no" ? "Vil du huske denne matchen?" : locale === "se" ? "Vill du spara den här matchen?" : locale === "dk" ? "Vil du huske dette match?" : locale === "fi" ? "Haluatko tallentaa tämän matchin?" : "Want to save this match?"}
                         </p>
                         <Link
-                          href="/login?from=together&mode=signup"
-                          className="button"
-                          style={{ display: "block", width: "100%", textAlign: "center", marginBottom: 8, textDecoration: "none" }}
+                          href="/login?mode=signup"
+                          style={{ display: "block", width: "100%", textAlign: "center", padding: "10px 0", borderRadius: 10, background: "#ff2a2a", color: "#fff", fontSize: 13, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}
                         >
-                          {locale === "no" ? "Registrer deg gratis →" : locale === "se" ? "Registrera dig gratis →" : locale === "dk" ? "Registrer dig gratis →" : locale === "fi" ? "Rekisteröidy ilmaiseksi →" : "Sign up for free →"}
+                          {locale === "no" ? "Opprett gratis konto →" : locale === "se" ? "Skapa gratis konto →" : locale === "dk" ? "Opret gratis konto →" : locale === "fi" ? "Luo ilmainen tili →" : "Create free account →"}
                         </Link>
                         <Link
                           href="/login"
                           style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", textDecoration: "none" }}
                         >
-                          {locale === "no" ? "Har konto? Logg inn" : locale === "se" ? "Har konto? Logga in" : locale === "dk" ? "Har konto? Log ind" : locale === "fi" ? "Onko tili? Kirjaudu" : "Have an account? Log in"}
+                          {locale === "no" ? "Allerede bruker? Logg inn" : locale === "se" ? "Har du redan ett konto? Logga in" : locale === "dk" ? "Har du allerede en konto? Log ind" : locale === "fi" ? "Onko sinulla jo tili? Kirjaudu sisään" : "Already have an account? Log in"}
                         </Link>
                       </div>
                     )}
