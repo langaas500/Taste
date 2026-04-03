@@ -533,6 +533,7 @@ function SettingsContent() {
   const [explorationSlider, setExplorationSlider] = useState(50);
   const [savingSlider, setSavingSlider] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [settingsTitleCount, setSettingsTitleCount] = useState<number | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [savingName, setSavingName] = useState(false);
@@ -608,6 +609,7 @@ function SettingsContent() {
         setPremiumSince(data.profile.premium_since || null);
         if (data.profile.preferred_region) setSelectedRegion(data.profile.preferred_region);
         setSelectedLocale(data.profile.preferred_locale || "");
+        if (data.profile.title_count != null) setSettingsTitleCount(data.profile.title_count);
         const filters = (data.profile.content_filters || {}) as ContentFilters;
         setActivePresets(filtersToPresets(filters));
       }
@@ -1339,7 +1341,7 @@ function SettingsContent() {
         </div>
       </div>
 
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="settings" />
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="settings" userName={displayName || null} titleCount={settingsTitleCount} />
     </div>
   );
 }

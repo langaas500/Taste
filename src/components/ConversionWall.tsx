@@ -7,6 +7,21 @@ import { track } from "@/lib/posthog";
 import { useLocale } from "@/hooks/useLocale";
 
 /* ── locale strings ──────────────────────────────────────── */
+const personalizedDesc = {
+  no: (name: string, count: number) =>
+    `${name}, du har logget ${count} titler. Curator kjenner smaken din — lås opp for å få perfekte anbefalinger.`,
+  en: (name: string, count: number) =>
+    `${name}, you've logged ${count} titles. Curator knows your taste — unlock it for perfect recommendations.`,
+  da: (name: string, count: number) =>
+    `${name}, du har logget ${count} titler. Curator kender din smag — lås op for perfekte anbefalinger.`,
+  dk: (name: string, count: number) =>
+    `${name}, du har logget ${count} titler. Curator kender din smag — lås op for perfekte anbefalinger.`,
+  se: (name: string, count: number) =>
+    `${name}, du har loggat ${count} titlar. Curator känner din smak — lås upp för perfekta rekommendationer.`,
+  fi: (name: string, count: number) =>
+    `${name}, olet kirjannut ${count} nimikettä. Curator tuntee makusi — avaa se täydellisiä suosituksia varten.`,
+} as const;
+
 const strings = {
   no: {
     upgradePremium: "Du har brukt opp gratiskvoten",
@@ -60,12 +75,20 @@ interface ConversionWallProps {
   onClose: () => void;
   /** If true, show "Upgrade to Premium" instead of signup/login */
   premium?: boolean;
+  /** User's first name or display_name for personalized text */
+  userName?: string | null;
+  /** Number of titles the user has logged */
+  titleCount?: number | null;
 }
 
-export default function ConversionWall({ open, onClose, premium }: ConversionWallProps) {
+export default function ConversionWall({ open, onClose, premium, userName, titleCount }: ConversionWallProps) {
   const [showPremium, setShowPremium] = useState(false);
   const locale = useLocale();
   const s = strings[locale] ?? strings.en;
+  const pFn = personalizedDesc[locale as keyof typeof personalizedDesc] ?? personalizedDesc.en;
+  const premiumDescText = userName && titleCount != null && titleCount > 0
+    ? pFn(userName, titleCount)
+    : s.premiumDesc;
 
   useEffect(() => {
     if (!open) return;
@@ -118,7 +141,7 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
             {premium ? s.upgradePremium : s.authTitle}
           </h2>
           <p className="text-sm leading-relaxed mb-6" style={{ color: "rgba(255,255,255,0.5)" }}>
-            {premium ? s.premiumDesc : s.authDesc}
+            {premium ? premiumDescText : s.authDesc}
           </p>
 
           <div className="flex flex-col gap-2.5">
@@ -162,7 +185,7 @@ export default function ConversionWall({ open, onClose, premium }: ConversionWal
         </div>
       </div>
 
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="conversion_wall" />
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="conversion_wall" userName={userName} titleCount={titleCount} />
     </>
   );
 }

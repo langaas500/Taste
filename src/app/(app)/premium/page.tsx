@@ -57,6 +57,8 @@ export default function PremiumHubPage() {
   const [inviteLoading, setInviteLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [heroPosters, setHeroPosters] = useState<string[]>([]);
+  const [profileName, setProfileName] = useState<string | null>(null);
+  const [profileTitleCount, setProfileTitleCount] = useState<number | null>(null);
   const [selectedTitle, setSelectedTitle] = useState<{ id: number; type: "movie" | "tv"; title: string; poster_path: string | null } | null>(null);
   const locale = useLocale();
 
@@ -77,6 +79,8 @@ export default function PremiumHubPage() {
       .then((d) => {
         const premium = !!d.profile?.is_premium;
         setIsPremium(premium);
+        if (d.profile?.display_name) setProfileName(d.profile.display_name);
+        if (d.profile?.title_count != null) setProfileTitleCount(d.profile.title_count);
         if (d.profile?.premium_since) {
           const date = new Date(d.profile.premium_since);
           setFoundingDate(date.toLocaleDateString(locale === "no" ? "nb-NO" : locale === "se" ? "sv-SE" : locale === "dk" ? "da-DK" : "en-US", { day: "numeric", month: "long", year: "numeric" }));
@@ -239,7 +243,7 @@ export default function PremiumHubPage() {
           </div>
         </div>
 
-        <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} source="premium_hub" />
+        <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} source="premium_hub" userName={profileName} titleCount={profileTitleCount} />
       </div>
     );
   }
@@ -490,7 +494,7 @@ export default function PremiumHubPage() {
         </div>
       )}
 
-      <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} source="premium_hub" />
+      <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} source="premium_hub" userName={profileName} titleCount={profileTitleCount} />
 
       {selectedTitle && (
         <StreamingModal

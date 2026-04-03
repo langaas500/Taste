@@ -6,13 +6,17 @@
 **03.04.2026**
 
 ## Git-status
-- **Siste push:** `fix: mobile UX — stack WT banner, horizontal scroll touch isolation, premium 2x2 grid` (03.04.2026)
+- **Siste push:** `feat: Wrapped-kort på home-siden` (03.04.2026)
 - **Committed men ikke pushet:** ingen
 - **Branch:** main
 
 ## Hva er gjort nylig (siste 10 endringer)
 
-1. [pushet] **Mobile UX-fikser** — (a) Watch Together-banner på home stacker nå vertikalt på mobil så CTA-knappen ikke kuttes av. (b) Alle horisontale scroll-rader (home, library, search, compare, StreamingModal, AnimatedTabs) har nå `touchAction: pan-x` + `overscrollBehaviorX: contain` slik at horisontale swipes kun scroller kortene, ikke hele siden. (c) Premium feature-grid er nå 2×2 på mobil, 4 kolonner på desktop. (d) Dev-server eksponert på LAN med `--hostname 0.0.0.0 --webpack`.
+1. [pushet] **Wrapped-kort på home** — Kompakt kort mellom Se Sammen-banner og Tonight's Pick. Vises kun hvis brukeren har logget ≥3 titler denne måneden. Lenker til /wrapped/YYYY-MM. "NY"-badge. Glass-stil. 5 språk med lokaliserte månedsnavn.
+2. [pushet] **Tapsfokusert premium-tekst** — All premium-kommunikasjon endret fra gevinst-framing ("Oppgrader for ubegrenset") til tap-aversjon ("Du mister tilgang"). Progress bars lagt til i Curator og Recommendations. 5 filer endret: ConversionWall, PremiumModal, curator/page, recommendations/page, taste/page. Alle 5 språk.
+2. [pushet] **Auth wall modal for gjester** — Gjester som klikker på beskyttede sider (Home, Library, Premium, Taste, Settings) får nå en modal med "Krever gratis konto" i stedet for redirect til login. Lokalisert 5 språk. Forklarer hvorfor konto trengs.
+2. [pushet] **Språkvalg uavhengig av region** — Ny `preferred_locale` kolonne. Språk-dropdown i Settings. Region styrer strømmetjenester, språk styrer UI + AI. Middleware respekterer manuelt valg.
+3. [pushet] **Mobile UX-fikser** — (a) Watch Together-banner på home stacker nå vertikalt på mobil så CTA-knappen ikke kuttes av. (b) Alle horisontale scroll-rader (home, library, search, compare, StreamingModal, AnimatedTabs) har nå `touchAction: pan-x` + `overscrollBehaviorX: contain` slik at horisontale swipes kun scroller kortene, ikke hele siden. (c) Premium feature-grid er nå 2×2 på mobil, 4 kolonner på desktop. (d) Dev-server eksponert på LAN med `--hostname 0.0.0.0 --webpack`.
 2. [pushet] **VSCode extensions config** — `.vscode/extensions.json` med ESLint, Tailwind, Prettier, GitLens.
 3. [pushet] **Cache-buster på icon-URLer i manifest** — Fikser manifest.json icon-caching.
 4. [pushet] **Screenshots i manifest.json** — For PWABuilder/App Store.

@@ -15,6 +15,15 @@ export async function GET(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+    // Attach title_count for personalization (single count query)
+    if (data) {
+      const { count } = await supabase
+        .from("user_titles")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      (data as Record<string, unknown>).title_count = count ?? 0;
+    }
+
     // Auto-save preferred_region from IP header if not yet set
     if (data && !data.preferred_region) {
       const ipCountry = req.headers.get("x-vercel-ip-country")?.toUpperCase();

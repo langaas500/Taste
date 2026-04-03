@@ -344,6 +344,7 @@ function PremiumUnlock({ lang, onUpgrade }: { lang: Locale; onUpgrade: () => voi
 export default function CuratorPage() {
   const lang = useLocale() as Locale;
   const [username, setUsername] = useState<string | null>(null);
+  const [profileTitleCount, setProfileTitleCount] = useState<number | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const [showPremium, setShowPremium] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<{ tmdb_id: number; type: "movie" | "tv"; title: string; poster_path: string | null } | null>(null);
@@ -366,6 +367,7 @@ export default function CuratorPage() {
           setIsPremium(!!d.profile.is_premium);
           const name = d.profile.display_name || t.fallback;
           setUsername(d.profile.display_name || null);
+          if (d.profile.title_count != null) setProfileTitleCount(d.profile.title_count);
           setMessages([{ role: "bot", text: t.greeting(name) }]);
         } else {
           setIsPremium(false);
@@ -682,7 +684,7 @@ export default function CuratorPage() {
         </div>
       </div>
 
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="curator" />
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="curator" userName={username} titleCount={profileTitleCount} />
 
       {selectedMovie && (
         <StreamingModal

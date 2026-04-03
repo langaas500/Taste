@@ -344,6 +344,7 @@ export default function TastePage() {
   const [isPremium, setIsPremium] = useState(true);
   const [showPremium, setShowPremium] = useState(false);
   const [titleCount, setTitleCount] = useState<number | null>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
   const [enrichment, setEnrichment] = useState<TasteEnrichment>(EMPTY_ENRICHMENT);
   const locale = useLocale();
   const s = strings[locale] ?? strings.en;
@@ -365,7 +366,12 @@ export default function TastePage() {
     });
   }
 
-  useEffect(() => { loadSummary(); }, []);
+  useEffect(() => {
+    loadSummary();
+    fetch("/api/profile").then((r) => r.json()).then((d) => {
+      if (d.profile?.display_name) setProfileName(d.profile.display_name);
+    }).catch(() => {});
+  }, []);
 
   async function loadSummary() {
     try {
@@ -610,7 +616,7 @@ export default function TastePage() {
         </div>
       )}
 
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="taste_refresh" />
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="taste_refresh" userName={profileName} titleCount={titleCount} />
     </div>
   );
 }

@@ -4,6 +4,22 @@ import { useEffect, useState } from "react";
 import { track } from "@/lib/posthog";
 import { useLocale } from "@/hooks/useLocale";
 
+/* ── personalized sub ───────────────────────────────────── */
+const personalizedSub = {
+  no: (name: string, count: number) =>
+    `${name}, du har logget ${count} titler. Curator kjenner smaken din — lås opp for å få perfekte anbefalinger.`,
+  en: (name: string, count: number) =>
+    `${name}, you've logged ${count} titles. Curator knows your taste — unlock it for perfect recommendations.`,
+  da: (name: string, count: number) =>
+    `${name}, du har logget ${count} titler. Curator kender din smag — lås op for perfekte anbefalinger.`,
+  dk: (name: string, count: number) =>
+    `${name}, du har logget ${count} titler. Curator kender din smag — lås op for perfekte anbefalinger.`,
+  se: (name: string, count: number) =>
+    `${name}, du har loggat ${count} titlar. Curator känner din smak — lås upp för perfekta rekommendationer.`,
+  fi: (name: string, count: number) =>
+    `${name}, olet kirjannut ${count} nimikettä. Curator tuntee makusi — avaa se täydellisiä suosituksia varten.`,
+} as const;
+
 /* ── locale strings ──────────────────────────────────────── */
 const strings = {
   no: {
@@ -82,13 +98,21 @@ interface PremiumModalProps {
   isOpen: boolean;
   onClose: () => void;
   source?: string;
+  /** User's first name or display_name for personalized text */
+  userName?: string | null;
+  /** Number of titles the user has logged */
+  titleCount?: number | null;
 }
 
-export default function PremiumModal({ isOpen, onClose, source }: PremiumModalProps) {
+export default function PremiumModal({ isOpen, onClose, source, userName, titleCount }: PremiumModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const locale = useLocale();
   const s = strings[locale] ?? strings.en;
+  const pFn = personalizedSub[locale as keyof typeof personalizedSub] ?? personalizedSub.en;
+  const subText = userName && titleCount != null && titleCount > 0
+    ? pFn(userName, titleCount)
+    : s.sub;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -165,7 +189,7 @@ export default function PremiumModal({ isOpen, onClose, source }: PremiumModalPr
         {/* Heading + sub */}
         <h2 className="text-xl font-bold text-white mb-1.5">{s.heading}</h2>
         <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.5)" }}>
-          {s.sub}
+          {subText}
         </p>
 
         {/* Feature list */}

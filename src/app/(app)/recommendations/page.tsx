@@ -170,12 +170,20 @@ export default function RecommendationsPage() {
   const [isPremium, setIsPremium] = useState(true); // default true to avoid flash
   const [showWall, setShowWall] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [profileName, setProfileName] = useState<string | null>(null);
+  const [profileTitleCount, setProfileTitleCount] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/profile")
       .then((r) => r.json())
-      .then((d) => { if (d.profile) setIsPremium(!!d.profile.is_premium); })
+      .then((d) => {
+        if (d.profile) {
+          setIsPremium(!!d.profile.is_premium);
+          if (d.profile.display_name) setProfileName(d.profile.display_name);
+          if (d.profile.title_count != null) setProfileTitleCount(d.profile.title_count);
+        }
+      })
       .catch(() => {});
     loadRecs();
   }, []);
@@ -702,7 +710,7 @@ export default function RecommendationsPage() {
         </div>
       )}
 
-      <ConversionWall open={showWall} onClose={() => setShowWall(false)} premium />
+      <ConversionWall open={showWall} onClose={() => setShowWall(false)} premium userName={profileName} titleCount={profileTitleCount} />
 
       {/* Add to List Modal */}
       {addToListItem && (
@@ -744,6 +752,8 @@ export default function RecommendationsPage() {
       isOpen={showPremiumModal}
       onClose={() => setShowPremiumModal(false)}
       source="recommendations_limit"
+      userName={profileName}
+      titleCount={profileTitleCount}
     />
     </>
   );
