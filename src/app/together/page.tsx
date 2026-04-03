@@ -10,6 +10,7 @@ import { t, cardsLeft, type Locale } from "./strings";
 import { useLocale } from "@/hooks/useLocale";
 import useQrCode from "./hooks/useQrCode";
 import { track } from "@/lib/posthog";
+import GuestHeader from "@/components/GuestHeader";
 
 /* ── extracted modules ─────────────────────────────────── */
 
@@ -1079,6 +1080,7 @@ export default function WTBetaPage() {
       />
 
       <div className="relative z-10 min-h-dvh flex flex-col">
+        {!authUser && <GuestHeader locale={locale} />}
 
         {/* ── INTRO ── */}
         {screen === "intro" && (

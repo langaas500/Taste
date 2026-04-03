@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { type Locale } from "@/lib/i18n";
 import { useLocale } from "@/hooks/useLocale";
+import { createSupabaseBrowser } from "@/lib/supabase-browser";
+import GuestHeader from "@/components/GuestHeader";
 
 /* ── constants ──────────────────────────────────────────── */
 
@@ -71,10 +73,15 @@ export default function GroupPage() {
   const [userRegion, setUserRegion] = useState("US");
   const locale = useLocale() as Locale;
   const [ribbonPosters, setRibbonPosters] = useState<string[]>([]);
+  const [authUser, setAuthUser] = useState<{ email?: string } | null>(null);
 
   const guestIdRef = useRef("");
 
   useEffect(() => {
+    createSupabaseBrowser().auth.getSession().then(({ data }) => {
+      setAuthUser(data.session?.user ?? null);
+    });
+
     // Guest ID setup
     let gid = "";
     try { gid = localStorage.getItem("wt_guest_id") ?? ""; } catch { /* ignore */ }
@@ -228,6 +235,8 @@ export default function GroupPage() {
       `}} />
 
       {posterBg}
+
+      {!authUser && <GuestHeader locale={locale} />}
 
       {/* Back arrow (on create/join screens) */}
       <button
