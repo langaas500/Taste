@@ -72,6 +72,11 @@ const strings = {
     wrappedCta: "Se den →",
     wrappedCount: (n: number) => `${n} titler logget`,
     wrappedMonths: ["januar", "februar", "mars", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "desember"],
+    wrappedLocked: "Din Wrapped er klar — lås opp med Premium",
+    importPopupTitle: "Importer Netflix-historikken din",
+    importPopupDesc: "Få personlige anbefalinger med en gang — basert på hva du allerede har sett.",
+    importPopupCta: "Importer nå →",
+    importPopupDismiss: "Ikke vis igjen",
   },
   en: {
     title: "Home",
@@ -132,6 +137,11 @@ const strings = {
     wrappedCta: "View it →",
     wrappedCount: (n: number) => `${n} titles logged`,
     wrappedMonths: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    wrappedLocked: "Your Wrapped is ready — unlock with Premium",
+    importPopupTitle: "Import your Netflix history",
+    importPopupDesc: "Get personal recommendations instantly — based on what you've already watched.",
+    importPopupCta: "Import now →",
+    importPopupDismiss: "Don't show again",
   },
   dk: {
     title: "Hjem",
@@ -192,6 +202,11 @@ const strings = {
     wrappedCta: "Se den →",
     wrappedCount: (n: number) => `${n} titler logget`,
     wrappedMonths: ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"],
+    wrappedLocked: "Din Wrapped er klar — lås op med Premium",
+    importPopupTitle: "Importer din Netflix-historik",
+    importPopupDesc: "Få personlige anbefalinger med det samme — baseret på hvad du allerede har set.",
+    importPopupCta: "Importer nu →",
+    importPopupDismiss: "Vis ikke igen",
   },
   se: {
     title: "Hem",
@@ -252,6 +267,11 @@ const strings = {
     wrappedCta: "Se den →",
     wrappedCount: (n: number) => `${n} titlar loggade`,
     wrappedMonths: ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"],
+    wrappedLocked: "Din Wrapped är klar — lås upp med Premium",
+    importPopupTitle: "Importera din Netflix-historik",
+    importPopupDesc: "Få personliga rekommendationer direkt — baserat på vad du redan har sett.",
+    importPopupCta: "Importera nu →",
+    importPopupDismiss: "Visa inte igen",
   },
   fi: {
     title: "Koti",
@@ -312,6 +332,11 @@ const strings = {
     wrappedCta: "Katso se →",
     wrappedCount: (n: number) => `${n} nimikettä kirjattu`,
     wrappedMonths: ["tammikuu", "helmikuu", "maaliskuu", "huhtikuu", "toukokuu", "kesäkuu", "heinäkuu", "elokuu", "syyskuu", "lokakuu", "marraskuu", "joulukuu"],
+    wrappedLocked: "Wrapped on valmis — avaa Premiumilla",
+    importPopupTitle: "Tuo Netflix-historiaasi",
+    importPopupDesc: "Saa henkilökohtaisia suosituksia heti — perustuen siihen mitä olet jo katsonut.",
+    importPopupCta: "Tuo nyt →",
+    importPopupDismiss: "Älä näytä uudelleen",
   },
 } as const;
 
@@ -360,6 +385,8 @@ export default function HomePage() {
   const [returningBanner, setReturningBanner] = useState<{ type: "day3" | "day7" } | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [wrappedCount, setWrappedCount] = useState(0);
+  const [showImportPopup, setShowImportPopup] = useState(false);
+  const [importDismissChecked, setImportDismissChecked] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -505,6 +532,11 @@ export default function HomePage() {
       bannerPosters,
     });
     setLoading(false);
+
+    // Show import popup for new users with < 5 titles (once, unless dismissed)
+    if (allTitles.length < 5 && !localStorage.getItem("import_prompt_dismissed")) {
+      setShowImportPopup(true);
+    }
     track("home_viewed", { has_library: allTitles.length > 0 });
 
     const prefetchItems = watching.map((t) => ({ id: t.tmdb_id, type: t.type }));
@@ -662,32 +694,59 @@ export default function HomePage() {
         const year = now.getFullYear();
         const monthName = s.wrappedMonths[monthIdx];
         const slug = `${year}-${String(monthIdx + 1).padStart(2, "0")}`;
-        return (
-          <Link
-            href={`/wrapped/${slug}`}
-            onClick={() => track("wrapped_card_clicked", { month: slug, count: wrappedCount })}
-            className="block rounded-2xl p-4 transition-all hover:scale-[1.02] duration-200"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(255,255,255,0.08)",
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,42,42,0.1)", border: "1px solid rgba(255,42,42,0.2)" }}>
-                <span style={{ fontSize: 18 }}>🎬</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-white/90 truncate">{s.wrappedReady(monthName)}</p>
-                  <span className="flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider" style={{ background: "rgba(255,42,42,0.15)", color: "#ff2a2a", border: "1px solid rgba(255,42,42,0.3)" }}>NY</span>
-                </div>
-                <p className="text-xs text-white/40 mt-0.5">{s.wrappedCount(wrappedCount)}</p>
-              </div>
-              <span className="flex-shrink-0 text-xs font-semibold" style={{ color: "#ff2a2a" }}>{s.wrappedCta}</span>
+
+        const wrappedInner = (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,42,42,0.1)", border: "1px solid rgba(255,42,42,0.2)" }}>
+              <span style={{ fontSize: 18 }}>🎬</span>
             </div>
-          </Link>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-white/90 truncate">{s.wrappedReady(monthName)}</p>
+                <span className="flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider" style={{ background: "rgba(255,42,42,0.15)", color: "#ff2a2a", border: "1px solid rgba(255,42,42,0.3)" }}>NY</span>
+              </div>
+              <p className="text-xs text-white/40 mt-0.5">{s.wrappedCount(wrappedCount)}</p>
+            </div>
+            <span className="flex-shrink-0 text-xs font-semibold" style={{ color: "#ff2a2a" }}>{s.wrappedCta}</span>
+          </div>
+        );
+
+        const glassStyle = {
+          background: "rgba(255,255,255,0.03)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          border: "1px solid rgba(255,255,255,0.08)",
+        };
+
+        if (isPremium) {
+          return (
+            <Link
+              href={`/wrapped/${slug}`}
+              onClick={() => track("wrapped_card_clicked", { month: slug, count: wrappedCount })}
+              className="block rounded-2xl p-4 transition-all hover:scale-[1.02] duration-200"
+              style={glassStyle}
+            >
+              {wrappedInner}
+            </Link>
+          );
+        }
+
+        return (
+          <div className="relative rounded-2xl overflow-hidden" style={glassStyle}>
+            <div className="p-4" style={{ filter: "blur(4px)", pointerEvents: "none", userSelect: "none" }}>
+              {wrappedInner}
+            </div>
+            <Link
+              href="/premium"
+              onClick={() => track("wrapped_locked_clicked", { month: slug, count: wrappedCount })}
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2"
+              style={{ background: "rgba(10,10,15,0.6)" }}
+            >
+              <span style={{ fontSize: 20 }}>🔒</span>
+              <p className="text-xs font-semibold text-white/90 text-center px-4">{s.wrappedLocked}</p>
+              <span className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: "#ff2a2a", color: "#fff" }}>Premium</span>
+            </Link>
+          </div>
         );
       })()}
 
@@ -1047,6 +1106,61 @@ export default function HomePage() {
           ]}
           onAction={(action) => handleQuickAction(selectedItem.id, selectedItem.type, action)}
         />
+      )}
+
+      {/* Import prompt popup for new users */}
+      {showImportPopup && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0">
+          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }} onClick={() => { if (importDismissChecked) localStorage.setItem("import_prompt_dismissed", "1"); setShowImportPopup(false); }} />
+          <div
+            className="relative w-full max-w-sm rounded-2xl p-5 animate-fade-in-up"
+            style={{
+              background: "rgba(15,18,30,0.95)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 24px 80px rgba(0,0,0,0.6)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+            }}
+          >
+            <button
+              onClick={() => { if (importDismissChecked) localStorage.setItem("import_prompt_dismissed", "1"); setShowImportPopup(false); }}
+              className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full transition-colors"
+              style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)" }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: "rgba(229,9,20,0.1)", border: "1px solid rgba(229,9,20,0.15)" }}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#E50914">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
+            </div>
+
+            <h3 className="text-base font-bold text-white mb-1">{s.importPopupTitle}</h3>
+            <p className="text-sm leading-relaxed mb-4" style={{ color: "rgba(255,255,255,0.5)" }}>{s.importPopupDesc}</p>
+
+            <Link
+              href="/timemachine"
+              onClick={() => { localStorage.setItem("import_prompt_dismissed", "1"); track("import_popup_cta_clicked"); }}
+              className="w-full flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold text-white text-center transition-all hover:opacity-90"
+              style={{ background: "linear-gradient(135deg, #B00000, #E50914)", minHeight: 40 }}
+            >
+              {s.importPopupCta}
+            </Link>
+
+            <label className="flex items-center gap-2 mt-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={importDismissChecked}
+                onChange={(e) => setImportDismissChecked(e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-white/20 accent-[#E50914]"
+              />
+              <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>{s.importPopupDismiss}</span>
+            </label>
+          </div>
+        </div>
       )}
     </div>
   );
