@@ -150,6 +150,9 @@ const strings = {
     privacy: "Personvern",
     terms: "Vilkår",
     contact: "Kontakt",
+    credits: "Om appen",
+    creditsDesc: "Filmdata og bilder levert av TMDB.",
+    tmdbNotice: "Dette produktet bruker TMDB API, men er ikke godkjent eller sertifisert av TMDB.",
     currentEmail: "Nåværende epost",
     changeEmail: "Endre e-post",
     changeEmailDesc: "Oppdater e-postadressen knyttet til kontoen din.",
@@ -233,6 +236,9 @@ const strings = {
     privacy: "Privacy",
     terms: "Terms",
     contact: "Contact",
+    credits: "Credits",
+    creditsDesc: "Movie and TV data provided by TMDB.",
+    tmdbNotice: "This product uses the TMDB API but is not endorsed or certified by TMDB.",
     currentEmail: "Current email",
     changeEmail: "Change email",
     changeEmailDesc: "Update the email address linked to your account.",
@@ -316,6 +322,9 @@ const strings = {
     privacy: "Privatlivspolitik",
     terms: "Vilkår",
     contact: "Kontakt",
+    credits: "Om appen",
+    creditsDesc: "Film- og seriedata leveret af TMDB.",
+    tmdbNotice: "Dette produkt bruger TMDB API, men er ikke godkendt eller certificeret af TMDB.",
     currentEmail: "Nuværende e-mail",
     changeEmail: "Skift e-mail",
     changeEmailDesc: "Opdater den e-mailadresse, der er knyttet til din konto.",
@@ -399,6 +408,9 @@ const strings = {
     privacy: "Integritet",
     terms: "Villkor",
     contact: "Kontakt",
+    credits: "Om appen",
+    creditsDesc: "Film- och seriedata tillhandahålls av TMDB.",
+    tmdbNotice: "Denna produkt använder TMDB API men är inte godkänd eller certifierad av TMDB.",
     currentEmail: "Nuvarande e-post",
     changeEmail: "Ändra e-post",
     changeEmailDesc: "Uppdatera e-postadressen kopplad till ditt konto.",
@@ -482,6 +494,9 @@ const strings = {
     privacy: "Tietosuoja",
     terms: "Ehdot",
     contact: "Yhteystiedot",
+    credits: "Tietoja sovelluksesta",
+    creditsDesc: "Elokuva- ja sarjadata tarjoaa TMDB.",
+    tmdbNotice: "Tämä tuote käyttää TMDB API:a, mutta TMDB ei ole hyväksynyt tai sertifioinut sitä.",
     currentEmail: "Nykyinen sähköposti",
     changeEmail: "Vaihda sähköposti",
     changeEmailDesc: "Päivitä tiliisi liitetty sähköpostiosoite.",
@@ -1295,6 +1310,16 @@ function SettingsContent() {
               <a href="/terms" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">{s.terms}</a>
               <a href="/contact" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">{s.contact}</a>
             </div>
+          </div>
+
+          {/* Credits / TMDB Attribution */}
+          <div className={glassCard} style={glassCardStyle}>
+            <p className={sectionLabel}>{s.credits}</p>
+            <p className={sectionDesc}>{s.creditsDesc}</p>
+            <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer" className="inline-block mb-3">
+              <img src="/tmdb-logo.svg" alt="TMDB" style={{ height: 16 }} />
+            </a>
+            <p className="text-[10px] text-white/30 leading-relaxed">{s.tmdbNotice}</p>
           </div>
 
           {/* Danger Zone */}
