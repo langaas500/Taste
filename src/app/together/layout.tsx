@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
-const defaultTitle = "Se Sammen — Finn noe å se sammen | Logflix";
+const defaultTitle = "Watch Together — Find something to watch together | Logflix";
 const defaultDescription =
-  "Sveip hver for dere, match på det begge vil se. Gratis verktøy som løser «hva skal vi se i kveld?» på under 3 minutter.";
+  "Swipe apart, match on what you both want to watch. Free tool that solves «what should we watch tonight?» in under 3 minutes.";
 
 const challengeTexts: Record<string, string> = {
   no: "Klarer dere å finne kveldens film på under 3 min?",
