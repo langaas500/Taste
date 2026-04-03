@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Se Sammen i Logflix – Swipe hver for dere, match sammen";
+export const alt = "Watch Together on Logflix – Swipe apart, match together";
 
 export default function OGImage() {
   return new ImageResponse(
@@ -57,7 +57,7 @@ export default function OGImage() {
               letterSpacing: "-0.03em",
             }}
           >
-            Swipe hver for dere.
+            Swipe apart.
           </div>
           <div
             style={{
@@ -68,7 +68,7 @@ export default function OGImage() {
               letterSpacing: "-0.03em",
             }}
           >
-            Match sammen.
+            Match together.
           </div>
           <div
             style={{
@@ -79,7 +79,7 @@ export default function OGImage() {
               letterSpacing: "-0.01em",
             }}
           >
-            Match på 2 min · Gratis · Ingen konto
+            Match in 2 min · Free · No account needed
           </div>
         </div>
 
@@ -109,7 +109,7 @@ export default function OGImage() {
               letterSpacing: "0.02em",
             }}
           >
-            Logflix · Se Sammen
+            Logflix · Watch Together
           </div>
         </div>
       </div>
