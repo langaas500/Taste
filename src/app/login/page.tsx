@@ -32,29 +32,10 @@ const strings = {
     accountPerks: "Konto gir deg tilgang til:",
     browseFirst: "Bare se rundt først →",
     freeForever: "Gratis å bruke — alltid.",
-    heroTogether: "Lagre",
-    heroTogetherAccent: "matchene dine",
-    heroDefault: "Din personlige",
-    heroDefaultAccent: "film- og seriedagbok",
-    heroSubTogether: "Opprett konto for å huske hva dere likte, og få bedre treff neste gang.",
-    heroSubDefault: "Logg det du ser, oppdag nye favoritter med AI-anbefalinger, og aldri glem en god film igjen.",
-    heroSubDefaultMobile: "Logg det du ser, få AI-anbefalinger, og aldri glem en god film igjen.",
-    featureTogetherSave: "Lagre alle Se Sammen-matcher",
-    featureTogetherSaveDesc: "Husker hva dere likte — og bruker det til å finne bedre treff neste gang.",
-    featureTogetherRec: "Personlige anbefalinger basert på smaken din",
-    featureTogetherRecDesc: "Jo mer du sveiper, jo bedre blir forslagene.",
-    featureTogetherProfile: "Bygg smaksprofilen din over tid",
-    featureTogetherProfileDesc: "Én profil for alle dine matcher og preferanser.",
-    featureLog: "Logg alt du ser",
-    featureLogDesc: "Hold oversikt over filmer og serier du har sett, vil se, eller er midt i.",
-    featureAI: "Smarte anbefalinger",
-    featureAIDesc: "AI som lærer smaken din og foreslår det du faktisk vil like.",
-    featureRate: "Ranger og anmeld",
-    featureRateDesc: "Gi poeng, skriv korte tanker, og se tilbake på hva du likte best.",
-    featureShare: "Del med venner",
-    featureShareDesc: "Se hva vennene dine ser, og finn noe nytt å se sammen.",
-    mobileTogetherFeatures: ["Lagre alle Se Sammen-matcher", "Personlige anbefalinger basert på smaken din", "Bygg smaksprofilen din over tid"],
-    mobileDefaultFeatures: ["Se-lister, rangeringer og dagbok", "AI-anbefalinger tilpasset din smak", "Finn noe å se sammen med venner"],
+    heroHeadline: "Slutt å krangle om hva dere skal se.",
+    heroSub: "Logflix matcher deg og partneren din på filmer og serier — på sekunder.",
+    heroFeatures: ["🎬 Se Sammen — sveip og match med partneren din i sanntid", "🤖 AI-kurator — anbefalinger basert på din faktiske smak", "📚 Bibliotek — logg det du ser, aldri glem en god film igjen"],
+    heroCta: "Prøv Se Sammen gratis →",
     accountPerksTogether: ["Lagre alle Se Sammen-matcher", "Personlige anbefalinger basert på smaken din", "Bygg smaksprofilen din over tid"],
     accountPerksDefault: ["Se-lister, rangeringer og personlig bibliotek", "AI-anbefalinger basert på din smak", "Del lister og se statistikk over det du har sett"],
     errInvalidLogin: "Feil e-post eller passord.",
@@ -93,29 +74,10 @@ const strings = {
     accountPerks: "An account gives you access to:",
     browseFirst: "Just browse first →",
     freeForever: "Free to use — always.",
-    heroTogether: "Save",
-    heroTogetherAccent: "your matches",
-    heroDefault: "Your personal",
-    heroDefaultAccent: "movie & series diary",
-    heroSubTogether: "Create an account to remember what you liked, and get better matches next time.",
-    heroSubDefault: "Log what you watch, discover new favourites with AI recommendations, and never forget a great movie.",
-    heroSubDefaultMobile: "Log what you watch, get AI recommendations, and never forget a great movie.",
-    featureTogetherSave: "Save all Watch Together matches",
-    featureTogetherSaveDesc: "Remembers what you liked — and uses it for better matches next time.",
-    featureTogetherRec: "Personal recommendations based on your taste",
-    featureTogetherRecDesc: "The more you swipe, the better the suggestions.",
-    featureTogetherProfile: "Build your taste profile over time",
-    featureTogetherProfileDesc: "One profile for all your matches and preferences.",
-    featureLog: "Log everything you watch",
-    featureLogDesc: "Keep track of movies and series you've seen, want to see, or are watching.",
-    featureAI: "Smart recommendations",
-    featureAIDesc: "AI that learns your taste and suggests what you'll actually enjoy.",
-    featureRate: "Rate and review",
-    featureRateDesc: "Give scores, write short thoughts, and look back at what you liked best.",
-    featureShare: "Share with friends",
-    featureShareDesc: "See what your friends are watching, and find something new to watch together.",
-    mobileTogetherFeatures: ["Save all Watch Together matches", "Personal recommendations based on your taste", "Build your taste profile over time"],
-    mobileDefaultFeatures: ["Watchlists, ratings and diary", "AI recommendations tailored to your taste", "Find something to watch together with friends"],
+    heroHeadline: "Stop arguing about what to watch.",
+    heroSub: "Logflix matches you and your partner on movies and series — in seconds.",
+    heroFeatures: ["🎬 Watch Together — swipe and match with your partner in real time", "🤖 AI Curator — recommendations based on your actual taste", "📚 Library — log what you watch, never forget a great film again"],
+    heroCta: "Try Watch Together free →",
     accountPerksTogether: ["Save all Watch Together matches", "Personal recommendations based on your taste", "Build your taste profile over time"],
     accountPerksDefault: ["Watchlists, ratings and personal library", "AI recommendations based on your taste", "Share lists and view your watch stats"],
     errInvalidLogin: "Wrong email or password.",
@@ -154,29 +116,10 @@ const strings = {
     accountPerks: "En konto giver dig adgang til:",
     browseFirst: "Se dig omkring først →",
     freeForever: "Gratis at bruge — altid.",
-    heroTogether: "Gem",
-    heroTogetherAccent: "dine matches",
-    heroDefault: "Din personlige",
-    heroDefaultAccent: "film- og seriedagbog",
-    heroSubTogether: "Opret konto for at huske hvad I kunne lide, og få bedre matches næste gang.",
-    heroSubDefault: "Log hvad du ser, opdag nye favoritter med AI-anbefalinger, og glem aldrig en god film igen.",
-    heroSubDefaultMobile: "Log hvad du ser, få AI-anbefalinger, og glem aldrig en god film igen.",
-    featureTogetherSave: "Gem alle Se Sammen-matches",
-    featureTogetherSaveDesc: "Husker hvad I kunne lide — og bruger det til bedre matches næste gang.",
-    featureTogetherRec: "Personlige anbefalinger baseret på din smag",
-    featureTogetherRecDesc: "Jo mere du swiper, jo bedre bliver forslagene.",
-    featureTogetherProfile: "Byg din smagsprofil over tid",
-    featureTogetherProfileDesc: "Én profil til alle dine matches og præferencer.",
-    featureLog: "Log alt du ser",
-    featureLogDesc: "Hold styr på film og serier du har set, vil se, eller er i gang med.",
-    featureAI: "Smarte anbefalinger",
-    featureAIDesc: "AI der lærer din smag og foreslår det du faktisk vil kunne lide.",
-    featureRate: "Bedøm og anmeld",
-    featureRateDesc: "Giv point, skriv korte tanker, og se tilbage på hvad du bedst kunne lide.",
-    featureShare: "Del med venner",
-    featureShareDesc: "Se hvad dine venner ser, og find noget nyt at se sammen.",
-    mobileTogetherFeatures: ["Gem alle Se Sammen-matches", "Personlige anbefalinger baseret på din smag", "Byg din smagsprofil over tid"],
-    mobileDefaultFeatures: ["Se-lister, bedømmelser og dagbog", "AI-anbefalinger tilpasset din smag", "Find noget at se sammen med venner"],
+    heroHeadline: "Stop med at skændes om, hvad I skal se.",
+    heroSub: "Logflix matcher dig og din partner på film og serier — på sekunder.",
+    heroFeatures: ["🎬 Se Sammen — swipe og match med din partner i realtid", "🤖 AI-kurator — anbefalinger baseret på din faktiske smag", "📚 Bibliotek — log hvad du ser, glem aldrig en god film igen"],
+    heroCta: "Prøv Se Sammen gratis →",
     accountPerksTogether: ["Gem alle Se Sammen-matches", "Personlige anbefalinger baseret på din smag", "Byg din smagsprofil over tid"],
     accountPerksDefault: ["Se-lister, bedømmelser og personligt bibliotek", "AI-anbefalinger baseret på din smag", "Del lister og se statistik over det du har set"],
     errInvalidLogin: "Forkert e-mail eller adgangskode.",
@@ -215,29 +158,10 @@ const strings = {
     accountPerks: "Ett konto ger dig tillgång till:",
     browseFirst: "Titta runt först →",
     freeForever: "Gratis att använda — alltid.",
-    heroTogether: "Spara",
-    heroTogetherAccent: "dina matchningar",
-    heroDefault: "Din personliga",
-    heroDefaultAccent: "film- och seriedagbok",
-    heroSubTogether: "Skapa konto för att komma ihåg vad ni gillade och få bättre matchningar nästa gång.",
-    heroSubDefault: "Logga det du ser, upptäck nya favoriter med AI-rekommendationer och glöm aldrig en bra film.",
-    heroSubDefaultMobile: "Logga det du ser, få AI-rekommendationer och glöm aldrig en bra film.",
-    featureTogetherSave: "Spara alla Se Tillsammans-matchningar",
-    featureTogetherSaveDesc: "Kommer ihåg vad ni gillade — och använder det för bättre matchningar.",
-    featureTogetherRec: "Personliga rekommendationer baserat på din smak",
-    featureTogetherRecDesc: "Ju mer du svajpar, desto bättre blir förslagen.",
-    featureTogetherProfile: "Bygg din smakprofil över tid",
-    featureTogetherProfileDesc: "En profil för alla dina matchningar och preferenser.",
-    featureLog: "Logga allt du ser",
-    featureLogDesc: "Håll koll på filmer och serier du sett, vill se eller håller på med.",
-    featureAI: "Smarta rekommendationer",
-    featureAIDesc: "AI som lär sig din smak och föreslår det du faktiskt kommer gilla.",
-    featureRate: "Betygsätt och recensera",
-    featureRateDesc: "Ge poäng, skriv korta tankar och se tillbaka på vad du gillade mest.",
-    featureShare: "Dela med vänner",
-    featureShareDesc: "Se vad dina vänner tittar på och hitta något nytt att se tillsammans.",
-    mobileTogetherFeatures: ["Spara alla Se Tillsammans-matchningar", "Personliga rekommendationer baserat på din smak", "Bygg din smakprofil över tid"],
-    mobileDefaultFeatures: ["Se-listor, betyg och dagbok", "AI-rekommendationer anpassade efter din smak", "Hitta något att se tillsammans med vänner"],
+    heroHeadline: "Sluta bråka om vad ni ska se.",
+    heroSub: "Logflix matchar dig och din partner på filmer och serier — på sekunder.",
+    heroFeatures: ["🎬 Se Tillsammans — swipa och matcha med din partner i realtid", "🤖 AI-kurator — rekommendationer baserade på din faktiska smak", "📚 Bibliotek — logga vad du ser, glöm aldrig en bra film igen"],
+    heroCta: "Prova Se Tillsammans gratis →",
     accountPerksTogether: ["Spara alla Se Tillsammans-matchningar", "Personliga rekommendationer baserat på din smak", "Bygg din smakprofil över tid"],
     accountPerksDefault: ["Se-listor, betyg och personligt bibliotek", "AI-rekommendationer baserat på din smak", "Dela listor och se statistik över det du sett"],
     errInvalidLogin: "Fel e-post eller lösenord.",
@@ -276,29 +200,10 @@ const strings = {
     accountPerks: "Tili antaa sinulle pääsyn:",
     browseFirst: "Katsele ensin →",
     freeForever: "Ilmainen käyttää — aina.",
-    heroTogether: "Tallenna",
-    heroTogetherAccent: "matchisi",
-    heroDefault: "Henkilökohtainen",
-    heroDefaultAccent: "elokuva- ja sarjapäiväkirjasi",
-    heroSubTogether: "Luo tili muistaaksesi mistä piditte ja saadaksesi parempia matcheja seuraavalla kerralla.",
-    heroSubDefault: "Kirjaa katsomasi, löydä uusia suosikkeja AI-suosituksilla äläkä unohda hyvää elokuvaa.",
-    heroSubDefaultMobile: "Kirjaa katsomasi, saa AI-suosituksia äläkä unohda hyvää elokuvaa.",
-    featureTogetherSave: "Tallenna kaikki Katsotaan Yhdessä -matchit",
-    featureTogetherSaveDesc: "Muistaa mistä piditte — ja käyttää sitä parempiin matcheihin.",
-    featureTogetherRec: "Henkilökohtaiset suositukset makusi perusteella",
-    featureTogetherRecDesc: "Mitä enemmän swaippaat, sitä parempia ehdotuksia saat.",
-    featureTogetherProfile: "Rakenna makuprofiilisi ajan myötä",
-    featureTogetherProfileDesc: "Yksi profiili kaikille matcheillesi ja mieltymyksillesi.",
-    featureLog: "Kirjaa kaikki katsomasi",
-    featureLogDesc: "Pidä kirjaa elokuvista ja sarjoista jotka olet nähnyt, haluat nähdä tai katsot parhaillaan.",
-    featureAI: "Älykkäät suositukset",
-    featureAIDesc: "Tekoäly joka oppii makusi ja ehdottaa sitä mistä oikeasti pidät.",
-    featureRate: "Arvioi ja arvostele",
-    featureRateDesc: "Anna pisteitä, kirjoita lyhyitä ajatuksia ja katso mitä pidit eniten.",
-    featureShare: "Jaa ystävien kanssa",
-    featureShareDesc: "Katso mitä ystäväsi katsovat ja löydä jotain uutta katsottavaa yhdessä.",
-    mobileTogetherFeatures: ["Tallenna kaikki Katsotaan Yhdessä -matchit", "Henkilökohtaiset suositukset makusi perusteella", "Rakenna makuprofiilisi ajan myötä"],
-    mobileDefaultFeatures: ["Katselulistat, arviot ja päiväkirja", "AI-suositukset makuusi sopiviksi", "Löydä jotain katsottavaa yhdessä ystävien kanssa"],
+    heroHeadline: "Lopeta riitely siitä, mitä katsotte.",
+    heroSub: "Logflix yhdistää sinut ja kumppanisi elokuviin ja sarjoihin — sekunneissa.",
+    heroFeatures: ["🎬 Katso Yhdessä — swippaa ja matcha kumppanisi kanssa reaaliajassa", "🤖 AI-kuraattori — suositukset todellisen makusi perusteella", "📚 Kirjasto — kirjaa mitä katsot, älä koskaan unohda hyvää elokuvaa"],
+    heroCta: "Kokeile Katso Yhdessä ilmaiseksi →",
     accountPerksTogether: ["Tallenna kaikki Katsotaan Yhdessä -matchit", "Henkilökohtaiset suositukset makusi perusteella", "Rakenna makuprofiilisi ajan myötä"],
     accountPerksDefault: ["Katselulistat, arviot ja henkilökohtainen kirjasto", "AI-suositukset makusi perusteella", "Jaa listoja ja katso katselutilastojasi"],
     errInvalidLogin: "Väärä sähköposti tai salasana.",
@@ -466,84 +371,7 @@ function LoginContent() {
   }
 
 
-  const features = isTogether ? [
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-        </svg>
-      ),
-      title: s.featureTogetherSave,
-      desc: s.featureTogetherSaveDesc,
-    },
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-        </svg>
-      ),
-      title: s.featureTogetherRec,
-      desc: s.featureTogetherRecDesc,
-    },
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-        </svg>
-      ),
-      title: s.featureTogetherProfile,
-      desc: s.featureTogetherProfileDesc,
-    },
-  ] : [
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" />
-          <line x1="7" y1="2" x2="7" y2="22" />
-          <line x1="17" y1="2" x2="17" y2="22" />
-          <line x1="2" y1="12" x2="22" y2="12" />
-          <line x1="2" y1="7" x2="7" y2="7" />
-          <line x1="2" y1="17" x2="7" y2="17" />
-          <line x1="17" y1="7" x2="22" y2="7" />
-          <line x1="17" y1="17" x2="22" y2="17" />
-        </svg>
-      ),
-      title: s.featureLog,
-      desc: s.featureLogDesc,
-    },
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93L12 22l-.75-12.07A4.001 4.001 0 0 1 12 2z" />
-          <path d="M9 6.5a2.5 2.5 0 0 1 5 0" />
-          <circle cx="12" cy="6" r="1" fill="currentColor" />
-        </svg>
-      ),
-      title: s.featureAI,
-      desc: s.featureAIDesc,
-    },
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-        </svg>
-      ),
-      title: s.featureRate,
-      desc: s.featureRateDesc,
-    },
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-      ),
-      title: s.featureShare,
-      desc: s.featureShareDesc,
-    },
-  ];
+  const heroFeatures = s.heroFeatures as readonly string[];
 
   return (
     <div className="min-h-dvh flex relative">
@@ -570,36 +398,30 @@ function LoginContent() {
           />
 
           <h1 className="text-4xl xl:text-5xl font-bold text-[var(--text-primary)] leading-tight mb-4">
-            {isTogether ? (
-              <>{s.heroTogether} <span className="text-[var(--accent)]">{s.heroTogetherAccent}</span></>
-            ) : (
-              <>{s.heroDefault}<br /><span className="text-[var(--accent)]">{s.heroDefaultAccent}</span></>
-            )}
+            {s.heroHeadline}
           </h1>
 
-          <p className="text-[var(--text-secondary)] text-lg leading-relaxed mb-10 max-w-md">
-            {isTogether ? s.heroSubTogether : s.heroSubDefault}
+          <p className="text-[var(--text-secondary)] text-lg leading-relaxed mb-8 max-w-md">
+            {s.heroSub}
           </p>
 
-          <div className="space-y-5">
-            {features.map((f, i) => (
-              <div key={i} className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)]">
-                  {f.icon}
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-0.5">
-                    {f.title}
-                  </h3>
-                  <p className="text-sm text-[var(--text-tertiary)] leading-relaxed">
-                    {f.desc}
-                  </p>
-                </div>
+          <div className="space-y-4 mb-8">
+            {heroFeatures.map((feature, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <span className="text-sm text-[var(--text-secondary)] leading-relaxed">{feature}</span>
               </div>
             ))}
           </div>
 
-          <div className="mt-12 flex items-center gap-3 text-xs text-[var(--text-tertiary)]">
+          <Link
+            href="/together"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 hover:-translate-y-[1px]"
+            style={{ background: "#ff2a2a", boxShadow: "0 0 20px rgba(255,42,42,0.3)" }}
+          >
+            {s.heroCta}
+          </Link>
+
+          <div className="mt-10 flex items-center gap-3 text-xs text-[var(--text-tertiary)]">
             <div className="flex -space-x-2">
               {["🎬", "🍿", "⭐"].map((emoji, i) => (
                 <div
@@ -629,25 +451,28 @@ function LoginContent() {
             priority
           />
           <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
-            {isTogether
-              ? <>{s.heroTogether} <span className="text-[var(--accent)]">{s.heroTogetherAccent}</span></>
-              : <>{s.heroDefault} <span className="text-[var(--accent)]">{s.heroDefaultAccent}</span></>}
+            {s.heroHeadline}
           </h1>
           <p className="text-[var(--text-tertiary)] text-sm leading-relaxed mb-4">
-            {isTogether ? s.heroSubTogether : s.heroSubDefaultMobile}
+            {s.heroSub}
           </p>
 
-          {/* Mobile feature list (more compelling than pills) */}
-          <div className="text-left space-y-2.5 max-w-xs mx-auto">
-            {(isTogether ? s.mobileTogetherFeatures : s.mobileDefaultFeatures).map((label, i) => ({
-              label, icon: isTogether ? ["🎯", "✨", "📈"][i] : ["📋", "✨", "👥"][i],
-            })).map((item, i) => (
+          {/* Mobile feature list */}
+          <div className="text-left space-y-2.5 max-w-xs mx-auto mb-4">
+            {heroFeatures.map((feature, i) => (
               <div key={i} className="flex items-center gap-2.5">
-                <span className="text-sm">{item.icon}</span>
-                <span className="text-xs text-[var(--text-secondary)]">{item.label}</span>
+                <span className="text-xs text-[var(--text-secondary)]">{feature}</span>
               </div>
             ))}
           </div>
+
+          <Link
+            href="/together"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
+            style={{ background: "#ff2a2a", boxShadow: "0 0 16px rgba(255,42,42,0.3)" }}
+          >
+            {s.heroCta}
+          </Link>
         </div>
 
         {/* Auth card */}
