@@ -6,7 +6,8 @@ import Link from "next/link";
 import { logTitle } from "@/lib/api";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { getMessages } from "./messages";
-import { getLocale, t, cardsLeft, type Locale } from "./strings";
+import { t, cardsLeft, type Locale } from "./strings";
+import { useLocale } from "@/hooks/useLocale";
 import useQrCode from "./hooks/useQrCode";
 import { track } from "@/lib/posthog";
 
@@ -61,11 +62,11 @@ export default function WTBetaPage() {
 
   const [chosen, setChosen] = useState<WTTitle | null>(null); // paired polling compat
   const [mounted, setMounted] = useState(false);
-  const { ribbonPosters, userRegion, ribbonLocale } = useRibbon();
+  const { ribbonPosters, userRegion } = useRibbon();
   const [preferenceMode, setPreferenceMode] = useState<"series" | "movies" | "mix">("series");
   const [selectedProviders, setSelectedProviders] = useState<number[]>([]);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [locale, setLocale] = useState<Locale>("en");
+  const locale = useLocale() as Locale;
   const introChoice = "paired"; // default mode for tracking
   const [introFading, setIntroFading] = useState(false);
   const [ritualState, setRitualState] = useState<RitualState>("idle");
@@ -284,10 +285,7 @@ export default function WTBetaPage() {
     return () => { ritualTimers.current.forEach(clearTimeout); };
   }, []);
 
-  /* ── sync locale from ribbon hook ── */
-  useEffect(() => {
-    if (ribbonLocale) setLocale(ribbonLocale);
-  }, [ribbonLocale]);
+  /* locale now comes from useLocale() — no sync needed */
 
   /* ── card timing ── */
   useEffect(() => {
