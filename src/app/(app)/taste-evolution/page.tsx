@@ -185,14 +185,48 @@ export default function TasteEvolutionPage() {
   const d = data;
   const moviePct = d.totalTitles > 0 ? Math.round((d.movieCount / d.totalTitles) * 100) : 0;
 
-  async function handleShare() {
-    track("taste_evolution_shared");
-    const text = `${s.shareText}\n\n${d.genreBreakdown.slice(0, 3).map((g) => `${g.name} ${g.pct}%`).join(" · ")}\n${d.totalTitles} titles · ${d.topDirectors[0]?.name ?? ""}\n\nlogflix.app/taste-evolution`;
-    if (navigator.share) {
-      try { await navigator.share({ text }); } catch { /* cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(text);
+  const [shareState, setShareState] = useState<"idle" | "loading" | "copied">("idle");
+
+  function buildOgUrl() {
+    const params = new URLSearchParams({
+      name: "",
+      total: String(d.totalTitles),
+      genres: d.genreBreakdown.slice(0, 4).map((g) => `${g.name}:${g.pct}`).join(","),
+      moviePct: String(moviePct),
+      directors: d.topDirectors.slice(0, 3).map((d) => d.name).join(","),
+      moods: d.topMoods.slice(0, 3).join(","),
+      rating: d.avgRating ? String(d.avgRating) : "",
+      countries: String(d.countryCount),
+      tempo: String(d.titlesPerMonth),
+    });
+    return `https://logflix.app/api/og/taste-evolution?${params}`;
+  }
+
+  const shareText = `${s.shareText}\n\n${d.genreBreakdown.slice(0, 3).map((g) => `${g.name} ${g.pct}%`).join(" · ")}\n${d.totalTitles} titles\n\nlogflix.app`;
+  const shareUrl = "https://logflix.app/taste-evolution";
+
+  async function handleShareImage() {
+    track("taste_evolution_shared", { method: "image" });
+    setShareState("loading");
+    try {
+      const res = await fetch(buildOgUrl());
+      const blob = await res.blob();
+      const file = new File([blob], "my-film-taste.png", { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ text: shareText, files: [file] });
+      } else {
+        await navigator.share({ text: shareText, url: shareUrl });
+      }
+    } catch {
+      // Fallback: copy text
+      try { await navigator.clipboard.writeText(shareText); setShareState("copied"); setTimeout(() => setShareState("idle"), 2000); } catch { /* ignore */ }
     }
+    if (shareState !== "copied") setShareState("idle");
+  }
+
+  function handleCopyLink() {
+    track("taste_evolution_shared", { method: "copy" });
+    navigator.clipboard.writeText(shareUrl).then(() => { setShareState("copied"); setTimeout(() => setShareState("idle"), 2000); }).catch(() => {});
   }
 
   function renderMilestone(m: { icon: string; text: string }) {
@@ -386,14 +420,56 @@ export default function TasteEvolutionPage() {
         </div>
       )}
 
-      {/* Share button */}
-      <button
-        onClick={handleShare}
-        className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-        style={{ background: "#ff2a2a", cursor: "pointer", border: "none" }}
-      >
-        {s.share}
-      </button>
+      {/* Share section */}
+      <div className="space-y-2">
+        {/* Primary: share with image (mobile) or copy (desktop) */}
+        <button
+          onClick={typeof navigator !== "undefined" && "share" in navigator ? handleShareImage : handleCopyLink}
+          disabled={shareState === "loading"}
+          className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
+          style={{ background: "#ff2a2a", cursor: "pointer", border: "none" }}
+        >
+          {shareState === "loading" ? "..." : shareState === "copied" ? "✓ Copied!" : `📸 ${s.share}`}
+        </button>
+
+        {/* Desktop fallback buttons */}
+        <div className="flex gap-2">
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+            target="_blank" rel="noopener noreferrer"
+            className="flex-1 py-2.5 rounded-xl text-xs font-medium text-center transition-all hover:bg-white/[0.06]"
+            style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}
+            onClick={() => track("taste_evolution_shared", { method: "whatsapp" })}
+          >
+            WhatsApp
+          </a>
+          <a
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
+            target="_blank" rel="noopener noreferrer"
+            className="flex-1 py-2.5 rounded-xl text-xs font-medium text-center transition-all hover:bg-white/[0.06]"
+            style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}
+            onClick={() => track("taste_evolution_shared", { method: "facebook" })}
+          >
+            Facebook
+          </a>
+          <a
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`}
+            target="_blank" rel="noopener noreferrer"
+            className="flex-1 py-2.5 rounded-xl text-xs font-medium text-center transition-all hover:bg-white/[0.06]"
+            style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}
+            onClick={() => track("taste_evolution_shared", { method: "twitter" })}
+          >
+            X
+          </a>
+          <button
+            onClick={handleCopyLink}
+            className="flex-1 py-2.5 rounded-xl text-xs font-medium text-center transition-all hover:bg-white/[0.06]"
+            style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)", cursor: "pointer" }}
+          >
+            {shareState === "copied" ? "✓" : "Copy"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
