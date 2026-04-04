@@ -474,7 +474,10 @@ export default function CuratorPage() {
           }
           setMessages((prev) => {
             const without = prev.filter((m) => !m.loading);
-            return [...without, { role: "bot" as const, text: msgText || t.error, movies }];
+            // Remove the streaming partial message before adding final with movies
+            const lastBot = without[without.length - 1];
+            const base = lastBot?.role === "bot" && !lastBot.movies ? without.slice(0, -1) : without;
+            return [...base, { role: "bot" as const, text: msgText || t.error, movies }];
           });
           setFollowUps(serverPills.length > 0 ? serverPills : pickFollowUps(lang));
           messageShown = true;
