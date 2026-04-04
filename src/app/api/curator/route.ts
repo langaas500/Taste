@@ -772,7 +772,7 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
         : wc >= 71 && wc <= 77 ? "Snowing — perfect for a cozy night in"
         : wc >= 80 ? "Stormy — intense weather calls for an intense film"
         : "Mild weather";
-      tasteContext += `\nCurrent weather: ${weatherMood}, ${Math.round(temp)}°C. Let this subtly influence your recommendation tone.`;
+      tasteContext += `\nCurrent weather: ${weatherMood}, ${Math.round(temp)}°C. Use this ONLY to inform your recommendation choices — do NOT mention the weather in your message unless the user specifically asks about it.`;
     }
   } catch { /* non-fatal */ }
 
@@ -950,7 +950,7 @@ When couple context is present, prefix your "message" with "💑" and briefly ex
     } else {
       timeContext = ts.default;
     }
-    tasteContext += `\nTime context: ${timeContext}`;
+    tasteContext += `\nTime context (use to inform picks, do NOT repeat the time/day in every message): ${timeContext}`;
   }
 
   // Watchlist context — title names from cache
