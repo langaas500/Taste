@@ -107,8 +107,22 @@ interface PremiumModalProps {
 export default function PremiumModal({ isOpen, onClose, source, userName, titleCount }: PremiumModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [priceLabel, setPriceLabel] = useState("");
+  const [spotsLeft, setSpotsLeft] = useState<number | null>(null);
   const locale = useLocale();
   const s = strings[locale] ?? strings.en;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch("/api/pricing")
+      .then((r) => r.json())
+      .then((d) => {
+        const period = d.periods?.[locale] || d.periods?.en || "/mo";
+        setPriceLabel(`${d.price}${period}`);
+        setSpotsLeft(d.spots_left ?? null);
+      })
+      .catch(() => {});
+  }, [isOpen, locale]);
   const pFn = personalizedSub[locale as keyof typeof personalizedSub] ?? personalizedSub.en;
   const subText = userName && titleCount != null && titleCount > 0
     ? pFn(userName, titleCount)
@@ -187,7 +201,11 @@ export default function PremiumModal({ isOpen, onClose, source, userName, titleC
         </button>
 
         {/* Heading + sub */}
-        <h2 className="text-xl font-bold text-white mb-1.5">{s.heading}</h2>
+        <h2 className="text-xl font-bold text-white mb-1.5">
+          {priceLabel
+            ? `${priceLabel} — ${locale === "no" ? "for dere begge" : locale === "dk" ? "for jer begge" : locale === "se" ? "för er båda" : locale === "fi" ? "teille molemmille" : "for both of you"}`
+            : s.heading}
+        </h2>
         <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.5)" }}>
           {subText}
         </p>
@@ -234,15 +252,26 @@ export default function PremiumModal({ isOpen, onClose, source, userName, titleC
             animation: "ctaGlow 2s ease-in-out infinite",
           }}
         >
-          {loading ? s.loading : s.cta}
+          {loading ? s.loading : priceLabel
+            ? `${locale === "no" ? "Start Logflix Par" : locale === "dk" ? "Start Logflix Par" : locale === "se" ? "Starta Logflix Par" : locale === "fi" ? "Aloita Logflix Par" : "Start Logflix Par"} — ${priceLabel}`
+            : s.cta}
         </button>
+
+        {/* Spots left */}
+        {spotsLeft !== null && spotsLeft <= 100 && (
+          <p className="text-xs text-center mt-2 font-semibold" style={{ color: "rgba(255,42,42,0.7)" }}>
+            {locale === "no" ? `Kun ${spotsLeft} plasser igjen` : locale === "dk" ? `Kun ${spotsLeft} pladser tilbage` : locale === "se" ? `Endast ${spotsLeft} platser kvar` : locale === "fi" ? `Vain ${spotsLeft} paikkaa jäljellä` : `Only ${spotsLeft} spots left`}
+          </p>
+        )}
 
         {/* Lock-in text */}
         <p
           className="text-[11px] text-center mt-3 leading-relaxed"
           style={{ color: "rgba(255,255,255,0.35)" }}
         >
-          {s.lockin}
+          {priceLabel
+            ? `🔒 ${priceLabel} ${locale === "no" ? "låses for alltid. Partner får også premium. Ingen binding." : locale === "dk" ? "låses for altid. Din partner får også premium. Ingen binding." : locale === "se" ? "låses för alltid. Din partner får också premium. Ingen bindningstid." : locale === "fi" ? "lukitaan ikuisesti. Kumppanisi saa myös premiumin. Ei sitoutumista." : "locked forever. Your partner gets premium too. No commitment."}`
+            : s.lockin}
         </p>
 
         {/* Footer */}

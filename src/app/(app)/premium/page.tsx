@@ -47,6 +47,9 @@ function StarIcon({ color = "#E8A830", size = 16 }: { color?: string; size?: num
 export default function PremiumHubPage() {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [priceLabel, setPriceLabel] = useState("");
+  const [spotsLeft, setSpotsLeft] = useState<number | null>(null);
+  const [isFoundingAvailable, setIsFoundingAvailable] = useState(true);
   const [tonightPick, setTonightPick] = useState<TonightPickData | null>(null);
   const [tpRerolling, setTpRerolling] = useState(false);
   const [coupleReport, setCoupleReport] = useState<CoupleReport | null>(null);
@@ -94,6 +97,17 @@ export default function PremiumHubPage() {
         }
       })
       .catch(() => setIsPremium(false));
+
+    // Fetch dynamic pricing
+    fetch("/api/pricing")
+      .then((r) => r.json())
+      .then((d) => {
+        const period = d.periods?.[locale] || d.periods?.en || "/mo";
+        setPriceLabel(`${d.price}${period}`);
+        setSpotsLeft(d.spots_left ?? null);
+        setIsFoundingAvailable(d.is_founding_available ?? true);
+      })
+      .catch(() => {});
   }, []);
 
   async function loadPremiumData() {
@@ -170,13 +184,20 @@ export default function PremiumHubPage() {
               {locale === "no" ? "Slutt å krangle om hva dere skal se." : "Stop arguing about what to watch."}
             </h1>
             <p className="text-base text-white/50 mb-6">
-              {locale === "no" ? "29 kr/mnd — for dere begge." : "29 NOK/mo — for both of you."}
+              {priceLabel ? `${priceLabel} — ${locale === "no" ? "for dere begge." : "for both of you."}` : "\u00A0"}
             </p>
             <button onClick={() => setShowModal(true)}
               className="px-8 py-4 rounded-xl text-sm font-bold text-white cursor-pointer transition-all duration-200"
               style={{ background: "linear-gradient(135deg, #E50914, #82060c)", animation: "pulse-cta 2.5s ease-in-out infinite" }}>
-              {locale === "no" ? "Bli Founding Member — 29 kr/mnd" : "Become Founding Member — 29 NOK/mo"} →
+              {isFoundingAvailable
+                ? `${locale === "no" ? "Bli Founding Member" : "Become Founding Member"} — ${priceLabel || "..."} →`
+                : `${locale === "no" ? "Start Premium" : "Start Premium"} — ${priceLabel || "..."} →`}
             </button>
+            {isFoundingAvailable && spotsLeft !== null && spotsLeft <= 100 && (
+              <p className="mt-3 text-xs font-semibold" style={{ color: "rgba(255,42,42,0.7)" }}>
+                {locale === "no" ? `Kun ${spotsLeft} plasser igjen` : locale === "dk" ? `Kun ${spotsLeft} pladser tilbage` : locale === "se" ? `Endast ${spotsLeft} platser kvar` : locale === "fi" ? `Vain ${spotsLeft} paikkaa jäljellä` : `Only ${spotsLeft} spots left`}
+              </p>
+            )}
           </div>
         </div>
 
@@ -237,7 +258,7 @@ export default function PremiumHubPage() {
               <button onClick={() => setShowModal(true)}
                 className="mt-3 px-4 py-2 rounded-xl text-xs font-bold transition-all"
                 style={{ background: "rgba(232,168,48,0.15)", border: "0.5px solid rgba(232,168,48,0.4)", color: "#E8A830" }}>
-                {locale === "no" ? "Lås opp — 29 kr/mnd" : "Unlock — 29 NOK/mo"}
+                {locale === "no" ? "Lås opp" : "Unlock"} — {priceLabel || "..."}
               </button>
             </div>
           </div>

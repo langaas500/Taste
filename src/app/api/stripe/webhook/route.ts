@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
-import { getStripeServer, FOUNDING_PRICE_ID } from "@/lib/stripe";
+import { getStripeServer } from "@/lib/stripe";
+
+const FOUNDING_PRICE_IDS = [
+  process.env.STRIPE_FOUNDING_PRICE_ID,
+  process.env.STRIPE_PRICE_FOUNDING_NOK,
+  process.env.STRIPE_PRICE_FOUNDING_USD,
+  process.env.STRIPE_PRICE_FOUNDING_EUR,
+].filter(Boolean) as string[];
 
 export async function POST(req: NextRequest) {
   const stripe = getStripeServer();
@@ -145,13 +152,22 @@ export async function POST(req: NextRequest) {
 
         const isActive = sub.status === "active" || sub.status === "trialing";
         const priceId = sub.items.data[0]?.price?.id;
-        const isFounding = priceId === FOUNDING_PRICE_ID;
+        const isFoundingPrice = !!priceId && FOUNDING_PRICE_IDS.includes(priceId);
+
+        // Once founding, always founding — never downgrade existing founding members
+        const { data: existing } = await admin
+          .from("profiles")
+          .select("founding_member")
+          .eq("stripe_customer_id", customerId)
+          .single();
+
+        const foundingMember = existing?.founding_member === true || isFoundingPrice;
 
         await admin
           .from("profiles")
           .update({
             is_premium: isActive,
-            founding_member: isFounding,
+            founding_member: foundingMember,
           })
           .eq("stripe_customer_id", customerId);
         break;
