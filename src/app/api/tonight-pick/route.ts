@@ -275,6 +275,7 @@ async function generatePick(
     .single();
 
   if (error) throw new Error(error.message);
+  if (!inserted) throw new Error("Pick not created");
   return formatPick(inserted);
 }
 

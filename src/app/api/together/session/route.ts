@@ -129,19 +129,32 @@ export const POST = withLogger("/api/together/session", async (req, { logger }) 
       attempts++;
     }
 
-    const { data: session, error } = await admin
-      .from("wt_sessions")
-      .insert({
-        code,
-        host_id: userId,
-        titles,
-        deck_seed,
-        status: "waiting",
-      })
-      .select("id, code, status")
-      .single();
+    let session;
+    let insertError;
+    for (let retry = 0; retry < 2; retry++) {
+      const { data, error: err } = await admin
+        .from("wt_sessions")
+        .insert({
+          code,
+          host_id: userId,
+          titles,
+          deck_seed,
+          status: "waiting",
+        })
+        .select("id, code, status")
+        .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (err && err.code === "23505") {
+        code = generateCode();
+        continue;
+      }
+      session = data;
+      insertError = err;
+      break;
+    }
+
+    if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
+    if (!session) return NextResponse.json({ error: "Failed to create session" }, { status: 500 });
 
     // DISABLED: Couple co-preference data is retained for taste graph
     // Previously deleted wt_session_swipes and wt_sessions older than 24h.

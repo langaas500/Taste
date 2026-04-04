@@ -449,8 +449,6 @@ export default function HomePage() {
         fetch("/api/taste-summary").then((r) => r.json()).catch(() => ({})),
         fetch("/api/profile").then((r) => r.json()).catch(() => ({})),
       ]);
-      console.log("profileRes:", JSON.stringify(profileRes));
-      console.log("isPremium:", !!profileRes?.profile?.is_premium);
       const premium = !!profileRes?.profile?.is_premium;
       setIsPremium(premium);
       setIsTrial(!!profileRes?.profile?.is_trial);

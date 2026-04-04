@@ -56,20 +56,33 @@ export const POST = withLogger("/api/group/session", async (req, { logger }) => 
       attempts++;
     }
 
-    // Insert session
-    const { data: session, error } = await admin
-      .from("group_sessions")
-      .insert({
-        code,
-        host_user_id: userId,
-        status: "lobby",
-        media_filter,
-        provider_region,
-      })
-      .select("*")
-      .single();
+    // Insert session (retry once on code collision)
+    let session;
+    let insertError;
+    for (let retry = 0; retry < 2; retry++) {
+      const { data, error: err } = await admin
+        .from("group_sessions")
+        .insert({
+          code,
+          host_user_id: userId,
+          status: "lobby",
+          media_filter,
+          provider_region,
+        })
+        .select("*")
+        .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (err && err.code === "23505") {
+        code = generateGroupCode();
+        continue;
+      }
+      session = data;
+      insertError = err;
+      break;
+    }
+
+    if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
+    if (!session) return NextResponse.json({ error: "Failed to create session" }, { status: 500 });
 
     // Add host as first participant
     await admin.from("group_session_participants").insert({

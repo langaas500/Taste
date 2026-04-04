@@ -272,8 +272,8 @@ export default function WTBetaPage() {
       if (urlParams.get("ref") === "match" && urlParams.get("title")) {
         setRefMatchTitle(decodeURIComponent(urlParams.get("title")!));
       }
-      // DEBUG: ?winner=1 → viser winner-skjermen direkte
-      if (urlParams.get("winner") === "1") {
+      // DEBUG: ?winner=1 → dev only
+      if (process.env.NODE_ENV === "development" && urlParams.get("winner") === "1") {
         setFinalWinner({ tmdb_id: 550, title: "Fight Club", year: 1999, type: "movie", genre_ids: [18, 53], overview: "An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into something much, much more.", poster_path: "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg", vote_average: 8.4 });
         setScreen("together");
         setRoundPhase("winner");

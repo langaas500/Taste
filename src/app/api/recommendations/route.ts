@@ -84,7 +84,8 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
           .from("wt_session_swipes")
           .select("session_id, user_id, guest_id, tmdb_id, media_type")
           .in("session_id", wtSessionIds)
-          .in("decision", ["like", "superlike"]);
+          .in("decision", ["like", "superlike"])
+          .limit(1000);
 
         // Group by (session_id:tmdb_id:media_type) → collect distinct player identities
         const groups = new Map<string, Set<string>>();

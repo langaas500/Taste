@@ -17,8 +17,11 @@ export async function GET(req: NextRequest) {
 
     // Provider filter — comma-separated TMDB provider IDs from client
     const providersParam = req.nextUrl.searchParams.get("providers");
+    if (providersParam && providersParam.length > 200) {
+      return NextResponse.json({ error: "Too many providers" }, { status: 400 });
+    }
     const providerIds = providersParam
-      ? providersParam.split(",").map(Number).filter(Boolean)
+      ? providersParam.split(",").slice(0, 20).map(Number).filter(Boolean)
       : [];
 
     // Content preference — deck weighting

@@ -308,7 +308,8 @@ function OnboardingContent() {
       .then((d) => {
         if (d.success) { setTrialActivated(true); setTrialDays(7); setIsPremium(true); }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => { trialActivating.current = false; });
   }, [step, isPremium, trialActivated]);
 
   // Detect region via the ribbon endpoint

@@ -28,11 +28,12 @@ export async function GET(req: NextRequest) {
     if (data && !data.preferred_region) {
       const ipCountry = req.headers.get("x-vercel-ip-country")?.toUpperCase();
       if (ipCountry && isSupportedRegion(ipCountry)) {
-        supabase
-          .from("profiles")
-          .update({ preferred_region: ipCountry })
-          .eq("id", user.id)
-          .then(() => {});
+        Promise.resolve(
+          supabase
+            .from("profiles")
+            .update({ preferred_region: ipCountry })
+            .eq("id", user.id)
+        ).catch((err: unknown) => { console.error("Auto-save region failed:", err); });
         data.preferred_region = ipCountry;
       }
     }
