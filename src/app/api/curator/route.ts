@@ -419,7 +419,7 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
   };
 
   // Fetch taste context + weather + post-watch + swipe analysis + mood tags + couple matches in parallel
-  const [likedRes, dislikedRes, watchlistRes, linksRes, favoritesRes, superlikesRes, exclusionsRes, moodTagsRes, coupleMatchesRes, coupleDisagreesRes, weatherRes, postWatchRes, swipeAnalysisRes, spotifyMoodRes] = await Promise.all([
+  const [likedRes, dislikedRes, watchlistRes, linksRes, favoritesRes, superlikesRes, exclusionsRes, moodTagsRes, coupleMatchesRes, coupleDisagreesRes, weatherRes, postWatchRes, swipeAnalysisRes, spotifyMoodRes, directorGraphRes] = await Promise.all([
     supabase
       .from("user_titles")
       .select("tmdb_id, type, rating, sentiment")
@@ -522,6 +522,8 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
     (async () => {
       try { return await getSpotifyMood(user.id); } catch { return null; }
     })(),
+    // Director graph — fetch after liked titles are known (deferred below)
+    Promise.resolve(null as { director_name: string; movements: string[] | null; awards: string[] | null; nationality: string | null; influenced_by: string[] | null }[] | null),
   ]);
 
   let tasteContext = "";
@@ -828,6 +830,46 @@ If appropriate, naturally ask what they thought early in the conversation. Use t
       }
     }
   } catch { /* non-fatal */ }
+
+  // Director graph context — fetch directors for user's liked titles
+  try {
+    const likedDirectors = new Set<string>();
+    for (const r of likedRows.slice(0, 5)) {
+      // Try to get director from tmdb_payload in the broader cache
+      const { data: fullCache } = await supabase
+        .from("titles_cache")
+        .select("tmdb_payload")
+        .eq("tmdb_id", r.tmdb_id)
+        .maybeSingle();
+      const payload = fullCache?.tmdb_payload as Record<string, unknown> | null;
+      const credits = payload?.credits as { crew?: { name: string; job: string }[] } | undefined;
+      if (credits?.crew) {
+        for (const c of credits.crew) {
+          if (c.job === "Director" && c.name) likedDirectors.add(c.name);
+        }
+      }
+    }
+
+    if (likedDirectors.size > 0) {
+      const { data: graphRows } = await supabase
+        .from("director_graph")
+        .select("director_name, movements, awards, nationality, influenced_by")
+        .in("director_name", [...likedDirectors]);
+
+      const directors = graphRows ?? [];
+      if (directors.length >= 2) {
+        const lines = directors.map((d: { director_name: string; movements: string[] | null; awards: string[] | null; nationality: string | null; influenced_by: string[] | null }) => {
+          const parts = [d.director_name];
+          if (d.movements?.length) parts.push(`Movement: ${d.movements.join(", ")}`);
+          if (d.nationality) parts.push(`From: ${d.nationality}`);
+          if (d.influenced_by?.length) parts.push(`Influenced by: ${d.influenced_by.join(", ")}`);
+          if (d.awards?.length) parts.push(`Awards: ${d.awards.slice(0, 3).join(", ")}`);
+          return `- ${parts.join(". ")}`;
+        });
+        tasteContext += `\n\nDirector connections based on user's taste:\n${lines.join("\n")}\nUse these connections to recommend films by related directors the user hasn't seen.`;
+      }
+    }
+  } catch { /* non-fatal — director graph may not be populated yet */ }
 
   // Spotify mood context
   if (spotifyMoodRes && spotifyMoodRes.connected && spotifyMoodRes.mood !== "neutral") {

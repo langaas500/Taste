@@ -59,6 +59,10 @@
     {
       "path": "/api/cron/curator-push",
       "schedule": "0 16 * * 5"
+    },
+    {
+      "path": "/api/cron/enrich-directors",
+      "schedule": "0 3 * * *"
     }
   ]
 }
