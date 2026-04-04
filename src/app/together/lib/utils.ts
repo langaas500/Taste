@@ -1,6 +1,7 @@
 import { GENRE_MAP, TITLES_CACHE_KEY, GUEST_PROFILE_KEY, PROVIDER_URLS, PROVIDERS } from "./constants";
 import type { WTTitle, TitlesCacheEntry, GuestProfile, Provider } from "./constants";
 import type { Locale } from "../strings";
+import { buildAffiliateUrl } from "@/lib/affiliate";
 
 export function getGenreColor(genre_ids: number[]): string {
   for (const id of genre_ids) {
@@ -88,10 +89,11 @@ export function buildGuestParams(): string {
 export function getProviderUrl(providerName: string, title: string): string {
   const key = providerName.toLowerCase();
   const encoded = encodeURIComponent(title);
+  let url = `https://www.justwatch.com/search?q=${encoded}`;
   for (const [k, template] of Object.entries(PROVIDER_URLS)) {
-    if (key.includes(k)) return template.replace("{title}", encoded);
+    if (key.includes(k)) { url = template.replace("{title}", encoded); break; }
   }
-  return `https://www.justwatch.com/search?q=${encoded}`;
+  return buildAffiliateUrl(providerName, url);
 }
 
 export function getWatchInfo(

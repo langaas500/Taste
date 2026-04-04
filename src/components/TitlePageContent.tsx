@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { WatchProviderData, WatchProvider } from "@/lib/types";
 import SeoPageTracker from "@/components/SeoPageTracker";
+import { buildAffiliateUrl } from "@/lib/affiliate";
 
 /* ── Types ────────────────────────────────────────────── */
 
@@ -390,8 +391,16 @@ function buildWatchActionSchema(props: TitlePageProps) {
 function ProviderLogo({ provider }: { provider: WatchProvider }) {
   const src = tmdbImg(provider.logo_path, "w92");
   if (!src) return null;
+  const searchUrl = `https://www.justwatch.com/search?q=${encodeURIComponent(provider.provider_name)}`;
+  const href = buildAffiliateUrl(provider.provider_name, searchUrl);
   return (
-    <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2">
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 hover:bg-white/[0.06] transition-colors"
+      style={{ textDecoration: "none" }}
+    >
       <Image
         src={src}
         alt={provider.provider_name}
@@ -400,7 +409,7 @@ function ProviderLogo({ provider }: { provider: WatchProvider }) {
         className="rounded-md"
       />
       <span className="text-sm text-white/80">{provider.provider_name}</span>
-    </div>
+    </a>
   );
 }
 

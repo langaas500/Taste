@@ -6,6 +6,7 @@ import Link from "next/link";
 import PremiumModal from "@/components/PremiumModal";
 import StreamingModal from "@/components/StreamingModal";
 import { track } from "@/lib/posthog";
+import { buildAffiliateUrl, hasAffiliate } from "@/lib/affiliate";
 import type { Locale } from "@/lib/i18n";
 import { useLocale } from "@/hooks/useLocale";
 
@@ -801,8 +802,8 @@ function MovieCard({ movie, onClick, onMoreLike, locale }: { movie: CuratorMovie
           )}
           {(flatrate.length > 0 || rentBuy.length > 0) && (
             <div className="flex flex-wrap gap-2 mt-1">
-              {flatrate.map((p) => <ProviderBadge key={p.name} provider={p} highlight />)}
-              {rentBuy.map((p) => <ProviderBadge key={p.name} provider={p} />)}
+              {flatrate.map((p) => <ProviderBadge key={p.name} provider={p} highlight tmdbId={movie.tmdb_id} />)}
+              {rentBuy.map((p) => <ProviderBadge key={p.name} provider={p} tmdbId={movie.tmdb_id} />)}
             </div>
           )}
         </div>
@@ -860,17 +861,28 @@ function MovieCard({ movie, onClick, onMoreLike, locale }: { movie: CuratorMovie
 
 /* ── ProviderBadge ───────────────────────────────────── */
 
-function ProviderBadge({ provider, highlight }: { provider: WatchProvider; highlight?: boolean }) {
+function ProviderBadge({ provider, highlight, tmdbId }: { provider: WatchProvider; highlight?: boolean; tmdbId?: number }) {
+  const providerUrl = `https://www.justwatch.com/search?q=${encodeURIComponent(provider.name)}`;
+  const href = buildAffiliateUrl(provider.name, providerUrl);
+  const isAffiliate = hasAffiliate(provider.name);
+
   return (
-    <div className={`flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-lg ${
-      highlight ? "bg-red-600/10 border border-red-600/20" : "bg-white/5 border border-white/[0.06]"
-    }`}>
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={() => track("affiliate_click", { provider: provider.name, tmdb_id: tmdbId, context: "curator", is_affiliate: isAffiliate })}
+      className={`flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-lg transition-all hover:scale-[1.03] ${
+        highlight ? "bg-red-600/10 border border-red-600/20" : "bg-white/5 border border-white/[0.06]"
+      }`}
+      style={{ textDecoration: "none" }}
+    >
       {provider.logo && (
         <Image src={provider.logo} alt={provider.name} width={18} height={18} className="rounded-md shadow-sm" />
       )}
       <span className={`text-[10px] font-bold tracking-tight ${highlight ? "text-white/80" : "text-white/30"}`}>
         {provider.name}
       </span>
-    </div>
+    </a>
   );
 }
