@@ -82,6 +82,9 @@ const strings = {
     trialExpired: "Prøveperioden din er over. Du har mistet tilgang til Tonight's Pick, ubegrenset Curator og full smaksprofil.",
     trialExpiredCta: "Aktiver Premium →",
     tasteEvoCta: "🎬 Se hvordan filmsmaken din har utviklet seg →",
+    streak: (n: number) => `🔥 ${n} ${n === 1 ? "dag" : "dager"} på rad!`,
+    streakSub: "Logg en tittel i dag for å holde streaken gående",
+    streakLost: "🔥 Streaken din ble brutt — logg noe i dag for å starte på nytt!",
   },
   en: {
     title: "Home",
@@ -152,6 +155,9 @@ const strings = {
     trialExpired: "Your trial has ended. You've lost access to Tonight's Pick, unlimited Curator and full taste profile.",
     trialExpiredCta: "Activate Premium →",
     tasteEvoCta: "🎬 See how your taste in film has evolved →",
+    streak: (n: number) => `🔥 ${n}-day streak!`,
+    streakSub: "Log a title today to keep your streak going",
+    streakLost: "🔥 Your streak was broken — log something today to start fresh!",
   },
   dk: {
     title: "Hjem",
@@ -222,6 +228,9 @@ const strings = {
     trialExpired: "Din prøveperiode er udløbet. Du har mistet adgang til Tonight's Pick, ubegrænset Curator og fuld smagsprofil.",
     trialExpiredCta: "Aktiver Premium →",
     tasteEvoCta: "🎬 Se hvordan din filmsmag har udviklet sig →",
+    streak: (n: number) => `🔥 ${n} ${n === 1 ? "dag" : "dage"} i træk!`,
+    streakSub: "Log en titel i dag for at holde din streak kørende",
+    streakLost: "🔥 Din streak blev brudt — log noget i dag for at starte forfra!",
   },
   se: {
     title: "Hem",
@@ -292,6 +301,9 @@ const strings = {
     trialExpired: "Din provperiod har gått ut. Du har förlorat tillgång till Tonight's Pick, obegränsad Curator och full smakprofil.",
     trialExpiredCta: "Aktivera Premium →",
     tasteEvoCta: "🎬 Se hur din filmsmak har utvecklats →",
+    streak: (n: number) => `🔥 ${n} ${n === 1 ? "dag" : "dagar"} i rad!`,
+    streakSub: "Logga en titel idag för att hålla din streak igång",
+    streakLost: "🔥 Din streak bröts — logga något idag för att börja om!",
   },
   fi: {
     title: "Koti",
@@ -362,6 +374,9 @@ const strings = {
     trialExpired: "Kokeilujaksosi on päättynyt. Olet menettänyt pääsyn Tonight's Pickiin, rajattomaan Curatoriin ja täyteen makuprofiiliin.",
     trialExpiredCta: "Aktivoi Premium →",
     tasteEvoCta: "🎬 Katso miten elokuvamaustusi on kehittynyt →",
+    streak: (n: number) => `🔥 ${n} ${n === 1 ? "päivä" : "päivää"} putkeen!`,
+    streakSub: "Kirjaa nimike tänään pitääksesi putkesi voimassa",
+    streakLost: "🔥 Putkesi katkesi — kirjaa jotain tänään aloittaaksesi alusta!",
   },
 } as const;
 
@@ -412,6 +427,7 @@ export default function HomePage() {
   const [returningBanner, setReturningBanner] = useState<{ type: "day3" | "day7" } | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [wrappedCount, setWrappedCount] = useState(0);
+  const [logStreak, setLogStreak] = useState(0);
   const [showImportPopup, setShowImportPopup] = useState(false);
   const [importDismissChecked, setImportDismissChecked] = useState(false);
 
@@ -525,6 +541,25 @@ export default function HomePage() {
     const thisMonthCount = userTitles.filter((t) => t.status === "watched" && (t.updated_at || "") >= monthStart).length;
     setWrappedCount(thisMonthCount);
 
+    // Logging streak: count consecutive days with at least one logged title
+    {
+      const dates = new Set<string>();
+      for (const t of userTitles) {
+        if (t.status === "watched" && t.updated_at) dates.add(t.updated_at.slice(0, 10));
+      }
+      const today = new Date().toISOString().slice(0, 10);
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      if (dates.has(today) || dates.has(yesterday)) {
+        let streak = 0;
+        let checkDate = dates.has(today) ? new Date() : new Date(Date.now() - 86400000);
+        while (dates.has(checkDate.toISOString().slice(0, 10))) {
+          streak++;
+          checkDate = new Date(checkDate.getTime() - 86400000);
+        }
+        setLogStreak(streak);
+      }
+    }
+
     const cacheMap = await fetchCacheForTitles(supabase, userTitles.map((t) => ({ tmdb_id: t.tmdb_id, type: t.type })));
 
     const allTitles = userTitles.map((t) => ({
@@ -626,6 +661,17 @@ export default function HomePage() {
           {s.loggedCount(data.totalTitles)}
         </p>
       </div>
+
+      {/* Logging streak */}
+      {logStreak >= 2 && (
+        <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: "rgba(255,160,40,0.06)", border: "1px solid rgba(255,160,40,0.15)" }}>
+          <span className="text-2xl">{logStreak >= 7 ? "🔥" : logStreak >= 3 ? "🔥" : "✨"}</span>
+          <div>
+            <p className="text-sm font-bold text-white">{s.streak(logStreak)}</p>
+            <p className="text-[11px] text-white/35">{s.streakSub}</p>
+          </div>
+        </div>
+      )}
 
       {/* Trial countdown banner — last 3 days */}
       {isTrial && trialEndsAt && (() => {

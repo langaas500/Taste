@@ -12,7 +12,7 @@ import { logTitle } from "@/lib/api";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { useGuestMode } from "@/hooks/useGuestMode";
 import { useLocale } from "@/hooks/useLocale";
-import { recordGuestTitleAction } from "@/lib/guest-actions";
+import { recordGuestTitleAction, readGuestTitleActions } from "@/lib/guest-actions";
 import Link from "next/link";
 import type { TMDBSearchResult, MediaType, AdvancedSearchFilters } from "@/lib/types";
 
@@ -1081,6 +1081,40 @@ export default function SearchPage() {
           )}
         </div>
       )}
+
+      {/* Guest blurred taste teaser */}
+      {guest.isGuest && (() => {
+        const guestActions = readGuestTitleActions();
+        if (guestActions.length < 3) return null;
+        const likedGenres = ["Drama", "Action", "Comedy"]; // placeholder visual
+        return (
+          <div className="mt-6 rounded-2xl p-5 relative overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.08)" }}>
+            <div style={{ filter: "blur(6px)", pointerEvents: "none" }}>
+              <p className="text-xs text-white/30 uppercase tracking-wider font-semibold mb-2">
+                {locale === "no" ? "Din smaksprofil" : "Your taste profile"}
+              </p>
+              <div className="flex gap-2 mb-2">
+                {likedGenres.map((g) => (
+                  <span key={g} className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ background: "rgba(255,42,42,0.1)", color: "rgba(255,120,120,0.9)" }}>{g}</span>
+                ))}
+              </div>
+              <p className="text-sm text-white/50">Du liker mørke thrillere med komplekse karakterer...</p>
+            </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-2xl">
+              <p className="text-sm font-semibold text-white mb-2">
+                {locale === "no" ? `Du har logget ${guestActions.length} titler — se hele smaksprofilen din` : `You've logged ${guestActions.length} titles — see your full taste profile`}
+              </p>
+              <Link
+                href="/login?mode=signup"
+                className="px-5 py-2 rounded-xl text-xs font-semibold text-white"
+                style={{ background: "#ff2a2a" }}
+              >
+                {locale === "no" ? "Opprett gratis konto →" : "Create free account →"}
+              </Link>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Add to List Modal (authenticated only) */}
       {addToListItem && !guest.isGuest && (
