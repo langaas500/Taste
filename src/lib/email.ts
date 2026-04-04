@@ -927,3 +927,76 @@ export async function sendCuratorPushEmail(
     console.error("[curator-push] Failed to send email:", err);
   }
 }
+
+/* ── Streak Reminder ──────────────────────────────────── */
+
+const streakStrings = {
+  no: {
+    subject: "🔥 Ikke mist streaken din! Logg en tittel i dag",
+    body: (n: number) => `Du har logget ${n} dager på rad 🎬 Ikke la streaken stoppe nå — logg én tittel i dag for å holde den i live.`,
+    cta: "Logg en tittel nå →",
+    footer: "Du mottar denne fordi du har en aktiv logging-streak på Logflix.",
+    unsub: "E-postinnstillinger",
+  },
+  en: {
+    subject: "🔥 Don't break your streak! Log a title today",
+    body: (n: number) => `You've logged ${n} days in a row 🎬 Don't let your streak end — log one title today to keep it going.`,
+    cta: "Log a title now →",
+    footer: "You're receiving this because you have an active logging streak on Logflix.",
+    unsub: "Email preferences",
+  },
+  dk: {
+    subject: "🔥 Mist ikke din streak! Log en titel i dag",
+    body: (n: number) => `Du har logget ${n} dage i træk 🎬 Lad ikke din streak stoppe nu — log én titel i dag for at holde den i live.`,
+    cta: "Log en titel nu →",
+    footer: "Du modtager denne fordi du har en aktiv logging-streak på Logflix.",
+    unsub: "E-mailindstillinger",
+  },
+  se: {
+    subject: "🔥 Tappa inte din streak! Logga en titel idag",
+    body: (n: number) => `Du har loggat ${n} dagar i rad 🎬 Låt inte din streak sluta nu — logga en titel idag för att hålla den vid liv.`,
+    cta: "Logga en titel nu →",
+    footer: "Du får detta för att du har en aktiv logging-streak på Logflix.",
+    unsub: "E-postinställningar",
+  },
+  fi: {
+    subject: "🔥 Älä katkaise putkeasi! Kirjaa nimike tänään",
+    body: (n: number) => `Olet kirjannut ${n} päivää peräkkäin 🎬 Älä anna putkesi loppua — kirjaa yksi nimike tänään pitääksesi sen käynnissä.`,
+    cta: "Kirjaa nimike nyt →",
+    footer: "Saat tämän koska sinulla on aktiivinen kirjausputki Logflixissä.",
+    unsub: "Sähköpostiasetukset",
+  },
+};
+
+export async function sendStreakReminderEmail(
+  email: string,
+  name: string | undefined,
+  streakDays: number,
+  locale?: string | null,
+): Promise<void> {
+  if (!resend) return;
+  const s = streakStrings[locale as keyof typeof streakStrings] ?? streakStrings.en;
+  try {
+    await resend.emails.send({
+      from: "Logflix <noreply@logflix.app>",
+      to: email,
+      subject: s.subject,
+      html: wrap(`
+        <tr><td align="center" style="padding-bottom:16px;font-size:48px;">🔥</td></tr>
+        <tr><td style="padding-bottom:8px;font-size:20px;font-weight:800;color:#fff;text-align:center;">
+          ${name ? `${name}, ` : ""}${streakDays} 🔥
+        </td></tr>
+        <tr><td style="padding-bottom:24px;font-size:14px;color:${TEXT};line-height:1.7;text-align:center;">
+          ${s.body(streakDays)}
+        </td></tr>
+        ${ctaButton(s.cta, "https://logflix.app/search")}
+        ${footer(
+          s.footer,
+          `<a href="https://logflix.app/settings" style="color:${TEXT_DIM};text-decoration:underline;">${s.unsub}</a>`,
+        )}
+      `),
+    });
+  } catch (err) {
+    console.error("[streak-reminder] Failed to send email:", err);
+  }
+}
