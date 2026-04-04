@@ -309,7 +309,7 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
   // Bug 7 fix: single profile query includes taste_summary
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_premium, preferred_region, partner_user_id, taste_summary")
+    .select("is_premium, preferred_region, partner_user_id, taste_summary, exploration_slider, streaming_services")
     .eq("id", user.id)
     .single();
 
@@ -339,8 +339,8 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
   const username = typeof body.username === "string" ? body.username.slice(0, 50) : null;
   const userRegion = resolveRegion(profile?.preferred_region, req.headers.get("x-vercel-ip-country"));
 
-  // Fetch taste context + watchlist + friends in parallel
-  const [likedRes, dislikedRes, watchlistRes, linksRes] = await Promise.all([
+  // Fetch taste context + watchlist + friends + favorites + superlikes + exclusions in parallel
+  const [likedRes, dislikedRes, watchlistRes, linksRes, favoritesRes, superlikesRes, exclusionsRes] = await Promise.all([
     supabase
       .from("user_titles")
       .select("tmdb_id, type, rating, sentiment")
@@ -367,32 +367,88 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
       .select("inviter_id, invitee_id")
       .eq("status", "accepted")
       .or(`inviter_id.eq.${user.id},invitee_id.eq.${user.id}`),
+    // ENDRING 1: Favorite titles (strongest signal)
+    supabase
+      .from("user_titles")
+      .select("tmdb_id, type")
+      .eq("user_id", user.id)
+      .eq("favorite", true)
+      .order("updated_at", { ascending: false })
+      .limit(10),
+    // ENDRING 4: Se Sammen superlike titles
+    supabase
+      .from("wt_session_swipes")
+      .select("tmdb_id, media_type")
+      .eq("user_id", user.id)
+      .eq("decision", "superlike")
+      .order("created_at", { ascending: false })
+      .limit(15),
+    // ENDRING 5: User exclusions
+    supabase
+      .from("user_exclusions")
+      .select("tmdb_id, type")
+      .eq("user_id", user.id)
+      .limit(50),
   ]);
 
   let tasteContext = "";
   const likedRows = likedRes.data ?? [];
   const dislikedRows = dislikedRes.data ?? [];
+  const favoriteRows = favoritesRes.data ?? [];
+  const superlikeRows = superlikesRes.data ?? [];
+  const exclusionRows = exclusionsRes.data ?? [];
 
-  if (likedRows.length > 0 || dislikedRows.length > 0) {
-    // Fetch titles_cache for genre + title data
-    const allTmdbKeys = [...likedRows, ...dislikedRows].map((r) => r.tmdb_id);
+  // Fetch titles_cache for all relevant IDs in one query
+  const allTmdbIds = new Set([
+    ...likedRows.map((r) => r.tmdb_id),
+    ...dislikedRows.map((r) => r.tmdb_id),
+    ...favoriteRows.map((r) => r.tmdb_id),
+    ...superlikeRows.map((r) => r.tmdb_id),
+    ...exclusionRows.map((r) => r.tmdb_id),
+  ]);
+
+  let cache = new Map<string, { tmdb_id: number; type: string; title: string; genres: unknown }>();
+  if (allTmdbIds.size > 0) {
     const { data: cacheRows } = await supabase
       .from("titles_cache")
       .select("tmdb_id, type, title, genres")
-      .in("tmdb_id", [...new Set(allTmdbKeys)]);
-    const cache = new Map((cacheRows ?? []).map((r) => [`${r.tmdb_id}:${r.type}`, r]));
+      .in("tmdb_id", [...allTmdbIds]);
+    cache = new Map((cacheRows ?? []).map((r) => [`${r.tmdb_id}:${r.type}`, r]));
+  }
 
-    // Top title names with genres (for personalized reasons)
+  // Helper: resolve title from cache (try both movie and tv keys)
+  function resolveTitle(tmdbId: number, type?: string): string | null {
+    if (type) {
+      const c = cache.get(`${tmdbId}:${type}`);
+      if (c?.title) return c.title as string;
+    }
+    const m = cache.get(`${tmdbId}:movie`);
+    if (m?.title) return m.title as string;
+    const t = cache.get(`${tmdbId}:tv`);
+    if (t?.title) return t.title as string;
+    return null;
+  }
+
+  function resolveGenres(tmdbId: number, type: string): string {
+    const c = cache.get(`${tmdbId}:${type}`);
+    return Array.isArray(c?.genres) ? (c.genres as { name: string }[]).map((g) => g.name).join(", ") : "";
+  }
+
+  if (likedRows.length > 0 || dislikedRows.length > 0) {
+    // ENDRING 3: Tiered rating formatting
+    const loved = likedRows.filter((r) => r.rating === 10);
+    const liked = likedRows.filter((r) => r.rating && r.rating >= 7 && r.rating < 10);
+    const enjoyedNoRating = likedRows.filter((r) => !r.rating && r.sentiment === "liked");
+
     const topTitlesDetailed = likedRows
       .slice(0, 5)
       .map((r) => {
-        const c = cache.get(`${r.tmdb_id}:${r.type}`);
-        if (!c?.title) return null;
-        const genres = Array.isArray(c.genres) ? (c.genres as { name: string }[]).map((g) => g.name).join(", ") : "";
-        return { title: c.title as string, genres };
+        const title = resolveTitle(r.tmdb_id, r.type);
+        if (!title) return null;
+        const genres = resolveGenres(r.tmdb_id, r.type);
+        return { title, genres };
       })
       .filter((t): t is { title: string; genres: string } => t !== null);
-    const topTitles = topTitlesDetailed.map((t) => t.title);
 
     // Genre frequency for liked
     const likedGenres: Record<string, number> = {};
@@ -425,7 +481,13 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
       .map(([name]) => name);
 
     const parts: string[] = [];
-    if (topTitles.length > 0) parts.push(`Enjoyed: ${topTitles.join(", ")}.`);
+    // Tiered ratings
+    const lovedTitles = loved.map((r) => resolveTitle(r.tmdb_id, r.type)).filter(Boolean);
+    const likedTitles = liked.map((r) => { const t = resolveTitle(r.tmdb_id, r.type); return t ? `${t} (${r.rating}/10)` : null; }).filter(Boolean);
+    const enjoyedTitles = enjoyedNoRating.map((r) => resolveTitle(r.tmdb_id, r.type)).filter(Boolean);
+    if (lovedTitles.length > 0) parts.push(`Loved (10/10): ${lovedTitles.join(", ")}.`);
+    if (likedTitles.length > 0) parts.push(`Liked: ${likedTitles.join(", ")}.`);
+    if (enjoyedTitles.length > 0) parts.push(`Enjoyed: ${enjoyedTitles.join(", ")}.`);
     if (topLikedGenres.length > 0) parts.push(`Favourite genres: ${topLikedGenres.join(", ")}.`);
     if (topDislikedGenres.length > 0) parts.push(`Tends to avoid: ${topDislikedGenres.join(", ")}.`);
 
@@ -434,6 +496,63 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
     }
     if (topTitlesDetailed.length > 0) {
       tasteContext += `\nReference these liked titles in your "reason" fields when relevant:\n${topTitlesDetailed.map((t) => `- ${t.title}${t.genres ? ` (${t.genres})` : ""}`).join("\n")}`;
+    }
+  }
+
+  // ENDRING 1: Favorite titles (strongest signal)
+  if (favoriteRows.length > 0) {
+    const favTitles = favoriteRows
+      .map((r) => {
+        const title = resolveTitle(r.tmdb_id, r.type);
+        if (!title) return null;
+        const genres = resolveGenres(r.tmdb_id, r.type);
+        return genres ? `${title} (${genres})` : title;
+      })
+      .filter(Boolean);
+    if (favTitles.length > 0) {
+      tasteContext += `\nUser's absolute favorites (strongest signal — prioritize similar): ${favTitles.join(", ")}.`;
+    }
+  }
+
+  // ENDRING 4: Se Sammen superlike titles
+  if (superlikeRows.length > 0) {
+    const slTitles = superlikeRows
+      .map((r) => resolveTitle(r.tmdb_id, r.media_type))
+      .filter(Boolean);
+    const unique = [...new Set(slTitles)].slice(0, 10);
+    if (unique.length > 0) {
+      tasteContext += `\nTitles user SUPERLIKED in Watch Together (very strong implicit signal): ${unique.join(", ")}.`;
+    }
+  }
+
+  // ENDRING 5: User exclusions — never recommend these
+  if (exclusionRows.length > 0) {
+    const exTitles = exclusionRows
+      .map((r) => resolveTitle(r.tmdb_id, r.type))
+      .filter(Boolean);
+    if (exTitles.length > 0) {
+      tasteContext += `\nNEVER recommend these titles (user explicitly excluded): ${exTitles.join(", ")}.`;
+    }
+  }
+
+  // ENDRING 2: Exploration slider
+  {
+    const slider = typeof profile?.exploration_slider === "number" ? profile.exploration_slider : null;
+    if (slider !== null) {
+      const explorationDesc = slider <= 30
+        ? "User prefers safe, familiar choices (low exploration). Stick to well-known titles in their favourite genres."
+        : slider <= 70
+        ? "User is open to some new discoveries (moderate exploration). Mix familiar genres with occasional surprises."
+        : "User loves discovering hidden gems (high exploration). Prioritize lesser-known, unique, or international titles.";
+      tasteContext += `\nExploration preference: ${explorationDesc}`;
+    }
+  }
+
+  // ENDRING 6: Streaming services
+  {
+    const services = profile?.streaming_services;
+    if (Array.isArray(services) && services.length > 0) {
+      tasteContext += `\nUser has access to: ${services.join(", ")}. Prioritize titles available on these services.`;
     }
   }
 

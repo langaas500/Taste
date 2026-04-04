@@ -71,21 +71,20 @@ export async function POST(req: NextRequest) {
             .eq("status", "watched");
           if (!titles || titles.length === 0) return;
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const ids = titles.map((t: any) => t.tmdb_id);
+          interface LogTitle { tmdb_id: number; type: string; sentiment: string }
+          interface CacheEntry { tmdb_id: number; title: string; type: string; genres: unknown }
+          const ids = titles.map((t: LogTitle) => t.tmdb_id);
           const { data: cached } = await admin
             .from("titles_cache")
             .select("tmdb_id, title, type, genres")
             .in("tmdb_id", ids);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const cacheMap = new Map((cached || []).map((c: any) => [`${c.tmdb_id}:${c.type}`, c]));
+          const cacheMap = new Map<string, CacheEntry>((cached || []).map((c: CacheEntry) => [`${c.tmdb_id}:${c.type}`, c]));
 
           const input: TasteInput = { liked: [], disliked: [], neutral: [], feedbackNotForMe: [] };
-          for (const t of titles) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const c = cacheMap.get(`${(t as any).tmdb_id}:${(t as any).type}`) as any;
+          for (const t of titles as LogTitle[]) {
+            const c = cacheMap.get(`${t.tmdb_id}:${t.type}`);
             if (!c) continue;
-            const entry = { title: c.title as string, type: c.type as string, genres: Array.isArray(c.genres) ? c.genres as string[] : [] };
+            const entry = { title: c.title, type: c.type, genres: Array.isArray(c.genres) ? c.genres as string[] : [] };
             if (t.sentiment === "liked") input.liked.push(entry);
             else if (t.sentiment === "disliked") input.disliked.push(entry);
             else input.neutral.push(entry);
