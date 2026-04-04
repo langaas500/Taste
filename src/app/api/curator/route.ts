@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { createSupabaseServer } from "@/lib/supabase-server";
+import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase-server";
 import { withLogger } from "@/lib/logger";
 import { tmdbSearch, tmdbWatchProviders } from "@/lib/tmdb";
 import { env } from "@/lib/env";
@@ -32,44 +32,54 @@ const feedbackLabels: Record<NormalizedLang, { liked: string; disliked: string }
   fi: { liked: " (piti siitä)", disliked: " (ei pitänyt)" },
 };
 
-const timeStrings: Record<NormalizedLang, { friday: string; weekendMorning: string; weekend: string; late: string; morning: string; default: string }> = {
+const timeStrings: Record<NormalizedLang, { friday: string; weekendDay: string; weekendMorning: string; weekend: string; weeknight: string; late: string; morning: string; default: string }> = {
   en: {
-    friday: "It's Friday evening — the user likely wants a great film experience tonight.",
+    friday: "It's Friday evening — perfect movie night. Be enthusiastic and celebratory in tone.",
+    weekendDay: "It's weekend daytime — suggest something relaxed or a series to binge.",
     weekendMorning: "It's a weekend morning — cozy, relaxed recommendations work well.",
     weekend: "It's the weekend — the user has time for longer films or series.",
-    late: "It's late evening — shorter films or episodes may suit better.",
+    weeknight: "It's a weekday evening — suggest something not too long or demanding.",
+    late: "It's late night — user might be tired. Suggest something light and engaging.",
     morning: "It's early morning — light entertainment or documentaries.",
     default: "Regular weekday — tailor recommendations to the user's taste.",
   },
   no: {
-    friday: "Det er fredagskveld — brukeren vil sannsynligvis ha en god filmopplevelse.",
+    friday: "Det er fredagskveld — perfekt for en filmkveld. Vær entusiastisk og festlig i tonen.",
+    weekendDay: "Det er helg og dag — foreslå gjerne noe avslappet eller en serie å binge.",
     weekendMorning: "Det er helgeformiddag — rolige, koselige anbefalinger passer godt.",
     weekend: "Det er helg — brukeren har tid til lengre filmer eller serier.",
-    late: "Det er sent på kvelden — korte filmer eller episoder kan passe bedre.",
+    weeknight: "Det er en vanlig ukekveld — foreslå noe som ikke er for langt eller krevende.",
+    late: "Det er natt — brukeren er kanskje søvnig. Foreslå noe lett og engasjerende.",
     morning: "Det er tidlig morgen — lett underholdning eller dokumentar kan passe.",
     default: "Vanlig hverdag — tilpass anbefalinger til brukerens smak.",
   },
   sv: {
-    friday: "Det är fredagskväll — användaren vill ha en bra filmupplevelse.",
+    friday: "Det är fredagskväll — perfekt för filmkväll. Var entusiastisk i tonen.",
+    weekendDay: "Det är helg och dag — föreslå något avslappnat eller en serie att binga.",
     weekendMorning: "Det är helgförmiddag — mysiga rekommendationer passar bra.",
     weekend: "Det är helg — användaren har tid för längre filmer eller serier.",
-    late: "Det är sent på kvällen — kortare filmer passar bättre.",
+    weeknight: "Det är en vanlig vardagskväll — föreslå något som inte är för långt.",
+    late: "Det är natt — användaren kanske är trött. Föreslå något lätt och engagerande.",
     morning: "Det är tidig morgon — lätt underhållning.",
     default: "Vanlig vardag — anpassa rekommendationer till smaken.",
   },
   da: {
-    friday: "Det er fredag aften — brugeren vil have en god filmoplevelse.",
+    friday: "Det er fredag aften — perfekt til filmaften. Vær entusiastisk i tonen.",
+    weekendDay: "Det er weekend og dag — foreslå noget afslappet eller en serie at binge.",
     weekendMorning: "Det er weekendformiddag — hyggelige anbefalinger passer godt.",
     weekend: "Det er weekend — brugeren har tid til længere film.",
-    late: "Det er sent om aftenen — kortere film passer bedre.",
+    weeknight: "Det er en almindelig hverdagsaften — foreslå noget der ikke er for langt.",
+    late: "Det er nat — brugeren er måske træt. Foreslå noget let og engagerende.",
     morning: "Det er tidlig morgen — let underholdning.",
     default: "Almindelig hverdag — tilpas anbefalinger til smagen.",
   },
   fi: {
-    friday: "On perjantai-ilta — käyttäjä haluaa hyvän elokuvaelämyksen.",
+    friday: "On perjantai-ilta — täydellinen elokuvailta. Ole innostunut sävyssä.",
+    weekendDay: "On viikonloppu ja päivä — ehdota jotain rentoa tai sarjaa bingettäväksi.",
     weekendMorning: "On viikonloppuaamu — rauhalliset suositukset sopivat hyvin.",
     weekend: "On viikonloppu — käyttäjällä on aikaa pidemmille elokuville.",
-    late: "On myöhäinen ilta — lyhyemmät elokuvat sopivat paremmin.",
+    weeknight: "On tavallinen arki-ilta — ehdota jotain joka ei ole liian pitkä.",
+    late: "On yö — käyttäjä saattaa olla väsynyt. Ehdota jotain kevyttä ja mukaansatempaavaa.",
     morning: "On aikainen aamu — kevyttä viihdettä.",
     default: "Tavallinen arkipäivä — räätälöi suositukset maun mukaan.",
   },
@@ -273,6 +283,61 @@ function extractProviders(providersData: Record<string, unknown>, country: strin
   return out;
 }
 
+/* ── ENDRING 7: Dynamic follow-up pills ──────────────── */
+
+const genericPills: Record<NormalizedLang, string[]> = {
+  no: ["Noe lysere", "Noe mørkere", "Kort film", "Lang serie", "Skjult perle", "Nytt i år"],
+  en: ["Something lighter", "Something darker", "Short film", "Long series", "Hidden gem", "New this year"],
+  sv: ["Något lättare", "Något mörkare", "Kort film", "Lång serie", "Gömd pärla", "Nytt i år"],
+  da: ["Noget lettere", "Noget mørkere", "Kort film", "Lang serie", "Skjult perle", "Nyt i år"],
+  fi: ["Jotain kevyempää", "Jotain synkempää", "Lyhyt elokuva", "Pitkä sarja", "Piilotettu helmi", "Uutta tänä vuonna"],
+};
+
+const moviePills: Record<NormalizedLang, string[]> = {
+  no: ["Lignende stemning", "Kortere versjon", "Samme sjanger"],
+  en: ["Similar vibe", "Shorter version", "Same genre"],
+  sv: ["Liknande stämning", "Kortare version", "Samma genre"],
+  da: ["Lignende stemning", "Kortere version", "Samme genre"],
+  fi: ["Samanlainen tunnelma", "Lyhyempi versio", "Sama genre"],
+};
+
+const tvPills: Record<NormalizedLang, string[]> = {
+  no: ["Lignende univers", "Kortere episoder", "Mer av samme sjanger"],
+  en: ["Similar universe", "Shorter episodes", "More of this genre"],
+  sv: ["Liknande universum", "Kortare avsnitt", "Mer av samma genre"],
+  da: ["Lignende univers", "Kortere episoder", "Mere af samme genre"],
+  fi: ["Samanlainen maailma", "Lyhyemmät jaksot", "Lisää samaa genreä"],
+};
+
+const couplePills: Record<NormalizedLang, string[]> = {
+  no: ["Noe vi begge vil like", "Mer action", "Noe lysere"],
+  en: ["Something we'll both enjoy", "More action", "Something lighter"],
+  sv: ["Något vi båda gillar", "Mer action", "Något lättare"],
+  da: ["Noget vi begge vil lide", "Mere action", "Noget lettere"],
+  fi: ["Jotain mitä molemmat pitävät", "Lisää actionia", "Jotain kevyempää"],
+};
+
+function generateFollowUpPills(lang: NormalizedLang, movies: CuratorMovie[], hasCoupleContext: boolean): string[] {
+  const pills: string[] = [];
+  const l = lang;
+
+  if (hasCoupleContext) {
+    pills.push(...couplePills[l]);
+  } else if (movies.length > 0) {
+    const lastType = movies[movies.length - 1].type;
+    pills.push(...(lastType === "tv" ? tvPills[l] : moviePills[l]));
+  }
+
+  // Fill remaining with generic pills (shuffle)
+  const generic = [...genericPills[l]].sort(() => Math.random() - 0.5);
+  for (const p of generic) {
+    if (pills.length >= 4) break;
+    if (!pills.includes(p)) pills.push(p);
+  }
+
+  return pills.slice(0, 4);
+}
+
 /* ── Movie result type ───────────────────────────────── */
 
 interface CuratorMovie {
@@ -339,8 +404,10 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
   const username = typeof body.username === "string" ? body.username.slice(0, 50) : null;
   const userRegion = resolveRegion(profile?.preferred_region, req.headers.get("x-vercel-ip-country"));
 
-  // Fetch taste context + watchlist + friends + favorites + superlikes + exclusions in parallel
-  const [likedRes, dislikedRes, watchlistRes, linksRes, favoritesRes, superlikesRes, exclusionsRes] = await Promise.all([
+  const partnerId = (profile as { partner_user_id?: string | null })?.partner_user_id;
+
+  // Fetch taste context + watchlist + friends + favorites + superlikes + exclusions + mood tags + couple matches in parallel
+  const [likedRes, dislikedRes, watchlistRes, linksRes, favoritesRes, superlikesRes, exclusionsRes, moodTagsRes, coupleMatchesRes, coupleDisagreesRes] = await Promise.all([
     supabase
       .from("user_titles")
       .select("tmdb_id, type, rating, sentiment")
@@ -389,6 +456,33 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
       .select("tmdb_id, type")
       .eq("user_id", user.id)
       .limit(50),
+    // ENDRING 8: Mood tags from liked titles
+    supabase
+      .from("user_titles")
+      .select("tmdb_id")
+      .eq("user_id", user.id)
+      .eq("sentiment", "liked")
+      .order("updated_at", { ascending: false })
+      .limit(10),
+    // ENDRING 9: Couple match history
+    partnerId
+      ? createSupabaseAdmin()
+          .from("wt_sessions")
+          .select("match_tmdb_id")
+          .not("match_tmdb_id", "is", null)
+          .or(`and(host_id.eq.${user.id},guest_id.eq.${partnerId}),and(host_id.eq.${partnerId},guest_id.eq.${user.id})`)
+          .order("created_at", { ascending: false })
+          .limit(10)
+      : Promise.resolve({ data: null }),
+    // ENDRING 9b: Couple disagreements
+    partnerId
+      ? createSupabaseAdmin()
+          .from("wt_session_swipes")
+          .select("tmdb_id, media_type, decision, user_id")
+          .or(`user_id.eq.${user.id},user_id.eq.${partnerId}`)
+          .order("created_at", { ascending: false })
+          .limit(200)
+      : Promise.resolve({ data: null }),
   ]);
 
   let tasteContext = "";
@@ -556,6 +650,76 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
     }
   }
 
+  // ENDRING 8: Mood tags from liked titles
+  try {
+    const moodTmdbIds = (moodTagsRes.data ?? []).map((r: { tmdb_id: number }) => r.tmdb_id);
+    if (moodTmdbIds.length > 0) {
+      const { data: moodRows } = await supabase
+        .from("titles_cache")
+        .select("mood_tags")
+        .in("tmdb_id", moodTmdbIds)
+        .not("mood_tags", "is", null);
+      if (moodRows && moodRows.length > 0) {
+        const tagFreq: Record<string, number> = {};
+        for (const r of moodRows) {
+          for (const tag of (r.mood_tags as string[]) || []) {
+            tagFreq[tag] = (tagFreq[tag] || 0) + 1;
+          }
+        }
+        const topMoods = Object.entries(tagFreq)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([tag]) => tag);
+        if (topMoods.length > 0) {
+          tasteContext += `\nUser's mood profile based on liked titles: ${topMoods.join(", ")}.`;
+        }
+      }
+    }
+  } catch { /* non-fatal */ }
+
+  // ENDRING 9: Couple match history + disagreements
+  if (partnerId) {
+    try {
+      const matchIds = (coupleMatchesRes.data ?? []).map((r: { match_tmdb_id: number }) => r.match_tmdb_id);
+      if (matchIds.length > 0) {
+        const { data: matchTitles } = await supabase
+          .from("titles_cache")
+          .select("tmdb_id, title")
+          .in("tmdb_id", matchIds);
+        const matchNames = (matchTitles ?? []).map((r: { title: string }) => r.title).slice(0, 10);
+        if (matchNames.length > 0) {
+          tasteContext += `\nCouple has matched on: ${matchNames.join(", ")} — these work for both.`;
+        }
+      }
+
+      // Disagreements: find titles where one liked and the other noped
+      const disagreeRows = coupleDisagreesRes.data ?? [];
+      if (disagreeRows.length > 0) {
+        const swipesByTitle = new Map<number, { likes: Set<string>; nopes: Set<string> }>();
+        for (const r of disagreeRows as { tmdb_id: number; user_id: string; decision: string }[]) {
+          if (!swipesByTitle.has(r.tmdb_id)) swipesByTitle.set(r.tmdb_id, { likes: new Set(), nopes: new Set() });
+          const entry = swipesByTitle.get(r.tmdb_id)!;
+          if (r.decision === "like" || r.decision === "superlike") entry.likes.add(r.user_id);
+          else if (r.decision === "nope") entry.nopes.add(r.user_id);
+        }
+        const disagreedIds = [...swipesByTitle.entries()]
+          .filter(([, v]) => v.likes.size > 0 && v.nopes.size > 0)
+          .slice(0, 5)
+          .map(([id]) => id);
+        if (disagreedIds.length > 0) {
+          const { data: disagTitles } = await supabase
+            .from("titles_cache")
+            .select("tmdb_id, title")
+            .in("tmdb_id", disagreedIds);
+          const disagNames = (disagTitles ?? []).map((r: { title: string }) => r.title);
+          if (disagNames.length > 0) {
+            tasteContext += `\nTitles they disagreed on: ${disagNames.join(", ")} — avoid unless there's a strong reason.`;
+          }
+        }
+      }
+    } catch { /* non-fatal */ }
+  }
+
   // Bug 5 fix: localized taste summary labels + Bug 7: use profile.taste_summary directly
   const tl = tasteLabels[normalizedLang] ?? tasteLabels.en;
   try {
@@ -575,7 +739,6 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
 
   // Partner taste context — recommend in the intersection of both tastes
   try {
-    const partnerId = (profile as { partner_user_id?: string | null })?.partner_user_id;
     if (partnerId) {
       const { data: partnerRow } = await supabase
         .from("profiles")
@@ -612,14 +775,18 @@ When couple context is present, prefix your "message" with "💑" and briefly ex
     const ts = timeStrings[normalizedLang] ?? timeStrings.en;
 
     let timeContext = "";
-    if (isFriday && hour >= 17) {
+    if (isFriday && hour >= 16) {
       timeContext = ts.friday;
-    } else if (isWeekend && hour < 12) {
+    } else if (isWeekend && hour >= 10 && hour < 17) {
+      timeContext = ts.weekendDay;
+    } else if (isWeekend && hour < 10) {
       timeContext = ts.weekendMorning;
     } else if (isWeekend) {
       timeContext = ts.weekend;
-    } else if (hour >= 22) {
+    } else if (hour >= 23 || hour < 4) {
       timeContext = ts.late;
+    } else if (hour >= 18 && hour < 23) {
+      timeContext = ts.weeknight;
     } else if (hour < 9) {
       timeContext = ts.morning;
     } else {
@@ -870,6 +1037,10 @@ Use this feedback loop: avoid re-recommending titles already suggested. If the u
 
         // Send movie cards after delimiter
         controller.enqueue(encoder.encode(`\n[CARDS]${JSON.stringify(available)}`));
+
+        // ENDRING 7: Dynamic follow-up pills based on last recommendation
+        const pills = generateFollowUpPills(normalizedLang, available, !!partnerId);
+        controller.enqueue(encoder.encode(`\n[PILLS]${JSON.stringify(pills)}`));
 
         // Fire-and-forget: persist conversation
         const newRecommendedIds = available.map((m) => m.tmdb_id);
