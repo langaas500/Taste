@@ -36,6 +36,7 @@ const strings = {
     logout: "Logg ut",
     connected: "Koblet til",
     guides: "Utforsk guider",
+    tasteJourney: "Smaksreise",
   },
   en: {
     home: "Home",
@@ -57,6 +58,7 @@ const strings = {
     logout: "Log out",
     connected: "Connected",
     guides: "Explore guides",
+    tasteJourney: "Taste Journey",
   },
   dk: {
     home: "Hjem",
@@ -78,6 +80,7 @@ const strings = {
     logout: "Log ud",
     connected: "Forbundet",
     guides: "Udforsk guider",
+    tasteJourney: "Smagsrejse",
   },
   se: {
     home: "Hem",
@@ -99,6 +102,7 @@ const strings = {
     logout: "Logga ut",
     connected: "Ansluten",
     guides: "Utforska guider",
+    tasteJourney: "Smakresa",
   },
   fi: {
     home: "Koti",
@@ -120,6 +124,7 @@ const strings = {
     logout: "Kirjaudu ulos",
     connected: "Yhdistetty",
     guides: "Tutustu oppaisiin",
+    tasteJourney: "Makumatka",
   },
 } as const;
 
@@ -384,24 +389,34 @@ export default function Nav() {
                 const active = pathname === href;
                 const blocked = isGuest && authRequired;
                 return (
-                  <Link
-                    key={href}
-                    href={blocked ? "#" : href}
-                    onClick={blocked ? (e) => { e.preventDefault(); setDrawerOpen(false); setShowAuthWall(true); } : undefined}
-                    className="group flex items-center gap-2.5 py-2 rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-200 ease-out px-2.5"
-                    style={{ background: active ? "rgba(255,42,42,0.05)" : "transparent" }}
-                  >
-                    {active && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r-full" style={{ height: "60%", background: RED, boxShadow: "0 0 8px rgba(255,42,42,0.4)" }} />
+                  <div key={href}>
+                    <Link
+                      href={blocked ? "#" : href}
+                      onClick={blocked ? (e) => { e.preventDefault(); setDrawerOpen(false); setShowAuthWall(true); } : undefined}
+                      className="group flex items-center gap-2.5 py-2 rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-200 ease-out px-2.5"
+                      style={{ background: active ? "rgba(255,42,42,0.05)" : "transparent" }}
+                    >
+                      {active && (
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r-full" style={{ height: "60%", background: RED, boxShadow: "0 0 8px rgba(255,42,42,0.4)" }} />
+                      )}
+                      <svg className="w-[18px] h-[18px] flex-shrink-0 relative" fill="none" viewBox="0 0 24 24" strokeWidth={active ? 2 : 1.5} stroke="currentColor" style={{ color: active ? "rgba(255,42,42,0.95)" : "rgba(255,255,255,0.45)" }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
+                      </svg>
+                      <span style={{ color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.55)" }}>{label}</span>
+                      {badge && (
+                        <span className="ml-auto text-[8px] font-semibold px-1.5 py-[3px] rounded-full" style={isPremium ? { background: "rgba(255,42,42,0.08)", color: "rgba(255,42,42,0.75)", border: "1px solid rgba(255,42,42,0.12)" } : { background: "rgba(245,200,66,0.12)", color: "#F5C842", border: "1px solid rgba(245,200,66,0.25)" }}>{badge}</span>
+                      )}
+                    </Link>
+                    {href === "/taste" && !isGuest && (
+                      <Link
+                        href="/taste-evolution"
+                        className="flex items-center gap-2.5 py-1.5 pl-[38px] text-[11px] transition-colors"
+                        style={{ color: pathname === "/taste-evolution" ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)" }}
+                      >
+                        {s.tasteJourney}
+                      </Link>
                     )}
-                    <svg className="w-[18px] h-[18px] flex-shrink-0 relative" fill="none" viewBox="0 0 24 24" strokeWidth={active ? 2 : 1.5} stroke="currentColor" style={{ color: active ? "rgba(255,42,42,0.95)" : "rgba(255,255,255,0.45)" }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
-                    </svg>
-                    <span style={{ color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.55)" }}>{label}</span>
-                    {badge && (
-                      <span className="ml-auto text-[8px] font-semibold px-1.5 py-[3px] rounded-full" style={isPremium ? { background: "rgba(255,42,42,0.08)", color: "rgba(255,42,42,0.75)", border: "1px solid rgba(255,42,42,0.12)" } : { background: "rgba(245,200,66,0.12)", color: "#F5C842", border: "1px solid rgba(245,200,66,0.25)" }}>{badge}</span>
-                    )}
-                  </Link>
+                  </div>
                 );
               })}
             </div>
@@ -589,88 +604,71 @@ export default function Nav() {
                     const blocked = isGuest && authRequired;
 
                     return (
-                      <Link
-                        key={href}
-                        href={blocked ? "#" : href}
-                        onClick={blocked ? (e) => { e.preventDefault(); setShowAuthWall(true); } : undefined}
-                        className={`group flex items-center gap-2.5 py-2 rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-200 ease-out ${
-                          collapsed ? "justify-center px-2.5" : "px-2.5"
-                        }`}
-                        title={collapsed ? label : undefined}
-                        style={{
-                          background: active ? "rgba(255,42,42,0.05)" : "transparent",
-                          transform: "translateX(0)",
-                        }}
-                      >
-                        {/* Hover bg with micro translateX */}
-                        {!active && (
-                          <div
-                            className="absolute inset-0 rounded-[10px] opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out"
-                            style={{
-                              background: "rgba(255,255,255,0.06)",
-                              transform: "translateX(0)",
-                            }}
-                          />
-                        )}
-
-                        {/* Active left indicator (thin 2px bar) */}
-                        {active && (
-                          <div
-                            className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r-full transition-all duration-200"
-                            style={{
-                              height: "60%",
-                              background: RED,
-                              boxShadow: "0 0 8px rgba(255,42,42,0.4)",
-                            }}
-                          />
-                        )}
-
-                        {/* Icon */}
-                        <svg
-                          className="w-[18px] h-[18px] flex-shrink-0 relative transition-all duration-200 ease-out"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={active ? 2 : 1.5}
-                          stroke="currentColor"
+                      <div key={href}>
+                        <Link
+                          href={blocked ? "#" : href}
+                          onClick={blocked ? (e) => { e.preventDefault(); setShowAuthWall(true); } : undefined}
+                          className={`group flex items-center gap-2.5 py-2 rounded-[10px] text-[13px] font-medium relative overflow-hidden transition-all duration-200 ease-out ${
+                            collapsed ? "justify-center px-2.5" : "px-2.5"
+                          }`}
+                          title={collapsed ? label : undefined}
                           style={{
-                            color: active ? "rgba(255,42,42,0.95)" : "rgba(255,255,255,0.45)",
+                            background: active ? "rgba(255,42,42,0.05)" : "transparent",
+                            transform: "translateX(0)",
                           }}
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
-                        </svg>
-
-                        {/* Label */}
-                        {!collapsed && (
-                          <span
-                            className="relative transition-all duration-200 ease-out group-hover:translate-x-[1px]"
-                            style={{
-                              color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.55)",
-                            }}
+                          {!active && (
+                            <div
+                              className="absolute inset-0 rounded-[10px] opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out"
+                              style={{ background: "rgba(255,255,255,0.06)", transform: "translateX(0)" }}
+                            />
+                          )}
+                          {active && (
+                            <div
+                              className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r-full transition-all duration-200"
+                              style={{ height: "60%", background: RED, boxShadow: "0 0 8px rgba(255,42,42,0.4)" }}
+                            />
+                          )}
+                          <svg
+                            className="w-[18px] h-[18px] flex-shrink-0 relative transition-all duration-200 ease-out"
+                            fill="none" viewBox="0 0 24 24" strokeWidth={active ? 2 : 1.5} stroke="currentColor"
+                            style={{ color: active ? "rgba(255,42,42,0.95)" : "rgba(255,255,255,0.45)" }}
                           >
-                            {label}
-                          </span>
-                        )}
-
-                        {/* Badge — gold for non-premium, red for premium */}
-                        {badge && !collapsed && (
-                          <span
-                            className="relative ml-auto text-[8px] font-semibold px-1.5 py-[3px] rounded-full"
-                            style={isPremium ? {
-                              background: "rgba(255,42,42,0.08)",
-                              color: "rgba(255,42,42,0.75)",
-                              border: "1px solid rgba(255,42,42,0.12)",
-                              letterSpacing: "0.04em",
-                            } : {
-                              background: "rgba(245,200,66,0.12)",
-                              color: "#F5C842",
-                              border: "1px solid rgba(245,200,66,0.25)",
-                              letterSpacing: "0.04em",
-                            }}
+                            <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
+                          </svg>
+                          {!collapsed && (
+                            <span
+                              className="relative transition-all duration-200 ease-out group-hover:translate-x-[1px]"
+                              style={{ color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.55)" }}
+                            >
+                              {label}
+                            </span>
+                          )}
+                          {badge && !collapsed && (
+                            <span
+                              className="relative ml-auto text-[8px] font-semibold px-1.5 py-[3px] rounded-full"
+                              style={isPremium ? {
+                                background: "rgba(255,42,42,0.08)", color: "rgba(255,42,42,0.75)",
+                                border: "1px solid rgba(255,42,42,0.12)", letterSpacing: "0.04em",
+                              } : {
+                                background: "rgba(245,200,66,0.12)", color: "#F5C842",
+                                border: "1px solid rgba(245,200,66,0.25)", letterSpacing: "0.04em",
+                              }}
+                            >
+                              {badge}
+                            </span>
+                          )}
+                        </Link>
+                        {href === "/taste" && !isGuest && !collapsed && (
+                          <Link
+                            href="/taste-evolution"
+                            className="flex items-center py-1 pl-[38px] text-[11px] transition-colors hover:text-white/50"
+                            style={{ color: pathname === "/taste-evolution" ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.28)" }}
                           >
-                            {badge}
-                          </span>
+                            {s.tasteJourney}
+                          </Link>
                         )}
-                      </Link>
+                      </div>
                     );
                   })}
                 </div>

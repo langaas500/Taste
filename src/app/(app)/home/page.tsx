@@ -81,6 +81,7 @@ const strings = {
     trialCta: "Behold Premium — 29 kr/mnd →",
     trialExpired: "Prøveperioden din er over. Du har mistet tilgang til Tonight's Pick, ubegrenset Curator og full smaksprofil.",
     trialExpiredCta: "Aktiver Premium →",
+    tasteEvoCta: "🎬 Se hvordan filmsmaken din har utviklet seg →",
   },
   en: {
     title: "Home",
@@ -150,6 +151,7 @@ const strings = {
     trialCta: "Keep Premium — 29 kr/month →",
     trialExpired: "Your trial has ended. You've lost access to Tonight's Pick, unlimited Curator and full taste profile.",
     trialExpiredCta: "Activate Premium →",
+    tasteEvoCta: "🎬 See how your taste in film has evolved →",
   },
   dk: {
     title: "Hjem",
@@ -219,6 +221,7 @@ const strings = {
     trialCta: "Behold Premium — 29 kr/md →",
     trialExpired: "Din prøveperiode er udløbet. Du har mistet adgang til Tonight's Pick, ubegrænset Curator og fuld smagsprofil.",
     trialExpiredCta: "Aktiver Premium →",
+    tasteEvoCta: "🎬 Se hvordan din filmsmag har udviklet sig →",
   },
   se: {
     title: "Hem",
@@ -288,6 +291,7 @@ const strings = {
     trialCta: "Behåll Premium — 29 kr/mån →",
     trialExpired: "Din provperiod har gått ut. Du har förlorat tillgång till Tonight's Pick, obegränsad Curator och full smakprofil.",
     trialExpiredCta: "Aktivera Premium →",
+    tasteEvoCta: "🎬 Se hur din filmsmak har utvecklats →",
   },
   fi: {
     title: "Koti",
@@ -357,6 +361,7 @@ const strings = {
     trialCta: "Pidä Premium — 29 kr/kk →",
     trialExpired: "Kokeilujaksosi on päättynyt. Olet menettänyt pääsyn Tonight's Pickiin, rajattomaan Curatoriin ja täyteen makuprofiiliin.",
     trialExpiredCta: "Aktivoi Premium →",
+    tasteEvoCta: "🎬 Katso miten elokuvamaustusi on kehittynyt →",
   },
 } as const;
 
@@ -808,6 +813,17 @@ export default function HomePage() {
           </div>
         );
       })()}
+
+      {/* Taste evolution card — 10+ titles */}
+      {data.totalTitles >= 10 && (
+        <Link
+          href="/taste-evolution"
+          className="block rounded-[var(--radius-lg)] p-4 border border-white/[0.08] hover:border-white/[0.14] transition-all"
+          style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+        >
+          <p className="text-sm font-medium text-white/70">{s.tasteEvoCta}</p>
+        </Link>
+      )}
 
       {/* Tonight's Pick — premium users (solo + paired) */}
 

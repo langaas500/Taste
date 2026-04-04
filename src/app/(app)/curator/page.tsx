@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import PremiumModal from "@/components/PremiumModal";
 import StreamingModal from "@/components/StreamingModal";
 import { track } from "@/lib/posthog";
@@ -620,6 +621,19 @@ export default function CuratorPage() {
                   {p}
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Taste evolution link */}
+          {profileTitleCount !== null && profileTitleCount >= 10 && messages.length > 1 && !isLoading && (
+            <div className="pl-11 mt-1">
+              <Link
+                href="/taste-evolution"
+                className="text-[11px] transition-colors hover:text-[#ff2a2a]"
+                style={{ color: "rgba(255,255,255,0.25)" }}
+              >
+                {lang === "no" ? "Nysgjerrig på hvordan smaken din har endret seg? Se smaksreisen din →" : lang === "dk" ? "Nysgerrig på hvordan din smag har ændret sig? Se din smagsrejse →" : lang === "se" ? "Nyfiken på hur din smak har förändrats? Se din smakresa →" : lang === "fi" ? "Utelias miten makusi on muuttunut? Katso makumatkasi →" : "Curious how your taste has changed? See your taste journey →"}
+              </Link>
             </div>
           )}
 

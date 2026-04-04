@@ -616,6 +616,17 @@ export default function TastePage() {
         </div>
       )}
 
+      {/* Taste evolution link */}
+      {titleCount !== null && titleCount >= 10 && (
+        <Link
+          href="/taste-evolution"
+          className="block text-center text-xs font-medium mt-6 transition-colors hover:text-[#ff2a2a]"
+          style={{ color: "rgba(255,255,255,0.35)" }}
+        >
+          {locale === "no" ? "Se hvordan smaken din har utviklet seg →" : locale === "dk" ? "Se hvordan din smag har udviklet sig →" : locale === "se" ? "Se hur din smak har utvecklats →" : locale === "fi" ? "Katso miten makusi on kehittynyt →" : "See how your taste has evolved →"}
+        </Link>
+      )}
+
       <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="taste_refresh" userName={profileName} titleCount={titleCount} />
     </div>
   );
