@@ -15,24 +15,24 @@ function resolveLocale(country: string): Locale {
 
 const meta = {
   no: {
-    title: "Logflix — Finn noe å se sammen",
-    description: "Sveip på filmer og serier. Kun felles liker gir match.",
+    title: "Slutt å krangle om hva dere skal se — Logflix",
+    description: "Logflix løser «hva skal vi se i kveld» — for par, venner og familier. Sveip, match og finn noe å se sammen på sekunder.",
   },
   sv: {
-    title: "Logflix — Hitta något att se tillsammans",
-    description: "Swipa på filmer och serier. Bara gemensamma likes blir en match.",
+    title: "Sluta bråka om vad ni ska se — Logflix",
+    description: "Logflix löser «vad ska vi se ikväll» — för par, vänner och familjer. Swipa, matcha och hitta något att se tillsammans på sekunder.",
   },
   da: {
-    title: "Logflix — Find noget at se sammen",
-    description: "Swipe på film og serier. Kun fælles likes giver match.",
+    title: "Stop med at skændes om hvad I skal se — Logflix",
+    description: "Logflix løser «hvad skal vi se i aften» — for par, venner og familier. Swipe, match og find noget at se sammen på sekunder.",
   },
   fi: {
-    title: "Logflix — Löydä jotain katsottavaa yhdessä",
-    description: "Swaippaa elokuvia ja sarjoja. Vain yhteisistä tykkäyksistä tulee match.",
+    title: "Lopeta riitely siitä mitä katsotte — Logflix",
+    description: "Logflix ratkaisee «mitä katsotaan tänään» — pareille, ystäville ja perheille. Swaippaa, matchaa ja löydä katsottavaa sekunneissa.",
   },
   en: {
-    title: "Logflix — Find something to watch together",
-    description: "Swipe on movies and shows. Only mutual likes become a match.",
+    title: "Stop arguing about what to watch — Logflix",
+    description: "Logflix solves what to watch tonight — for couples, friends and families worldwide. Swipe, match and enjoy.",
   },
 } as const;
 

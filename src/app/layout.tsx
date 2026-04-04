@@ -47,10 +47,17 @@ export default async function RootLayout({
 }) {
   const h = await headers();
   const country = h.get("x-vercel-ip-country") ?? "";
+  const localeCookie = h.get("cookie")?.match(/(?:^|; )x-locale=([^;]*)/)?.[1];
+  const manualCookie = h.get("cookie")?.match(/(?:^|; )x-locale-manual=([^;]*)/)?.[1];
+
+  // Manual locale choice takes priority, then IP detection, then default to English
   const regionMap: Record<string, RegionTextKey> = { NO: "no", DK: "dk", FI: "fi", SE: "se" };
-  const siteRegion = regionMap[country] ?? "no";
-  const lang = ({ no: "nb", dk: "da", fi: "fi", se: "sv", en: "en" } as const)[siteRegion];
-  const siteT = REGION_TEXT[siteRegion];
+  const siteRegion: RegionTextKey = manualCookie === "1" && localeCookie
+    ? (localeCookie as RegionTextKey)
+    : regionMap[country] ?? "en";
+  const langMap: Record<string, string> = { no: "nb", dk: "da", fi: "fi", se: "sv", en: "en" };
+  const lang = langMap[siteRegion] ?? "en";
+  const siteT = REGION_TEXT[siteRegion] ?? REGION_TEXT["en"];
 
   return (
     <html lang={lang} className={inter.className}>
@@ -77,7 +84,7 @@ export default async function RootLayout({
               name: "Logflix",
               url: "https://logflix.app",
               description: siteT.siteDescription,
-              inLanguage: [lang, "en"],
+              inLanguage: ["en", "nb", "sv", "da", "fi"],
             }),
           }}
         />
@@ -96,7 +103,7 @@ export default async function RootLayout({
                 "https://www.instagram.com/logflix",
               ],
               description:
-                "Norsk film- og serietjeneste for par. Finn noe å se sammen med Se Sammen — swipe-matching som Tinder, men for filmer.",
+                "Movie & TV companion for couples, friends and families. Swipe, match and discover what to watch tonight — together.",
             }),
           }}
         />
