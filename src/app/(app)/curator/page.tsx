@@ -438,18 +438,25 @@ export default function CuratorPage() {
         if (done) break;
         accumulated += decoder.decode(value, { stream: true });
 
-        // Check for [CARDS] delimiter
+        // Check for [CARDS] delimiter (and optional [PILLS] after it)
         const cardsIdx = accumulated.indexOf("\n[CARDS]");
         if (cardsIdx !== -1) {
           const msgText = accumulated.slice(0, cardsIdx);
-          const cardsJson = accumulated.slice(cardsIdx + 8); // skip "\n[CARDS]"
+          const afterCards = accumulated.slice(cardsIdx + 8); // skip "\n[CARDS]"
+          const pillsIdx = afterCards.indexOf("\n[PILLS]");
+          const cardsJson = pillsIdx !== -1 ? afterCards.slice(0, pillsIdx) : afterCards;
           let movies: CuratorMovie[] = [];
           try { movies = JSON.parse(cardsJson); } catch { /* ignore parse error */ }
+          // Parse dynamic pills from server
+          let serverPills: string[] = [];
+          if (pillsIdx !== -1) {
+            try { serverPills = JSON.parse(afterCards.slice(pillsIdx + 8)); } catch { /* ignore */ }
+          }
           setMessages((prev) => {
             const without = prev.filter((m) => !m.loading);
             return [...without, { role: "bot" as const, text: msgText || t.error, movies }];
           });
-          setFollowUps(pickFollowUps(lang));
+          setFollowUps(serverPills.length > 0 ? serverPills : pickFollowUps(lang));
           messageShown = true;
           break;
         }
@@ -479,17 +486,23 @@ export default function CuratorPage() {
         const cardsIdx = accumulated.indexOf("\n[CARDS]");
         const msgText = cardsIdx !== -1 ? accumulated.slice(0, cardsIdx) : accumulated;
         let movies: CuratorMovie[] = [];
+        let serverPills: string[] = [];
         if (cardsIdx !== -1) {
-          try { movies = JSON.parse(accumulated.slice(cardsIdx + 8)); } catch { /* ignore */ }
+          const afterCards = accumulated.slice(cardsIdx + 8);
+          const pillsIdx = afterCards.indexOf("\n[PILLS]");
+          const cardsJson = pillsIdx !== -1 ? afterCards.slice(0, pillsIdx) : afterCards;
+          try { movies = JSON.parse(cardsJson); } catch { /* ignore */ }
+          if (pillsIdx !== -1) {
+            try { serverPills = JSON.parse(afterCards.slice(pillsIdx + 8)); } catch { /* ignore */ }
+          }
         }
         setMessages((prev) => {
           const without = prev.filter((m) => !m.loading);
-          // Remove the streaming partial message if it exists
           const lastBot = without[without.length - 1];
           const base = lastBot?.role === "bot" && !lastBot.movies ? without.slice(0, -1) : without;
           return [...base, { role: "bot" as const, text: msgText || t.error, movies }];
         });
-        setFollowUps(pickFollowUps(lang));
+        setFollowUps(serverPills.length > 0 ? serverPills : pickFollowUps(lang));
       }
     } catch (e) {
       const isTimeout = e instanceof DOMException && (e.name === "AbortError" || e.name === "TimeoutError");
