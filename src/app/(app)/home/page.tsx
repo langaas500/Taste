@@ -77,6 +77,10 @@ const strings = {
     importPopupDesc: "Få personlige anbefalinger med en gang — basert på hva du allerede har sett.",
     importPopupCta: "Importer nå →",
     importPopupDismiss: "Ikke vis igjen",
+    trialBanner: (d: number) => `🔥 ${d} ${d === 1 ? "dag" : "dager"} igjen av prøveperioden din — ikke mist Tonight's Pick og Curator`,
+    trialCta: "Behold Premium — 29 kr/mnd →",
+    trialExpired: "Prøveperioden din er over. Du har mistet tilgang til Tonight's Pick, ubegrenset Curator og full smaksprofil.",
+    trialExpiredCta: "Aktiver Premium →",
   },
   en: {
     title: "Home",
@@ -142,6 +146,10 @@ const strings = {
     importPopupDesc: "Get personal recommendations instantly — based on what you've already watched.",
     importPopupCta: "Import now →",
     importPopupDismiss: "Don't show again",
+    trialBanner: (d: number) => `🔥 ${d} ${d === 1 ? "day" : "days"} left in your trial — don't lose Tonight's Pick and Curator`,
+    trialCta: "Keep Premium — 29 kr/month →",
+    trialExpired: "Your trial has ended. You've lost access to Tonight's Pick, unlimited Curator and full taste profile.",
+    trialExpiredCta: "Activate Premium →",
   },
   dk: {
     title: "Hjem",
@@ -207,6 +215,10 @@ const strings = {
     importPopupDesc: "Få personlige anbefalinger med det samme — baseret på hvad du allerede har set.",
     importPopupCta: "Importer nu →",
     importPopupDismiss: "Vis ikke igen",
+    trialBanner: (d: number) => `🔥 ${d} ${d === 1 ? "dag" : "dage"} tilbage af din prøveperiode — mist ikke Tonight's Pick og Curator`,
+    trialCta: "Behold Premium — 29 kr/md →",
+    trialExpired: "Din prøveperiode er udløbet. Du har mistet adgang til Tonight's Pick, ubegrænset Curator og fuld smagsprofil.",
+    trialExpiredCta: "Aktiver Premium →",
   },
   se: {
     title: "Hem",
@@ -272,6 +284,10 @@ const strings = {
     importPopupDesc: "Få personliga rekommendationer direkt — baserat på vad du redan har sett.",
     importPopupCta: "Importera nu →",
     importPopupDismiss: "Visa inte igen",
+    trialBanner: (d: number) => `🔥 ${d} ${d === 1 ? "dag" : "dagar"} kvar av din provperiod — förlora inte Tonight's Pick och Curator`,
+    trialCta: "Behåll Premium — 29 kr/mån →",
+    trialExpired: "Din provperiod har gått ut. Du har förlorat tillgång till Tonight's Pick, obegränsad Curator och full smakprofil.",
+    trialExpiredCta: "Aktivera Premium →",
   },
   fi: {
     title: "Koti",
@@ -337,6 +353,10 @@ const strings = {
     importPopupDesc: "Saa henkilökohtaisia suosituksia heti — perustuen siihen mitä olet jo katsonut.",
     importPopupCta: "Tuo nyt →",
     importPopupDismiss: "Älä näytä uudelleen",
+    trialBanner: (d: number) => `🔥 ${d} ${d === 1 ? "päivä" : "päivää"} jäljellä kokeilujaksossasi — älä menetä Tonight's Pickiä ja Curatoria`,
+    trialCta: "Pidä Premium — 29 kr/kk →",
+    trialExpired: "Kokeilujaksosi on päättynyt. Olet menettänyt pääsyn Tonight's Pickiin, rajattomaan Curatoriin ja täyteen makuprofiiliin.",
+    trialExpiredCta: "Aktivoi Premium →",
   },
 } as const;
 
@@ -370,6 +390,8 @@ export default function HomePage() {
   const locale = useLocale();
   const [hasTaste, setHasTaste] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
+  const [isTrial, setIsTrial] = useState(false);
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   const [homeRecs, setHomeRecs] = useState<Recommendation[]>(() => {
     try {
       const cached = localStorage.getItem("logflix_home_recs");
@@ -431,6 +453,8 @@ export default function HomePage() {
       console.log("isPremium:", !!profileRes?.profile?.is_premium);
       const premium = !!profileRes?.profile?.is_premium;
       setIsPremium(premium);
+      setIsTrial(!!profileRes?.profile?.is_trial);
+      setTrialEndsAt(profileRes?.profile?.trial_ends_at ?? null);
       if (!premium) setTpLoading(false);
       if (tasteRes?.summary) {
         setHasTaste(true);
@@ -598,6 +622,43 @@ export default function HomePage() {
           {s.loggedCount(data.totalTitles)}
         </p>
       </div>
+
+      {/* Trial countdown banner — last 3 days */}
+      {isTrial && trialEndsAt && (() => {
+        const daysLeft = Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86400000));
+        if (daysLeft > 3 || daysLeft <= 0) return null;
+        return (
+          <Link
+            href="/premium"
+            className="block rounded-[var(--radius-lg)] p-4 border transition-all hover:scale-[1.01]"
+            style={{ background: "rgba(255,42,42,0.06)", border: "1px solid rgba(255,42,42,0.2)" }}
+          >
+            <p className="text-sm font-semibold text-white mb-1">{s.trialBanner(daysLeft)}</p>
+            <p className="text-xs font-semibold" style={{ color: "#ff2a2a" }}>{s.trialCta}</p>
+          </Link>
+        );
+      })()}
+
+      {/* Trial expired — show once */}
+      {!isPremium && !isTrial && trialEndsAt && (() => {
+        try { if (localStorage.getItem("logflix_trial_expired_shown")) return null; } catch { /* ignore */ }
+        return (
+          <div
+            className="rounded-[var(--radius-lg)] p-4 border"
+            style={{ background: "rgba(255,42,42,0.04)", border: "1px solid rgba(255,42,42,0.15)" }}
+          >
+            <p className="text-sm text-white/70 mb-2">{s.trialExpired}</p>
+            <Link
+              href="/premium"
+              className="inline-block text-xs font-semibold px-4 py-2 rounded-lg"
+              style={{ background: "#ff2a2a", color: "#fff" }}
+              onClick={() => { try { localStorage.setItem("logflix_trial_expired_shown", "1"); } catch { /* ignore */ } }}
+            >
+              {s.trialExpiredCta}
+            </Link>
+          </div>
+        );
+      })()}
 
       {/* Returning user hook — day 3/7 */}
       {returningBanner && !hasTaste && (

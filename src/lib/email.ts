@@ -793,3 +793,59 @@ export async function sendCuratorWeeklyEmail(
     console.error("Failed to send curator weekly email:", err);
   }
 }
+
+/* ── Trial Reminder ───────────────────────────────────── */
+
+const trialStrings = {
+  no: {
+    day2Subject: "2 dager igjen av Logflix-prøveperioden",
+    day2Body: "Du er i ferd med å miste tilgang til Tonight's Pick, ubegrenset AI Curator og din fulle smaksprofil. Behold Premium for 29 kr/mnd — billigere enn en kaffe.",
+    day1Subject: "Siste dag av Logflix-prøveperioden",
+    day1Body: "Tonight's Pick, Curator og din fulle smaksprofil forsvinner i morgen. Ikke mist det du har bygget opp.",
+    cta: "Behold Premium →",
+    footer: "Du mottar denne fordi du har en aktiv prøveperiode på Logflix.",
+    unsub: "E-postinnstillinger",
+  },
+  en: {
+    day2Subject: "2 days left in your Logflix trial",
+    day2Body: "You're about to lose access to Tonight's Pick, unlimited AI Curator and your full Taste Profile. Keep Premium for 29 kr/month — less than a coffee.",
+    day1Subject: "Last day of your Logflix trial",
+    day1Body: "Tonight's Pick, Curator and your full Taste Profile disappear tomorrow. Don't lose what you've built.",
+    cta: "Keep my Premium →",
+    footer: "You're receiving this because you have an active trial on Logflix.",
+    unsub: "Email preferences",
+  },
+};
+
+export async function sendTrialReminderEmail(
+  email: string,
+  daysLeft: 1 | 2,
+  locale?: string | null,
+): Promise<void> {
+  if (!resend) return;
+  const s = locale === "no" ? trialStrings.no : trialStrings.en;
+  const subject = daysLeft === 2 ? s.day2Subject : s.day1Subject;
+  const body = daysLeft === 2 ? s.day2Body : s.day1Body;
+  try {
+    await resend.emails.send({
+      from: "Logflix <noreply@logflix.app>",
+      to: email,
+      subject,
+      html: wrap(`
+        <tr><td style="padding-bottom:16px;font-size:18px;font-weight:700;color:#fff;text-align:center;">
+          🔥 ${subject}
+        </td></tr>
+        <tr><td style="padding-bottom:24px;font-size:14px;color:${TEXT};line-height:1.7;text-align:center;">
+          ${body}
+        </td></tr>
+        ${ctaButton(s.cta, "https://logflix.app/premium")}
+        ${footer(
+          s.footer,
+          `<a href="https://logflix.app/settings" style="color:${TEXT_DIM};text-decoration:underline;">${s.unsub}</a>`,
+        )}
+      `),
+    });
+  } catch (err) {
+    console.error("Failed to send trial reminder email:", err);
+  }
+}
