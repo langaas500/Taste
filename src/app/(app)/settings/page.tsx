@@ -138,6 +138,11 @@ const strings = {
     traktDesc: "Importer seerhistorikk og ønskeliste fra Trakt.tv-kontoen din.",
     connected: "Tilkoblet",
     connectTrakt: "Koble til Trakt",
+    spotify: "Spotify",
+    spotifyDesc: "Koble til Spotify for å la Curator bruke musikk-stemningen din.",
+    connectSpotify: "Koble til Spotify",
+    spotifyConnected: "Spotify tilkoblet",
+    disconnectSpotify: "Koble fra",
     syncing: "Synkroniserer...",
     merge: "Flett",
     overwrite: "Overskriv",
@@ -222,6 +227,11 @@ const strings = {
     linked: "Linked!",
     traktSync: "Trakt sync",
     traktDesc: "Import watch history and watchlist from your Trakt.tv account.",
+    spotify: "Spotify",
+    spotifyDesc: "Connect Spotify to let Curator use your music mood.",
+    connectSpotify: "Connect Spotify",
+    spotifyConnected: "Spotify connected",
+    disconnectSpotify: "Disconnect",
     connected: "Connected",
     connectTrakt: "Connect Trakt",
     syncing: "Syncing...",
@@ -308,6 +318,11 @@ const strings = {
     linked: "Koblet!",
     traktSync: "Trakt-synkronisering",
     traktDesc: "Importer seerhistorik og ønskeliste fra din Trakt.tv-konto.",
+    spotify: "Spotify",
+    spotifyDesc: "Forbind Spotify for at lade Curator bruge din musikstemning.",
+    connectSpotify: "Tilslut Spotify",
+    spotifyConnected: "Spotify forbundet",
+    disconnectSpotify: "Afbryd",
     connected: "Tilsluttet",
     connectTrakt: "Tilslut Trakt",
     syncing: "Synkroniserer...",
@@ -394,6 +409,11 @@ const strings = {
     linked: "Länkad!",
     traktSync: "Trakt-synkronisering",
     traktDesc: "Importera tittarhistorik och önskelista från ditt Trakt.tv-konto.",
+    spotify: "Spotify",
+    spotifyDesc: "Anslut Spotify för att låta Curator använda din musikstämning.",
+    connectSpotify: "Anslut Spotify",
+    spotifyConnected: "Spotify ansluten",
+    disconnectSpotify: "Koppla från",
     connected: "Ansluten",
     connectTrakt: "Anslut Trakt",
     syncing: "Synkroniserar...",
@@ -480,6 +500,11 @@ const strings = {
     linked: "Linkitetty!",
     traktSync: "Trakt-synkronointi",
     traktDesc: "Tuo katseluhistoria ja toivelista Trakt.tv-tililtäsi.",
+    spotify: "Spotify",
+    spotifyDesc: "Yhdistä Spotify antaaksesi Curatorin käyttää musiikkitunnetilaasi.",
+    connectSpotify: "Yhdistä Spotify",
+    spotifyConnected: "Spotify yhdistetty",
+    disconnectSpotify: "Katkaise",
     connected: "Yhdistetty",
     connectTrakt: "Yhdistä Trakt",
     syncing: "Synkronoidaan...",
@@ -528,6 +553,8 @@ function SettingsContent() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [traktConnected, setTraktConnected] = useState(false);
+  const [spotifyConnected, setSpotifyConnected] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const [explorationSlider, setExplorationSlider] = useState(50);
@@ -610,6 +637,7 @@ function SettingsContent() {
         if (data.profile.preferred_region) setSelectedRegion(data.profile.preferred_region);
         setSelectedLocale(data.profile.preferred_locale || "");
         if (data.profile.title_count != null) setSettingsTitleCount(data.profile.title_count);
+        setSpotifyConnected(!!data.profile.spotify_connected);
         const filters = (data.profile.content_filters || {}) as ContentFilters;
         setActivePresets(filtersToPresets(filters));
       }
@@ -622,6 +650,14 @@ function SettingsContent() {
     } catch {}
 
     if (traktMsg === "connected") setTraktConnected(true);
+    const spotifyMsg = searchParams.get("spotify");
+    if (spotifyMsg === "connected") setSpotifyConnected(true);
+
+    // Admin check for Spotify (dev mode gating)
+    try {
+      const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "martinrlangaas@protonmail.com").split(",");
+      if (userEmail && adminEmails.includes(userEmail)) setIsAdmin(true);
+    } catch {}
     setLoading(false);
   }
 
@@ -1283,6 +1319,39 @@ function SettingsContent() {
               </p>
             )}
           </div>
+
+          {/* Spotify — admin only until Extended Quota Mode approved */}
+          {isAdmin && (
+            <div className={glassCard} style={glassCardStyle}>
+              <p className={sectionLabel}>{s.spotify}</p>
+              <p className={sectionDesc}>{s.spotifyDesc}</p>
+              {spotifyConnected ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.3)]" />
+                    <span className="text-xs text-emerald-400 font-medium">✅ {s.spotifyConnected}</span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      await fetch("/api/spotify/callback", { method: "DELETE" });
+                      setSpotifyConnected(false);
+                    }}
+                    className="text-[10px] text-white/30 hover:text-red-400 transition-colors"
+                    style={{ background: "none", border: "none", cursor: "pointer" }}
+                  >
+                    {s.disconnectSpotify}
+                  </button>
+                </div>
+              ) : (
+                <a
+                  href="/api/spotify/auth"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium border border-white/[0.08] text-white/65 hover:bg-[rgba(30,215,96,0.08)] hover:text-white hover:border-[rgba(30,215,96,0.3)] transition-all"
+                >
+                  {s.connectSpotify}
+                </a>
+              )}
+            </div>
+          )}
 
           {/* Data Export & Import */}
           <div className={glassCard} style={glassCardStyle}>

@@ -6,6 +6,7 @@ import { tmdbSearch, tmdbWatchProviders } from "@/lib/tmdb";
 import { env } from "@/lib/env";
 import { resolveRegion, REGION_LABELS, type SupportedRegion } from "@/lib/region";
 import { applyRateLimit } from "@/lib/rate-limit";
+import { getSpotifyMood } from "@/app/api/spotify/mood/route";
 
 /* ── AI call ───────────────────────────────────────── */
 
@@ -418,7 +419,7 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
   };
 
   // Fetch taste context + weather + post-watch + swipe analysis + mood tags + couple matches in parallel
-  const [likedRes, dislikedRes, watchlistRes, linksRes, favoritesRes, superlikesRes, exclusionsRes, moodTagsRes, coupleMatchesRes, coupleDisagreesRes, weatherRes, postWatchRes, swipeAnalysisRes] = await Promise.all([
+  const [likedRes, dislikedRes, watchlistRes, linksRes, favoritesRes, superlikesRes, exclusionsRes, moodTagsRes, coupleMatchesRes, coupleDisagreesRes, weatherRes, postWatchRes, swipeAnalysisRes, spotifyMoodRes] = await Promise.all([
     supabase
       .from("user_titles")
       .select("tmdb_id, type, rating, sentiment")
@@ -517,6 +518,10 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(200),
+    // Spotify mood (2s timeout, non-blocking)
+    (async () => {
+      try { return await getSpotifyMood(user.id); } catch { return null; }
+    })(),
   ]);
 
   let tasteContext = "";
@@ -823,6 +828,13 @@ If appropriate, naturally ask what they thought early in the conversation. Use t
       }
     }
   } catch { /* non-fatal */ }
+
+  // Spotify mood context
+  if (spotifyMoodRes && spotifyMoodRes.connected && spotifyMoodRes.mood !== "neutral") {
+    const trackList = spotifyMoodRes.tracks.slice(0, 3).join(", ");
+    tasteContext += `\nUser's current music mood: ${spotifyMoodRes.mood} (recently played: ${trackList}).
+Let this subtly influence your film recommendation — music mood often reflects desired film mood.`;
+  }
 
   // Bug 5 fix: localized taste summary labels + Bug 7: use profile.taste_summary directly
   const tl = tasteLabels[normalizedLang] ?? tasteLabels.en;

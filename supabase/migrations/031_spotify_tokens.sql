@@ -1,0 +1,5 @@
+ALTER TABLE profiles
+ADD COLUMN IF NOT EXISTS spotify_access_token TEXT,
+ADD COLUMN IF NOT EXISTS spotify_refresh_token TEXT,
+ADD COLUMN IF NOT EXISTS spotify_token_expires_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS spotify_connected BOOLEAN DEFAULT FALSE;
