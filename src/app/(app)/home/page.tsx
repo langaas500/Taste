@@ -498,7 +498,8 @@ export default function HomePage() {
     setTpRerolling(true);
     try {
       const res = await fetch("/api/tonight-pick", { method: "POST" });
-      if (res.ok) { const data = await res.json(); setTonightPick(data); }
+      const data = await res.json();
+      if (res.ok && data) { setTonightPick(data); }
     } catch { /* ignore */ }
     setTpRerolling(false);
   }
