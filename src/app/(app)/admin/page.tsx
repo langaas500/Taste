@@ -42,6 +42,11 @@ interface Stats {
   members: {
     total: number;
     premium: number;
+    trial: number;
+    founding: number;
+    dau: number;
+    wau: number;
+    new_per_day: Record<string, number>;
   };
   curator: {
     total_with_slug: number;
@@ -63,6 +68,26 @@ interface Stats {
     titles: SeoTitle[];
   };
   recent: RecentTitle[];
+}
+
+interface WtStats {
+  total: number;
+  matched: number;
+  match_rate: number;
+  active_now: number;
+  per_day: Record<string, { total: number; matched: number }>;
+  top_matches: { tmdb_id: number; type: string; count: number; title?: string }[];
+}
+
+interface UserResult {
+  id: string;
+  email: string | null;
+  display_name: string | null;
+  is_premium: boolean;
+  founding_member: boolean;
+  trial_ends_at: string | null;
+  created_at: string | null;
+  title_count: number;
 }
 
 /* ── Dot indicator ────────────────────────────────────── */
@@ -116,10 +141,15 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [wtStats, setWtStats] = useState<WtStats | null>(null);
   const [page, setPage] = useState(0);
   const [error, setError] = useState("");
   const [triggering, setTriggering] = useState(false);
   const [triggerResult, setTriggerResult] = useState("");
+  const [userQuery, setUserQuery] = useState("");
+  const [userResults, setUserResults] = useState<UserResult[]>([]);
+  const [userSearching, setUserSearching] = useState(false);
+  const [togglingUser, setTogglingUser] = useState<string | null>(null);
 
   // Auth check (client-side)
   useEffect(() => {
@@ -139,6 +169,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (!authorized) return;
     fetchStats(page);
+    fetchWtStats();
   }, [authorized, page]);
 
   async function fetchStats(p: number) {
@@ -170,6 +201,39 @@ export default function AdminPage() {
     } finally {
       setTriggering(false);
     }
+  }
+
+  async function fetchWtStats() {
+    try {
+      const res = await fetch("/api/admin/wt-stats");
+      if (res.ok) setWtStats(await res.json());
+    } catch { /* ignore */ }
+  }
+
+  async function searchUsers() {
+    if (!userQuery.trim() || userQuery.trim().length < 2) return;
+    setUserSearching(true);
+    try {
+      const res = await fetch(`/api/admin/user/search?q=${encodeURIComponent(userQuery.trim())}`);
+      const data = await res.json();
+      setUserResults(data.users || []);
+    } catch { setUserResults([]); }
+    setUserSearching(false);
+  }
+
+  async function togglePremium(userId: string, currentlyPremium: boolean) {
+    setTogglingUser(userId);
+    try {
+      const res = await fetch(`/api/admin/user/${userId}/toggle-premium`, {
+        method: currentlyPremium ? "DELETE" : "POST",
+      });
+      if (res.ok) {
+        setUserResults((prev) =>
+          prev.map((u) => u.id === userId ? { ...u, is_premium: !currentlyPremium } : u),
+        );
+      }
+    } catch { /* ignore */ }
+    setTogglingUser(null);
   }
 
   if (loading) return <LoadingSpinner text="Sjekker tilgang..." />;
@@ -204,6 +268,8 @@ export default function AdminPage() {
             <div className="flex flex-wrap gap-3 mb-3">
               <StatBox label="Totalt" value={stats.members.total} />
               <StatBox label="Premium" value={stats.members.premium} />
+              <StatBox label="Trial" value={stats.members.trial} />
+              <StatBox label="Founding" value={stats.members.founding} />
               <StatBox
                 label="Konvertering"
                 value={
@@ -219,6 +285,144 @@ export default function AdminPage() {
               max={stats.members.total}
               label="Premium-andel"
             />
+
+            {/* DAU / WAU */}
+            <div className="flex flex-wrap gap-3 mt-4 pt-3 border-t border-white/[0.06]">
+              <StatBox label="DAU" value={stats.members.dau} />
+              <StatBox label="WAU" value={stats.members.wau} />
+            </div>
+
+            {/* New users per day (last 7 days) */}
+            <div className="mt-4 pt-3 border-t border-white/[0.06]">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/50 mb-2 block">Nye brukere siste 7 dager</span>
+              <div className="flex items-end gap-1.5 h-16">
+                {Object.entries(stats.members.new_per_day).map(([day, count]) => {
+                  const maxCount = Math.max(...Object.values(stats.members.new_per_day), 1);
+                  const height = Math.max((count / maxCount) * 100, 4);
+                  return (
+                    <div key={day} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-[9px] font-mono text-white/50">{count}</span>
+                      <div
+                        className="w-full rounded-sm transition-all"
+                        style={{ height: `${height}%`, background: "linear-gradient(180deg, #E50914, #B00000)", minHeight: 2 }}
+                      />
+                      <span className="text-[8px] text-white/30 font-mono">{day.slice(5)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* ── 0b. Se Sammen Stats ──────────────────── */}
+          {wtStats && (
+            <div className={glassCard} style={glassCardStyle}>
+              <p className={sectionLabel}>Se Sammen (Watch Together)</p>
+              <p className={sectionDesc}>Sesjoner, matcher og aktivitet.</p>
+
+              <div className="flex flex-wrap gap-3 mb-3">
+                <StatBox label="Totalt" value={wtStats.total} />
+                <StatBox label="Matched" value={wtStats.matched} />
+                <StatBox label="Match rate" value={`${wtStats.match_rate}%`} />
+                <StatBox label="Aktive nå" value={wtStats.active_now} />
+              </div>
+
+              <ProgressBar value={wtStats.matched} max={wtStats.total} label="Match-andel" />
+
+              {/* Sessions per day */}
+              <div className="mt-4 pt-3 border-t border-white/[0.06]">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-white/50 mb-2 block">Sesjoner siste 7 dager</span>
+                <div className="flex items-end gap-1.5 h-16">
+                  {Object.entries(wtStats.per_day).map(([day, d]) => {
+                    const maxCount = Math.max(...Object.values(wtStats.per_day).map((v) => v.total), 1);
+                    const height = Math.max((d.total / maxCount) * 100, 4);
+                    return (
+                      <div key={day} className="flex-1 flex flex-col items-center gap-1">
+                        <span className="text-[9px] font-mono text-white/50">{d.total}<span className="text-emerald-400/60">/{d.matched}</span></span>
+                        <div
+                          className="w-full rounded-sm transition-all"
+                          style={{ height: `${height}%`, background: "linear-gradient(180deg, #E50914, #B00000)", minHeight: 2 }}
+                        />
+                        <span className="text-[8px] text-white/30 font-mono">{day.slice(5)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Top 10 matched titles */}
+              {wtStats.top_matches.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-white/[0.06]">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-white/50 mb-2 block">Topp 10 mest matchede titler</span>
+                  <div className="space-y-1">
+                    {wtStats.top_matches.map((m, i) => (
+                      <div key={`${m.tmdb_id}:${m.type}`} className="flex items-center gap-2 py-1">
+                        <span className="text-[10px] font-mono text-white/30 w-4 text-right">{i + 1}.</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/[0.06] text-white/50">{m.type}</span>
+                        <span className="text-xs text-white/70 truncate flex-1">{m.title || `TMDB:${m.tmdb_id}`}</span>
+                        <span className="text-xs font-mono text-white/50">{m.count}×</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── 0c. User Search ──────────────────────── */}
+          <div className={glassCard} style={glassCardStyle}>
+            <p className={sectionLabel}>Brukersøk</p>
+            <p className={sectionDesc}>Søk etter brukere på e-post eller visningsnavn.</p>
+
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={userQuery}
+                onChange={(e) => setUserQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") searchUsers(); }}
+                placeholder="E-post eller navn..."
+                className="flex-1 px-3 py-2 rounded-lg text-sm bg-white/[0.04] border border-white/[0.08] text-white/80 placeholder:text-white/25 outline-none focus:border-white/20 transition-colors"
+              />
+              <button
+                onClick={searchUsers}
+                disabled={userSearching || userQuery.trim().length < 2}
+                className="px-4 py-2 rounded-lg text-xs font-medium border border-white/[0.08] text-white/65 hover:bg-white/[0.06] hover:text-white/80 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+              >
+                {userSearching ? "Søker..." : "Søk"}
+              </button>
+            </div>
+
+            {userResults.length > 0 && (
+              <div className="space-y-2">
+                {userResults.map((u) => (
+                  <div key={u.id} className="flex items-center gap-3 py-2.5 px-3 rounded-xl border border-white/[0.04] hover:border-white/[0.08] transition-colors" style={{ background: "rgba(255,255,255,0.02)" }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-white/80 font-medium truncate">{u.display_name || "–"}</span>
+                        {u.is_premium && <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">Premium</span>}
+                        {u.founding_member && <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400">Founding</span>}
+                      </div>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <span className="text-[11px] text-white/40 truncate">{u.email || "–"}</span>
+                        <span className="text-[10px] text-white/30 font-mono">{u.title_count} titler</span>
+                        {u.created_at && <span className="text-[10px] text-white/25 font-mono">{new Date(u.created_at).toLocaleDateString("no-NO", { day: "2-digit", month: "short", year: "numeric" })}</span>}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => togglePremium(u.id, u.is_premium)}
+                      disabled={togglingUser === u.id}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold border transition-all cursor-pointer disabled:opacity-40 ${
+                        u.is_premium
+                          ? "border-red-500/30 text-red-400 hover:bg-red-500/10"
+                          : "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                      }`}
+                    >
+                      {togglingUser === u.id ? "..." : u.is_premium ? "Fjern premium" : "Gi premium"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* ── 1. Curator Generation Progress ──────── */}

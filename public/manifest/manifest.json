@@ -1,0 +1,69 @@
+{
+  "background_color": "#0a0a0f",
+  "description": "Swipe o Stop arguing about what to watch. Swipe movies together and match in under 3 minutesn movies and shows. Only mutual likes become a match.",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Logflix — Watch Together",
+  "orientation": "portrait",
+  "scope": "/",
+  "short_name": "Logflix",
+  "start_url": "/together",
+  "theme_color": "#0a0a0f",
+  "icons": [
+    {
+      "src": "https://logflix.app/icon?ad377c53a23c5601",
+      "type": "image/png",
+      "sizes": "512x512",
+      "isSquare": true,
+      "isPng": true,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 512,
+      "is512x512": true,
+      "is256x256": false,
+      "is192x192": false
+    },
+    {
+      "src": "https://logflix.app/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "isSquare": true,
+      "isPng": true,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 180,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    },
+    {
+      "src": "https://logflix.app/og-v2.png",
+      "isSquare": false,
+      "isPng": true,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 0,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    },
+    {
+      "src": "https://logflix.app/favicon.ico",
+      "type": "image/x-icon",
+      "isSquare": false,
+      "isPng": false,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 0,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    }
+  ],
+  "id": "app.logflix.ios",
+  "lang": "en",
+  "categories": [
+    "entertainment",
+    "lifestyle"
+  ]
+}

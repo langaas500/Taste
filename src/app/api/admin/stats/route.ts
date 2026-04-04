@@ -22,6 +22,11 @@ export async function GET(req: NextRequest) {
     const PAGE_SIZE = 50;
 
     // ── Parallel queries ────────────────────────────
+    // ── Date boundaries for DAU/WAU/new users ──────────
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
     const [
       slugCountRes,
       curatorCountRes,
@@ -36,6 +41,11 @@ export async function GET(req: NextRequest) {
       recentRes,
       totalMembersRes,
       premiumMembersRes,
+      trialMembersRes,
+      foundingMembersRes,
+      newUsersRes,
+      dauRes,
+      wauRes,
     ] = await Promise.all([
       // Total with slug
       admin
@@ -113,6 +123,38 @@ export async function GET(req: NextRequest) {
         .from("profiles")
         .select("*", { count: "exact", head: true })
         .eq("is_premium", true),
+
+      // Trial members (trial active, not premium via stripe)
+      admin
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .gt("trial_ends_at", now.toISOString())
+        .eq("is_premium", false),
+
+      // Founding members
+      admin
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("founding_member", true),
+
+      // New users last 7 days (created_at per day)
+      admin
+        .from("profiles")
+        .select("created_at")
+        .gte("created_at", sevenDaysAgo)
+        .order("created_at", { ascending: true }),
+
+      // DAU: unique users with user_titles activity in last 24h
+      admin
+        .from("user_titles")
+        .select("user_id", { count: "exact", head: true })
+        .gte("updated_at", oneDayAgo),
+
+      // WAU: unique users with user_titles activity in last 7 days
+      admin
+        .from("user_titles")
+        .select("user_id", { count: "exact", head: true })
+        .gte("updated_at", sevenDaysAgo),
     ]);
 
     // For SEO titles — batch check which have providers
@@ -148,10 +190,26 @@ export async function GET(req: NextRequest) {
       0,
     );
 
+    // ── Compute new users per day (last 7 days) ──────
+    const newUsersPerDay: Record<string, number> = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      newUsersPerDay[d.toISOString().slice(0, 10)] = 0;
+    }
+    for (const row of (newUsersRes.data || []) as { created_at: string }[]) {
+      const day = row.created_at.slice(0, 10);
+      if (day in newUsersPerDay) newUsersPerDay[day]++;
+    }
+
     return NextResponse.json({
       members: {
         total: totalMembersRes.count || 0,
         premium: premiumMembersRes.count || 0,
+        trial: trialMembersRes.count || 0,
+        founding: foundingMembersRes.count || 0,
+        dau: dauRes.count || 0,
+        wau: wauRes.count || 0,
+        new_per_day: newUsersPerDay,
       },
       curator: {
         total_with_slug: slugCountRes.count || 0,
