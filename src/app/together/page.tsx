@@ -1813,7 +1813,7 @@ export default function WTBetaPage() {
                 <div className="absolute inset-0" style={{ background: getGenreColor(finalWinner.genre_ids) }} />
                 {finalWinner.poster_path && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={`https://image.tmdb.org/t/p/w780${finalWinner.poster_path}`} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  <img src={`https://image.tmdb.org/t/p/w780${finalWinner.poster_path}`} alt={finalWinner.title} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 )}
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.92) 70%, rgba(0,0,0,1) 100%)" }} />
                 <div className="relative z-10 w-full max-w-sm">
@@ -1884,7 +1884,7 @@ export default function WTBetaPage() {
                   <div className="rounded-2xl overflow-hidden mb-4 mx-auto" style={{ maxWidth: 200, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
                     {roundMatches[0].title.poster_path ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={`https://image.tmdb.org/t/p/w342${roundMatches[0].title.poster_path}`} alt="" className="w-full object-cover" style={{ aspectRatio: "2/3" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      <img src={`https://image.tmdb.org/t/p/w342${roundMatches[0].title.poster_path}`} alt={roundMatches[0].title.title} className="w-full object-cover" style={{ aspectRatio: "2/3" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                     ) : (
                       <div className="w-full flex items-center justify-center text-3xl font-black" style={{ aspectRatio: "2/3", background: getGenreColor(roundMatches[0].title.genre_ids), color: "rgba(255,255,255,0.15)" }}>{roundMatches[0].title.title.substring(0, 2)}</div>
                     )}
@@ -1933,7 +1933,7 @@ export default function WTBetaPage() {
                     <div className="rounded-2xl overflow-hidden mb-6 mx-auto" style={{ maxWidth: 180, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
                       {compromiseTitle.poster_path ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={`https://image.tmdb.org/t/p/w342${compromiseTitle.poster_path}`} alt="" className="w-full object-cover" style={{ aspectRatio: "2/3" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        <img src={`https://image.tmdb.org/t/p/w342${compromiseTitle.poster_path}`} alt={compromiseTitle.title} className="w-full object-cover" style={{ aspectRatio: "2/3" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                       ) : (
                         <div className="w-full flex items-center justify-center text-3xl font-black" style={{ aspectRatio: "2/3", background: getGenreColor(compromiseTitle.genre_ids), color: "rgba(255,255,255,0.15)" }}>{compromiseTitle.title.substring(0, 2)}</div>
                       )}
@@ -2070,7 +2070,7 @@ export default function WTBetaPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={`https://image.tmdb.org/t/p/w780${finalWinner.poster_path}`}
-                    alt=""
+                    alt={finalWinner.title}
                     className="absolute inset-0 w-full h-full object-cover md:object-contain"
                     style={{
                       animation: "poster-fadein 600ms ease-out forwards, poster-reveal 1s ease-out 600ms forwards, poster-zoom 4s ease-in-out 600ms forwards",

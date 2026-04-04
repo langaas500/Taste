@@ -439,7 +439,7 @@ export default function RecommendationsPage() {
                 src={hero.backdrop_path
                   ? `https://image.tmdb.org/t/p/w1280${hero.backdrop_path}`
                   : `https://image.tmdb.org/t/p/w500${hero.poster_path}`}
-                alt=""
+                alt={hero.title}
                 fill
                 className="object-cover"
               />

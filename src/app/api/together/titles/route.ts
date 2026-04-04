@@ -139,7 +139,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ titles, region });
   } catch (error: unknown) {
-    console.error("WT titles error:", error);
+    console.error("[wt-titles]", error instanceof Error ? error.message : error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to fetch titles" },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
 import { getStripeServer } from "@/lib/stripe";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const FOUNDING_PRICE_IDS = [
   process.env.STRIPE_FOUNDING_PRICE_ID,
@@ -182,8 +183,7 @@ export async function POST(req: NextRequest) {
 
 /* ── Freeze helper ────────────────────────────────────── */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function buildFrozenCoupleData(admin: any, userId: string) {
+async function buildFrozenCoupleData(admin: SupabaseClient, userId: string) {
   // Find partner
   const { data: link } = await admin
     .from("account_links")
