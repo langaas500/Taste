@@ -159,6 +159,7 @@ export default function TasteEvolutionPage() {
   const s = t[locale as keyof typeof t] ?? t.en;
   const [data, setData] = useState<EvData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [shareState, setShareState] = useState<"idle" | "loading" | "copied">("idle");
 
   useEffect(() => {
     fetch("/api/taste-evolution")
@@ -184,8 +185,6 @@ export default function TasteEvolutionPage() {
 
   const d = data;
   const moviePct = d.totalTitles > 0 ? Math.round((d.movieCount / d.totalTitles) * 100) : 0;
-
-  const [shareState, setShareState] = useState<"idle" | "loading" | "copied">("idle");
 
   function buildOgUrl() {
     const params = new URLSearchParams({
