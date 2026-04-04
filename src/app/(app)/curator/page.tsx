@@ -26,7 +26,26 @@ interface CuratorMovie {
   vote_average: number;
   providers: WatchProvider[];
   reason: string;
+  rottenTomatoes?: string;
+  metacritic?: string;
+  awards?: string;
 }
+
+const moreLikeTexts: Record<string, (title: string) => string> = {
+  no: (t) => `Vis meg mer som ${t} — samme stemning og tema`,
+  en: (t) => `Show me more like ${t} — same mood and theme`,
+  dk: (t) => `Vis mig mere som ${t} — samme stemning og tema`,
+  se: (t) => `Visa mig mer som ${t} — samma stämning och tema`,
+  fi: (t) => `Näytä minulle lisää kuten ${t} — sama tunnelma ja teema`,
+};
+
+const moreLikeLabels: Record<string, string> = {
+  no: "Mer som denne →",
+  en: "More like this →",
+  dk: "Mere som denne →",
+  se: "Mer som denna →",
+  fi: "Lisää tällaisia →",
+};
 
 interface Message {
   role: "bot" | "user";
@@ -566,7 +585,7 @@ export default function CuratorPage() {
               {msg.movies && msg.movies.length > 0 && (
                 <div className="flex flex-col gap-3.5 mt-4 pl-11">
                   {msg.movies.map((movie) => (
-                    <MovieCard key={`${movie.tmdb_id}:${movie.type}`} movie={movie} onClick={() => setSelectedMovie({ tmdb_id: movie.tmdb_id, type: movie.type, title: movie.title, poster_path: movie.poster_path })} />
+                    <MovieCard key={`${movie.tmdb_id}:${movie.type}`} movie={movie} locale={lang} onMoreLike={(title) => send((moreLikeTexts[lang] ?? moreLikeTexts.en)(title))} onClick={() => setSelectedMovie({ tmdb_id: movie.tmdb_id, type: movie.type, title: movie.title, poster_path: movie.poster_path })} />
                   ))}
                 </div>
               )}
@@ -724,7 +743,7 @@ export default function CuratorPage() {
 
 /* ── MovieCard ───────────────────────────────────────── */
 
-function MovieCard({ movie, onClick }: { movie: CuratorMovie; onClick?: () => void }) {
+function MovieCard({ movie, onClick, onMoreLike, locale }: { movie: CuratorMovie; onClick?: () => void; onMoreLike?: (title: string) => void; locale?: string }) {
   const [fb, setFb] = useState<"liked" | "disliked" | null>(null);
   const imgSrc = movie.poster_path ? `https://image.tmdb.org/t/p/w154${movie.poster_path}` : null;
   const flatrate = movie.providers.filter((p) => p.type === "flatrate");
@@ -771,6 +790,20 @@ function MovieCard({ movie, onClick }: { movie: CuratorMovie; onClick?: () => vo
           )}
         </div>
       </div>
+      {/* OMDB ratings + awards */}
+      {(movie.rottenTomatoes || movie.metacritic || movie.awards) && (
+        <div className="flex flex-wrap items-center gap-2 px-4 pb-2 -mt-1">
+          {movie.rottenTomatoes && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(255,80,80,0.1)", color: "rgba(255,120,120,0.9)" }}>🍅 {movie.rottenTomatoes}</span>
+          )}
+          {movie.metacritic && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(100,200,100,0.1)", color: "rgba(130,220,130,0.9)" }}>MC {movie.metacritic}</span>
+          )}
+          {movie.awards && (
+            <span className="text-[10px] text-white/30 truncate max-w-[200px]">🏆 {movie.awards}</span>
+          )}
+        </div>
+      )}
       <div className="flex items-center gap-1 px-4 pb-3 -mt-1">
         {fb ? (
           <span className="text-xs" style={{ color: fb === "liked" ? "rgba(52,211,153,0.8)" : "rgba(248,113,113,0.8)" }}>
@@ -793,6 +826,15 @@ function MovieCard({ movie, onClick }: { movie: CuratorMovie; onClick?: () => vo
               👎
             </button>
           </>
+        )}
+        {onMoreLike && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onMoreLike(movie.title); }}
+            className="ml-auto text-[10px] font-medium transition-all hover:text-[#ff2a2a]"
+            style={{ color: "rgba(255,255,255,0.3)", cursor: "pointer", background: "none", border: "none", padding: 0 }}
+          >
+            {(locale && moreLikeLabels[locale]) || moreLikeLabels.en}
+          </button>
         )}
       </div>
     </div>

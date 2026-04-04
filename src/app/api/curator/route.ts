@@ -350,6 +350,9 @@ interface CuratorMovie {
   vote_average: number;
   providers: WatchProvider[];
   reason: string;
+  rottenTomatoes?: string;
+  metacritic?: string;
+  awards?: string;
 }
 
 /* ── Route handler ───────────────────────────────────── */
@@ -406,8 +409,16 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
 
   const partnerId = (profile as { partner_user_id?: string | null })?.partner_user_id;
 
-  // Fetch taste context + watchlist + friends + favorites + superlikes + exclusions + mood tags + couple matches in parallel
-  const [likedRes, dislikedRes, watchlistRes, linksRes, favoritesRes, superlikesRes, exclusionsRes, moodTagsRes, coupleMatchesRes, coupleDisagreesRes] = await Promise.all([
+  // ENDRING 11: Weather coordinates per region
+  const REGION_COORDS: Record<string, [number, number]> = {
+    NO: [59.91, 10.75], SE: [59.33, 18.07], DK: [55.68, 12.57], FI: [60.17, 24.94],
+    DE: [52.52, 13.41], ES: [40.42, -3.70], FR: [48.86, 2.35], IT: [41.90, 12.50],
+    PL: [52.23, 21.01], CA: [43.65, -79.38], AU: [-33.87, 151.21], GB: [51.51, -0.13],
+    US: [40.71, -74.01],
+  };
+
+  // Fetch taste context + weather + post-watch + swipe analysis + mood tags + couple matches in parallel
+  const [likedRes, dislikedRes, watchlistRes, linksRes, favoritesRes, superlikesRes, exclusionsRes, moodTagsRes, coupleMatchesRes, coupleDisagreesRes, weatherRes, postWatchRes, swipeAnalysisRes] = await Promise.all([
     supabase
       .from("user_titles")
       .select("tmdb_id, type, rating, sentiment")
@@ -483,6 +494,29 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
           .order("created_at", { ascending: false })
           .limit(200)
       : Promise.resolve({ data: null }),
+    // ENDRING 11: Weather
+    (async () => {
+      try {
+        const coords = REGION_COORDS[userRegion] || REGION_COORDS.GB;
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords[0]}&longitude=${coords[1]}&current=temperature_2m,precipitation,weathercode&timezone=auto`, { signal: AbortSignal.timeout(2000) });
+        return await res.json();
+      } catch { return null; }
+    })(),
+    // ENDRING 13: Post-watch follow-up
+    supabase
+      .from("user_titles")
+      .select("tmdb_id, type, sentiment, rating")
+      .eq("user_id", user.id)
+      .eq("status", "watched")
+      .order("updated_at", { ascending: false })
+      .limit(1),
+    // ENDRING 14: Swipe analysis (last 200 swipes)
+    supabase
+      .from("wt_session_swipes")
+      .select("tmdb_id, media_type, decision")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(200),
   ]);
 
   let tasteContext = "";
@@ -719,6 +753,76 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
       }
     } catch { /* non-fatal */ }
   }
+
+  // ENDRING 11: Weather context
+  try {
+    if (weatherRes?.current) {
+      const wc = weatherRes.current.weathercode ?? -1;
+      const temp = weatherRes.current.temperature_2m;
+      const weatherMood = wc <= 1 ? "Clear sky, perfect for any mood"
+        : wc <= 3 ? "Cloudy"
+        : wc >= 51 && wc <= 67 ? "Rainy evening — perfect for noir or cozy drama"
+        : wc >= 71 && wc <= 77 ? "Snowing — perfect for a cozy night in"
+        : wc >= 80 ? "Stormy — intense weather calls for an intense film"
+        : "Mild weather";
+      tasteContext += `\nCurrent weather: ${weatherMood}, ${Math.round(temp)}°C. Let this subtly influence your recommendation tone.`;
+    }
+  } catch { /* non-fatal */ }
+
+  // ENDRING 13: Post-watch follow-up
+  try {
+    const postWatchRows = postWatchRes.data ?? [];
+    if (postWatchRows.length > 0 && chatHistory.length <= 2) {
+      // Only on first message in conversation
+      const lastWatched = postWatchRows[0];
+      const lastTitle = resolveTitle(lastWatched.tmdb_id, lastWatched.type);
+      if (lastTitle) {
+        tasteContext += `\nSince last conversation, user watched "${lastTitle}".${lastWatched.sentiment ? ` They ${lastWatched.sentiment} it.` : ""}${lastWatched.rating ? ` Rating: ${lastWatched.rating}/10.` : ""}
+If appropriate, naturally ask what they thought early in the conversation. Use their response to calibrate future recommendations.`;
+      }
+    }
+  } catch { /* non-fatal */ }
+
+  // ENDRING 14: Swipe analysis
+  try {
+    const swipeRows = swipeAnalysisRes.data ?? [];
+    if (swipeRows.length >= 20) {
+      const swipeTmdbIds = swipeRows.map((r: { tmdb_id: number }) => r.tmdb_id);
+      const { data: swipeCache } = await supabase
+        .from("titles_cache")
+        .select("tmdb_id, type, genres")
+        .in("tmdb_id", [...new Set(swipeTmdbIds)]);
+      if (swipeCache && swipeCache.length > 0) {
+        const genreMap = new Map(swipeCache.map((r: { tmdb_id: number; type: string; genres: unknown }) => [r.tmdb_id, r.genres]));
+        const genreLikes: Record<string, number> = {};
+        const genreNopes: Record<string, number> = {};
+        const genreTotal: Record<string, number> = {};
+        for (const s of swipeRows as { tmdb_id: number; decision: string }[]) {
+          const genres = genreMap.get(s.tmdb_id);
+          if (!Array.isArray(genres)) continue;
+          for (const g of genres as { name: string }[]) {
+            if (!g.name) continue;
+            genreTotal[g.name] = (genreTotal[g.name] || 0) + 1;
+            if (s.decision === "like" || s.decision === "superlike") genreLikes[g.name] = (genreLikes[g.name] || 0) + 1;
+            if (s.decision === "nope") genreNopes[g.name] = (genreNopes[g.name] || 0) + 1;
+          }
+        }
+        const avoidGenres = Object.entries(genreTotal)
+          .filter(([name]) => genreTotal[name] >= 5 && (genreNopes[name] || 0) / genreTotal[name] > 0.6)
+          .sort((a, b) => (genreNopes[b[0]] || 0) / b[1] - (genreNopes[a[0]] || 0) / a[1])
+          .slice(0, 5).map(([name]) => name);
+        const likeGenres = Object.entries(genreTotal)
+          .filter(([name]) => genreTotal[name] >= 5 && (genreLikes[name] || 0) / genreTotal[name] > 0.7)
+          .sort((a, b) => (genreLikes[b[0]] || 0) / b[1] - (genreLikes[a[0]] || 0) / a[1])
+          .slice(0, 5).map(([name]) => name);
+        if (avoidGenres.length > 0 || likeGenres.length > 0) {
+          tasteContext += "\nSwipe behavior analysis:";
+          if (avoidGenres.length > 0) tasteContext += ` Consistently avoids ${avoidGenres.join(", ")} in Watch Together.`;
+          if (likeGenres.length > 0) tasteContext += ` Consistently likes ${likeGenres.join(", ")} in Watch Together.`;
+        }
+      }
+    }
+  } catch { /* non-fatal */ }
 
   // Bug 5 fix: localized taste summary labels + Bug 7: use profile.taste_summary directly
   const tl = tasteLabels[normalizedLang] ?? tasteLabels.en;
@@ -969,6 +1073,18 @@ Use this feedback loop: avoid re-recommending titles already suggested. If the u
     }
   }
 
+  // ENDRING 16: Movie night planner detection
+  if (userMessageLower.match(/filmkveld|movie night|plan.*evening|planlegg.*kveld|filmkväll|filmaften|elokuvailta/i)) {
+    tasteContext += `\n\nMOVIE NIGHT PLANNER MODE — The user wants a curated movie night. Return exactly 3 titles in this order:
+1. APPETISER — A short film or TV episode (20-40 min) to set the mood
+2. MAIN COURSE — The main feature film (90-150 min)
+3. DESSERT — A feel-good conclusion (60-90 min)
+
+In your "message", explain the flow: why this order works and how the three titles complement each other.
+Label each search with its course in the "reason" field (e.g. "Appetiser: ..." or "Main course: ...").
+Make sure the three titles share a thematic thread or emotional arc.`;
+  }
+
   // 1. AI interprets the query (streaming for faster time-to-completion)
   const aiRaw = await callCuratorAIStreaming(chatHistory, normalizedLang, username, userRegion, tasteContext, !!profile?.is_premium);
   const aiResponse = parseAIResponse(aiRaw);
@@ -1033,6 +1149,30 @@ Use this feedback loop: avoid re-recommending titles already suggested. If the u
         }
 
         const available = movies.filter((m) => m.providers.length > 0);
+
+        // ENDRING 12: OMDB enrichment (parallel, non-blocking)
+        const omdbKey = process.env.OMDB_API_KEY;
+        if (omdbKey && available.length > 0) {
+          try {
+            await Promise.all(available.slice(0, 5).map(async (m) => {
+              try {
+                const detailRes = await fetch(`https://api.themoviedb.org/3/${m.type}/${m.tmdb_id}/external_ids?api_key=${process.env.TMDB_API_KEY}`, { signal: AbortSignal.timeout(1500) });
+                const detail = await detailRes.json();
+                const imdbId = detail?.imdb_id;
+                if (!imdbId) return;
+                const omdbRes = await fetch(`https://www.omdbapi.com/?i=${imdbId}&apikey=${omdbKey}`, { signal: AbortSignal.timeout(1500) });
+                const omdb = await omdbRes.json();
+                if (omdb?.Response === "True") {
+                  const rt = omdb.Ratings?.find((r: { Source: string }) => r.Source === "Rotten Tomatoes");
+                  if (rt?.Value) m.rottenTomatoes = rt.Value;
+                  if (omdb.Metascore && omdb.Metascore !== "N/A") m.metacritic = omdb.Metascore;
+                  if (omdb.Awards && omdb.Awards !== "N/A") m.awards = omdb.Awards;
+                }
+              } catch { /* skip individual failures */ }
+            }));
+          } catch { /* non-fatal */ }
+        }
+
         logger.info("Curator response", { movies: movies.length, available: available.length, elapsed: logger.elapsed() });
 
         // Send movie cards after delimiter
