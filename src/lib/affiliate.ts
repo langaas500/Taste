@@ -43,15 +43,30 @@ function getAffiliateId(providerName: string): string {
 }
 
 /**
+ * Per-provider URL format builders.
+ * Each provider can have its own affiliate system.
+ * Default: Adtraction tracking URL.
+ */
+type UrlBuilder = (affiliateId: string, originalUrl: string) => string;
+
+const PROVIDER_URL_BUILDERS: Record<string, UrlBuilder> = {
+  PRIME: (tag) => `https://www.amazon.com/primevideo?tag=${tag}`,
+};
+
+const DEFAULT_BUILDER: UrlBuilder = (id, url) =>
+  `https://track.adtraction.com/t/t?a=${id}&b=${encodeURIComponent(url)}`;
+
+/**
  * Build an affiliate-tracked URL for a streaming provider.
  * Returns the original URL unchanged if no affiliate ID is configured.
  */
 export function buildAffiliateUrl(providerName: string, originalUrl: string): string {
+  const key = PROVIDER_KEY_MAP[providerName.toLowerCase()];
   const affiliateId = getAffiliateId(providerName);
   if (!affiliateId) return originalUrl;
 
-  // Adtraction format (default)
-  return `https://track.adtraction.com/t/t?a=${affiliateId}&b=${encodeURIComponent(originalUrl)}`;
+  const builder = (key && PROVIDER_URL_BUILDERS[key]) || DEFAULT_BUILDER;
+  return builder(affiliateId, originalUrl);
 }
 
 /**
