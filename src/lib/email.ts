@@ -849,3 +849,81 @@ export async function sendTrialReminderEmail(
     console.error("Failed to send trial reminder email:", err);
   }
 }
+
+/* ── Curator Push (Friday pick) ───────────────────────── */
+
+const curatorPushStrings = {
+  no: {
+    subject: "🎬 Din fredagsfilm fra Curator",
+    heading: "Curator har en film til deg i kveld",
+    openCurator: "Åpne Curator for flere →",
+    footer: "Du mottar denne fordi du bruker Logflix.",
+    unsub: "Avslutt e-poster",
+  },
+  en: {
+    subject: "🎬 Your Friday pick from Curator",
+    heading: "Curator has a pick for you tonight",
+    openCurator: "Open Curator for more →",
+    footer: "You're receiving this because you use Logflix.",
+    unsub: "Unsubscribe from emails",
+  },
+  dk: {
+    subject: "🎬 Din fredagsfilm fra Curator",
+    heading: "Curator har en film til dig i aften",
+    openCurator: "Åbn Curator for flere →",
+    footer: "Du modtager denne fordi du bruger Logflix.",
+    unsub: "Afmeld e-mails",
+  },
+  se: {
+    subject: "🎬 Din fredagsfilm från Curator",
+    heading: "Curator har ett val till dig ikväll",
+    openCurator: "Öppna Curator för fler →",
+    footer: "Du får detta för att du använder Logflix.",
+    unsub: "Avsluta e-post",
+  },
+  fi: {
+    subject: "🎬 Perjantai-elokuvasi Curatorilta",
+    heading: "Curatorilla on valinta sinulle tänä iltana",
+    openCurator: "Avaa Curator lisää varten →",
+    footer: "Saat tämän koska käytät Logflixiä.",
+    unsub: "Lopeta sähköpostit",
+  },
+};
+
+export async function sendCuratorPushEmail(
+  email: string,
+  name: string | undefined,
+  pick: { title: string; year?: number; reason: string; posterUrl?: string },
+  locale?: string,
+): Promise<void> {
+  if (!resend) return;
+  const s = curatorPushStrings[locale as keyof typeof curatorPushStrings] ?? curatorPushStrings.en;
+  try {
+    await resend.emails.send({
+      from: "Logflix Curator <noreply@logflix.app>",
+      to: email,
+      subject: s.subject,
+      html: wrap(`
+        <tr><td style="padding-bottom:8px;font-size:20px;font-weight:800;color:#fff;text-align:center;">
+          ${s.heading}${name ? `, ${name}` : ""}
+        </td></tr>
+        ${pick.posterUrl ? `<tr><td align="center" style="padding-bottom:16px;">
+          <img src="${pick.posterUrl}" alt="${pick.title}" width="200" style="border-radius:12px;display:block;margin:0 auto;" />
+        </td></tr>` : ""}
+        <tr><td style="padding-bottom:4px;font-size:18px;font-weight:700;color:#fff;text-align:center;">
+          ${pick.title}${pick.year ? ` (${pick.year})` : ""}
+        </td></tr>
+        <tr><td style="padding-bottom:24px;font-size:14px;color:${TEXT};line-height:1.7;text-align:center;font-style:italic;">
+          "${pick.reason}"
+        </td></tr>
+        ${ctaButton(s.openCurator, "https://logflix.app/curator")}
+        ${footer(
+          s.footer,
+          `<a href="https://logflix.app/settings?curator_push=false" style="color:${TEXT_DIM};text-decoration:underline;">${s.unsub}</a>`,
+        )}
+      `),
+    });
+  } catch (err) {
+    console.error("[curator-push] Failed to send email:", err);
+  }
+}

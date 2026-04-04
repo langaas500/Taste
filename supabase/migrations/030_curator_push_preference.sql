@@ -1,0 +1,1 @@
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS curator_push_enabled BOOLEAN DEFAULT TRUE;
