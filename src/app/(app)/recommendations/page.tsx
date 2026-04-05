@@ -731,9 +731,8 @@ export default function RecommendationsPage() {
           posterPath={selectedItem.poster_path}
           onClose={() => setSelectedItem(null)}
           actions={[
-            { label: "👍 Sett", action: "liked", variant: "green" },
-            { label: "👎 Sett", action: "disliked", variant: "red" },
-            { label: "😐 Sett", action: "neutral", variant: "yellow" },
+            { label: "👍 Likte", action: "liked", variant: "green" },
+            { label: "👎 Mislikte", action: "disliked", variant: "red" },
             { label: "+ Se-liste", action: "watchlist", variant: "default" },
             { label: "List+", action: "add-to-list", variant: "accent" },
           ]}

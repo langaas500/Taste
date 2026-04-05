@@ -391,9 +391,8 @@ export default function WatchlistPage() {
               onAction={(action) => handleAction(t, action)}
               actions={[
                 { label: "List+", action: "add-to-list", variant: "accent" },
-                { label: "👍", action: "liked", variant: "green" },
-                { label: "👎", action: "disliked", variant: "red" },
-                { label: "😐", action: "neutral", variant: "yellow" },
+                { label: "👍 Likte", action: "liked", variant: "green" },
+                { label: "👎 Mislikte", action: "disliked", variant: "red" },
                 { label: "✕", action: "remove", variant: "default" },
               ]}
             />

@@ -1140,7 +1140,6 @@ export default function SearchPage() {
           actions={[
             { label: s.likedAction, action: "liked", variant: "green" },
             { label: s.dislikedAction, action: "disliked", variant: "red" },
-            { label: s.mehAction, action: "neutral", variant: "yellow" },
             { label: s.watchlistAction, action: "watchlist", variant: "default" },
             { label: s.listPlus, action: "add-to-list", variant: "accent" },
           ]}

@@ -291,7 +291,6 @@ export default function WatchBankPage() {
               { label: "List+", action: "add-to-list", variant: "accent" },
               { label: s.doneUp, action: "liked", variant: "green" },
               { label: s.doneDown, action: "disliked", variant: "red" },
-              { label: s.doneMeh, action: "neutral", variant: "yellow" },
               { label: s.remove, action: "remove", variant: "default" },
             ]}
             onAction={(action) => {
