@@ -1489,6 +1489,18 @@ export default function WTBetaPage() {
                 </div>
               )}
 
+              {/* SEO crawlable links — visible only on intro screen */}
+              <nav className="mt-8 pt-6 text-center" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <p className="text-xs text-white/25 mb-3">Find something to watch together</p>
+                <p className="text-[11px] text-white/20 mb-3">Not sure what to watch? These guides help you decide fast.</p>
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+                  <Link href="/en/what-to-watch-together" className="text-[11px] text-white/20 hover:text-white/40 transition-colors">What to watch together</Link>
+                  <Link href="/en/cant-decide-what-to-watch" className="text-[11px] text-white/20 hover:text-white/40 transition-colors">Can&apos;t decide what to watch?</Link>
+                  <Link href="/en/what-to-watch-with-girlfriend" className="text-[11px] text-white/20 hover:text-white/40 transition-colors">What to watch with girlfriend</Link>
+                  <Link href="/en/find-something-to-watch-fast" className="text-[11px] text-white/20 hover:text-white/40 transition-colors">Find something fast</Link>
+                  <Link href="/no/filmer-a-se-med-kjaeresten" className="text-[11px] text-white/20 hover:text-white/40 transition-colors">Filmer å se med kjæresten</Link>
+                </div>
+              </nav>
 
             </div>
             </div>
