@@ -286,6 +286,9 @@ export default function PremiumHubPage() {
         .fm-banner { position: relative; overflow: hidden; }
         .fm-banner::after { content: ""; position: absolute; top: 0; left: 0; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,184,0,0.08), transparent); animation: fm-shimmer 3s ease-in-out infinite; pointer-events: none; }
         .fm-star { animation: fm-star-pulse 2s ease-in-out infinite; }
+        @keyframes curator-shimmer { 0% { transform: translateX(-100%) skewX(-15deg); } 100% { transform: translateX(250%) skewX(-15deg); } }
+        .curator-card { position: relative; overflow: hidden; }
+        .curator-card::after { content: ""; position: absolute; top: 0; left: 0; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,42,42,0.06), transparent); animation: curator-shimmer 3s ease-in-out infinite; pointer-events: none; }
       `}} />
       {isPremium && isFoundingMember ? (
         <div className="fm-banner rounded-2xl p-4 sm:p-5 mb-5 text-center" style={{ background: "linear-gradient(135deg, #1a1400 0%, #2a1f00 50%, #1a1400 100%)", border: "1.5px solid #FFB800" }}>
@@ -311,7 +314,7 @@ export default function PremiumHubPage() {
         <div className="mb-6">
           <button
             onClick={() => setShowModal(true)}
-            className="w-full py-3.5 rounded-xl text-sm sm:text-base font-bold text-white cursor-pointer transition-all hover:opacity-90 active:scale-[0.98]"
+            className="w-full py-3.5 rounded-xl text-sm sm:text-base font-bold text-white cursor-pointer transition-all duration-200 hover:scale-[1.04] active:scale-[0.98]"
             style={{ background: "#ff2a2a", boxShadow: "0 0 20px rgba(255,42,42,0.3)" }}
           >
             {s.trialCta}
@@ -321,7 +324,7 @@ export default function PremiumHubPage() {
       )}
 
       {/* ── SEKSJON 4: Curator AI (full bredde hero-kort) ── */}
-      <Link href="/curator" className="block rounded-2xl p-4 sm:p-5 mb-4 transition-all hover:scale-[1.01] duration-200" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,42,42,0.15)", borderLeft: "3px solid #ff2a2a", boxShadow: "0 0 20px rgba(255,42,42,0.1)", textDecoration: "none" }}>
+      <Link href="/curator" className="curator-card block rounded-2xl p-4 sm:p-5 mb-4 transition-all hover:scale-[1.02] duration-200" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,42,42,0.15)", borderLeft: "3px solid #ff2a2a", boxShadow: "0 0 20px rgba(255,42,42,0.1)", textDecoration: "none" }}>
         <div className="flex items-start gap-3.5">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,42,42,0.15)", border: "1px solid rgba(255,42,42,0.3)" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff2a2a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -353,8 +356,8 @@ export default function PremiumHubPage() {
               <p className="text-[10px] mt-0.5" style={{ color: "#FFB800" }}>★ {pick.match_score}% {s.match}</p>
             )}
             <div className="flex gap-2 mt-1.5">
-              <button onClick={() => setSelectedTitle({ id: pick.tmdb_id, type: pick.type as "movie" | "tv", title: pick.title, poster_path: pick.poster_path })} className="px-2 py-1 rounded-md text-[10px] font-semibold text-white" style={{ background: "#ff2a2a" }}>{s.watchNow}</button>
-              <button onClick={handleReroll} disabled={tpRerolling} className="px-2 py-1 rounded-md text-[10px] text-white/35" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>{tpRerolling ? "..." : `↻ ${s.newPick}`}</button>
+              <button onClick={() => setSelectedTitle({ id: pick.tmdb_id, type: pick.type as "movie" | "tv", title: pick.title, poster_path: pick.poster_path })} className="px-2 py-1 rounded-md text-[10px] font-semibold text-white transition-transform duration-200 hover:scale-110" style={{ background: "#ff2a2a" }}>{s.watchNow}</button>
+              <button onClick={handleReroll} disabled={tpRerolling} className="px-2 py-1 rounded-md text-[10px] text-white/35 transition-transform duration-200 hover:scale-110" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>{tpRerolling ? "..." : `↻ ${s.newPick}`}</button>
             </div>
           </div>
         </div>
@@ -391,7 +394,7 @@ export default function PremiumHubPage() {
           <p className="text-xs text-white/50 truncate">{partnerName ? s.partnerHas(partnerName) : s.partnerBanner}</p>
         </div>
         {!partnerName && isPremium && (
-          <Link href="/settings" className="text-[10px] font-semibold px-2.5 py-1 rounded-md flex-shrink-0" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.08)", textDecoration: "none" }}>
+          <Link href="/settings" className="text-[10px] font-semibold px-2.5 py-1 rounded-md flex-shrink-0 transition-transform duration-200 hover:scale-110" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.08)", textDecoration: "none" }}>
             {s.invitePartner}
           </Link>
         )}
