@@ -51,8 +51,8 @@ export default function WatchWithGirlfriendPage() {
       <SeoGuideLayout
         locale="en"
         h1="What to Watch With Your Girlfriend"
-        heroSubtitle="She says 'whatever you want.' But it's never whatever you want. Find something you both actually agree on."
-        ctaText="Try Watch Together — free"
+        heroSubtitle={`"You pick." So you do. She says no. You try again. She says maybe. You rewatch The Office.`}
+        ctaText="Stop guessing. Start matching."
         trustLine="Free · No app · Done in 3 minutes"
         relatedLinks={[
           { href: "/en/what-to-watch-together", label: "What to watch together tonight" },
@@ -69,18 +69,26 @@ export default function WatchWithGirlfriendPage() {
             The Couple Movie Night Loop
           </h2>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>
-            You know the script. She asks what you want to watch. You suggest something. She pauses. &quot;Hmm, maybe something else.&quot; You suggest another. Same reaction. Eventually one of you pulls out their phone and the other falls asleep to The Office. Again.
+            &ldquo;What do you want to watch?&rdquo;
+            <br />&ldquo;I don&apos;t know. You pick.&rdquo;
           </p>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>
-            The problem isn&apos;t your taste or hers. It&apos;s the process. Suggesting movies face-to-face puts social pressure on every pick. Neither of you wants to shoot down the other&apos;s idea, so you both play it safe — and end up watching nothing new.
+            So you pick something. She pauses.
+            <br />&ldquo;Hmm. Maybe something else.&rdquo;
+            <br />You try again. Same reaction.
+            <br />Eventually someone pulls out their phone and the other falls asleep to a rerun.
+          </p>
+          <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>
+            It&apos;s not your taste. It&apos;s not hers.
+            <br />It&apos;s the process. Suggesting face-to-face makes every pick feel like a test.
           </p>
           <ul style={{ paddingLeft: 20, margin: "0 0 12px" }}>
             {[
-              "\"You pick\" actually means \"pick something I'll also like, but I won't tell you what\"",
-              "Suggesting a movie feels like a test you might fail",
-              "You avoid your favorites because you're not sure she'll like them",
-              "She avoids hers for the same reason",
-              "You default to rewatching because it's the only safe choice",
+              "\"You pick\" means \"pick something I'll like, but I won't tell you what that is\"",
+              "Every suggestion feels like a risk",
+              "You hold back your real picks because rejection stings",
+              "She holds back hers for the same reason",
+              "You rewatch something safe because it's easier than failing",
             ].map((item) => (
               <li key={item} style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 6 }}>{item}</li>
             ))}
@@ -89,18 +97,18 @@ export default function WatchWithGirlfriendPage() {
 
         <section style={{ marginBottom: 32 }}>
           <h2 style={{ color: "#ffffff", fontSize: "1.1rem", fontWeight: 700, marginBottom: 12 }}>
-            Remove the Pressure: Swipe Independently
+            You Don&apos;t Suggest. You Don&apos;t Negotiate. You Match.
           </h2>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 16 }}>
-            Watch Together changes the dynamic. Instead of negotiating, both of you swipe through movies and shows on your own phones. You don&apos;t see her choices, she doesn&apos;t see yours. When your likes overlap — that&apos;s your match. No judgment, no rejection, no debate.
+            Both of you swipe on your own phones. You don&apos;t see her choices. She doesn&apos;t see yours. When your likes overlap — that&apos;s what you watch. No suggesting. No vetoing. No &ldquo;are you sure?&rdquo;
           </p>
           <ol style={{ paddingLeft: 20, margin: 0, marginBottom: 16 }}>
             {[
-              { title: "Open logflix.app/together", desc: "No app needed. Works in any browser on any device." },
-              { title: "Pick your streaming services", desc: "Select Netflix, Disney+, HBO Max — whatever you both have. Only titles on those services show up." },
-              { title: "Share the session code", desc: "She scans the QR code or types the 6-letter code. Joined in seconds." },
-              { title: "Both swipe privately", desc: "25 titles each. Swipe right = interested, left = nah. Nobody sees the other's picks." },
-              { title: "See your matches", desc: "Only titles you BOTH liked are revealed. Pick one and press play." },
+              { title: "Open logflix.app/together", desc: "No app. No account. Just open it." },
+              { title: "Pick your services", desc: "Netflix, Disney+, HBO — whatever you have. You only see what's actually watchable." },
+              { title: "Send the code", desc: "6 letters. QR or text. Joined in seconds." },
+              { title: "Swipe privately", desc: "25 titles. Right = yes, left = no. Nobody sees the other's picks." },
+              { title: "See what you both liked", desc: "Only the overlap. Pick one. Press play." },
             ].map((step, i) => (
               <li key={i} style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 10 }}>
                 <strong style={{ color: "rgba(255,255,255,0.75)" }}>{step.title}.</strong> {step.desc}
@@ -108,7 +116,7 @@ export default function WatchWithGirlfriendPage() {
             ))}
           </ol>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7 }}>
-            Takes 2–5 minutes total. Usually you&apos;ll match on 2–4 titles. Pick one and the decision is made — without a single &quot;I don&apos;t know, what do you think?&quot;
+            3 minutes. You&apos;ll match on 2–4 titles. Pick one. Done.
           </p>
         </section>
 
@@ -118,12 +126,12 @@ export default function WatchWithGirlfriendPage() {
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {[
-              { title: "About Time", year: 2013, type: "Movie", note: "Romantic without being cheesy. He'll like the time-travel angle, she'll love the emotional core." },
-              { title: "Normal People", year: 2020, type: "Series", note: "Intimate and beautifully made. Short episodes mean you can 'just watch one more.'" },
-              { title: "Everything Everywhere All at Once", year: 2022, type: "Movie", note: "Action, comedy, and a love story. Crosses every taste boundary." },
-              { title: "Fleabag", year: 2016, type: "Series", note: "Sharp, funny, and deeply human. Season 2 is one of the best things on TV." },
-              { title: "La La Land", year: 2016, type: "Movie", note: "Musical for people who don't like musicals. Gorgeous and bittersweet." },
-              { title: "The Bear", year: 2022, type: "Series", note: "High-energy, short episodes. You'll both be hooked by the end of episode one." },
+              { title: "About Time", year: 2013, type: "Movie", note: "Romantic but not embarrassing. Works for both of you without either one compromising." },
+              { title: "Normal People", year: 2020, type: "Series", note: "Short episodes. You'll say 'one more' three times. Easy to start, hard to stop." },
+              { title: "Everything Everywhere All at Once", year: 2022, type: "Movie", note: "Action, comedy, love story — all at once. The rare film that crosses every taste." },
+              { title: "Fleabag", year: 2016, type: "Series", note: "Funny, sharp, and 25 minutes per episode. Low risk, high reward. Season 2 is perfect." },
+              { title: "La La Land", year: 2016, type: "Movie", note: "Safe pick that doesn't feel safe. Works even if neither of you likes musicals." },
+              { title: "The Bear", year: 2022, type: "Series", note: "20-minute episodes, high energy. You'll both be hooked before the credits of episode one." },
             ].map((pick) => (
               <div key={pick.title} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "14px 16px" }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
@@ -136,8 +144,12 @@ export default function WatchWithGirlfriendPage() {
           </div>
         </section>
 
-        <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 32 }}>
-          The best date night movie is one you both genuinely want to watch — not one person&apos;s compromise. Let Watch Together find the overlap and skip the awkward negotiation.
+        <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, fontWeight: 600, lineHeight: 1.6, marginBottom: 8 }}>
+          The best movie isn&apos;t the one you pick.
+          <br />It&apos;s the one you both agree on.
+        </p>
+        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, lineHeight: 1.7, marginBottom: 32 }}>
+          Stop suggesting. Stop guessing. Just match.
         </p>
 
         <FaqSection title="Frequently Asked Questions" items={faqItems} />
