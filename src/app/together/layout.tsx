@@ -43,8 +43,8 @@ export const metadata: Metadata = {
 const togetherJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "Se Sammen",
-  alternateName: "Watch Together",
+  name: "Watch Together",
+  alternateName: "Se Sammen",
   url: "https://logflix.app/together",
   applicationCategory: "EntertainmentApplication",
   operatingSystem: "Any",
@@ -54,11 +54,12 @@ const togetherJsonLd = {
     priceCurrency: "NOK",
   },
   description:
-    "Gratis verktøy for par og venner som vil finne noe å se sammen. Begge sveiper på filmer og serier — kun felles liker gir match.",
+    "Free tool for couples and friends who want to find something to watch together. Both swipe on movies and shows — only mutual likes become a match.",
   featureList: [
     "Swipe matching",
-    "Streaming filters",
+    "Streaming service filters",
     "No account required",
+    "No app download needed",
     "Couple movie finder",
   ],
   aggregateRating: {
@@ -84,24 +85,25 @@ export default function TogetherLayout({
   const howToJsonLd = {
     "@context": "https://schema.org",
     "@type": "HowTo",
-    name: "Hvordan finne en film å se sammen",
+    name: "How to find a movie to watch together",
     description:
-      "Bruk Se Sammen på Logflix for å matche med partneren din på under 3 minutter.",
+      "Use Watch Together on Logflix to match with your partner in under 3 minutes.",
+    totalTime: "PT3M",
     step: [
       {
         "@type": "HowToStep",
-        name: "Opprett en sesjon",
-        text: "Gå til logflix.app/together og trykk 'Start med partner'. Del koden med partneren din.",
+        name: "Create a session",
+        text: "Go to logflix.app/together and tap 'Start with partner'. Share the code with your partner.",
       },
       {
         "@type": "HowToStep",
-        name: "Sveip hver for dere",
-        text: "Dere sveiper uavhengig gjennom filmer og serier. Ingen ser hva den andre velger.",
+        name: "Swipe independently",
+        text: "Both of you swipe through movies and shows independently. Neither sees what the other picks.",
       },
       {
         "@type": "HowToStep",
-        name: "Se matchen",
-        text: "Når dere begge liker samme tittel blir det en match. Start filmkvelden.",
+        name: "See the match",
+        text: "When you both like the same title, it's a match. Start watching.",
       },
     ],
   };

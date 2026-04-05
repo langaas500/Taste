@@ -326,6 +326,23 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         </p>
       </div>
 
+      {/* ── Guides (crawlable internal links) ── */}
+      <nav style={{ width: "100%", maxWidth: 720, margin: "0 auto", padding: "24px 24px 8px", textAlign: "center" }}>
+        <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 20 }} />
+        <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", marginBottom: 10, letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 }}>Guides</p>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
+          {[
+            { href: "/en/what-to-watch-together", label: "What to watch together" },
+            { href: "/en/cant-decide-what-to-watch", label: "Can't decide what to watch?" },
+            { href: "/en/what-to-watch-with-girlfriend", label: "What to watch with girlfriend" },
+            { href: "/en/find-something-to-watch-fast", label: "Find something fast" },
+            { href: "/together", label: "Watch Together" },
+          ].map((link) => (
+            <Link key={link.href} href={link.href} style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", textDecoration: "none", padding: "4px 10px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.06)", transition: "all 0.2s" }}>{link.label}</Link>
+          ))}
+        </div>
+      </nav>
+
       {/* ── ALSO (subtle, bottom) ── */}
       <div style={{ width: "100%", maxWidth: 720, margin: "0 auto", padding: "16px 24px 48px", textAlign: "center" }}>
         <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 24 }} />
