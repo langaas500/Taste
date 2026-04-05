@@ -51,8 +51,8 @@ export default function CantDecidePage() {
       <SeoGuideLayout
         locale="en"
         h1="Can't Decide What to Watch?"
-        heroSubtitle="You're not bad at choosing. There's just too much to choose from — and two of you trying to agree makes it worse."
-        ctaText="Try Watch Together — free"
+        heroSubtitle="Snacks ready. Couch ready. 30 minutes later — still scrolling."
+        ctaText="Find something in 3 minutes"
         trustLine="Free · 3 minutes · No app · No login"
         relatedLinks={[
           { href: "/en/what-to-watch-together", label: "What to watch together tonight" },
@@ -66,21 +66,26 @@ export default function CantDecidePage() {
 
         <section style={{ marginBottom: 32 }}>
           <h2 style={{ color: "#ffffff", fontSize: "1.1rem", fontWeight: 700, marginBottom: 12 }}>
-            Why You&apos;re Stuck (It&apos;s Not Your Fault)
+            This Is What Actually Happens
           </h2>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>
-            You sit down ready to watch something. Thirty minutes later, you&apos;re still scrolling. The couch is comfortable, the snacks are ready, but the screen shows a grid of thumbnails you can&apos;t commit to.
+            You open Netflix. Scroll for a bit.
+            <br />&ldquo;What about this one?&rdquo;
+            <br />&ldquo;Hmm. Maybe.&rdquo;
           </p>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>
-            This is decision paralysis. Psychologists have studied it for decades. The more options you have, the harder it is to choose — and the less satisfied you are with whatever you pick.
+            You try HBO. Then Disney+. Then back to Netflix.
+            <br />Twenty minutes gone. Nobody has picked anything.
+            <br />One of you says &ldquo;I don&apos;t care, you pick.&rdquo;
+            <br />Now the other person doesn&apos;t want to pick either.
           </p>
           <ul style={{ paddingLeft: 20, margin: "0 0 12px" }}>
             {[
-              "Netflix, Disney+, HBO Max, and more — each with thousands of titles",
-              "Every suggestion feels risky when someone else has to watch it too",
-              "\"I don't care, you pick\" is the most common phrase on movie night",
-              "You scroll past good options because you're looking for the perfect one",
-              "By the time you choose, the mood is gone",
+              "You suggest something — they're not sure. Now you feel rejected.",
+              "They suggest something — you say maybe. Now they stop trying.",
+              "You scroll past 40 titles and somehow none of them feel right",
+              "You pick whatever's on the front page just to stop the arguing",
+              "By the time you press play, neither of you is excited anymore",
             ].map((item) => (
               <li key={item} style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 6 }}>{item}</li>
             ))}
@@ -89,18 +94,18 @@ export default function CantDecidePage() {
 
         <section style={{ marginBottom: 32 }}>
           <h2 style={{ color: "#ffffff", fontSize: "1.1rem", fontWeight: 700, marginBottom: 12 }}>
-            The Fix: Let Both of You Swipe Independently
+            You Don&apos;t Decide Together. You Decide Separately.
           </h2>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 16 }}>
-            Watch Together removes the negotiation entirely. Both of you swipe through the same deck of movies and shows on your own phones. You never see what the other person picks. When your likes overlap, that&apos;s your match — and the decision is made.
+            Each of you swipes on your own phone. You never see what the other picks. When your likes overlap — that&apos;s your match. No negotiation. No compromise. No &ldquo;are you sure?&rdquo;
           </p>
           <ol style={{ paddingLeft: 20, margin: 0, marginBottom: 16 }}>
             {[
-              { title: "Open logflix.app/together", desc: "No download, no account. Works on any phone or laptop." },
-              { title: "Select streaming services", desc: "Pick the ones you have. Only titles available on those services appear — no false promises." },
-              { title: "Share the session code", desc: "Your partner joins with a 6-letter code or QR scan. Takes seconds." },
-              { title: "Swipe through 25 titles", desc: "Right = interested, left = pass. Independent, private, no pressure." },
-              { title: "See what you both liked", desc: "Only mutual likes are revealed. Tap to open on Netflix, HBO, Disney+, or wherever it streams." },
+              { title: "Open logflix.app/together", desc: "No app. No account. Just open it." },
+              { title: "Pick your streaming services", desc: "You only see titles you can actually watch tonight." },
+              { title: "Send the code", desc: "6 letters. Your partner joins from any phone in seconds." },
+              { title: "Swipe 25 titles", desc: "Right = yes, left = no. Private. Nobody sees your choices." },
+              { title: "See the overlap", desc: "Only what you BOTH liked. Tap to watch." },
             ].map((step, i) => (
               <li key={i} style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 10 }}>
                 <strong style={{ color: "rgba(255,255,255,0.75)" }}>{step.title}.</strong> {step.desc}
@@ -108,24 +113,24 @@ export default function CantDecidePage() {
             ))}
           </ol>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7 }}>
-            Done in 2–5 minutes. No scrolling, no arguing, no settling.
+            3 minutes. You only see what you both want.
           </p>
         </section>
 
         <section style={{ marginBottom: 32 }}>
           <h2 style={{ color: "#ffffff", fontSize: "1.1rem", fontWeight: 700, marginBottom: 12 }}>
-            Titles That Solve the Deadlock
+            Low-Risk Picks You&apos;ll Both Say Yes To
           </h2>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 16 }}>
-            These are crowd-pleasers that work across different tastes. If you&apos;re reading this, you&apos;ll probably match on at least two of these:
+            When you can&apos;t agree, start here. These work across different tastes:
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {[
-              { title: "Nobody", year: 2021, type: "Movie", note: "Tightly paced action-comedy. Short, satisfying, and hard to say no to." },
-              { title: "Shrinking", year: 2023, type: "Series", note: "Funny and heartfelt. Low-commitment first episode hooks both of you." },
-              { title: "Knives Out", year: 2019, type: "Movie", note: "Whodunit with charm. Works whether you want mystery, comedy, or drama." },
-              { title: "The White Lotus", year: 2021, type: "Series", note: "Sharp social satire that's impossible to stop once you start." },
-              { title: "Parasite", year: 2019, type: "Movie", note: "Genre-bending thriller. If you haven't seen it, tonight's the night." },
+              { title: "Nobody", year: 2021, type: "Movie", note: "90 minutes, no slow start. The kind of film nobody says no to." },
+              { title: "Shrinking", year: 2023, type: "Series", note: "Low commitment — one episode and you're both in. Funny without trying too hard." },
+              { title: "Knives Out", year: 2019, type: "Movie", note: "Works for any mood. Mystery, comedy, drama — it's all three at once." },
+              { title: "The White Lotus", year: 2021, type: "Series", note: "Easy to start, impossible to stop. Good when you want something sharp but not heavy." },
+              { title: "Parasite", year: 2019, type: "Movie", note: "If one of you hasn't seen it — tonight. If you both have — you'll still watch it again." },
             ].map((pick) => (
               <div key={pick.title} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "14px 16px" }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
@@ -138,8 +143,12 @@ export default function CantDecidePage() {
           </div>
         </section>
 
-        <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 32 }}>
-          You don&apos;t need better content — you need a better way to agree. Watch Together makes the decision for you, based on what you both honestly want to see.
+        <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, fontWeight: 600, lineHeight: 1.6, marginBottom: 8 }}>
+          The problem isn&apos;t what&apos;s on.
+          <br />It&apos;s that two people can&apos;t agree.
+        </p>
+        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, lineHeight: 1.7, marginBottom: 32 }}>
+          Stop browsing together. Start deciding separately.
         </p>
 
         <FaqSection title="Frequently Asked Questions" items={faqItems} />
