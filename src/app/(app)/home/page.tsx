@@ -934,12 +934,12 @@ export default function HomePage() {
       {!isPremium && (
         <section>
           <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-4">
-            Tonight&apos;s Pick for deg
+            {s.tpTitleSolo}
           </h2>
           <div className="relative grid grid-cols-2 gap-3 max-w-md">
             {[
-              { label: "🎬 Film i kveld", title: "Chinatown", score: "85% match" },
-              { label: "📺 Serie i kveld", title: "CSI: Crime Scene Investigation", score: "85% match" },
+              { label: `🎬 ${s.tpMovie}`, title: "Chinatown", score: `85% ${s.tpMatch}` },
+              { label: `📺 ${s.tpSeries}`, title: "CSI: Crime Scene Investigation", score: `85% ${s.tpMatch}` },
             ].map((item) => (
               <div key={item.label} className="rounded-xl border border-white/[0.06] p-3 flex flex-col"
                 style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", minHeight: 120 }}>
@@ -953,14 +953,16 @@ export default function HomePage() {
               style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(2px)" }}>
               <div className="text-center px-4">
                 <p className="text-sm font-bold text-white mb-1">🔓 Tonight&apos;s Pick</p>
-                <p className="text-xs text-white/60 mb-3">Daglig film + serie basert på smaken din</p>
+                <p className="text-xs text-white/60 mb-3">
+                  {locale === "no" ? "Daglig film + serie basert på smaken din" : locale === "se" ? "Daglig film + serie baserat på din smak" : locale === "dk" ? "Daglig film + serie baseret på din smag" : locale === "fi" ? "Päivittäinen elokuva + sarja makusi perusteella" : "Daily movie + series based on your taste"}
+                </p>
                 <Link href="/premium"
                   className="block px-4 py-2 rounded-xl text-xs font-bold transition-all"
                   style={{ background: "rgba(245,200,66,0.15)", border: "0.5px solid rgba(245,200,66,0.4)", color: "#F5C842" }}>
-                  {locale === "no" ? "🔓 Lås opp Tonight's Pick" : "🔓 Unlock Tonight's Pick"}
+                  {locale === "no" ? "🔓 Lås opp Tonight's Pick" : locale === "se" ? "🔓 Lås upp Tonight's Pick" : locale === "dk" ? "🔓 Lås op Tonight's Pick" : locale === "fi" ? "🔓 Avaa Tonight's Pick" : "🔓 Unlock Tonight's Pick"}
                 </Link>
                 <p style={{ fontSize: 11, color: "rgba(245,200,66,0.7)", marginTop: 6, textAlign: "center" }}>
-                  {locale === "no" ? "29 kr/mnd · Partneren din får det gratis" : "29 NOK/mo · Your partner gets it for free"}
+                  {locale === "no" ? "29 kr/mnd · Partneren din får det gratis" : locale === "se" ? "29 kr/mån · Din partner får det gratis" : locale === "dk" ? "29 kr/md · Din partner får det gratis" : locale === "fi" ? "29 kr/kk · Kumppanisi saa sen ilmaiseksi" : "29 NOK/mo · Your partner gets it for free"}
                 </p>
               </div>
             </div>
