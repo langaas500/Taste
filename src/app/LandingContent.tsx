@@ -258,58 +258,47 @@ export default function LandingContent({ locale }: { locale: Locale }) {
                 {s.sub}
               </p>
 
-              {/* SwipeMatchDemo — mobile */}
-              <div className="lg:hidden landing-mobile-demo-clip lf-3" style={{ filter: "brightness(1.2) contrast(1.1)" }}>
-                <div className="demo-scaler">
-                  <SwipeMatchDemo locale={locale === "no" ? "no" : "en"} />
-                </div>
-              </div>
-
-              {/* Primary CTA */}
+              {/* Primary CTA — full width on mobile */}
               <Link
                 href="/together"
                 className="landing-cta lf-3"
-                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "16px 36px", background: "#ff2a2a", color: "#ffffff", fontSize: 20, fontWeight: 700, letterSpacing: "0.01em", borderRadius: 12, textDecoration: "none", textAlign: "center" }}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", maxWidth: 400, minHeight: 52, padding: "14px 36px", background: "#ff2a2a", color: "#ffffff", fontSize: 18, fontWeight: 700, letterSpacing: "0.01em", borderRadius: 12, textDecoration: "none", textAlign: "center" }}
               >
-                {s.cta}
+                {locale === "no" ? "Prøv gratis — ingen konto →" : locale === "sv" ? "Testa gratis — inget konto →" : locale === "da" ? "Prøv gratis — ingen konto →" : locale === "fi" ? "Kokeile ilmaiseksi — ei tiliä →" : "Try it free — no signup →"}
               </Link>
 
               {/* No friction text */}
-              <p className="lf-4" style={{ fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.4)", marginTop: 12, textAlign: "center" }}>
+              <p className="lf-4" style={{ fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.35)", marginTop: 10, textAlign: "center" }}>
                 {s.noFriction}
               </p>
 
               {/* Social proof */}
               {matchCount && matchCount > 10 && (
-                <p className="lf-4" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,42,42,0.6)", marginTop: 8, textAlign: "center" }}>
+                <p className="lf-4" style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,42,42,0.5)", marginTop: 6, textAlign: "center" }}>
                   {s.socialProof(matchCount)}
                 </p>
               )}
-
-              {/* Signup link */}
-              <Link
-                href="/login?mode=signup"
-                className="lf-5"
-                style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,42,42,0.7)", marginTop: 16, textDecoration: "none", padding: "8px 20px", border: "1px solid rgba(255,42,42,0.2)", borderRadius: 8, transition: "all 0.2s" }}
-                onMouseEnter={(e) => { const el = e.currentTarget; el.style.color = "#ff2a2a"; el.style.borderColor = "rgba(255,42,42,0.4)"; el.style.background = "rgba(255,42,42,0.06)"; }}
-                onMouseLeave={(e) => { const el = e.currentTarget; el.style.color = "rgba(255,42,42,0.7)"; el.style.borderColor = "rgba(255,42,42,0.2)"; el.style.background = "transparent"; }}
-              >
-                {locale === "no" ? "Opprett gratis konto →" : locale === "sv" ? "Skapa gratis konto →" : locale === "da" ? "Opret gratis konto →" : locale === "fi" ? "Luo ilmainen tili →" : "Create free account →"}
-              </Link>
 
               {/* Login link */}
               <Link
                 href="/login"
                 className="lf-5"
-                style={{ fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.3)", marginTop: 8, textDecoration: "none" }}
+                style={{ fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.3)", marginTop: 14, textDecoration: "none" }}
               >
                 {s.login}
               </Link>
 
               {/* Streaming — mobile */}
-              <p className="lg:hidden lf-5" style={{ fontSize: 10, fontWeight: 400, color: "rgba(255,255,255,0.2)", letterSpacing: "0.06em", marginTop: 16, textAlign: "center" }}>
+              <p className="lg:hidden lf-5" style={{ fontSize: 10, fontWeight: 400, color: "rgba(255,255,255,0.18)", letterSpacing: "0.06em", marginTop: 14, textAlign: "center" }}>
                 {s.streaming}
               </p>
+
+              {/* SwipeMatchDemo — mobile, below the fold */}
+              <div className="lg:hidden landing-mobile-demo-clip lf-5" style={{ filter: "brightness(1.2) contrast(1.1)", marginTop: 8 }}>
+                <div className="demo-scaler">
+                  <SwipeMatchDemo locale={locale === "no" ? "no" : "en"} />
+                </div>
+              </div>
             </div>
 
             {/* SwipeMatchDemo — desktop */}
