@@ -1565,6 +1565,8 @@ export default function WTBetaPage() {
               </button>
               <button
                 onClick={() => {
+                  const msg = locale === "no" ? "Duo-sesjonen avsluttes. Vil du fortsette alene?" : locale === "se" ? "Duo-sessionen avslutas. Vill du fortsätta ensam?" : locale === "dk" ? "Duo-sessionen afsluttes. Vil du fortsætte alene?" : locale === "fi" ? "Duo-istunto päättyy. Haluatko jatkaa yksin?" : "The duo session will end. Continue solo?";
+                  if (!window.confirm(msg)) return;
                   setMode("solo");
                   setPartnerJoined(false);
                   setRoundPhase("swiping");
@@ -2413,7 +2415,7 @@ export default function WTBetaPage() {
                               track("viral_try_another_friend", { session_id: sessionId, tmdb_id: finalWinner?.tmdb_id, method: "copy" });
                             }
                           }}
-                          className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.4)" }}>
+                          className="w-full py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-all" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)" }}>
                           {t(locale, "winner", "tryAnotherFriend")}
                         </button>
 
@@ -2696,10 +2698,13 @@ export default function WTBetaPage() {
                     </div>
                   )}
 
-                  {/* Progress indicator */}
+                  {/* Progress indicator + last cards warning */}
                   {deck.length > 0 && (
-                    <p className="text-xs text-white/40 text-center mt-2">
-                      {cardsLeft(locale, round, Math.max(0, deck.length - deckIndex))}
+                    <p className={`text-xs text-center mt-2 ${deck.length - deckIndex <= 3 && deck.length - deckIndex > 0 ? "font-semibold" : ""}`}
+                      style={{ color: deck.length - deckIndex <= 3 && deck.length - deckIndex > 0 ? "#FFB800" : "rgba(255,255,255,0.4)" }}>
+                      {deck.length - deckIndex <= 3 && deck.length - deckIndex > 0
+                        ? (locale === "no" ? `Siste ${deck.length - deckIndex} kort!` : locale === "se" ? `Sista ${deck.length - deckIndex} kort!` : locale === "dk" ? `Sidste ${deck.length - deckIndex} kort!` : locale === "fi" ? `Viimeiset ${deck.length - deckIndex} korttia!` : `Last ${deck.length - deckIndex} cards!`)
+                        : cardsLeft(locale, round, Math.max(0, deck.length - deckIndex))}
                     </p>
                   )}
 
