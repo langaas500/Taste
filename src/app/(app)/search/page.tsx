@@ -832,6 +832,7 @@ export default function SearchPage() {
         onFiltersChange={setAdvancedFilters}
         onSearch={() => handleAdvancedSearch(1)}
         onPersonSelect={handlePersonSelect}
+        region={userRegion}
       />
 
       {error && (

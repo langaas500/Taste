@@ -21,9 +21,10 @@ interface Props {
   onFiltersChange: (f: AdvancedSearchFilters) => void;
   onSearch: () => void;
   onPersonSelect: (personId: number, personName: string) => void;
+  region?: string;
 }
 
-export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, onSearch, onPersonSelect }: Props) {
+export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, onSearch, onPersonSelect, region = "US" }: Props) {
   const locale = useLocale();
   const s = strings[locale] ?? strings.en;
   const [genres, setGenres] = useState<Record<string, TMDBGenre[]>>({});
@@ -47,21 +48,21 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
       .catch(() => {});
   }, [isOpen, filters.type, genres]);
 
-  // Fetch providers when type changes
+  // Fetch providers when type or region changes
   useEffect(() => {
     if (!isOpen) return;
     const t = filters.type;
-    if (providers[t]) return;
-    fetch(`/api/tmdb/discover?action=providers&type=${t}`)
+    const key = `${t}:${region}`;
+    if (providers[key]) return;
+    fetch(`/api/tmdb/discover?action=providers&type=${t}&region=${region}`)
       .then((r) => r.json())
       .then((d) => {
         const list = (d.providers || []) as WatchProvider[];
-        // Show top providers by display_priority
         list.sort((a: WatchProvider, b: WatchProvider) => a.display_priority - b.display_priority);
-        setProviders((prev) => ({ ...prev, [t]: list.slice(0, 30) }));
+        setProviders((prev) => ({ ...prev, [key]: list.slice(0, 30) }));
       })
       .catch(() => {});
-  }, [isOpen, filters.type, providers]);
+  }, [isOpen, filters.type, providers, region]);
 
   // Debounced person search with abort to prevent stale results
   const handlePersonInput = useCallback((val: string) => {
@@ -111,7 +112,7 @@ export default function AdvancedSearchPanel({ isOpen, filters, onFiltersChange, 
   }
 
   const currentGenres = genres[filters.type] || [];
-  const currentProviders = providers[filters.type] || [];
+  const currentProviders = providers[`${filters.type}:${region}`] || [];
 
   return (
     <AnimatePresence>
