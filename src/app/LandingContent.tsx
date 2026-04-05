@@ -12,7 +12,7 @@ const strings = {
     sub: "Sveip filmer hver for dere. Kun felles likes gir match. Gratis, ingen konto.",
     cta: "Start nå — gratis →",
     noFriction: "Ingen konto. Ingen nedlasting. Bare sveip.",
-    socialProof: (n: number) => `${n.toLocaleString("nb-NO")} par har allerede funnet noe å se`,
+    socialProof: "Hundrevis av par har allerede funnet noe å se",
     step1: "Del lenke med partneren din",
     step2: "Sveip filmer uavhengig av hverandre",
     step3: "Match = dere er enige. Se i kveld.",
@@ -29,7 +29,7 @@ const strings = {
     sub: "Swipe movies independently. Only mutual likes match. Free, no account needed.",
     cta: "Start now — free →",
     noFriction: "No account. No download. Just swipe.",
-    socialProof: (n: number) => `${n.toLocaleString("en-US")} couples have already found something to watch`,
+    socialProof: "Hundreds of couples have already found something to watch",
     step1: "Share a link with your partner",
     step2: "Swipe movies independently",
     step3: "Match = you agree. Watch tonight.",
@@ -46,7 +46,7 @@ const strings = {
     sub: "Svep filmer var för sig. Bara gemensamma likes matchar. Gratis, inget konto.",
     cta: "Börja nu — gratis →",
     noFriction: "Inget konto. Ingen nedladdning. Bara svep.",
-    socialProof: (n: number) => `${n.toLocaleString("sv-SE")} par har redan hittat något att se`,
+    socialProof: "Hundratals par har redan hittat något att se",
     step1: "Dela en länk med din partner",
     step2: "Svep filmer var för sig",
     step3: "Match = ni är överens. Se ikväll.",
@@ -63,7 +63,7 @@ const strings = {
     sub: "Swipe film hver for jer. Kun fælles likes giver match. Gratis, ingen konto.",
     cta: "Start nu — gratis →",
     noFriction: "Ingen konto. Ingen download. Bare swipe.",
-    socialProof: (n: number) => `${n.toLocaleString("da-DK")} par har allerede fundet noget at se`,
+    socialProof: "Hundredvis af par har allerede fundet noget at se",
     step1: "Del et link med din partner",
     step2: "Swipe film uafhængigt af hinanden",
     step3: "Match = I er enige. Se i aften.",
@@ -80,7 +80,7 @@ const strings = {
     sub: "Pyyhkäise elokuvia erikseen. Vain yhteiset tykkäykset täsmäävät. Ilmainen, ei tiliä.",
     cta: "Aloita nyt — ilmainen →",
     noFriction: "Ei tiliä. Ei latausta. Vain pyyhkäisy.",
-    socialProof: (n: number) => `${n.toLocaleString("fi-FI")} paria on jo löytänyt katsottavaa`,
+    socialProof: "Sadat parit ovat jo löytäneet katsottavaa",
     step1: "Jaa linkki kumppanillesi",
     step2: "Pyyhkäise elokuvia erikseen",
     step3: "Osuma = olette samaa mieltä. Katsokaa tänään.",
@@ -112,20 +112,11 @@ const PLACEHOLDER_COLORS: [string, string][] = [
 export default function LandingContent({ locale }: { locale: Locale }) {
   const s = strings[locale];
   const [posters, setPosters] = useState<string[]>([]);
-  const [matchCount, setMatchCount] = useState<number | null>(null);
-
   useEffect(() => {
     fetch("/api/together/ribbon")
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data.posters) && data.posters.length > 0) setPosters(data.posters);
-      })
-      .catch(() => {});
-
-    fetch("/api/together/match-count")
-      .then((r) => r.json())
-      .then((data) => {
-        if (typeof data.count === "number" && data.count > 0) setMatchCount(data.count);
       })
       .catch(() => {});
   }, []);
@@ -273,11 +264,9 @@ export default function LandingContent({ locale }: { locale: Locale }) {
               </p>
 
               {/* Social proof */}
-              {matchCount && matchCount > 10 && (
-                <p className="lf-4" style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,42,42,0.5)", marginTop: 6, textAlign: "center" }}>
-                  {s.socialProof(matchCount)}
-                </p>
-              )}
+              <p className="lf-4" style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,42,42,0.5)", marginTop: 6, textAlign: "center" }}>
+                {s.socialProof}
+              </p>
 
               {/* Login link */}
               <Link
