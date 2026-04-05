@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { tmdbTrending, tmdbDiscover } from "@/lib/tmdb";
 import { getUser } from "@/lib/auth";
 import { createSupabaseServer } from "@/lib/supabase-server";
@@ -9,25 +10,40 @@ interface DiscoveryRow {
   results: unknown[];
 }
 
+type Loc = "no" | "en" | "dk" | "se" | "fi";
+
 /* ── Genre map: TMDB name → genre_id ────────────────── */
-const GENRE_MAP: Record<string, { id: number; labelNo: string; labelEn: string; type: "movie" | "tv" }> = {
-  Action: { id: 28, labelNo: "Action for deg", labelEn: "Action for you", type: "movie" },
-  "Action & Adventure": { id: 10759, labelNo: "Action & Eventyr", labelEn: "Action & Adventure", type: "tv" },
-  Comedy: { id: 35, labelNo: "Komedie du vil like", labelEn: "Comedy you'll like", type: "movie" },
-  Crime: { id: 80, labelNo: "Krim du ikke har sett", labelEn: "Crime you haven't seen", type: "tv" },
-  Drama: { id: 18, labelNo: "Drama som treffer", labelEn: "Drama that hits", type: "tv" },
-  Horror: { id: 27, labelNo: "Skrekk for deg", labelEn: "Horror for you", type: "movie" },
-  Romance: { id: 10749, labelNo: "Romantikk", labelEn: "Romance", type: "movie" },
-  "Sci-Fi & Fantasy": { id: 10765, labelNo: "Sci-Fi & Fantasy", labelEn: "Sci-Fi & Fantasy", type: "tv" },
-  "Science Fiction": { id: 878, labelNo: "Sci-Fi for deg", labelEn: "Sci-Fi for you", type: "movie" },
-  Thriller: { id: 53, labelNo: "Thrillere", labelEn: "Thrillers", type: "movie" },
-  Animation: { id: 16, labelNo: "Animasjon", labelEn: "Animation", type: "movie" },
-  Documentary: { id: 99, labelNo: "Dokumentar", labelEn: "Documentary", type: "movie" },
-  Mystery: { id: 9648, labelNo: "Mysterium", labelEn: "Mystery", type: "movie" },
+const GENRE_MAP: Record<string, { id: number; labels: Record<Loc, string>; type: "movie" | "tv" }> = {
+  Action:              { id: 28,    labels: { no: "Action for deg", en: "Action for you", dk: "Action for dig", se: "Action för dig", fi: "Toimintaa sinulle" }, type: "movie" },
+  "Action & Adventure":{ id: 10759, labels: { no: "Action & Eventyr", en: "Action & Adventure", dk: "Action & Eventyr", se: "Action & Äventyr", fi: "Toiminta & Seikkailu" }, type: "tv" },
+  Comedy:              { id: 35,    labels: { no: "Komedie du vil like", en: "Comedy you'll like", dk: "Komedie du vil like", se: "Komedi du gillar", fi: "Komediaa sinulle" }, type: "movie" },
+  Crime:               { id: 80,    labels: { no: "Krim du ikke har sett", en: "Crime you haven't seen", dk: "Krimi du ikke har set", se: "Krim du inte sett", fi: "Rikoselokuvia sinulle" }, type: "tv" },
+  Drama:               { id: 18,    labels: { no: "Drama som treffer", en: "Drama that hits", dk: "Drama der rammer", se: "Drama som träffar", fi: "Koskettavaa draamaa" }, type: "tv" },
+  Horror:              { id: 27,    labels: { no: "Skrekk for deg", en: "Horror for you", dk: "Gyser for dig", se: "Skräck för dig", fi: "Kauhua sinulle" }, type: "movie" },
+  Romance:             { id: 10749, labels: { no: "Romantikk", en: "Romance", dk: "Romantik", se: "Romantik", fi: "Romantiikkaa" }, type: "movie" },
+  "Sci-Fi & Fantasy":  { id: 10765, labels: { no: "Sci-Fi & Fantasy", en: "Sci-Fi & Fantasy", dk: "Sci-Fi & Fantasy", se: "Sci-Fi & Fantasy", fi: "Sci-Fi & Fantasia" }, type: "tv" },
+  "Science Fiction":   { id: 878,   labels: { no: "Sci-Fi for deg", en: "Sci-Fi for you", dk: "Sci-Fi for dig", se: "Sci-Fi för dig", fi: "Scifiä sinulle" }, type: "movie" },
+  Thriller:            { id: 53,    labels: { no: "Thrillere", en: "Thrillers", dk: "Thrillere", se: "Thrillers", fi: "Jännäreitä" }, type: "movie" },
+  Animation:           { id: 16,    labels: { no: "Animasjon", en: "Animation", dk: "Animation", se: "Animation", fi: "Animaatiota" }, type: "movie" },
+  Documentary:         { id: 99,    labels: { no: "Dokumentar", en: "Documentary", dk: "Dokumentar", se: "Dokumentär", fi: "Dokumentteja" }, type: "movie" },
+  Mystery:             { id: 9648,  labels: { no: "Mysterium", en: "Mystery", dk: "Mysterium", se: "Mysterium", fi: "Mysteerejä" }, type: "movie" },
+};
+
+const ROW_LABELS: Record<string, Record<Loc, string>> = {
+  trending:  { no: "Nye på strømming", en: "New on streaming", dk: "Nyt på streaming", se: "Nytt på streaming", fi: "Uutta suoratoistossa" },
+  action:    { no: "Actionfylte favoritter", en: "Action-packed favorites", dk: "Actionfyldte favoritter", se: "Actionfyllda favoriter", fi: "Toimintasuosikkeja" },
+  drama:     { no: "Drama", en: "Drama", dk: "Drama", se: "Drama", fi: "Draamaa" },
+  comedy:    { no: "Komedie", en: "Comedy", dk: "Komedie", se: "Komedi", fi: "Komediaa" },
+  lifestyle: { no: "Livsstil & Oppussing", en: "Lifestyle & Renovation", dk: "Livsstil & Renovering", se: "Livsstil & Renovering", fi: "Elämäntapa & Remontti" },
+  popular:   { no: "Populært nå", en: "Popular now", dk: "Populært nu", se: "Populärt nu", fi: "Suosittua nyt" },
 };
 
 export async function GET() {
   try {
+    const c = await cookies();
+    const loc = (c.get("x-locale")?.value || "en") as Loc;
+    const l = (["no", "en", "dk", "se", "fi"].includes(loc) ? loc : "en") as Loc;
+
     // Try to get personalized genres from user's library
     let personalGenres: { id: number; label: string; type: "movie" | "tv" }[] = [];
 
@@ -69,7 +85,7 @@ export async function GET() {
               .slice(0, 3)
               .map(([name]) => {
                 const g = GENRE_MAP[name];
-                return { id: g.id, label: g.labelNo, type: g.type };
+                return { id: g.id, label: g.labels[l], type: g.type };
               });
           }
         }
@@ -123,7 +139,7 @@ export async function GET() {
     const results = await Promise.all(calls);
 
     const rows: DiscoveryRow[] = [
-      { key: "trending", label: "Nye på strømming", results: ((results[0] as { results?: unknown[] }).results || []).slice(0, 20) },
+      { key: "trending", label: ROW_LABELS.trending[l], results: ((results[0] as { results?: unknown[] }).results || []).slice(0, 20) },
     ];
 
     if (hasPersonal) {
@@ -136,9 +152,9 @@ export async function GET() {
       });
     } else {
       rows.push(
-        { key: "action", label: "Actionfylte favoritter", results: ((results[1] as { results?: unknown[] }).results || []).slice(0, 20) },
-        { key: "drama", label: "Drama", results: ((results[2] as { results?: unknown[] }).results || []).slice(0, 20) },
-        { key: "comedy", label: "Komedie", results: ((results[3] as { results?: unknown[] }).results || []).slice(0, 20) },
+        { key: "action", label: ROW_LABELS.action[l], results: ((results[1] as { results?: unknown[] }).results || []).slice(0, 20) },
+        { key: "drama", label: ROW_LABELS.drama[l], results: ((results[2] as { results?: unknown[] }).results || []).slice(0, 20) },
+        { key: "comedy", label: ROW_LABELS.comedy[l], results: ((results[3] as { results?: unknown[] }).results || []).slice(0, 20) },
       );
     }
 
@@ -147,7 +163,7 @@ export async function GET() {
     if (lifestyleResults.length > 0) {
       rows.push({
         key: "lifestyle",
-        label: "Livsstil & Oppussing",
+        label: ROW_LABELS.lifestyle[l],
         results: lifestyleResults,
       });
     }
@@ -155,7 +171,7 @@ export async function GET() {
     // Popular now (last call result)
     rows.push({
       key: "popular",
-      label: "Populært nå",
+      label: ROW_LABELS.popular[l],
       results: ((results[results.length - 1] as { results?: unknown[] }).results || []).slice(0, 20),
     });
 
