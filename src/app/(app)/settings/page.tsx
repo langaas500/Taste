@@ -749,8 +749,8 @@ function SettingsContent() {
       });
       // Update cookies so useLocale picks it up immediately
       if (locale) {
-        document.cookie = `x-locale=${locale}; path=/; max-age=86400; samesite=lax`;
-        document.cookie = `x-locale-manual=1; path=/; max-age=86400; samesite=lax`;
+        document.cookie = `x-locale=${locale}; path=/; max-age=31536000; samesite=lax`;
+        document.cookie = `x-locale-manual=1; path=/; max-age=31536000; samesite=lax`;
       } else {
         // Reset to auto — let middleware set it from IP on next request
         document.cookie = "x-locale=; path=/; max-age=0";

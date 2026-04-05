@@ -138,7 +138,6 @@ export async function middleware(request: NextRequest) {
   }
 
   // Set locale cookie — respect user's manual choice, fallback to IP detection
-  const existingLocale = request.cookies.get("x-locale")?.value;
   const hasManualChoice = request.cookies.get("x-locale-manual")?.value === "1";
   if (!hasManualChoice) {
     const country = request.headers.get("x-vercel-ip-country") || "";
@@ -147,7 +146,7 @@ export async function middleware(request: NextRequest) {
       path: "/",
       sameSite: "lax",
       httpOnly: false,
-      maxAge: 86400,
+      maxAge: 31536000,
     });
   }
 
