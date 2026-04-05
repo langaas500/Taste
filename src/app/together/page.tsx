@@ -2179,19 +2179,25 @@ export default function WTBetaPage() {
                         }}
                       >
                         <p style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", margin: "0 0 10px" }}>
-                          {locale === "no" ? "Vil du huske denne matchen?" : locale === "se" ? "Vill du spara den här matchen?" : locale === "dk" ? "Vil du huske dette match?" : locale === "fi" ? "Haluatko tallentaa tämän matchin?" : "Want to save this match?"}
+                          {locale === "no" ? "Vil dere se denne igjen? Lagre matchen." : locale === "se" ? "Vill ni se den igen? Spara matchen." : locale === "dk" ? "Vil I se den igen? Gem matchen." : locale === "fi" ? "Haluatteko katsoa tämän uudelleen? Tallenna ottelu." : "Want to watch this again? Save the match."}
                         </p>
                         <Link
                           href="/login?mode=signup"
-                          style={{ display: "block", width: "100%", textAlign: "center", padding: "10px 0", borderRadius: 10, background: "#ff2a2a", color: "#fff", fontSize: 13, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}
+                          style={{ display: "block", width: "100%", textAlign: "center", padding: "12px 0", borderRadius: 10, background: "#ff2a2a", color: "#fff", fontSize: 14, fontWeight: 700, textDecoration: "none", marginBottom: 4 }}
                         >
-                          {locale === "no" ? "Opprett gratis konto →" : locale === "se" ? "Skapa gratis konto →" : locale === "dk" ? "Opret gratis konto →" : locale === "fi" ? "Luo ilmainen tili →" : "Create free account →"}
+                          {locale === "no" ? "Opprett konto — gratis" : locale === "se" ? "Skapa konto — gratis" : locale === "dk" ? "Opret konto — gratis" : locale === "fi" ? "Luo tili — ilmainen" : "Create account — free"}
                         </Link>
+                        <p style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", margin: "0 0 10px" }}>
+                          {locale === "no" ? "Få 7 dager premium. Ingen kortinfo nødvendig." : locale === "se" ? "Få 7 dagars premium. Inget kortinfo behövs." : locale === "dk" ? "Få 7 dages premium. Ingen kortinfo nødvendig." : locale === "fi" ? "Saat 7 päivää premiumia. Ei korttitietoja tarvita." : "Get 7 days premium. No credit card needed."}
+                        </p>
                         <Link
                           href="/login"
-                          style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", textDecoration: "none" }}
+                          style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", textDecoration: "none", display: "block", marginBottom: 8 }}
                         >
                           {locale === "no" ? "Allerede bruker? Logg inn" : locale === "se" ? "Har du redan ett konto? Logga in" : locale === "dk" ? "Har du allerede en konto? Log ind" : locale === "fi" ? "Onko sinulla jo tili? Kirjaudu sisään" : "Already have an account? Log in"}
+                        </Link>
+                        <Link href="/together" style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>
+                          {locale === "no" ? "Utfordre et annet par — kan de slå dere? →" : locale === "se" ? "Utmana ett annat par — kan de slå er? →" : locale === "dk" ? "Udfordr et andet par — kan de slå jer? →" : locale === "fi" ? "Haasta toinen pari — voivatko he voittaa teidät? →" : "Challenge another couple — can they beat you? →"}
                         </Link>
                       </div>
                     )}
@@ -2326,10 +2332,24 @@ export default function WTBetaPage() {
                         {/* Guest signup */}
                         {!authUser && (
                           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px", textAlign: "center" }}>
-                            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.5, marginBottom: 10 }}>{t(locale, "winner", "guestSignupText")}</p>
-                            <a href={`/login?from=together&mode=signup${sessionCode ? `&wt_code=${sessionCode}` : ""}`} style={{ display: "block", padding: "10px 0", background: "#ff2a2a", color: "#fff", borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: "none", marginBottom: 6 }}>{t(locale, "winner", "guestSignupBtn")}</a>
+                            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.5, marginBottom: 10 }}>
+                              {locale === "no" ? "Vil dere se denne igjen? Lagre matchen." : locale === "se" ? "Vill ni se den igen? Spara matchen." : locale === "dk" ? "Vil I se den igen? Gem matchen." : locale === "fi" ? "Haluatteko katsoa tämän uudelleen? Tallenna ottelu." : "Want to watch this again? Save the match."}
+                            </p>
+                            <a href={`/login?from=together&mode=signup${sessionCode ? `&wt_code=${sessionCode}` : ""}`} style={{ display: "block", padding: "12px 0", background: "#ff2a2a", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none", marginBottom: 4 }}>
+                              {locale === "no" ? "Opprett konto — gratis" : locale === "se" ? "Skapa konto — gratis" : locale === "dk" ? "Opret konto — gratis" : locale === "fi" ? "Luo tili — ilmainen" : "Create account — free"}
+                            </a>
+                            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", margin: "0 0 8px" }}>
+                              {locale === "no" ? "Få 7 dager premium. Ingen kortinfo nødvendig." : locale === "se" ? "Få 7 dagars premium. Inget kortinfo behövs." : locale === "dk" ? "Få 7 dages premium. Ingen kortinfo nødvendig." : locale === "fi" ? "Saat 7 päivää premiumia. Ei korttitietoja tarvita." : "Get 7 days premium. No credit card needed."}
+                            </p>
                             <a href={`/login?from=together&mode=login${sessionCode ? `&wt_code=${sessionCode}` : ""}`} style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", textDecoration: "underline", textUnderlineOffset: 2 }}>{t(locale, "winner", "guestLoginBtn")}</a>
                           </div>
+                        )}
+
+                        {/* Match saved for logged in users */}
+                        {authUser && (
+                          <p style={{ fontSize: 12, fontWeight: 600, color: "rgba(52,211,153,0.8)", textAlign: "center", margin: "8px 0" }}>
+                            {locale === "no" ? "Match lagret! ✓" : locale === "se" ? "Match sparad! ✓" : locale === "dk" ? "Match gemt! ✓" : locale === "fi" ? "Ottelu tallennettu! ✓" : "Match saved! ✓"}
+                          </p>
                         )}
 
                         {/* Try another friend */}
