@@ -77,5 +77,19 @@ export default async function Home() {
   const country = h.get("x-vercel-ip-country") || "";
   const locale = resolveLocale(country);
 
-  return <LandingContent locale={locale} />;
+  return (
+    <>
+      <LandingContent locale={locale} />
+      {/* SEO link cluster — server-rendered, always crawlable */}
+      <nav style={{ maxWidth: 540, margin: "0 auto", padding: "0 24px 48px", textAlign: "center" }}>
+        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+          <li><a href="/en/what-to-watch-together" style={{ fontSize: 12, color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>What to watch together</a></li>
+          <li><a href="/en/cant-decide-what-to-watch" style={{ fontSize: 12, color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>Can&apos;t decide what to watch</a></li>
+          <li><a href="/en/what-to-watch-with-girlfriend" style={{ fontSize: 12, color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>What to watch with your girlfriend</a></li>
+          <li><a href="/en/find-something-to-watch-fast" style={{ fontSize: 12, color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>Find something to watch fast</a></li>
+          <li><a href="/no/filmer-a-se-med-kjaeresten" style={{ fontSize: 12, color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>Filmer å se med kjæresten</a></li>
+        </ul>
+      </nav>
+    </>
+  );
 }
