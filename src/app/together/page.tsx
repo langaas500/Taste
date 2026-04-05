@@ -1093,7 +1093,7 @@ export default function WTBetaPage() {
       />
 
       <div className="relative z-10 min-h-dvh flex flex-col">
-        {!authUser && <GuestHeader locale={locale} />}
+        {!authUser && !finalWinner && <GuestHeader locale={locale} />}
 
         {/* ── INTRO ── */}
         {screen === "intro" && (
