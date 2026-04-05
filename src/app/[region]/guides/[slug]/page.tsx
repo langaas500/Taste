@@ -258,11 +258,14 @@ export default async function GuidePage({
           </h2>
           <p className="mb-4 text-sm text-white/50">{t.bottom_body}</p>
           <Link
-            href="/login"
+            href="/login?mode=signup"
             className="inline-block rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             style={{ background: "#E50914" }}
           >
-            Kom i gang — gratis
+            Kom i gang — gratis →
+          </Link>
+          <Link href="/login" className="block mt-2 text-[11px]" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none" }}>
+            Har du konto? Logg inn
           </Link>
         </section>
       </div>

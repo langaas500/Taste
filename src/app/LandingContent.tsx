@@ -286,13 +286,22 @@ export default function LandingContent({ locale }: { locale: Locale }) {
                 </p>
               )}
 
+              {/* Signup link */}
+              <Link
+                href="/login?mode=signup"
+                className="lf-5"
+                style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,42,42,0.7)", marginTop: 16, textDecoration: "none", padding: "8px 20px", border: "1px solid rgba(255,42,42,0.2)", borderRadius: 8, transition: "all 0.2s" }}
+                onMouseEnter={(e) => { const el = e.currentTarget; el.style.color = "#ff2a2a"; el.style.borderColor = "rgba(255,42,42,0.4)"; el.style.background = "rgba(255,42,42,0.06)"; }}
+                onMouseLeave={(e) => { const el = e.currentTarget; el.style.color = "rgba(255,42,42,0.7)"; el.style.borderColor = "rgba(255,42,42,0.2)"; el.style.background = "transparent"; }}
+              >
+                {locale === "no" ? "Opprett gratis konto →" : locale === "sv" ? "Skapa gratis konto →" : locale === "da" ? "Opret gratis konto →" : locale === "fi" ? "Luo ilmainen tili →" : "Create free account →"}
+              </Link>
+
               {/* Login link */}
               <Link
                 href="/login"
                 className="lf-5"
-                style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.35)", marginTop: 20, textDecoration: "none", padding: "6px 16px", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, transition: "color 0.2s, border-color 0.2s" }}
-                onMouseEnter={(e) => { const el = e.currentTarget; el.style.color = "rgba(255,255,255,0.6)"; el.style.borderColor = "rgba(255,255,255,0.2)"; }}
-                onMouseLeave={(e) => { const el = e.currentTarget; el.style.color = "rgba(255,255,255,0.35)"; el.style.borderColor = "rgba(255,255,255,0.1)"; }}
+                style={{ fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.3)", marginTop: 8, textDecoration: "none" }}
               >
                 {s.login}
               </Link>

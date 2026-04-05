@@ -27,7 +27,7 @@ export default function ImporterPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "SoftwareApplication", name: "Logflix Import", applicationCategory: "EntertainmentApplication", operatingSystem: "Web", url: `${BASE}/no/importer`, featureList: ["Netflix CSV-import", "Trakt.tv OAuth-synk", "Automatisk tittelmatching", "Bulk bibliotekbygging"], offers: { "@type": "Offer", price: "0", priceCurrency: "NOK", description: "Gratis" } }) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", datePublished: "2026-03-25", dateModified: "2026-03-25", mainEntity: faqItems.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) }) }} />
 
-      <SeoGuideLayout locale="no" h1="Importer seerhistorikken din" heroSubtitle="Hent Netflix- og Trakt.tv-historikken din inn i Logflix. Bygg smaksprofilen din umiddelbart — ingen manuell logging nødvendig." ctaText="Opprett gratis konto" ctaHref="/login" trustLine="Gratis · Netflix CSV & Trakt.tv · Tar 2 minutter"
+      <SeoGuideLayout locale="no" h1="Importer seerhistorikken din" heroSubtitle="Hent Netflix- og Trakt.tv-historikken din inn i Logflix. Bygg smaksprofilen din umiddelbart — ingen manuell logging nødvendig." ctaText="Opprett gratis konto" ctaHref="/login?mode=signup" trustLine="Gratis · Netflix CSV & Trakt.tv · Tar 2 minutter"
         relatedLinks={[{ href: "/no/bibliotek", label: "Filmbiblioteket ditt" }, { href: "/no/taste-profile", label: "Smaksprofil" }, { href: "/together", label: "Start Se Sammen — gratis" }, { href: "/no/ai-curator", label: "AI Curator" }]}>
 
         <section style={{ marginBottom: 40 }}>
@@ -50,8 +50,9 @@ export default function ImporterPage() {
 
         <div style={{ textAlign: "center", padding: "24px 20px", marginBottom: 40, background: "rgba(255,42,42,0.04)", border: "1px solid rgba(255,42,42,0.15)", borderRadius: 14 }}>
           <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Klar til å importere?</p>
-          <a href="/login" style={{ display: "inline-block", padding: "12px 32px", background: "#ff2a2a", color: "#ffffff", fontSize: 14, fontWeight: 700, borderRadius: 10, textDecoration: "none" }}>Opprett gratis konto</a>
+          <a href="/login?mode=signup" style={{ display: "inline-block", padding: "12px 32px", background: "#ff2a2a", color: "#ffffff", fontSize: 14, fontWeight: 700, borderRadius: 10, textDecoration: "none" }}>Opprett gratis konto →</a>
           <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, marginTop: 8 }}>Gratis for alltid · Import er alltid gratis</p>
+          <a href="/login" style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, marginTop: 4, display: "inline-block", textDecoration: "none" }}>Har du konto? Logg inn</a>
         </div>
 
         <FaqSection items={faqItems} />

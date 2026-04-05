@@ -763,11 +763,14 @@ export default function TitlePageContent(props: TitlePageProps) {
             {t.ctaBody}
           </p>
           <Link
-            href="/login"
+            href="/login?mode=signup"
             className="inline-block rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             style={{ background: "#E50914" }}
           >
             {t.ctaButton}
+          </Link>
+          <Link href="/login" className="block mt-2 text-[11px]" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none" }}>
+            {region === "no" ? "Har du konto? Logg inn" : region === "da" ? "Har du en konto? Log ind" : region === "sv" ? "Har du ett konto? Logga in" : region === "fi" ? "Onko sinulla tili? Kirjaudu sisään" : "Already have an account? Log in"}
           </Link>
         </section>
       </div>

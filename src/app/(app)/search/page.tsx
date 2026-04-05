@@ -1110,7 +1110,10 @@ export default function SearchPage() {
                 className="px-5 py-2 rounded-xl text-xs font-semibold text-white"
                 style={{ background: "#ff2a2a" }}
               >
-                {locale === "no" ? "Opprett gratis konto →" : "Create free account →"}
+                {locale === "no" ? "Opprett gratis konto →" : locale === "se" ? "Skapa gratis konto →" : locale === "dk" ? "Opret gratis konto →" : locale === "fi" ? "Luo ilmainen tili →" : "Create free account →"}
+              </Link>
+              <Link href="/login" className="block mt-2 text-[11px]" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none" }}>
+                {locale === "no" ? "Har du konto? Logg inn" : locale === "se" ? "Har du ett konto? Logga in" : locale === "dk" ? "Har du en konto? Log ind" : locale === "fi" ? "Onko sinulla tili? Kirjaudu sisään" : "Already have an account? Log in"}
               </Link>
             </div>
           </div>

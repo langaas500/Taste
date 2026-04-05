@@ -27,7 +27,7 @@ export default function BibliotekPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "SoftwareApplication", name: "Logflix Bibliotek", applicationCategory: "EntertainmentApplication", operatingSystem: "Web", url: `${BASE}/no/bibliotek`, featureList: ["Film- og serielogging", "Sentimentvurderinger", "Watchlist", "Episodesporing", "Netflix & Trakt-import"], offers: { "@type": "Offer", price: "0", priceCurrency: "NOK", description: "Gratis" } }) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", datePublished: "2026-03-25", dateModified: "2026-03-25", mainEntity: faqItems.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) }) }} />
 
-      <SeoGuideLayout locale="no" h1="Filmbiblioteket ditt" heroSubtitle="Logg hver film og serie du ser. Gi vurderinger, bygg watchlisten, og la AI-en lære smaken din over tid." ctaText="Opprett gratis konto" ctaHref="/login" trustLine="Gratis for alltid · 800 000+ titler · Netflix & Trakt-import"
+      <SeoGuideLayout locale="no" h1="Filmbiblioteket ditt" heroSubtitle="Logg hver film og serie du ser. Gi vurderinger, bygg watchlisten, og la AI-en lære smaken din over tid." ctaText="Opprett gratis konto" ctaHref="/login?mode=signup" trustLine="Gratis for alltid · 800 000+ titler · Netflix & Trakt-import"
         relatedLinks={[{ href: "/no/importer", label: "Importer historikken din" }, { href: "/no/taste-profile", label: "Smaksprofil" }, { href: "/together", label: "Start Se Sammen — gratis" }, { href: "/no/ai-curator", label: "AI Curator" }]}>
 
         <section style={{ marginBottom: 40 }}>
@@ -58,8 +58,9 @@ export default function BibliotekPage() {
 
         <div style={{ textAlign: "center", padding: "24px 20px", marginBottom: 40, background: "rgba(255,42,42,0.04)", border: "1px solid rgba(255,42,42,0.15)", borderRadius: 14 }}>
           <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Begynn å bygge biblioteket</p>
-          <a href="/login" style={{ display: "inline-block", padding: "12px 32px", background: "#ff2a2a", color: "#ffffff", fontSize: 14, fontWeight: 700, borderRadius: 10, textDecoration: "none" }}>Opprett gratis konto</a>
+          <a href="/login?mode=signup" style={{ display: "inline-block", padding: "12px 32px", background: "#ff2a2a", color: "#ffffff", fontSize: 14, fontWeight: 700, borderRadius: 10, textDecoration: "none" }}>Opprett gratis konto →</a>
           <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, marginTop: 8 }}>Gratis for alltid · Ingen begrensninger på logging</p>
+          <a href="/login" style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, marginTop: 4, display: "inline-block", textDecoration: "none" }}>Har du konto? Logg inn</a>
         </div>
 
         <section style={{ marginBottom: 40 }}>

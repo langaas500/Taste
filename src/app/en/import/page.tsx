@@ -27,7 +27,7 @@ export default function ImportPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "SoftwareApplication", name: "Logflix Import", applicationCategory: "EntertainmentApplication", operatingSystem: "Web", url: `${BASE}/en/import`, featureList: ["Netflix CSV import", "Trakt.tv OAuth sync", "Automatic title matching", "Bulk library building"], offers: { "@type": "Offer", price: "0", priceCurrency: "NOK", description: "Free" } }) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", datePublished: "2026-03-25", dateModified: "2026-03-25", mainEntity: faqItems.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) }) }} />
 
-      <SeoGuideLayout locale="en" h1="Import Your Watch History" heroSubtitle="Bring your Netflix and Trakt.tv history into Logflix. Build your taste profile instantly — no manual logging required." ctaText="Create free account" ctaHref="/login" trustLine="Free · Netflix CSV & Trakt.tv · Takes 2 minutes"
+      <SeoGuideLayout locale="en" h1="Import Your Watch History" heroSubtitle="Bring your Netflix and Trakt.tv history into Logflix. Build your taste profile instantly — no manual logging required." ctaText="Create free account" ctaHref="/login?mode=signup" trustLine="Free · Netflix CSV & Trakt.tv · Takes 2 minutes"
         relatedLinks={[{ href: "/en/library", label: "Your Movie Library" }, { href: "/en/taste-profile", label: "Taste Profile" }, { href: "/together", label: "Start Watch Together — free" }, { href: "/en/ai-curator", label: "AI Curator" }]}>
 
         <section style={{ marginBottom: 40 }}>
@@ -50,8 +50,9 @@ export default function ImportPage() {
 
         <div style={{ textAlign: "center", padding: "24px 20px", marginBottom: 40, background: "rgba(255,42,42,0.04)", border: "1px solid rgba(255,42,42,0.15)", borderRadius: 14 }}>
           <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Ready to import?</p>
-          <a href="/login" style={{ display: "inline-block", padding: "12px 32px", background: "#ff2a2a", color: "#ffffff", fontSize: 14, fontWeight: 700, borderRadius: 10, textDecoration: "none" }}>Create free account</a>
+          <a href="/login?mode=signup" style={{ display: "inline-block", padding: "12px 32px", background: "#ff2a2a", color: "#ffffff", fontSize: 14, fontWeight: 700, borderRadius: 10, textDecoration: "none" }}>Create free account →</a>
           <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, marginTop: 8 }}>Free forever · Import is always free</p>
+          <a href="/login" style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, marginTop: 4, display: "inline-block", textDecoration: "none" }}>Already have an account? Log in</a>
         </div>
 
         <FaqSection items={faqItems} />

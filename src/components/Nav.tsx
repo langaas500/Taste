@@ -219,6 +219,19 @@ export default function Nav() {
             )}
           </div>
 
+          {/* Guest signup CTA */}
+          {isGuest && !collapsed && (
+            <div className="px-3 pb-2">
+              <Link
+                href="/login?mode=signup"
+                className="flex items-center justify-center w-full py-2 rounded-lg text-[11px] font-semibold transition-all duration-200"
+                style={{ background: "rgba(255,42,42,0.1)", border: "1px solid rgba(255,42,42,0.2)", color: "#ff2a2a", textDecoration: "none" }}
+              >
+                {locale === "no" ? "Opprett gratis konto →" : locale === "se" ? "Skapa gratis konto →" : locale === "dk" ? "Opret gratis konto →" : locale === "fi" ? "Luo ilmainen tili →" : "Create free account →"}
+              </Link>
+            </div>
+          )}
+
           <div className="mx-3" style={{ height: "1px", background: "rgba(255,255,255,0.06)" }} />
 
           {/* ── Nav links ── */}
