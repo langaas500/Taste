@@ -280,18 +280,25 @@ export default function PremiumHubPage() {
       </div>
 
       {/* ── SEKSJON 2: Founding Member banner ── */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes fm-shimmer { 0% { transform: translateX(-100%) skewX(-15deg); } 100% { transform: translateX(250%) skewX(-15deg); } }
+        @keyframes fm-star-pulse { 0%,100% { filter: drop-shadow(0 0 4px rgba(255,184,0,0.4)); } 50% { filter: drop-shadow(0 0 10px rgba(255,184,0,0.8)); } }
+        .fm-banner { position: relative; overflow: hidden; }
+        .fm-banner::after { content: ""; position: absolute; top: 0; left: 0; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,184,0,0.08), transparent); animation: fm-shimmer 3s ease-in-out infinite; pointer-events: none; }
+        .fm-star { animation: fm-star-pulse 2s ease-in-out infinite; }
+      `}} />
       {isPremium && isFoundingMember ? (
-        <div className="rounded-2xl p-4 mb-5 text-center" style={{ background: "rgba(255,184,0,0.06)", border: "1px solid rgba(255,184,0,0.25)" }}>
-          <p className="text-sm font-bold" style={{ color: "#FFB800" }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFB800" stroke="none" className="inline-block mr-1.5 -mt-0.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <div className="fm-banner rounded-2xl p-4 sm:p-5 mb-5 text-center" style={{ background: "linear-gradient(135deg, #1a1400 0%, #2a1f00 50%, #1a1400 100%)", border: "1.5px solid #FFB800" }}>
+          <p className="text-base sm:text-lg font-extrabold" style={{ color: "#FFB800" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFB800" stroke="none" className="fm-star inline-block mr-2 -mt-0.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             {s.foundingActive}
           </p>
-          {foundingDate && <p className="text-[11px] text-white/30 mt-1">{foundingDate}</p>}
+          {foundingDate && <p className="text-[11px] mt-1.5" style={{ color: "#CC9900" }}>{foundingDate}</p>}
         </div>
       ) : (
-        <div className="rounded-2xl p-4 sm:p-5 mb-5" style={{ background: "rgba(255,184,0,0.04)", border: "1px solid rgba(255,184,0,0.2)" }}>
+        <div className="fm-banner rounded-2xl p-4 sm:p-5 mb-5" style={{ background: "linear-gradient(135deg, #1a1400 0%, #2a1f00 50%, #1a1400 100%)", border: "1.5px solid rgba(255,184,0,0.3)" }}>
           <p className="text-sm sm:text-base font-bold text-white/90 mb-1.5">{s.foundingTitle}</p>
-          <p className="text-xs text-white/40 leading-relaxed">{s.foundingSub}</p>
+          <p className="text-xs leading-relaxed" style={{ color: "rgba(255,184,0,0.5)" }}>{s.foundingSub}</p>
         </div>
       )}
 
@@ -314,9 +321,9 @@ export default function PremiumHubPage() {
       )}
 
       {/* ── SEKSJON 4: Curator AI (full bredde hero-kort) ── */}
-      <Link href="/curator" className="block rounded-2xl p-4 sm:p-5 mb-4 transition-all hover:scale-[1.01] duration-200" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,42,42,0.15)", textDecoration: "none" }}>
+      <Link href="/curator" className="block rounded-2xl p-4 sm:p-5 mb-4 transition-all hover:scale-[1.01] duration-200" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,42,42,0.15)", borderLeft: "3px solid #ff2a2a", boxShadow: "0 0 20px rgba(255,42,42,0.1)", textDecoration: "none" }}>
         <div className="flex items-start gap-3.5">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,42,42,0.1)", border: "1px solid rgba(255,42,42,0.2)" }}>
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,42,42,0.15)", border: "1px solid rgba(255,42,42,0.3)" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff2a2a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 3c.5 0 2.5 4 2.5 4s4.5.5 4.5 1-3 3.5-3 3.5.5 4.5 0 4.5-3.5-2.5-4-2.5-3.5 3-4 2.5.5-4.5 0-4.5-3-3-3-3.5 4.5-1 4.5-1S11.5 3 12 3z"/>
               <circle cx="12" cy="12" r="3" strokeWidth="1.2"/>
@@ -364,8 +371,10 @@ export default function PremiumHubPage() {
           <Link
             key={f.href}
             href={f.href}
-            className="block rounded-xl p-3 sm:p-4 transition-all hover:scale-[1.02] duration-200"
+            className="block rounded-xl p-3 sm:p-4 transition-all duration-200"
             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", textDecoration: "none" }}
+            onMouseEnter={(e) => { const el = e.currentTarget; el.style.transform = "translateY(-2px)"; el.style.borderColor = "rgba(255,255,255,0.14)"; el.style.background = "rgba(255,255,255,0.05)"; }}
+            onMouseLeave={(e) => { const el = e.currentTarget; el.style.transform = "translateY(0)"; el.style.borderColor = "rgba(255,255,255,0.06)"; el.style.background = "rgba(255,255,255,0.03)"; }}
           >
             <span className="text-lg block mb-2">{f.icon}</span>
             <p className="text-xs font-bold text-white/80 mb-0.5">{f.title}</p>
