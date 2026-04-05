@@ -14,7 +14,7 @@ import type { Locale } from "@/lib/i18n";
 
 const strings = {
   no: {
-    title: "Hjem",
+    title: "For deg",
     titlesInCollection: "titler i samlingen din",
     titleSingular: "tittel",
     greetMorning: "God morgen",
@@ -87,7 +87,7 @@ const strings = {
     streakLost: "🔥 Streaken din ble brutt — logg noe i dag for å starte på nytt!",
   },
   en: {
-    title: "Home",
+    title: "For You",
     titlesInCollection: "titles in your collection",
     titleSingular: "title",
     greetMorning: "Good morning",
@@ -160,7 +160,7 @@ const strings = {
     streakLost: "🔥 Your streak was broken — log something today to start fresh!",
   },
   dk: {
-    title: "Hjem",
+    title: "For dig",
     titlesInCollection: "titler i din samling",
     titleSingular: "titel",
     greetMorning: "God morgen",
@@ -233,7 +233,7 @@ const strings = {
     streakLost: "🔥 Din streak blev brudt — log noget i dag for at starte forfra!",
   },
   se: {
-    title: "Hem",
+    title: "För dig",
     titlesInCollection: "titlar i din samling",
     titleSingular: "titel",
     greetMorning: "God morgon",
@@ -306,7 +306,7 @@ const strings = {
     streakLost: "🔥 Din streak bröts — logga något idag för att börja om!",
   },
   fi: {
-    title: "Koti",
+    title: "Sinulle",
     titlesInCollection: "nimikettä kokoelmassasi",
     titleSingular: "nimike",
     greetMorning: "Hyvää huomenta",

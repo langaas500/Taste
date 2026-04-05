@@ -15,16 +15,17 @@ const RED = "#ff2a2a";
 /* ── locale strings ─────────────────────────────────── */
 
 const strings = {
-  no: { together: "Se sammen", search: "Søk", library: "Mine titler", premium: "Premium", profile: "Profil", settings: "Innstillinger", guest: "Gjest", login: "Logg inn", filmelsker: "Filmelsker", togetherTagline: "Hva skal dere se?", togetherSub: "Finn noe å se sammen — på under 3 minutter", togetherCta: "Se sammen", guides: "Utforsk guider" },
-  en: { together: "Watch Together", search: "Search", library: "My Titles", premium: "Premium", profile: "Profile", settings: "Settings", guest: "Guest", login: "Log in", filmelsker: "Film lover", togetherTagline: "What should you watch?", togetherSub: "Find something to watch together — in under 3 minutes", togetherCta: "Watch Together", guides: "Explore guides" },
-  dk: { together: "Se sammen", search: "Søg", library: "Mine titler", premium: "Premium", profile: "Profil", settings: "Indstillinger", guest: "Gæst", login: "Log ind", filmelsker: "Filmelsker", togetherTagline: "Hvad skal I se?", togetherSub: "Find noget at se sammen — på under 3 minutter", togetherCta: "Se sammen", guides: "Udforsk guider" },
-  se: { together: "Se tillsammans", search: "Sök", library: "Mina titlar", premium: "Premium", profile: "Profil", settings: "Inställningar", guest: "Gäst", login: "Logga in", filmelsker: "Filmälskare", togetherTagline: "Vad ska ni se?", togetherSub: "Hitta något att se tillsammans — på under 3 minuter", togetherCta: "Se tillsammans", guides: "Utforska guider" },
-  fi: { together: "Katso yhdessä", search: "Hae", library: "Omat nimikkeet", premium: "Premium", profile: "Profiili", settings: "Asetukset", guest: "Vieras", login: "Kirjaudu", filmelsker: "Elokuvarakastaja", togetherTagline: "Mitä katsotte?", togetherSub: "Löydä jotain katsottavaa yhdessä — alle 3 minuutissa", togetherCta: "Katso yhdessä", guides: "Tutustu oppaisiin" },
+  no: { forYou: "For deg", together: "Se sammen", search: "Søk", library: "Mine titler", premium: "Premium", profile: "Profil", settings: "Innstillinger", guest: "Gjest", login: "Logg inn", filmelsker: "Filmelsker", togetherTagline: "Hva skal dere se?", togetherSub: "Finn noe å se sammen — på under 3 minutter", togetherCta: "Se sammen", guides: "Utforsk guider" },
+  en: { forYou: "For You", together: "Watch Together", search: "Search", library: "My Titles", premium: "Premium", profile: "Profile", settings: "Settings", guest: "Guest", login: "Log in", filmelsker: "Film lover", togetherTagline: "What should you watch?", togetherSub: "Find something to watch together — in under 3 minutes", togetherCta: "Watch Together", guides: "Explore guides" },
+  dk: { forYou: "For dig", together: "Se sammen", search: "Søg", library: "Mine titler", premium: "Premium", profile: "Profil", settings: "Indstillinger", guest: "Gæst", login: "Log ind", filmelsker: "Filmelsker", togetherTagline: "Hvad skal I se?", togetherSub: "Find noget at se sammen — på under 3 minutter", togetherCta: "Se sammen", guides: "Udforsk guider" },
+  se: { forYou: "För dig", together: "Se tillsammans", search: "Sök", library: "Mina titlar", premium: "Premium", profile: "Profil", settings: "Inställningar", guest: "Gäst", login: "Logga in", filmelsker: "Filmälskare", togetherTagline: "Vad ska ni se?", togetherSub: "Hitta något att se tillsammans — på under 3 minuter", togetherCta: "Se tillsammans", guides: "Utforska guider" },
+  fi: { forYou: "Sinulle", together: "Katso yhdessä", search: "Hae", library: "Omat nimikkeet", premium: "Premium", profile: "Profiili", settings: "Asetukset", guest: "Vieras", login: "Kirjaudu", filmelsker: "Elokuvarakastaja", togetherTagline: "Mitä katsotte?", togetherSub: "Löydä jotain katsottavaa yhdessä — alle 3 minuutissa", togetherCta: "Katso yhdessä", guides: "Tutustu oppaisiin" },
 } as const;
 
 /* ── SVG paths ───────────────────────────────────────── */
 
 const ICONS = {
+  home: "M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25",
   together: "M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z",
   search: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z",
   library: "M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z",
@@ -79,6 +80,7 @@ export default function Nav() {
 
   /* ── Nav items ── */
   const navItems = [
+    { href: "/home", label: s.forYou, icon: ICONS.home, authRequired: true },
     { href: "/together", label: s.together, icon: ICONS.together },
     { href: "/search", label: s.search, icon: ICONS.search },
     { href: "/library", label: s.library, icon: ICONS.library, authRequired: true },
@@ -87,10 +89,10 @@ export default function Nav() {
   ];
 
   const bottomNavItems = [
+    { href: "/home", label: s.forYou, icon: ICONS.home, authRequired: true },
     { href: "/together", label: s.together, icon: ICONS.together },
     { href: "/search", label: s.search, icon: ICONS.search },
     { href: "/library", label: s.library, icon: ICONS.library, authRequired: true },
-    { href: "/premium", label: s.premium, icon: ICONS.premium, authRequired: true },
     { href: "/taste", label: s.profile, icon: ICONS.profile, authRequired: true, isProfile: true },
   ];
 
