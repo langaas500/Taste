@@ -8,144 +8,89 @@ export type Locale = "no" | "en" | "sv" | "da" | "fi";
 
 const strings = {
   no: {
-    hero: "Slutt å krangle om hva dere skal se.",
-    sub: "Swipe filmer og serier sammen. Match på under 3 minutter.",
-    cta: "Start Swiping",
-    trust: "Gratis. Ingen konto nødvendig.",
-    support: "Laget for to. Fungerer live på hver sin telefon.",
-    steps: "Opprett rom · Swipe hver for dere · Match med en gang",
+    hero: "Enig om filmen på 3 minutter",
+    sub: "Sveip filmer hver for dere. Kun felles likes gir match. Gratis, ingen konto.",
+    cta: "Start nå — gratis →",
+    noFriction: "Ingen konto. Ingen nedlasting. Bare sveip.",
+    socialProof: (n: number) => `${n.toLocaleString("nb-NO")} par har allerede funnet noe å se`,
+    step1: "Del lenke med partneren din",
+    step2: "Sveip filmer uavhengig av hverandre",
+    step3: "Match = dere er enige. Se i kveld.",
+    howTitle: "Slik fungerer det",
+    streaming: "Netflix · Prime Video · Disney+ · Max · Apple TV+",
     login: "Har du konto? Logg inn",
-    streaming: "Fungerer på tvers av de største strømmetjenestene",
-    cta2: "Bli med via kode",
-    cta2Helper: "Bruk kode eller skann QR",
-    social: "Perfekt for fredagskvelder.",
-    micro1: "Bestem dere raskere",
-    micro2: "Swipe privat",
-    micro3: "Mindre krangling. Mer filmkveld.",
-    featureTitle: "Med gratis konto får du også",
-    featureLog: "Logg det du ser",
-    featureLogDesc: "Bygg biblioteket ditt og hold styr på hva du har sett",
-    featureAI: "AI-anbefalinger",
-    featureAIDesc: "Få personlige anbefalinger basert på din smak",
-    featureTaste: "Smaksprofil",
-    featureTasteDesc: "Se hva slags filmsmak du egentlig har",
-    featureFriends: "Del med venner",
-    featureFriendsDesc: "Sammenlign smak og se hva vennene dine ser",
-    featureCta: "Opprett gratis konto",
-    featureCtaSub: "Tar 30 sekunder. Ingen kredittkort.",
-    streamingWith: "Fungerer på Netflix, Prime Video, Disney+ og mer.",
+    also: "Også:",
+    alsoAI: "AI-anbefalinger",
+    alsoLibrary: "Bibliotek",
+    alsoTaste: "Smaksprofil",
   },
   en: {
-    hero: "Stop arguing about what to watch.",
-    sub: "Swipe movies and shows together. Match in under 3 minutes.",
-    cta: "Start Swiping",
-    trust: "Free. No account needed.",
-    support: "Built for two people. Works live on separate phones.",
-    steps: "Create room · Swipe separately · Match instantly",
+    hero: "Agree on a movie in 3 minutes",
+    sub: "Swipe movies independently. Only mutual likes match. Free, no account needed.",
+    cta: "Start now — free →",
+    noFriction: "No account. No download. Just swipe.",
+    socialProof: (n: number) => `${n.toLocaleString("en-US")} couples have already found something to watch`,
+    step1: "Share a link with your partner",
+    step2: "Swipe movies independently",
+    step3: "Match = you agree. Watch tonight.",
+    howTitle: "How it works",
+    streaming: "Netflix · Prime Video · Disney+ · Max · Apple TV+",
     login: "Have an account? Log in",
-    streaming: "Works across major streaming services",
-    cta2: "Join with Code",
-    cta2Helper: "Use code or scan QR",
-    social: "Perfect for Friday nights.",
-    micro1: "Decide faster",
-    micro2: "Swipe privately",
-    micro3: "Less debating. More watching.",
-    featureTitle: "With a free account you also get",
-    featureLog: "Log what you watch",
-    featureLogDesc: "Build your library and keep track of everything you've seen",
-    featureAI: "AI recommendations",
-    featureAIDesc: "Get personal suggestions based on your taste",
-    featureTaste: "Taste profile",
-    featureTasteDesc: "Discover what kind of movie taste you really have",
-    featureFriends: "Share with friends",
-    featureFriendsDesc: "Compare taste and see what your friends are watching",
-    featureCta: "Create free account",
-    featureCtaSub: "Takes 30 seconds. No credit card.",
-    streamingWith: "Works with Netflix, Prime Video, Disney+ and more.",
+    also: "Also:",
+    alsoAI: "AI recommendations",
+    alsoLibrary: "Library",
+    alsoTaste: "Taste profile",
   },
   sv: {
-    hero: "Sluta bråka om vad ni ska se.",
-    sub: "Swipa filmer och serier tillsammans. Matcha på under 3 minuter.",
-    cta: "Start Swiping",
-    trust: "Gratis. Inget konto behövs.",
-    support: "Byggt för två. Fungerar live på varsin telefon.",
-    steps: "Skapa rum · Swipa var för sig · Matcha direkt",
+    hero: "Överens om filmen på 3 minuter",
+    sub: "Svep filmer var för sig. Bara gemensamma likes matchar. Gratis, inget konto.",
+    cta: "Börja nu — gratis →",
+    noFriction: "Inget konto. Ingen nedladdning. Bara svep.",
+    socialProof: (n: number) => `${n.toLocaleString("sv-SE")} par har redan hittat något att se`,
+    step1: "Dela en länk med din partner",
+    step2: "Svep filmer var för sig",
+    step3: "Match = ni är överens. Se ikväll.",
+    howTitle: "Så funkar det",
+    streaming: "Netflix · Prime Video · Disney+ · Max · Apple TV+",
     login: "Har du konto? Logga in",
-    streaming: "Fungerar med de största streamingtjänsterna",
-    cta2: "Gå med via kod",
-    cta2Helper: "Använd kod eller skanna QR",
-    social: "Perfekt för fredagskvällar.",
-    micro1: "Bestäm er snabbare",
-    micro2: "Swipa privat",
-    micro3: "Mindre diskussion. Mer filmkväll.",
-    featureTitle: "Med ett gratis konto får du också",
-    featureLog: "Logga vad du ser",
-    featureLogDesc: "Bygg ditt bibliotek och håll koll på vad du sett",
-    featureAI: "AI-rekommendationer",
-    featureAIDesc: "Få personliga rekommendationer baserade på din smak",
-    featureTaste: "Smakprofil",
-    featureTasteDesc: "Se vilken sorts filmsmak du egentligen har",
-    featureFriends: "Dela med vänner",
-    featureFriendsDesc: "Jämför smak och se vad dina vänner tittar på",
-    featureCta: "Skapa gratis konto",
-    featureCtaSub: "Tar 30 sekunder. Inget kreditkort.",
-    streamingWith: "Fungerar med Netflix, Prime Video, Disney+ och mer.",
+    also: "Också:",
+    alsoAI: "AI-rekommendationer",
+    alsoLibrary: "Bibliotek",
+    alsoTaste: "Smakprofil",
   },
   da: {
-    hero: "Stop med at skændes om hvad I skal se.",
-    sub: "Swipe film og serier sammen. Match på under 3 minutter.",
-    cta: "Start Swiping",
-    trust: "Gratis. Ingen konto nødvendig.",
-    support: "Lavet til to. Virker live på hver sin telefon.",
-    steps: "Opret rum · Swipe hver for sig · Match med det samme",
+    hero: "Enige om filmen på 3 minutter",
+    sub: "Swipe film hver for jer. Kun fælles likes giver match. Gratis, ingen konto.",
+    cta: "Start nu — gratis →",
+    noFriction: "Ingen konto. Ingen download. Bare swipe.",
+    socialProof: (n: number) => `${n.toLocaleString("da-DK")} par har allerede fundet noget at se`,
+    step1: "Del et link med din partner",
+    step2: "Swipe film uafhængigt af hinanden",
+    step3: "Match = I er enige. Se i aften.",
+    howTitle: "Sådan virker det",
+    streaming: "Netflix · Prime Video · Disney+ · Max · Apple TV+",
     login: "Har du konto? Log ind",
-    streaming: "Virker på tværs af de største streamingtjenester",
-    cta2: "Deltag med kode",
-    cta2Helper: "Brug kode eller scan QR",
-    social: "Perfekt til fredagsaftener.",
-    micro1: "Beslut jer hurtigere",
-    micro2: "Swipe privat",
-    micro3: "Mindre diskussion. Mere filmaften.",
-    featureTitle: "Med en gratis konto får du også",
-    featureLog: "Log hvad du ser",
-    featureLogDesc: "Byg dit bibliotek og hold styr på hvad du har set",
-    featureAI: "AI-anbefalinger",
-    featureAIDesc: "Få personlige anbefalinger baseret på din smag",
-    featureTaste: "Smagsprofil",
-    featureTasteDesc: "Se hvilken slags filmsmag du egentlig har",
-    featureFriends: "Del med venner",
-    featureFriendsDesc: "Sammenlign smag og se hvad dine venner ser",
-    featureCta: "Opret gratis konto",
-    featureCtaSub: "Tager 30 sekunder. Intet kreditkort.",
-    streamingWith: "Virker med Netflix, Prime Video, Disney+ og mere.",
+    also: "Også:",
+    alsoAI: "AI-anbefalinger",
+    alsoLibrary: "Bibliotek",
+    alsoTaste: "Smagsprofil",
   },
   fi: {
-    hero: "Lopeta kinastelu siitä mitä katsoa.",
-    sub: "Selaa elokuvia yhdessä. Sovi alle 3 minuutissa.",
-    cta: "Start Swiping",
-    trust: "Ilmainen. Ei tiliä tarvita.",
-    support: "Tehty kahdelle. Toimii livenä omilla puhelimilla.",
-    steps: "Luo huone · Swaippaa erikseen · Match heti",
+    hero: "Yhtä mieltä elokuvasta 3 minuutissa",
+    sub: "Pyyhkäise elokuvia erikseen. Vain yhteiset tykkäykset täsmäävät. Ilmainen, ei tiliä.",
+    cta: "Aloita nyt — ilmainen →",
+    noFriction: "Ei tiliä. Ei latausta. Vain pyyhkäisy.",
+    socialProof: (n: number) => `${n.toLocaleString("fi-FI")} paria on jo löytänyt katsottavaa`,
+    step1: "Jaa linkki kumppanillesi",
+    step2: "Pyyhkäise elokuvia erikseen",
+    step3: "Osuma = olette samaa mieltä. Katsokaa tänään.",
+    howTitle: "Näin se toimii",
+    streaming: "Netflix · Prime Video · Disney+ · Max · Apple TV+",
     login: "Onko sinulla tili? Kirjaudu",
-    streaming: "Toimii suurimpien suoratoistopalvelujen kanssa",
-    cta2: "Liity koodilla",
-    cta2Helper: "Käytä koodia tai skannaa QR",
-    social: "Täydellinen perjantai-iltoihin.",
-    micro1: "Päättäkää nopeammin",
-    micro2: "Swaippaa yksityisesti",
-    micro3: "Vähemmän väittelyä. Enemmän leffailtaa.",
-    featureTitle: "Ilmaisella tilillä saat myös",
-    featureLog: "Kirjaa katsomasi",
-    featureLogDesc: "Rakenna kirjastosi ja seuraa mitä olet katsonut",
-    featureAI: "AI-suositukset",
-    featureAIDesc: "Saa henkilökohtaisia suosituksia makusi perusteella",
-    featureTaste: "Makuprofiili",
-    featureTasteDesc: "Katso millainen elokuvamaku sinulla oikeasti on",
-    featureFriends: "Jaa kavereiden kanssa",
-    featureFriendsDesc: "Vertaa makuja ja katso mitä kaverisi katsovat",
-    featureCta: "Luo ilmainen tili",
-    featureCtaSub: "Kestää 30 sekuntia. Ei luottokorttia.",
-    streamingWith: "Toimii Netflixin, Prime Videon, Disney+:n ja muiden kanssa.",
+    also: "Myös:",
+    alsoAI: "AI-suositukset",
+    alsoLibrary: "Kirjasto",
+    alsoTaste: "Makuprofiili",
   },
 };
 
@@ -164,780 +109,252 @@ const PLACEHOLDER_COLORS: [string, string][] = [
   ["#5a3a8b", "#2d1e4a"],
 ];
 
-const SERVICES = ["Netflix", "Prime Video", "Disney+", "Max", "Apple TV+"];
-
 export default function LandingContent({ locale }: { locale: Locale }) {
   const s = strings[locale];
   const [posters, setPosters] = useState<string[]>([]);
+  const [matchCount, setMatchCount] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/together/ribbon")
       .then((r) => r.json())
       .then((data) => {
-        if (Array.isArray(data.posters) && data.posters.length > 0) {
-          setPosters(data.posters);
-        }
+        if (Array.isArray(data.posters) && data.posters.length > 0) setPosters(data.posters);
+      })
+      .catch(() => {});
+
+    fetch("/api/together/match-count")
+      .then((r) => r.json())
+      .then((data) => {
+        if (typeof data.count === "number" && data.count > 0) setMatchCount(data.count);
       })
       .catch(() => {});
   }, []);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        position: "relative",
-        background: "#0a0a0a",
-      }}
-    >
-    {/* Hero wrapper — 100dvh on mobile, auto on desktop */}
-    <div
-      className="landing-hero-section"
-      style={{
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        position: "relative",
-        overflow: "hidden",
-        background: "radial-gradient(ellipse 60% 50% at 50% 30%, rgba(255,42,42,0.08) 0%, transparent 70%)",
-      }}
-    >
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", background: "#0a0a0a" }}>
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes landing-ribbon-scroll {
           from { transform: translateX(0); }
-          to   { transform: translateX(-50%); }
+          to { transform: translateX(-50%); }
         }
         .landing-ribbon-track { animation: landing-ribbon-scroll 40s linear infinite; }
 
         @keyframes landing-fade-in {
           from { opacity: 0; transform: translateY(6px); }
-          to   { opacity: 1; transform: translateY(0); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        .landing-fade-1 { animation: landing-fade-in 0.5s ease 0.05s both; }
-        .landing-fade-2 { animation: landing-fade-in 0.5s ease 0.12s both; }
-        .landing-fade-3 { animation: landing-fade-in 0.5s ease 0.20s both; }
-        .landing-fade-4 { animation: landing-fade-in 0.5s ease 0.28s both; }
-        .landing-fade-5 { animation: landing-fade-in 0.5s ease 0.36s both; }
-        .landing-fade-6 { animation: landing-fade-in 0.5s ease 0.44s both; }
-        .landing-login-link { transition: transform 0.2s ease, color 0.2s ease; }
-        .landing-login-link:hover { transform: scale(1.1); color: #ff2a2a !important; }
+        .lf-1 { animation: landing-fade-in 0.5s ease 0.05s both; }
+        .lf-2 { animation: landing-fade-in 0.5s ease 0.15s both; }
+        .lf-3 { animation: landing-fade-in 0.5s ease 0.25s both; }
+        .lf-4 { animation: landing-fade-in 0.5s ease 0.35s both; }
+        .lf-5 { animation: landing-fade-in 0.5s ease 0.45s both; }
 
-        @keyframes signal-nudge {
-          0%, 85%, 100% { transform: translateX(0); }
-          90% { transform: translateX(4px); }
-          95% { transform: translateX(3px); }
-        }
-        @keyframes signal-nudge-r {
-          0%, 85%, 100% { transform: translateX(0); }
-          90% { transform: translateX(-4px); }
-          95% { transform: translateX(-3px); }
-        }
-        @keyframes signal-check {
-          0%, 88% { opacity: 0; transform: scale(0.6); }
-          93% { opacity: 1; transform: scale(1.1); }
-          96%, 100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes signal-pulse {
-          0%, 88%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
-          93% { box-shadow: 0 0 10px 3px rgba(220,38,38,0.20); }
-        }
-        .signal-l { animation: signal-nudge 7s ease-in-out infinite; }
-        .signal-r { animation: signal-nudge-r 7s ease-in-out infinite; }
-        .signal-check { animation: signal-check 7s ease-in-out infinite; }
-        .signal-dot { animation: signal-pulse 7s ease-in-out infinite; }
-
-        .landing-cta-v2 {
-          transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
-        }
-        .landing-cta-v2:hover {
-          background-color: #e02424 !important;
-          box-shadow: 0 2px 16px rgba(220,38,38,0.18);
-          transform: translateY(-1px);
-        }
-        .landing-cta-v2:active {
-          transform: translateY(0);
-          box-shadow: none;
-        }
-
-        @keyframes landing-cta-pulse {
+        @keyframes cta-pulse {
           0%, 100% { box-shadow: 0 0 20px rgba(255,42,42,0.4); }
-          50% { box-shadow: 0 0 30px rgba(255,42,42,0.6); }
+          50% { box-shadow: 0 0 32px rgba(255,42,42,0.6); }
         }
-        .landing-cta-v2 {
-          box-shadow: 0 0 20px rgba(255,42,42,0.4);
-          animation: landing-cta-pulse 2s ease-in-out infinite;
+        .landing-cta {
+          transition: background-color 0.2s, box-shadow 0.2s, transform 0.15s;
+          animation: cta-pulse 2s ease-in-out infinite;
         }
+        .landing-cta:hover { background-color: #e02424 !important; transform: translateY(-1px); }
+        .landing-cta:active { transform: translateY(0); box-shadow: none; }
 
-        .landing-warm-spot {
-          position: absolute;
-          top: -40px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 600px;
-          height: 400px;
-          background: radial-gradient(ellipse 70% 60% at 50% 40%, rgba(255,220,180,0.07) 0%, rgba(255,200,150,0.03) 50%, transparent 80%);
-          pointer-events: none;
-          z-index: 0;
-        }
+        .landing-hero-section { min-height: 100dvh; }
+        @media (min-width: 1024px) { .landing-hero-section { min-height: auto; } }
 
-        .landing-cta-row {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 10px;
-          width: 100%;
-        }
+        .landing-main { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+        .landing-grid { display: flex; flex-direction: column; gap: 28px; }
 
-        .landing-cta-secondary {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          padding: 15px 24px;
-          background: transparent;
-          color: rgba(255,255,255,0.50);
-          font-size: 14px;
-          font-weight: 500;
-          letter-spacing: 0.01em;
-          border-radius: 10px;
-          text-decoration: none;
-          text-align: center;
-          border: 1px solid rgba(255,255,255,0.10);
-          transition: border-color 0.2s ease, color 0.2s ease;
+        @media (max-width: 1023px) {
+          .landing-main { padding: 0 16px !important; }
+          .landing-hero-title { font-size: clamp(1.5rem, 6vw, 2rem) !important; }
+          .landing-hero-sub { font-size: 0.85rem !important; }
+          .landing-cta { width: 100% !important; font-size: 18px !important; }
+          .landing-ribbon { height: 80px !important; }
+          .landing-ribbon img { height: 70px !important; }
         }
-        .landing-cta-secondary:hover {
-          border-color: rgba(255,255,255,0.20);
-          color: rgba(255,255,255,0.70);
-        }
-
-        @media (min-width: 640px) {
-          .landing-cta-row {
-            flex-direction: row;
-            justify-content: center;
-            align-items: stretch;
-          }
-        }
-
-        .landing-main {
-          width: 100%;
-          max-width: 1200px;
-          margin-left: auto;
-          margin-right: auto;
-          padding: 0 32px;
-        }
-
-        .landing-hero-section {
-          min-height: 100dvh;
-        }
-        @media (min-width: 1024px) {
-          .landing-hero-section {
-            min-height: auto;
-          }
-        }
-
-        @keyframes landing-arrow-bounce {
-          0%, 100% { transform: translateY(0); opacity: 0.4; }
-          50% { transform: translateY(6px); opacity: 0.6; }
-        }
-        .landing-scroll-arrow {
-          animation: landing-arrow-bounce 2s ease-in-out infinite;
-          cursor: pointer;
-        }
-
-        .landing-features {
-          width: 100%;
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 40px 24px;
-        }
-        .landing-features-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 14px;
-        }
-        @media (min-width: 768px) {
-          .landing-features {
-            padding: 48px 32px;
-          }
-          .landing-features-grid {
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-          }
-        }
-        .landing-feature-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 14px;
-          padding: 22px 18px;
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          transition: border-color 0.2s ease, background 0.2s ease;
-        }
-        .landing-feature-card:hover {
-          border-color: rgba(255,255,255,0.14);
-          background: rgba(255,255,255,0.06);
-        }
-        @media (min-width: 768px) {
-          .landing-feature-card {
-            padding: 28px 22px;
-          }
-        }
-        .landing-grid {
-          display: flex;
-          flex-direction: column;
-          gap: 28px;
-        }
-
         @media (min-width: 768px) {
           .landing-ribbon { height: 150px !important; }
           .landing-ribbon img { height: 130px !important; }
           .landing-hero-title { font-size: 2.4rem !important; }
-          .landing-hero-sub { font-size: 17px !important; }
         }
-
-        .landing-mobile-demo-clip {
-          width: 100%;
-          overflow: hidden;
-          justify-content: center;
-          pointer-events: none;
-        }
-        .demo-scaler {
-          width: 420px;
-          flex-shrink: 0;
-          transform-origin: top center;
-        }
-        @media (max-width: 1023px) {
-          .landing-mobile-demo-clip {
-            display: flex;
-          }
-          .demo-scaler {
-            transform: scale(0.72);
-            margin-bottom: -70px;
-          }
-        }
-        @media (max-width: 460px) {
-          .demo-scaler {
-            transform: scale(0.65);
-            margin-bottom: -90px;
-          }
-        }
-        @media (max-width: 400px) {
-          .demo-scaler {
-            transform: scale(0.58);
-            margin-bottom: -110px;
-          }
-        }
-        @media (max-width: 360px) {
-          .demo-scaler {
-            transform: scale(0.52);
-            margin-bottom: -130px;
-          }
-        }
-
-        @media (max-width: 1023px) {
-          .landing-logo-wrap {
-            margin-top: -30px !important;
-          }
-          .landing-logo-img {
-            height: 44px !important;
-          }
-          .landing-ribbon {
-            height: 80px !important;
-          }
-          .landing-ribbon img {
-            height: 70px !important;
-          }
-          .landing-main {
-            padding: 0 16px !important;
-          }
-          .landing-grid {
-            gap: 12px !important;
-          }
-          .landing-hero-title {
-            font-size: clamp(1.4rem, 5vw, 1.8rem) !important;
-            margin-bottom: 8px !important;
-          }
-          .landing-hero-sub {
-            font-size: 0.8rem !important;
-            margin-bottom: 12px !important;
-          }
-          .landing-cta-v2 {
-            width: 100% !important;
-            height: 52px !important;
-            font-size: 18px !important;
-            padding: 0 24px !important;
-            position: relative;
-            z-index: 10;
-          }
-          .landing-trust-text {
-            font-size: 0.75rem !important;
-            margin-top: 8px !important;
-          }
-          .landing-login-link {
-            font-size: 0.75rem !important;
-            margin-top: 6px !important;
-            padding: 2px 0 !important;
-          }
-          .landing-floor-divider {
-            display: none !important;
-          }
-        }
-
         @media (min-width: 1024px) {
-          .landing-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 64px;
-            align-items: center;
-            flex: 1;
-            padding-top: 0 !important;
-          }
-
-          .landing-hero-wrap {
-            max-width: 560px !important;
-            align-items: flex-start !important;
-            text-align: left !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-          }
-
-          .landing-hero-title {
-            font-size: 3rem !important;
-          }
-
-          .landing-cta-v2 {
-            width: auto !important;
-            max-width: none !important;
-            min-width: 280px;
-          }
-
-          .landing-cta-row {
-            justify-content: flex-start !important;
-          }
-
-          .landing-divider {
-            display: none !important;
-          }
+          .landing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; flex: 1; }
+          .landing-hero-wrap { max-width: 560px !important; align-items: flex-start !important; text-align: left !important; }
+          .landing-hero-title { font-size: 3rem !important; }
+          .landing-cta { width: auto !important; min-width: 280px; }
         }
-      `,
-        }}
-      />
 
-      {/* ── SECTION 1: HERO ── */}
+        .landing-mobile-demo-clip { width: 100%; overflow: hidden; justify-content: center; pointer-events: none; }
+        .demo-scaler { width: 420px; flex-shrink: 0; transform-origin: top center; }
+        @media (max-width: 1023px) {
+          .landing-mobile-demo-clip { display: flex; }
+          .demo-scaler { transform: scale(0.72); margin-bottom: -70px; }
+        }
+        @media (max-width: 460px) { .demo-scaler { transform: scale(0.65); margin-bottom: -90px; } }
+        @media (max-width: 400px) { .demo-scaler { transform: scale(0.58); margin-bottom: -110px; } }
+        @media (max-width: 360px) { .demo-scaler { transform: scale(0.52); margin-bottom: -130px; } }
+        @media (max-width: 1023px) {
+          .landing-logo-wrap { margin-top: -30px !important; }
+          .landing-logo-img { height: 44px !important; }
+        }
+      `}} />
 
-      {/* Poster ribbon */}
+      {/* ── HERO SECTION ── */}
       <div
-        className="landing-ribbon"
+        className="landing-hero-section"
         style={{
-          flexShrink: 0,
-          position: "relative",
-          zIndex: 1,
-          marginTop: 10,
-          overflow: "hidden",
-          height: 105,
           width: "100%",
-          WebkitMaskImage:
-            "linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)",
-          maskImage:
-            "linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)",
-          pointerEvents: "none",
-          userSelect: "none",
-        }}
-      >
-        {posters.length > 0 ? (
-          <div
-            className="landing-ribbon-track"
-            style={{
-              display: "flex",
-              gap: 10,
-              width: "max-content",
-              paddingTop: 4,
-              paddingBottom: 4,
-              filter: "blur(0.8px)",
-            }}
-          >
-            {[...posters, ...posters].map((poster, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={i}
-                src={`https://image.tmdb.org/t/p/w185${poster}`}
-                alt=""
-                style={{
-                  height: 96,
-                  width: "auto",
-                  borderRadius: 10,
-                  opacity: 0.4,
-                  flexShrink: 0,
-                  display: "block",
-                  objectFit: "cover",
-                }}
-              />
-            ))}
-          </div>
-        ) : (
-          <div
-            className="landing-ribbon-track"
-            style={{
-              display: "flex",
-              gap: 10,
-              width: "max-content",
-              paddingTop: 4,
-              paddingBottom: 4,
-            }}
-          >
-            {[...PLACEHOLDER_COLORS, ...PLACEHOLDER_COLORS].map(
-              ([from, to], i) => (
-                <div
-                  key={i}
-                  style={{
-                    height: 96,
-                    width: 64,
-                    borderRadius: 10,
-                    background: `linear-gradient(160deg, ${from} 0%, ${to} 100%)`,
-                    opacity: 0.1,
-                    flexShrink: 0,
-                  }}
-                />
-              )
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Logo — overlaps ribbon */}
-      <div
-        className="landing-fade-1 landing-logo-wrap"
-        style={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
-          marginTop: -100,
-          flexShrink: 0,
           position: "relative",
-          zIndex: 2,
+          overflow: "hidden",
+          background: "radial-gradient(ellipse 60% 50% at 50% 30%, rgba(255,42,42,0.08) 0%, transparent 70%)",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo.png"
-          alt="Logflix"
-          className="landing-logo-img"
-          style={{ height: 102, width: "auto", opacity: 0.9, position: "relative", zIndex: 1, filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.6))" }}
-        />
-        <p className="hidden lg:block" style={{
-          fontSize: 11,
-          fontWeight: 400,
-          color: "rgba(255,255,255,0.22)",
-          letterSpacing: "0.10em",
-          textTransform: "uppercase",
-          marginTop: 8,
-          marginBottom: 0,
-        }}>
-          {s.streaming}
-        </p>
-        <p className="hidden lg:block" style={{
-          fontSize: 13,
-          fontWeight: 400,
-          color: "rgba(255,255,255,0.40)",
-          letterSpacing: "0.02em",
-          margin: "4px 0 0",
-        }}>
-          {SERVICES.join(" · ")}
-        </p>
-      </div>
+        {/* Poster ribbon */}
+        <div
+          className="landing-ribbon"
+          style={{ flexShrink: 0, position: "relative", zIndex: 1, marginTop: 10, overflow: "hidden", height: 105, width: "100%", WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)", maskImage: "linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)", pointerEvents: "none", userSelect: "none" }}
+        >
+          {posters.length > 0 ? (
+            <div className="landing-ribbon-track" style={{ display: "flex", gap: 10, width: "max-content", paddingTop: 4, paddingBottom: 4, filter: "blur(0.8px)" }}>
+              {[...posters, ...posters].map((poster, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={i} src={`https://image.tmdb.org/t/p/w185${poster}`} alt="" style={{ height: 96, width: "auto", borderRadius: 10, opacity: 0.4, flexShrink: 0, display: "block", objectFit: "cover" }} />
+              ))}
+            </div>
+          ) : (
+            <div className="landing-ribbon-track" style={{ display: "flex", gap: 10, width: "max-content", paddingTop: 4, paddingBottom: 4 }}>
+              {[...PLACEHOLDER_COLORS, ...PLACEHOLDER_COLORS].map(([from, to], i) => (
+                <div key={i} style={{ height: 96, width: 64, borderRadius: 10, background: `linear-gradient(160deg, ${from} 0%, ${to} 100%)`, opacity: 0.1, flexShrink: 0 }} />
+              ))}
+            </div>
+          )}
+        </div>
 
-      {/* Main max-width container */}
-      <div className="landing-main" style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column" }}>
-        {/* Warm spotlight */}
-        <div className="landing-warm-spot" />
-        {/* Desktop grid: hero left, benefits right */}
-        <div className="landing-grid" style={{ paddingTop: 6, flex: 1 }}>
-          {/* Hero content */}
-          <div
-            className="landing-hero-wrap"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              padding: "0",
-              width: "100%",
-              maxWidth: 480,
-              textAlign: "center",
-            }}
-          >
-            {/* Two-device signal */}
-            <div
-              className="landing-fade-2 hidden lg:flex"
-              style={{
-                alignItems: "center",
-                gap: 6,
-                marginBottom: 14,
-              }}
-            >
-              <div
-                className="signal-l signal-dot"
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.22)",
-                  border: "1.5px solid rgba(255,255,255,0.12)",
-                }}
-              />
-              <div
-                className="signal-check"
-                style={{
-                  fontSize: 10,
-                  lineHeight: 1,
-                  color: "#dc2626",
-                  opacity: 0,
-                }}
+        {/* Logo */}
+        <div className="lf-1 landing-logo-wrap" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", marginTop: -100, flexShrink: 0, position: "relative", zIndex: 2 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Logflix" className="landing-logo-img" style={{ height: 102, width: "auto", opacity: 0.9, position: "relative", zIndex: 1, filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.6))" }} />
+        </div>
+
+        {/* Main content */}
+        <div className="landing-main" style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column" }}>
+          <div className="landing-grid" style={{ paddingTop: 6, flex: 1 }}>
+            {/* Hero text */}
+            <div className="landing-hero-wrap" style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 0, width: "100%", maxWidth: 480, textAlign: "center" }}>
+
+              <h1
+                className="landing-hero-title lf-2"
+                style={{ fontSize: "clamp(1.65rem, 6.2vw, 2.15rem)", fontWeight: 700, letterSpacing: "-0.03em", color: "#ffffff", lineHeight: 1.1, margin: "0 0 14px", maxWidth: 560 }}
               >
-                ✓
+                {s.hero}
+              </h1>
+
+              <p className="lf-3 landing-hero-sub" style={{ fontSize: 15, fontWeight: 400, color: "rgba(255,255,255,0.65)", lineHeight: 1.55, margin: "0 0 24px", maxWidth: 560 }}>
+                {s.sub}
+              </p>
+
+              {/* SwipeMatchDemo — mobile */}
+              <div className="lg:hidden landing-mobile-demo-clip lf-3" style={{ filter: "brightness(1.2) contrast(1.1)" }}>
+                <div className="demo-scaler">
+                  <SwipeMatchDemo locale={locale === "no" ? "no" : "en"} />
+                </div>
               </div>
-              <div
-                className="signal-r signal-dot"
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.22)",
-                  border: "1.5px solid rgba(255,255,255,0.12)",
-                }}
-              />
-            </div>
 
-            <h1
-              className="landing-hero-title landing-fade-2"
-              style={{
-                fontSize: "clamp(1.65rem, 6.2vw, 2.15rem)",
-                fontWeight: 600,
-                letterSpacing: "-0.025em",
-                color: "#ffffff",
-                lineHeight: 1.12,
-                margin: "0 0 12px",
-                maxWidth: 560,
-              }}
-            >
-              {s.hero}
-            </h1>
-
-            <p
-              className="landing-fade-3 landing-hero-sub"
-              style={{
-                fontSize: 15,
-                fontWeight: 400,
-                color: "rgba(255,255,255,0.68)",
-                lineHeight: 1.55,
-                margin: "0 0 22px",
-                maxWidth: 560,
-              }}
-            >
-              {s.sub}
-            </p>
-
-            {/* ── SWIPE DEMO (mobile only) ── */}
-            <div className="lg:hidden landing-mobile-demo-clip landing-fade-3" style={{ filter: "brightness(1.2) contrast(1.1)" }}>
-              <div className="demo-scaler">
-                <SwipeMatchDemo locale={locale === "no" ? "no" : "en"} />
-              </div>
-            </div>
-
-            <div className="landing-cta-row landing-fade-3">
+              {/* Primary CTA */}
               <Link
                 href="/together"
-                className="landing-cta-v2"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "15px 32px",
-                  background: "#dc2626",
-                  color: "#ffffff",
-                  fontSize: 20,
-                  fontWeight: 600,
-                  letterSpacing: "0.01em",
-                  borderRadius: 10,
-                  textDecoration: "none",
-                  textAlign: "center",
-                }}
+                className="landing-cta lf-3"
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "16px 36px", background: "#ff2a2a", color: "#ffffff", fontSize: 20, fontWeight: 700, letterSpacing: "0.01em", borderRadius: 12, textDecoration: "none", textAlign: "center" }}
               >
                 {s.cta}
               </Link>
-            </div>
 
-            <p
-              className="landing-fade-4 landing-trust-text"
-              style={{
-                fontSize: 12,
-                fontWeight: 400,
-                color: "rgba(255,255,255,0.45)",
-                marginTop: 10,
-                lineHeight: 1.6,
-                textAlign: "center",
-              }}
-            >
-              {s.trust}
-            </p>
+              {/* No friction text */}
+              <p className="lf-4" style={{ fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.4)", marginTop: 12, textAlign: "center" }}>
+                {s.noFriction}
+              </p>
 
-            <Link
-              href="/login"
-              className="landing-fade-5 landing-login-link"
-              style={{
-                fontSize: 13,
-                fontWeight: 500,
-                color: "rgba(255,255,255,0.50)",
-                marginTop: 18,
-                textDecoration: "none",
-                padding: "8px 20px",
-                display: "inline-block",
-                border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: 8,
-              }}
-            >
-              {s.login}
-            </Link>
+              {/* Social proof */}
+              {matchCount && matchCount > 10 && (
+                <p className="lf-4" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,42,42,0.6)", marginTop: 8, textAlign: "center" }}>
+                  {s.socialProof(matchCount)}
+                </p>
+              )}
 
-            {/* Streaming list — mobile only (under login) */}
-            <div className="lg:hidden landing-fade-5" style={{ textAlign: "center", marginTop: 14 }}>
-              <p style={{
-                fontSize: 10,
-                fontWeight: 400,
-                color: "rgba(255,255,255,0.22)",
-                letterSpacing: "0.10em",
-                textTransform: "uppercase",
-                marginBottom: 4,
-              }}>
+              {/* Login link */}
+              <Link
+                href="/login"
+                className="lf-5"
+                style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.35)", marginTop: 20, textDecoration: "none", padding: "6px 16px", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, transition: "color 0.2s, border-color 0.2s" }}
+                onMouseEnter={(e) => { const el = e.currentTarget; el.style.color = "rgba(255,255,255,0.6)"; el.style.borderColor = "rgba(255,255,255,0.2)"; }}
+                onMouseLeave={(e) => { const el = e.currentTarget; el.style.color = "rgba(255,255,255,0.35)"; el.style.borderColor = "rgba(255,255,255,0.1)"; }}
+              >
+                {s.login}
+              </Link>
+
+              {/* Streaming — mobile */}
+              <p className="lg:hidden lf-5" style={{ fontSize: 10, fontWeight: 400, color: "rgba(255,255,255,0.2)", letterSpacing: "0.06em", marginTop: 16, textAlign: "center" }}>
                 {s.streaming}
               </p>
-              <p style={{
-                fontSize: 12,
-                fontWeight: 400,
-                color: "rgba(255,255,255,0.36)",
-                letterSpacing: "0.02em",
-                margin: 0,
-              }}>
-                {SERVICES.join(" · ")}
-              </p>
+            </div>
+
+            {/* SwipeMatchDemo — desktop */}
+            <div className="hidden lg:flex lf-5" style={{ alignSelf: "center", justifyContent: "center", transform: "scale(1.15)", transformOrigin: "center center", filter: "brightness(1.2) contrast(1.1)" }}>
+              <SwipeMatchDemo locale={locale === "no" ? "no" : "en"} />
             </div>
           </div>
-
-          {/* ── SWIPE DEMO (desktop only) ── */}
-          <div className="hidden lg:flex landing-fade-6" style={{ alignSelf: "center", justifyContent: "center", transform: "scale(1.15)", transformOrigin: "center center", filter: "brightness(1.2) contrast(1.1)" }}>
-            <SwipeMatchDemo locale={locale === "no" ? "no" : "en"} />
-          </div>
         </div>
-
-        {/* Visual floor — grounding divider */}
-        <div
-          className="landing-floor-divider"
-          style={{
-            width: "100%",
-            height: 1,
-            background: "rgba(255,255,255,0.08)",
-            marginTop: 12,
-          }}
-        />
-
-        {/* Scroll-down arrow — mobile only */}
-        <div
-          className="landing-scroll-arrow landing-fade-6 lg:hidden"
-          onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            paddingTop: 16,
-            paddingBottom: 8,
-          }}
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 7L10 13L16 7" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-
-      </div>
-    </div>
-
-    {/* ── SECTION 2: FEATURES ── */}
-    <div id="features" className="landing-features" style={{ position: "relative" }}>
-      <h2 style={{
-        fontSize: "clamp(1.3rem, 4vw, 1.8rem)",
-        fontWeight: 600,
-        color: "#ffffff",
-        textAlign: "center",
-        marginBottom: 40,
-        letterSpacing: "-0.02em",
-      }}>
-        {s.featureTitle}
-      </h2>
-
-      <div className="landing-features-grid">
-        {([
-          { emoji: "📚", title: s.featureLog, desc: s.featureLogDesc },
-          { emoji: "🤖", title: s.featureAI, desc: s.featureAIDesc },
-          { emoji: "✨", title: s.featureTaste, desc: s.featureTasteDesc },
-          { emoji: "👫", title: s.featureFriends, desc: s.featureFriendsDesc },
-        ] as const).map((f) => (
-          <div key={f.title} className="landing-feature-card">
-            <div style={{ fontSize: 28, marginBottom: 10 }}>{f.emoji}</div>
-            <h3 style={{
-              fontSize: 15,
-              fontWeight: 600,
-              color: "#ffffff",
-              margin: "0 0 6px",
-            }}>
-              {f.title}
-            </h3>
-            <p style={{
-              fontSize: 13,
-              fontWeight: 400,
-              color: "rgba(255,255,255,0.55)",
-              lineHeight: 1.5,
-              margin: 0,
-            }}>
-              {f.desc}
-            </p>
-          </div>
-        ))}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 40 }}>
-        <Link
-          href="/login?mode=signup"
-          className="landing-cta-v2"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "15px 36px",
-            background: "#dc2626",
-            color: "#ffffff",
-            fontSize: 18,
-            fontWeight: 600,
-            letterSpacing: "0.01em",
-            borderRadius: 10,
-            textDecoration: "none",
-            textAlign: "center",
-          }}
-        >
-          {s.featureCta}
-        </Link>
-        <p style={{
-          fontSize: 12,
-          fontWeight: 400,
-          color: "rgba(255,255,255,0.40)",
-          marginTop: 12,
-          textAlign: "center",
-        }}>
-          {s.featureCtaSub}
+      {/* ── HOW IT WORKS — 3 steps ── */}
+      <div style={{ width: "100%", maxWidth: 720, margin: "0 auto", padding: "48px 24px 32px" }}>
+        <h2 style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", textAlign: "center", marginBottom: 32 }}>
+          {s.howTitle}
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {[
+            { icon: "📱", text: s.step1, num: "1" },
+            { icon: "👆", text: s.step2, num: "2" },
+            { icon: "🎬", text: s.step3, num: "3" },
+          ].map((step) => (
+            <div key={step.num} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,42,42,0.08)", border: "1px solid rgba(255,42,42,0.15)", flexShrink: 0, fontSize: 20 }}>
+                {step.icon}
+              </div>
+              <div style={{ flex: 1 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.2)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Steg {step.num}</span>
+                <p style={{ fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.75)", margin: "2px 0 0", lineHeight: 1.4 }}>{step.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Streaming — desktop */}
+        <p className="hidden lg:block" style={{ fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.18)", letterSpacing: "0.06em", textAlign: "center", marginTop: 32 }}>
+          {s.streaming}
         </p>
       </div>
-    </div>
 
+      {/* ── ALSO (subtle, bottom) ── */}
+      <div style={{ width: "100%", maxWidth: 720, margin: "0 auto", padding: "16px 24px 48px", textAlign: "center" }}>
+        <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 24 }} />
+        <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", marginBottom: 8 }}>{s.also}</p>
+        <div style={{ display: "flex", justifyContent: "center", gap: 20 }}>
+          <Link href="/curator" style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", textDecoration: "none", transition: "color 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }} onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}>
+            {s.alsoAI}
+          </Link>
+          <Link href="/library" style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", textDecoration: "none", transition: "color 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }} onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}>
+            {s.alsoLibrary}
+          </Link>
+          <Link href="/taste" style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", textDecoration: "none", transition: "color 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }} onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}>
+            {s.alsoTaste}
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
