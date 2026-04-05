@@ -86,7 +86,7 @@ const FETCH_MIN_VOTE_TV   = 30;
 const MAINSTREAM_LANGS = new Set(["en", "no", "sv", "da", "ko", "es", "fr"]);
 
 // Hard-blocked languages — never allowed regardless of quality
-const BLOCKED_LANGS = new Set(["hi", "ta", "te", "ml", "kn", "pa", "bn", "mr", "ja"]);
+const BLOCKED_LANGS = new Set(["hi", "ta", "te", "ml", "kn", "pa", "bn", "mr", "ja", "th", "zh", "tl", "ar", "tr", "id", "ms", "vi"]);
 
 // Hard-blocked genres — Animation excluded entirely
 const BLOCKED_GENRES = new Set([16]);
