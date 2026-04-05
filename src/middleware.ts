@@ -123,10 +123,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect logged-in users from /login to /home
+  // Redirect logged-in users from /login to /together
   if (user && pathname === "/login") {
     const url = request.nextUrl.clone();
-    url.pathname = "/home";
+    url.pathname = "/together";
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect /home to /together
+  if (user && pathname === "/home") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/together";
     return NextResponse.redirect(url);
   }
 
