@@ -1984,6 +1984,15 @@ export default function WTBetaPage() {
                     </button>
                   )}
                   <button onClick={reset} className="w-full py-2 mt-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>{t(locale, "noMatch", "playAgain")}</button>
+                  {authUser && (
+                    <Link
+                      href="/home"
+                      className="block w-full py-2.5 mt-2 rounded-xl text-sm font-semibold text-center transition-all"
+                      style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", textDecoration: "none" }}
+                    >
+                      {locale === "no" ? "For deg — anbefalinger, Curator, Wrapped →" : locale === "se" ? "För dig — rekommendationer, Curator, Wrapped →" : locale === "dk" ? "For dig — anbefalinger, Curator, Wrapped →" : locale === "fi" ? "Sinulle — suositukset, Curator, Wrapped →" : "For You — recommendations, Curator, Wrapped →"}
+                    </Link>
+                  )}
                 </div>
               </div>
             )}
@@ -2384,6 +2393,17 @@ export default function WTBetaPage() {
                         <button onClick={reset} className="w-full py-2 text-xs font-medium bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.28)" }}>
                           {t(locale, "winner", "playAgain")}
                         </button>
+
+                        {/* Go to For deg */}
+                        {authUser && (
+                          <Link
+                            href="/home"
+                            className="block w-full py-2.5 mt-1 rounded-xl text-sm font-semibold text-center transition-all"
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", textDecoration: "none" }}
+                          >
+                            {locale === "no" ? "For deg — anbefalinger, Curator, Wrapped →" : locale === "se" ? "För dig — rekommendationer, Curator, Wrapped →" : locale === "dk" ? "For dig — anbefalinger, Curator, Wrapped →" : locale === "fi" ? "Sinulle — suositukset, Curator, Wrapped →" : "For You — recommendations, Curator, Wrapped →"}
+                          </Link>
+                        )}
 
                         {/* Couple report */}
                         {authUser && matchCount >= 3 && (
