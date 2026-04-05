@@ -133,7 +133,7 @@ export default function WTBetaPage() {
   const guestIdRef = useRef<string>("");
 
   const [swipe, setSwipe] = useState<{ x: number; y: number; rot: number; dragging: boolean }>({ x: 0, y: 0, rot: 0, dragging: false });
-  const [fly, setFly] = useState<{ active: boolean; x: number; rot: number }>({ active: false, x: 0, rot: 0 });
+  const [fly, setFly] = useState<{ active: boolean; x: number; y: number; rot: number }>({ active: false, x: 0, y: 0, rot: 0 });
 
   const [authUser, setAuthUser] = useState<{ email?: string } | null>(null);
   const firstSwipeTrackedRef = useRef(false);
@@ -628,7 +628,7 @@ export default function WTBetaPage() {
     setIsFallbackCompromise(false);
     setFinalWinner(null);
     setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
-    setFly({ active: false, x: 0, rot: 0 });
+    setFly({ active: false, x: 0, y: 0, rot: 0 });
   }
 
   /* ── reset ── */
@@ -670,7 +670,7 @@ export default function WTBetaPage() {
     setSessionError("");
     partnerRef.current = null;
     setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
-    setFly({ active: false, x: 0, rot: 0 });
+    setFly({ active: false, x: 0, y: 0, rot: 0 });
     swipeQueue.current = [];
     inFlight.current = new Set();
     queueWorkerRunning.current = false;
@@ -876,12 +876,25 @@ export default function WTBetaPage() {
   function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
     if (ptr.current.id !== e.pointerId || !swipe.dragging) return;
     const dx = e.clientX - ptr.current.sx;
-    setSwipe({ x: dx, y: 0, rot: clamp(dx / 18, -14, 14), dragging: true });
+    const dy = e.clientY - ptr.current.sy;
+    setSwipe({ x: dx, y: dy, rot: clamp(dx / 18, -14, 14), dragging: true });
   }
 
   function endSwipe(action?: SwipeAction) {
     const top = deck[deckIndex];
     if (!top) return;
+
+    // Check for superlike via upward drag (not a SwipeAction — handled separately)
+    if (!action && swipe.y < -80 && Math.abs(swipe.y) > Math.abs(swipe.x) && superLikesUsed < SUPERLIKES_PER_ROUND) {
+      setFly({ active: true, x: 0, y: -window.innerHeight, rot: 0 });
+      window.setTimeout(() => {
+        setFly({ active: false, x: 0, y: 0, rot: 0 });
+        setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
+        handleSuperLike();
+      }, 200);
+      return;
+    }
+
     let decided: SwipeAction | null = action || null;
     if (!decided) {
       if (swipe.x > 100) decided = "like";
@@ -889,9 +902,9 @@ export default function WTBetaPage() {
     }
     if (!decided) { setSwipe({ x: 0, y: 0, rot: 0, dragging: false }); return; }
     const outX = decided === "like" ? window.innerWidth * 1.1 : -window.innerWidth * 1.1;
-    setFly({ active: true, x: outX, rot: decided === "like" ? 20 : -20 });
+    setFly({ active: true, x: outX, y: 0, rot: decided === "like" ? 20 : -20 });
     window.setTimeout(() => {
-      setFly({ active: false, x: 0, rot: 0 });
+      setFly({ active: false, x: 0, y: 0, rot: 0 });
       setSwipe({ x: 0, y: 0, rot: 0, dragging: false });
       commitChoice(top, decided!);
     }, 200);
@@ -2500,7 +2513,7 @@ export default function WTBetaPage() {
                         overflow: "hidden",
                         touchAction: isDesktop ? "auto" : "none",
                         cursor: isDesktop ? "default" : swipe.dragging ? "grabbing" : "grab",
-                        transform: `translate3d(${fly.active ? fly.x : swipe.x}px, 0px, 0) rotate(${fly.active ? fly.rot : swipe.rot}deg)`,
+                        transform: `translate3d(${fly.active ? fly.x : swipe.x}px, ${fly.active ? fly.y : (swipe.dragging ? Math.min(0, swipe.y * 0.4) : 0)}px, 0) rotate(${fly.active ? fly.rot : swipe.rot}deg)`,
                         transition: swipe.dragging ? "none" : fly.active ? "transform 200ms cubic-bezier(.2,.9,.2,1)" : "transform 220ms cubic-bezier(.2,.9,.2,1)",
                         boxShadow: "0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)",
                         userSelect: "none",
@@ -2519,6 +2532,34 @@ export default function WTBetaPage() {
                           draggable={false}
                           onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                         />
+                      )}
+
+                      {/* Drag direction glow overlays */}
+                      {swipe.dragging && swipe.x > 20 && (
+                        <div className="absolute inset-0 z-20 pointer-events-none" style={{ background: `rgba(74,222,128,${Math.min(0.25, Math.abs(swipe.x) / 400)})`, transition: "none" }} />
+                      )}
+                      {swipe.dragging && swipe.x < -20 && (
+                        <div className="absolute inset-0 z-20 pointer-events-none" style={{ background: `rgba(239,68,68,${Math.min(0.25, Math.abs(swipe.x) / 400)})`, transition: "none" }} />
+                      )}
+                      {swipe.dragging && swipe.y < -20 && Math.abs(swipe.y) > Math.abs(swipe.x) && (
+                        <div className="absolute inset-0 z-20 pointer-events-none" style={{ background: `rgba(255,184,0,${Math.min(0.25, Math.abs(swipe.y) / 320)})`, transition: "none" }} />
+                      )}
+
+                      {/* LIKE / NOPE / SUPER badges */}
+                      {swipe.dragging && swipe.x > 30 && (
+                        <div className="absolute top-6 left-5 z-30 pointer-events-none" style={{ opacity: Math.min(1, (swipe.x - 30) / 70), transform: "rotate(-15deg)" }}>
+                          <span style={{ fontSize: 32, fontWeight: 900, color: "#4ade80", border: "3px solid #4ade80", borderRadius: 8, padding: "4px 14px", letterSpacing: "0.05em" }}>LIKE</span>
+                        </div>
+                      )}
+                      {swipe.dragging && swipe.x < -30 && (
+                        <div className="absolute top-6 right-5 z-30 pointer-events-none" style={{ opacity: Math.min(1, (Math.abs(swipe.x) - 30) / 70), transform: "rotate(15deg)" }}>
+                          <span style={{ fontSize: 32, fontWeight: 900, color: "#ef4444", border: "3px solid #ef4444", borderRadius: 8, padding: "4px 14px", letterSpacing: "0.05em" }}>NOPE</span>
+                        </div>
+                      )}
+                      {swipe.dragging && swipe.y < -30 && Math.abs(swipe.y) > Math.abs(swipe.x) && (
+                        <div className="absolute top-6 left-1/2 z-30 pointer-events-none" style={{ opacity: Math.min(1, (Math.abs(swipe.y) - 30) / 50), transform: "translateX(-50%)" }}>
+                          <span style={{ fontSize: 32, fontWeight: 900, color: "#FFB800", border: "3px solid #FFB800", borderRadius: 8, padding: "4px 14px", letterSpacing: "0.05em" }}>SUPER</span>
+                        </div>
                       )}
 
                       {/* Bottom gradient for text */}
@@ -2638,29 +2679,35 @@ export default function WTBetaPage() {
                       0%, 100% { color: #d4af37; text-shadow: 0 0 6px rgba(212,175,55,0.3); }
                       50% { color: #f5e6a3; text-shadow: 0 0 12px rgba(245,230,163,0.5), 0 0 4px rgba(255,255,255,0.2); }
                     }
+                    @keyframes superlike-glow {
+                      0%, 100% { box-shadow: 0 0 12px rgba(255,184,0,0.3), inset 0 0 8px rgba(255,184,0,0.1); }
+                      50% { box-shadow: 0 0 24px rgba(255,184,0,0.5), inset 0 0 12px rgba(255,184,0,0.15); }
+                    }
                     .wt-superlike-btn {
                       position: relative;
-                      width: 90px;
-                      height: 42px;
+                      width: 56px;
+                      height: 56px;
                       background-color: #000;
                       display: flex;
+                      flex-direction: column;
                       align-items: center;
-                      color: #d4af37;
+                      color: #FFB800;
                       justify-content: center;
-                      border: none;
+                      gap: 2px;
+                      border: 2px solid rgba(255,184,0,0.4);
                       padding: 0;
-                      border-radius: 8px;
+                      border-radius: 50%;
                       cursor: pointer;
                       font-family: inherit;
-                      font-size: 13px;
+                      font-size: 10px;
                       font-weight: 700;
-                      animation: gold-shimmer 3s ease-in-out infinite;
+                      animation: superlike-glow 2s ease-in-out infinite;
                     }
                     @media (min-width: 640px) {
                       .wt-superlike-btn {
-                        width: 120px;
-                        height: 48px;
-                        font-size: 14px;
+                        width: 64px;
+                        height: 64px;
+                        font-size: 11px;
                       }
                     }
                     .wt-superlike-btn::before {
@@ -2722,7 +2769,8 @@ export default function WTBetaPage() {
                     className="wt-superlike-btn"
                     aria-label="Super-like"
                   >
-                    ★ {SUPERLIKES_PER_ROUND - superLikesUsed}
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="#FFB800" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", opacity: 0.7 }}>{SUPERLIKES_PER_ROUND - superLikesUsed}</span>
                   </button>
 
                   {/* Like */}
