@@ -28,12 +28,17 @@ export const POST = withLogger("/api/together/session/join", async (req, { logge
 
     const { data: session, error: findError } = await admin
       .from("wt_sessions")
-      .select("id, host_id, guest_id, titles, deck_seed, status")
+      .select("id, host_id, guest_id, titles, deck_seed, status, expires_at")
       .eq("code", code.toUpperCase().trim())
       .single();
 
     if (findError || !session) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+
+    // Check TTL — session codes expire after 24 hours
+    if (session.expires_at && new Date(session.expires_at) < new Date()) {
+      return NextResponse.json({ error: "SESSION_EXPIRED" }, { status: 410 });
     }
 
     if (session.host_id === userId) {

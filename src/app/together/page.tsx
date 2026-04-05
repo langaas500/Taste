@@ -1016,7 +1016,19 @@ export default function WTBetaPage() {
       setTimer(ROUND1_DURATION); setTimerRunning(true);
       setChosen(null);
     } catch (e: unknown) {
-      setSessionError(e instanceof Error ? e.message : "Kunne ikke bli med");
+      const msg = e instanceof Error ? e.message : "";
+      if (msg === "SESSION_EXPIRED") {
+        const expired: Record<string, string> = {
+          no: "Koden er utløpt — be om en ny",
+          en: "This code has expired — ask for a new one",
+          se: "Koden har gått ut — be om en ny",
+          dk: "Koden er udløbet — bed om en ny",
+          fi: "Koodi on vanhentunut — pyydä uusi",
+        };
+        setSessionError(expired[locale] || expired.en);
+      } else {
+        setSessionError(msg || "Kunne ikke bli med");
+      }
     }
     setTitlesLoading(false);
   }
