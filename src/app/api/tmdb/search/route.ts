@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { tmdbSearch, tmdbSearchKeywords, tmdbDiscover } from "@/lib/tmdb";
 
-// Norwegian topic terms → English search terms for title + keyword search
+// Nordic topic terms → English search terms for title + keyword search
+// Covers: Norwegian (no), Danish (dk), Swedish (se), Finnish (fi)
 const TOPIC_MAP: Record<string, string[]> = {
   // Bolig & oppussing
   oppussing: ["renovation", "home improvement", "house flipping", "fixer upper", "home makeover", "property brothers", "grand designs"],
@@ -99,6 +100,157 @@ const TOPIC_MAP: Record<string, string[]> = {
   viking: ["viking", "norse", "vikings"],
   egypten: ["egypt", "ancient egypt", "pharaoh"],
   rom: ["ancient rome", "roman empire", "gladiator"],
+
+  // ── Danish (dk) ──────────────────────────────────────
+  // Bolig & oppussing
+  istandsættelse: ["renovation", "home improvement", "home makeover"],
+  boligindretning: ["interior design", "home decoration", "home design"],
+  "gør det selv": ["diy", "home improvement", "renovation"],
+  håndværker: ["carpenter", "construction", "building"],
+  havepleje: ["gardening", "garden makeover", "landscape"],
+  "bolig til salg": ["real estate", "property", "house hunting"],
+  ombygning: ["renovation", "remodel", "home makeover"],
+  // Bil
+  bilværksted: ["garage", "mechanic", "car repair"],
+  // Mat
+  madlavning: ["cooking", "chef", "culinary", "kitchen"],
+  bagning: ["baking", "pastry", "bake off"],
+  // Natur & dyr
+  dyreliv: ["wildlife", "animal", "nature"],
+  // Vitenskap
+  videnskab: ["science", "scientific", "discovery"],
+  rumfart: ["space", "nasa", "astronaut"],
+  // Sport
+  fodbold: ["football", "soccer"],
+  træning: ["fitness", "workout", "training"],
+  boksning: ["boxing", "fighter"],
+  // Krim
+  forbrydelse: ["crime", "true crime", "criminal"],
+  efterforskning: ["investigation", "detective", "forensic"],
+  // Musikk & kunst
+  musik: ["music", "musician", "band", "concert"],
+  // Reise
+  rejse: ["travel", "journey", "adventure"],
+  // Helse
+  læge: ["doctor", "medical", "hospital"],
+  sygehus: ["hospital", "medical", "emergency"],
+
+  // ── Swedish (se) ─────────────────────────────────────
+  // Bolig & oppussing
+  renovera: ["renovation", "home improvement", "home makeover"],
+  uppfräschning: ["renovation", "home makeover", "remodel"],
+  inredning: ["interior design", "home decoration", "home design"],
+  inredningsdesign: ["interior design", "home decor"],
+  trädgård: ["garden", "gardening", "garden makeover", "landscape"],
+  "trädgårdsarbete": ["gardening", "landscape"],
+  bostad: ["real estate", "house", "home improvement", "property"],
+  fastighet: ["real estate", "property", "house hunting"],
+  snickare: ["carpenter", "woodworking", "construction"],
+  bygga: ["building", "construction", "home renovation"],
+  // Bil
+  bilverkstad: ["garage", "mechanic", "car repair"],
+  bilar: ["car", "automobile", "racing", "car show"],
+  // Mat
+  matlagning: ["cooking", "chef", "culinary", "kitchen"],
+  bakning: ["baking", "pastry", "bake off"],
+  kock: ["chef", "cooking", "culinary"],
+  // Natur & dyr
+  djur: ["animal", "wildlife", "pet", "zoo"],
+  berg: ["mountain", "climbing", "hiking"],
+  fiska: ["fishing", "angling"],
+  // Vitenskap
+  vetenskap: ["science", "scientific", "discovery"],
+  teknik: ["technology", "tech", "innovation"],
+  rymd: ["space", "nasa", "astronaut", "cosmos"],
+  // Sport
+  fotboll: ["football", "soccer", "premier league"],
+  träning: ["fitness", "workout", "training"],
+  boxning: ["boxing", "fighter"],
+  kampsporter: ["martial arts", "mma", "ufc"],
+  schack: ["chess"],
+  // Krim
+  brott: ["crime", "true crime", "criminal"],
+  utredning: ["investigation", "detective", "forensic"],
+  // Musikk & kunst
+  konst: ["art", "artist", "painting", "gallery"],
+  // Reise
+  resa: ["travel", "journey", "adventure", "destination"],
+  äventyr: ["adventure", "expedition", "explorer"],
+  // Helse
+  läkare: ["doctor", "medical", "hospital"],
+  sjukhus: ["hospital", "medical", "emergency"],
+  // Økonomi
+  ekonomi: ["finance", "economy", "wall street"],
+
+  // ── Finnish (fi) ──────────────────────────────────────
+  // Bolig & oppussing
+  remontti: ["renovation", "home improvement", "home makeover"],
+  remontointi: ["renovation", "remodel", "home renovation"],
+  sisustus: ["interior design", "home decoration", "home design"],
+  sisustussuunnittelu: ["interior design", "home decor"],
+  puutarha: ["garden", "gardening", "garden makeover", "landscape"],
+  puutarhanhoito: ["gardening", "landscape"],
+  asunto: ["real estate", "house", "home improvement", "property"],
+  kiinteistö: ["real estate", "property", "house hunting"],
+  rakentaminen: ["building", "construction", "home renovation"],
+  nikkarointi: ["carpentry", "woodworking", "diy"],
+  // Bil
+  autokorjaamo: ["garage", "mechanic", "car repair"],
+  auto: ["car", "automobile", "car show"],
+  autot: ["car", "automobile", "racing", "car show"],
+  moottoriurheilu: ["motorsport", "racing", "formula one"],
+  // Mat
+  ruoanlaitto: ["cooking", "chef", "culinary", "kitchen"],
+  kokki: ["chef", "cooking", "culinary"],
+  leipominen: ["baking", "pastry", "bake off"],
+  ravintola: ["restaurant", "chef", "cooking competition"],
+  ruoka: ["food", "cooking", "culinary"],
+  viini: ["wine", "winery", "sommelier"],
+  // Natur & dyr
+  luonto: ["nature", "wildlife", "wilderness", "planet earth"],
+  eläin: ["animal", "wildlife", "pet", "zoo"],
+  eläimet: ["animal", "wildlife", "pet", "zoo"],
+  koira: ["dog", "canine", "puppy"],
+  kissa: ["cat", "feline", "kitten"],
+  meri: ["ocean", "sea", "marine", "deep sea"],
+  vuori: ["mountain", "climbing", "hiking"],
+  kalastus: ["fishing", "angling"],
+  metsästys: ["hunting", "hunter"],
+  // Vitenskap
+  tiede: ["science", "scientific", "discovery"],
+  teknologia: ["technology", "tech", "innovation"],
+  avaruus: ["space", "nasa", "astronaut", "cosmos"],
+  // Sport
+  jalkapallo: ["football", "soccer"],
+  harjoittelu: ["fitness", "workout", "training"],
+  nyrkkeily: ["boxing", "fighter"],
+  kamppailulaji: ["martial arts", "mma", "ufc"],
+  shakki: ["chess"],
+  // Krim
+  rikos: ["crime", "true crime", "criminal"],
+  murha: ["murder", "homicide", "killer"],
+  tutkinta: ["investigation", "detective", "forensic"],
+  poliisi: ["police", "law enforcement", "cop"],
+  // Musikk & kunst
+  musiikki: ["music", "musician", "band", "concert"],
+  taide: ["art", "artist", "painting", "gallery"],
+  tanssi: ["dance", "dancing", "ballet"],
+  teatteri: ["theater", "theatre", "broadway", "musical"],
+  // Reise
+  matka: ["travel", "journey", "adventure", "destination"],
+  seikkailu: ["adventure", "expedition", "explorer"],
+  selviytyminen: ["survival", "wilderness", "survivor"],
+  // Helse
+  lääkäri: ["doctor", "medical", "hospital"],
+  sairaala: ["hospital", "medical", "emergency"],
+  lääketiede: ["medicine", "medical"],
+  psykologia: ["psychology", "mental health", "therapy"],
+  // Økonomi
+  talous: ["finance", "economy", "wall street"],
+  sijoittaminen: ["investment", "stock market", "trading"],
+  // Historie
+  historia: ["history", "historical", "ancient"],
+  sota: ["war", "military", "world war", "battle"],
 };
 
 async function searchKeywordsForTerms(terms: string[]): Promise<number[]> {
