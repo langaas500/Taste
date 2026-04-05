@@ -46,7 +46,7 @@ export default function Nav() {
   const [isFoundingMember, setIsFoundingMember] = useState(false);
   const [isPremium, setIsPremium] = useState(true);
   const locale = useLocale();
-  const [region, setRegion] = useState<string>("no");
+  const [region, setRegion] = useState<string>("en");
   const [showAuthWall, setShowAuthWall] = useState(false);
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function Nav() {
   useEffect(() => {
     fetch("/api/together/ribbon")
       .then((r) => r.json())
-      .then((data) => { if (data.region) { const r = data.region as string; setRegion(["no", "se", "dk", "fi"].includes(r) ? r : "no"); } })
+      .then((data) => { if (data.region) { const r = data.region as string; setRegion(["no", "se", "dk", "fi", "en"].includes(r) ? r : "en"); } })
       .catch(() => {});
   }, []);
 
