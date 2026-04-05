@@ -93,7 +93,8 @@ export default function Nav() {
     { href: "/together", label: s.together, icon: ICONS.together },
     { href: "/search", label: s.search, icon: ICONS.search },
     { href: "/library", label: s.library, icon: ICONS.library, authRequired: true },
-    { href: "/taste", label: s.profile, icon: ICONS.profile, authRequired: true, isProfile: true },
+    { href: "/premium", label: s.premium, icon: ICONS.premium, badge: isPremium ? "PRO" : "✨", authRequired: true },
+    { href: "/settings", label: s.settings, icon: ICONS.settings, authRequired: true },
   ];
 
   function isActive(href: string) {
@@ -125,16 +126,9 @@ export default function Nav() {
                 className="flex flex-col items-center justify-center py-1 px-2 min-w-[56px]"
                 style={{ textDecoration: "none" }}
               >
-                {item.isProfile && avatarUrl && !isGuest ? (
-                  <div className="w-6 h-6 rounded-full overflow-hidden" style={{ border: active ? `2px solid ${RED}` : "2px solid transparent" }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  </div>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={active ? 2 : 1.5} stroke={active ? RED : "#666"}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-                  </svg>
-                )}
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={active ? 2 : 1.5} stroke={active ? RED : "#666"}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                </svg>
                 <span className="text-[9px] mt-0.5 font-medium" style={{ color: active ? RED : "#666" }}>{item.label}</span>
               </Link>
             );
