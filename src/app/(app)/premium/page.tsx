@@ -7,6 +7,7 @@ import PremiumModal from "@/components/PremiumModal";
 import StreamingModal from "@/components/StreamingModal";
 import { useLocale } from "@/hooks/useLocale";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
+import type { Locale } from "@/lib/i18n";
 
 /* ── Types ───────────────────────────────────────────── */
 
@@ -25,24 +26,187 @@ interface TonightPickData {
   solo: boolean;
 }
 
-interface CoupleReport {
-  compatibility_score: number | null;
-  total_matches: number;
-  top_genre: string | null;
-  streak: number;
-}
+/* ── i18n ─────────────────────────────────────────────── */
 
-/* ── Inline icons ─────────────────────────────────────── */
+const strings = {
+  no: {
+    pageTitle: "Premium",
+    tonightPick: "Tonight's Pick",
+    newPick: "Ny pick",
+    watchNow: "Se nå →",
+    match: "match",
+    curatorTitle: "Curator AI",
+    curatorDesc: "Din personlige filmrådgiver",
+    curatorCta: "Åpne Curator →",
+    recTitle: "Anbefalinger",
+    recDesc: "Filmer tilpasset din smak",
+    recCta: "Se anbefalinger →",
+    wrappedTitle: "Wrapped",
+    wrappedDesc: "Din månedlige filmoppsummering",
+    wrappedCta: "Se Wrapped →",
+    tasteTitle: "Smaksreise",
+    tasteDesc: "Se hvordan smaken din utvikler seg",
+    tasteCta: "Se reisen →",
+    coupleTitle: "Par-rapport",
+    coupleDesc: "Kompatibilitet og matchhistorikk",
+    coupleCta: "Se rapport →",
+    foundingTitle: "Founding Member",
+    foundingDesc: (d: string) => `Medlem siden ${d}`,
+    foundingFallback: "Takk for at du er tidlig ute",
+    partnerBanner: "Partneren din får Premium gratis",
+    partnerHas: (name: string) => `${name} har Premium`,
+    invitePartner: "Inviter partner",
+    upgradeCta: "Lås opp →",
+    lockedDesc: "Oppgrader for å få tilgang",
+    heroTitle: "Slutt å krangle om hva dere skal se.",
+    heroCta: "Bli Founding Member",
+    startPremium: "Start Premium",
+    forBoth: "for dere begge.",
+    spotsLeft: (n: number) => `Kun ${n} plasser igjen`,
+  },
+  en: {
+    pageTitle: "Premium",
+    tonightPick: "Tonight's Pick",
+    newPick: "New pick",
+    watchNow: "Watch now →",
+    match: "match",
+    curatorTitle: "Curator AI",
+    curatorDesc: "Your personal film advisor",
+    curatorCta: "Open Curator →",
+    recTitle: "Recommendations",
+    recDesc: "Movies matched to your taste",
+    recCta: "See recommendations →",
+    wrappedTitle: "Wrapped",
+    wrappedDesc: "Your monthly film summary",
+    wrappedCta: "See Wrapped →",
+    tasteTitle: "Taste Evolution",
+    tasteDesc: "See how your taste evolves",
+    tasteCta: "See journey →",
+    coupleTitle: "Couple Report",
+    coupleDesc: "Compatibility and match history",
+    coupleCta: "See report →",
+    foundingTitle: "Founding Member",
+    foundingDesc: (d: string) => `Member since ${d}`,
+    foundingFallback: "Thanks for being early",
+    partnerBanner: "Your partner gets Premium free",
+    partnerHas: (name: string) => `${name} has Premium`,
+    invitePartner: "Invite partner",
+    upgradeCta: "Unlock →",
+    lockedDesc: "Upgrade to access",
+    heroTitle: "Stop arguing about what to watch.",
+    heroCta: "Become Founding Member",
+    startPremium: "Start Premium",
+    forBoth: "for both of you.",
+    spotsLeft: (n: number) => `Only ${n} spots left`,
+  },
+  dk: {
+    pageTitle: "Premium",
+    tonightPick: "Tonight's Pick",
+    newPick: "Nyt pick",
+    watchNow: "Se nu →",
+    match: "match",
+    curatorTitle: "Curator AI",
+    curatorDesc: "Din personlige filmrådgiver",
+    curatorCta: "Åbn Curator →",
+    recTitle: "Anbefalinger",
+    recDesc: "Film tilpasset din smag",
+    recCta: "Se anbefalinger →",
+    wrappedTitle: "Wrapped",
+    wrappedDesc: "Din månedlige filmoversigt",
+    wrappedCta: "Se Wrapped →",
+    tasteTitle: "Smagsrejse",
+    tasteDesc: "Se hvordan din smag udvikler sig",
+    tasteCta: "Se rejsen →",
+    coupleTitle: "Parrapport",
+    coupleDesc: "Kompatibilitet og matchhistorik",
+    coupleCta: "Se rapport →",
+    foundingTitle: "Founding Member",
+    foundingDesc: (d: string) => `Medlem siden ${d}`,
+    foundingFallback: "Tak fordi du var tidligt ude",
+    partnerBanner: "Din partner får Premium gratis",
+    partnerHas: (name: string) => `${name} har Premium`,
+    invitePartner: "Inviter partner",
+    upgradeCta: "Lås op →",
+    lockedDesc: "Opgrader for adgang",
+    heroTitle: "Stop med at skændes om hvad I skal se.",
+    heroCta: "Bliv Founding Member",
+    startPremium: "Start Premium",
+    forBoth: "for jer begge.",
+    spotsLeft: (n: number) => `Kun ${n} pladser tilbage`,
+  },
+  se: {
+    pageTitle: "Premium",
+    tonightPick: "Tonight's Pick",
+    newPick: "Nytt pick",
+    watchNow: "Se nu →",
+    match: "match",
+    curatorTitle: "Curator AI",
+    curatorDesc: "Din personliga filmrådgivare",
+    curatorCta: "Öppna Curator →",
+    recTitle: "Rekommendationer",
+    recDesc: "Filmer anpassade till din smak",
+    recCta: "Se rekommendationer →",
+    wrappedTitle: "Wrapped",
+    wrappedDesc: "Din månatliga filmsammanfattning",
+    wrappedCta: "Se Wrapped →",
+    tasteTitle: "Smakresa",
+    tasteDesc: "Se hur din smak utvecklas",
+    tasteCta: "Se resan →",
+    coupleTitle: "Parrapport",
+    coupleDesc: "Kompatibilitet och matchhistorik",
+    coupleCta: "Se rapport →",
+    foundingTitle: "Founding Member",
+    foundingDesc: (d: string) => `Medlem sedan ${d}`,
+    foundingFallback: "Tack för att du var tidig",
+    partnerBanner: "Din partner får Premium gratis",
+    partnerHas: (name: string) => `${name} har Premium`,
+    invitePartner: "Bjud in partner",
+    upgradeCta: "Lås upp →",
+    lockedDesc: "Uppgradera för tillgång",
+    heroTitle: "Sluta bråka om vad ni ska se.",
+    heroCta: "Bli Founding Member",
+    startPremium: "Starta Premium",
+    forBoth: "för er båda.",
+    spotsLeft: (n: number) => `Endast ${n} platser kvar`,
+  },
+  fi: {
+    pageTitle: "Premium",
+    tonightPick: "Tonight's Pick",
+    newPick: "Uusi valinta",
+    watchNow: "Katso nyt →",
+    match: "osuma",
+    curatorTitle: "Curator AI",
+    curatorDesc: "Henkilökohtainen elokuvaneuvojasi",
+    curatorCta: "Avaa Curator →",
+    recTitle: "Suositukset",
+    recDesc: "Elokuvat makuusi sopiviksi",
+    recCta: "Katso suositukset →",
+    wrappedTitle: "Wrapped",
+    wrappedDesc: "Kuukausittainen elokuvayhteenveto",
+    wrappedCta: "Katso Wrapped →",
+    tasteTitle: "Makumatka",
+    tasteDesc: "Katso miten makusi kehittyy",
+    tasteCta: "Katso matka →",
+    coupleTitle: "Pariraportti",
+    coupleDesc: "Yhteensopivuus ja osumahistoria",
+    coupleCta: "Katso raportti →",
+    foundingTitle: "Founding Member",
+    foundingDesc: (d: string) => `Jäsen alkaen ${d}`,
+    foundingFallback: "Kiitos että olit ajoissa",
+    partnerBanner: "Kumppanisi saa Premiumin ilmaiseksi",
+    partnerHas: (name: string) => `${name} on Premium`,
+    invitePartner: "Kutsu kumppani",
+    upgradeCta: "Avaa →",
+    lockedDesc: "Päivitä pääsyä varten",
+    heroTitle: "Lopeta riitely siitä mitä katsotte.",
+    heroCta: "Liity Founding Memberiksi",
+    startPremium: "Aloita Premium",
+    forBoth: "teille molemmille.",
+    spotsLeft: (n: number) => `Vain ${n} paikkaa jäljellä`,
+  },
+} as const;
 
-function StarIcon({ color = "#E8A830", size = 16 }: { color?: string; size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-    </svg>
-  );
-}
-
-/* ── Main page ────────────────────────────────────────── */
+/* ── Page ────────────────────────────────────────────── */
 
 export default function PremiumHubPage() {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
@@ -52,25 +216,14 @@ export default function PremiumHubPage() {
   const [isFoundingAvailable, setIsFoundingAvailable] = useState(true);
   const [tonightPick, setTonightPick] = useState<TonightPickData | null>(null);
   const [tpRerolling, setTpRerolling] = useState(false);
-  const [coupleReport, setCoupleReport] = useState<CoupleReport | null>(null);
   const [partnerName, setPartnerName] = useState<string | null>(null);
   const [foundingDate, setFoundingDate] = useState<string | null>(null);
-  const [showPartnerInvite, setShowPartnerInvite] = useState(false);
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
-  const [inviteLoading, setInviteLoading] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
-  const [heroPosters, setHeroPosters] = useState<string[]>([]);
   const [profileName, setProfileName] = useState<string | null>(null);
   const [profileTitleCount, setProfileTitleCount] = useState<number | null>(null);
   const [selectedTitle, setSelectedTitle] = useState<{ id: number; type: "movie" | "tv"; title: string; poster_path: string | null } | null>(null);
   const locale = useLocale();
+  const s = strings[locale] ?? strings.en;
 
-  useEffect(() => {
-    createSupabaseBrowser().from("titles_cache").select("poster_path").not("poster_path", "is", null).limit(30)
-      .then(({ data }) => { if (data) setHeroPosters(data.map((r: { poster_path: string }) => r.poster_path)); });
-  }, []);
-
-  // Override global bg-taste.jpg on premium page
   useEffect(() => {
     document.body.classList.add("premium-bg-override");
     return () => { document.body.classList.remove("premium-bg-override"); };
@@ -86,19 +239,13 @@ export default function PremiumHubPage() {
         if (d.profile?.title_count != null) setProfileTitleCount(d.profile.title_count);
         if (d.profile?.premium_since) {
           const date = new Date(d.profile.premium_since);
-          setFoundingDate(date.toLocaleDateString(locale === "no" ? "nb-NO" : locale === "se" ? "sv-SE" : locale === "dk" ? "da-DK" : "en-US", { day: "numeric", month: "long", year: "numeric" }));
+          const dateLocale = locale === "no" ? "nb-NO" : locale === "se" ? "sv-SE" : locale === "dk" ? "da-DK" : locale === "fi" ? "fi-FI" : "en-US";
+          setFoundingDate(date.toLocaleDateString(dateLocale, { day: "numeric", month: "long", year: "numeric" }));
         }
-        if (premium && !localStorage.getItem("logflix_partner_invite_shown")) {
-          setShowPartnerInvite(true);
-          localStorage.setItem("logflix_partner_invite_shown", "1");
-        }
-        if (premium) {
-          loadPremiumData();
-        }
+        if (premium) loadPremiumData();
       })
       .catch(() => setIsPremium(false));
 
-    // Fetch dynamic pricing
     fetch("/api/pricing")
       .then((r) => r.json())
       .then((d) => {
@@ -111,409 +258,224 @@ export default function PremiumHubPage() {
   }, []);
 
   async function loadPremiumData() {
-    const [tpRes, reportRes, friendsRes] = await Promise.all([
+    const [tpRes, friendsRes] = await Promise.all([
       fetch("/api/tonight-pick").then(r => r.json()).catch(() => null),
-      fetch("/api/couple-report").then(r => r.json()).catch(() => null),
       fetch("/api/friends/titles").then(r => r.json()).catch(() => null),
     ]);
     if (tpRes && !tpRes.error) setTonightPick(tpRes);
-    if (reportRes && !reportRes.error) setCoupleReport(reportRes);
     if (friendsRes?.friendName) setPartnerName(friendsRes.friendName);
   }
-
-  useEffect(() => {
-    if (!showPartnerInvite || inviteCode) return;
-    setInviteLoading(true);
-    fetch("/api/links", { method: "POST" })
-      .then(r => r.json())
-      .then(d => { if (d.link?.invite_code) setInviteCode(d.link.invite_code); })
-      .catch(() => {})
-      .finally(() => setInviteLoading(false));
-  }, [showPartnerInvite, inviteCode]);
 
   async function handleReroll() {
     setTpRerolling(true);
     try {
       const res = await fetch("/api/tonight-pick", { method: "POST" });
       if (res.ok) setTonightPick(await res.json());
-    } catch {}
+    } catch { /* ignore */ }
     setTpRerolling(false);
   }
 
+  // Loading skeleton
   if (isPremium === null) {
     return (
-      <div className="animate-fade-in-up max-w-3xl mx-auto space-y-6">
-        <div className="skeleton h-32 rounded-2xl" />
-        <div className="skeleton h-48 rounded-2xl" />
-        <div className="grid grid-cols-3 gap-3">
-          {[1,2,3].map(i => <div key={i} className="skeleton h-32 rounded-2xl" />)}
+      <div className="animate-fade-in-up max-w-3xl mx-auto space-y-4">
+        <div className="skeleton h-20 rounded-2xl" />
+        <div className="grid grid-cols-2 gap-3">
+          {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="skeleton h-36 rounded-2xl" />)}
         </div>
       </div>
     );
   }
 
-  /* ── NON-PREMIUM VIEW ──────────────────────────────── */
-  if (!isPremium) {
-    return (
-      <div className="animate-fade-in-up max-w-2xl mx-auto relative">
-        <style>{`
-          @keyframes border-rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-          @keyframes pulse-cta { 0%,100% { box-shadow: 0 0 30px rgba(229,9,20,0.3); } 50% { box-shadow: 0 0 50px rgba(229,9,20,0.5); } }
-          @keyframes poster-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        `}</style>
-
-        {/* Animated poster drift background — fullscreen behind everything */}
-        {heroPosters.length > 0 && (
-          <div className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
-            <div style={{ display: "flex", gap: 8, height: "100%", width: "max-content", animation: "poster-drift 60s linear infinite" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              {[...heroPosters, ...heroPosters].map((p, i) => (
-                <img key={i} src={`https://image.tmdb.org/t/p/w185${p}`} alt="" style={{ width: 80, height: "100%", objectFit: "cover", opacity: 0.08, filter: "blur(3px)", flexShrink: 0 }} />
-              ))}
+  /* ── Feature card helper ── */
+  function FeatureCard({ href, icon, title, desc, cta, locked, gold }: {
+    href: string; icon: React.ReactNode; title: string; desc: string; cta: string; locked?: boolean; gold?: boolean;
+  }) {
+    const content = (
+      <div
+        className="group relative rounded-2xl p-5 flex flex-col gap-3 transition-all duration-200 h-full"
+        style={{
+          background: "rgba(255,255,255,0.03)",
+          border: gold ? "1px solid rgba(255,184,0,0.25)" : "1px solid rgba(255,255,255,0.06)",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.transform = "translateY(0)"; }}
+      >
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{
+          background: gold ? "rgba(255,184,0,0.1)" : "rgba(255,42,42,0.08)",
+          border: gold ? "1px solid rgba(255,184,0,0.25)" : "1px solid rgba(255,42,42,0.15)",
+        }}>
+          {icon}
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-bold text-white/90 mb-1">{title}</p>
+          <p className="text-xs text-white/40 leading-relaxed">{desc}</p>
+        </div>
+        <p className="text-xs font-semibold" style={{ color: gold ? "#FFB800" : "#ff2a2a" }}>{cta}</p>
+        {locked && (
+          <div className="absolute inset-0 rounded-2xl flex items-center justify-center" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(2px)" }}>
+            <div className="text-center">
+              <span className="text-lg">🔒</span>
+              <p className="text-[10px] text-white/40 mt-1">{s.lockedDesc}</p>
             </div>
-            <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 80% at 50% 50%, transparent 20%, rgba(10,10,15,0.95) 100%)" }} />
           </div>
         )}
+      </div>
+    );
+    if (locked) return <div className="cursor-pointer" onClick={() => setShowModal(true)}>{content}</div>;
+    return <Link href={href} style={{ textDecoration: "none" }}>{content}</Link>;
+  }
 
-        {/* Hero */}
-        <div className="relative rounded-2xl overflow-hidden mb-8"
-          style={{ border: "1px solid rgba(229,9,20,0.3)", boxShadow: "0 0 40px rgba(229,9,20,0.15)" }}>
-          <div className="relative z-10 p-8">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3" style={{ color: "rgba(229,9,20,0.85)" }}>Logflix Par</p>
-            <h1 className="text-3xl font-black text-white tracking-tight mb-2">
-              {locale === "no" ? "Slutt å krangle om hva dere skal se." : "Stop arguing about what to watch."}
-            </h1>
-            <p className="text-base text-white/50 mb-6">
-              {priceLabel ? `${priceLabel} — ${locale === "no" ? "for dere begge." : "for both of you."}` : "\u00A0"}
-            </p>
-            <button onClick={() => setShowModal(true)}
-              className="px-8 py-4 rounded-xl text-sm font-bold text-white cursor-pointer transition-all duration-200"
-              style={{ background: "linear-gradient(135deg, #E50914, #82060c)", animation: "pulse-cta 2.5s ease-in-out infinite" }}>
-              {isFoundingAvailable
-                ? `${locale === "no" ? "Bli Founding Member" : "Become Founding Member"} — ${priceLabel || "..."} →`
-                : `${locale === "no" ? "Start Premium" : "Start Premium"} — ${priceLabel || "..."} →`}
+  const isLocked = !isPremium;
+
+  // Get current month for wrapped link
+  const now = new Date();
+  const wrappedSlug = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  return (
+    <div className="animate-fade-in-up mx-auto pb-8" style={{ maxWidth: 720 }}>
+
+      {/* ── NON-PREMIUM: Upgrade hero ── */}
+      {!isPremium && (
+        <div className="rounded-2xl overflow-hidden mb-6 relative" style={{ border: "1px solid rgba(229,9,20,0.25)", background: "rgba(255,255,255,0.02)" }}>
+          <div className="p-6">
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-2" style={{ color: "#E50914" }}>Logflix Premium</p>
+            <h1 className="text-xl font-extrabold text-white tracking-tight mb-2">{s.heroTitle}</h1>
+            <p className="text-sm text-white/40 mb-4">{priceLabel ? `${priceLabel} — ${s.forBoth}` : "\u00A0"}</p>
+            <button onClick={() => setShowModal(true)} className="px-6 py-3 rounded-xl text-sm font-bold text-white cursor-pointer transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #E50914, #82060c)" }}>
+              {isFoundingAvailable ? `${s.heroCta} — ${priceLabel || "..."} →` : `${s.startPremium} — ${priceLabel || "..."} →`}
             </button>
             {isFoundingAvailable && spotsLeft !== null && spotsLeft <= 100 && (
-              <p className="mt-3 text-xs font-semibold" style={{ color: "rgba(255,42,42,0.7)" }}>
-                {locale === "no" ? `Kun ${spotsLeft} plasser igjen` : locale === "dk" ? `Kun ${spotsLeft} pladser tilbage` : locale === "se" ? `Endast ${spotsLeft} platser kvar` : locale === "fi" ? `Vain ${spotsLeft} paikkaa jäljellä` : `Only ${spotsLeft} spots left`}
-              </p>
+              <p className="mt-2 text-xs font-semibold" style={{ color: "rgba(255,42,42,0.7)" }}>{s.spotsLeft(spotsLeft)}</p>
             )}
           </div>
         </div>
+      )}
 
-        {/* Verdi-punkter */}
-        <div className="grid grid-cols-1 gap-4 mb-8">
-          {[
-            {
-              icon: "🎬",
-              title: locale === "no" ? "Tonight's Pick — hver kveld" : "Tonight's Pick — every evening",
-              desc: locale === "no" ? "Én film og én serie, kuratert for smaken din. Klar hver dag." : "One movie and one series, curated for your taste. Ready every day.",
-              gold: true,
-            },
-            {
-              icon: "🤖",
-              title: locale === "no" ? "Curator kjenner smaken din" : "Curator knows your taste",
-              desc: locale === "no" ? "Spør om hva som helst — stemning, skuespiller, sjanger. Ubegrenset." : "Ask anything — mood, actor, genre. Unlimited.",
-              gold: false,
-            },
-            {
-              icon: "💑",
-              title: locale === "no" ? "Partneren din får det gratis" : "Your partner gets it for free",
-              desc: locale === "no" ? "Én betaler. Begge har full tilgang. 14,50 kr per person." : "One pays. Both get full access. 7 NOK per person.",
-              gold: false,
-            },
-          ].map((item) => (
-            <div key={item.title} className="flex items-start gap-4 p-5 rounded-2xl"
-              style={{ background: "rgba(255,255,255,0.03)", border: item.gold ? "0.5px solid rgba(232,168,48,0.2)" : "0.5px solid rgba(255,255,255,0.06)" }}>
-              <span className="text-2xl flex-shrink-0">{item.icon}</span>
-              <div>
-                <p className="text-sm font-bold text-white/90 mb-1">{item.title}</p>
-                <p className="text-xs text-white/45 leading-relaxed">{item.desc}</p>
+      {/* ── SECTION 1: Tonight's Pick (compact) ── */}
+      {isPremium && tonightPick && (tonightPick.movie || tonightPick.series) && (() => {
+        const pick = tonightPick.movie || tonightPick.series;
+        if (!pick) return null;
+        return (
+          <div className="rounded-2xl mb-6 flex items-center gap-4 p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", maxHeight: 120 }}>
+            {/* Poster */}
+            {pick.poster_path && (
+              <div className="relative flex-shrink-0 rounded-lg overflow-hidden cursor-pointer" style={{ width: 60, height: 90 }}
+                onClick={() => setSelectedTitle({ id: pick.tmdb_id, type: pick.type as "movie" | "tv", title: pick.title, poster_path: pick.poster_path })}>
+                <Image src={`https://image.tmdb.org/t/p/w185${pick.poster_path}`} alt={pick.title} fill className="object-cover" sizes="60px" />
               </div>
-              {item.gold && <StarIcon color="#E8A830" size={14} />}
+            )}
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-white/30 mb-1">{s.tonightPick}</p>
+              <p className="text-sm font-bold text-white/90 truncate">{pick.title}</p>
+              {pick.match_score != null && (
+                <p className="text-[11px] mt-0.5" style={{ color: "#FFB800" }}>★ {pick.match_score}% {s.match}</p>
+              )}
             </div>
-          ))}
-        </div>
-
-        {/* Blurret Tonight's Pick preview */}
-        <div className="relative rounded-2xl overflow-hidden p-6 mb-8"
-          style={{ background: "rgba(255,255,255,0.02)", border: "0.5px solid rgba(232,168,48,0.15)" }}>
-          <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "rgba(232,168,48,0.6)" }}>
-            {locale === "no" ? "Tonight's Pick — forhåndsvisning" : "Tonight's Pick — preview"}
-          </p>
-          <div className="flex gap-4">
-            {[{ label: locale === "no" ? "🎬 Film i kveld" : "🎬 Movie tonight" }, { label: locale === "no" ? "📺 Serie i kveld" : "📺 Series tonight" }].map((item) => (
-              <div key={item.label} className="flex-1 rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.06)" }}>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/30 mb-2">{item.label}</p>
-                <div className="w-full rounded-lg mb-2" style={{ aspectRatio: "2/3", background: "rgba(255,255,255,0.05)", filter: "blur(4px)" }} />
-                <div className="h-2 rounded bg-white/10 mb-1" style={{ filter: "blur(3px)" }} />
-                <div className="h-2 rounded bg-white/5 w-2/3" style={{ filter: "blur(3px)" }} />
-              </div>
-            ))}
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center rounded-2xl"
-            style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(2px)" }}>
-            <div className="text-center">
-              <p className="text-sm font-bold text-white mb-1">🔒 {locale === "no" ? "Låst for Founding Members" : "Locked for Founding Members"}</p>
-              <button onClick={() => setShowModal(true)}
-                className="mt-3 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                style={{ background: "rgba(232,168,48,0.15)", border: "0.5px solid rgba(232,168,48,0.4)", color: "#E8A830" }}>
-                {locale === "no" ? "Lås opp" : "Unlock"} — {priceLabel || "..."}
-              </button>
+            {/* Actions */}
+            <div className="flex flex-col gap-2 flex-shrink-0">
+              <button
+                onClick={() => setSelectedTitle({ id: pick.tmdb_id, type: pick.type as "movie" | "tv", title: pick.title, poster_path: pick.poster_path })}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition-all hover:opacity-90"
+                style={{ background: "#ff2a2a" }}
+              >{s.watchNow}</button>
+              <button onClick={handleReroll} disabled={tpRerolling}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-white/40 transition-all hover:text-white/60"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+              >{tpRerolling ? "..." : `↻ ${s.newPick}`}</button>
             </div>
           </div>
-        </div>
+        );
+      })()}
 
-        <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} source="premium_hub" userName={profileName} titleCount={profileTitleCount} />
-      </div>
-    );
-  }
-
-  /* ── PREMIUM VIEW ──────────────────────────────────── */
-  return (
-    <div className="animate-fade-in-up mx-auto relative" style={{ maxWidth: 960 }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@1&display=swap');
-        @keyframes poster-drift-p { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        @keyframes card-shine { 0% { transform: translateX(-100%) skewX(-15deg); } 100% { transform: translateX(200%) skewX(-15deg); } }
-        .premium-card { position: relative; overflow: hidden; border: 1px solid rgba(212,168,83,0.2); }
-        .premium-card::after { content: ""; position: absolute; top: 0; left: 0; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(212,168,83,0.08), transparent); animation: card-shine 4s ease-in-out infinite; pointer-events: none; }
-        @keyframes poster-shine { 0%,60% { transform: translateX(-100%) skewX(-15deg); } 80% { transform: translateX(200%) skewX(-15deg); } 100% { transform: translateX(200%) skewX(-15deg); } }
-        .poster-shine { position: relative; overflow: hidden; border: 1px solid rgba(212,168,83,0.25); }
-        .poster-shine::after { content: ""; position: absolute; top: 0; left: 0; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(212,168,83,0.12), transparent); animation: poster-shine 5s ease-in-out infinite; pointer-events: none; z-index: 1; }
-      `}</style>
-
-
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: 28 }}>
-
-        {/* 1. Hero image with Tonight's Pick overlay */}
-        <div style={{ position: "relative" }}>
-          <Link href="/together" style={{ textDecoration: "none", display: "block" }}>
-            <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", borderRadius: 20, overflow: "hidden" }}>
-              <Image src="/couple-hero.jpg" alt="Par som ser film" fill className="object-cover" sizes="100vw" priority />
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.55) 100%)" }} />
-              {/* Tonight's Pick heading on image */}
-              {/* Tonight's Pick heading + film/serie cards overlay */}
-              <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", padding: "20px 24px 24px", gap: 12 }}>
-                {/* Tonight's Pick heading — top */}
-                <h1 style={{
-                  fontFamily: "'DM Serif Display', Georgia, serif",
-                  fontStyle: "italic",
-                  fontWeight: 400,
-                  fontSize: "clamp(32px, 6vw, 52px)",
-                  textAlign: "center",
-                  lineHeight: 1.1,
-                  margin: 0,
-                  color: "#fff",
-                  textShadow: "0 0 20px rgba(212,168,83,0.4), 0 0 60px rgba(212,168,83,0.2), 0 4px 12px rgba(0,0,0,0.8)",
-                  WebkitFontSmoothing: "antialiased",
-                  MozOsxFontSmoothing: "grayscale",
-                }}>
-                  Tonight&apos;s Pick
-                </h1>
-
-                {/* Film + Pick again + Serie cards — under heading */}
-                <div style={{ display: "flex", gap: 20, alignItems: "flex-end" }}>
-                  {tonightPick?.movie && (
-                    <div style={{ textAlign: "center", maxWidth: 120, cursor: "pointer" }}
-                      onClick={(e) => { e.preventDefault(); setSelectedTitle({ id: tonightPick.movie!.tmdb_id, type: tonightPick.movie!.type as "movie" | "tv", title: tonightPick.movie!.title, poster_path: tonightPick.movie!.poster_path }); }}>
-                      {tonightPick.movie.poster_path && (
-                        <div style={{ position: "relative", width: 80, height: 120, borderRadius: 8, margin: "0 auto 8px", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }} className="poster-shine">
-                          <Image src={`https://image.tmdb.org/t/p/w185${tonightPick.movie.poster_path}`} alt={tonightPick.movie.title} fill className="object-cover" sizes="80px" />
-                        </div>
-                      )}
-                      <p style={{ fontSize: 11, fontWeight: 700, color: "#fff", margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.8)" }} className="truncate">{tonightPick.movie.title}</p>
-                      {tonightPick.movie.match_score != null && (
-                        <p style={{ fontSize: 10, color: "#D4A853", fontWeight: 600, margin: "2px 0 0", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>★ {tonightPick.movie.match_score}%</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Pick again button */}
-                  <button onClick={(e) => { e.preventDefault(); handleReroll(); }} disabled={tpRerolling}
-                    style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, padding: "8px 14px", cursor: "pointer", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 40, transition: "all 0.2s", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
-                    {tpRerolling ? "..." : `↻ ${locale === "no" ? "Ny pick" : "New pick"}`}
-                  </button>
-
-                  {tonightPick?.series && (
-                    <div style={{ textAlign: "center", maxWidth: 120, cursor: "pointer" }}
-                      onClick={(e) => { e.preventDefault(); setSelectedTitle({ id: tonightPick.series!.tmdb_id, type: tonightPick.series!.type as "movie" | "tv", title: tonightPick.series!.title, poster_path: tonightPick.series!.poster_path }); }}>
-                      {tonightPick.series.poster_path && (
-                        <div style={{ position: "relative", width: 80, height: 120, borderRadius: 8, margin: "0 auto 8px", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }} className="poster-shine">
-                          <Image src={`https://image.tmdb.org/t/p/w185${tonightPick.series.poster_path}`} alt={tonightPick.series.title} fill className="object-cover" sizes="80px" />
-                        </div>
-                      )}
-                      <p style={{ fontSize: 11, fontWeight: 700, color: "#fff", margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.8)" }} className="truncate">{tonightPick.series.title}</p>
-                      {tonightPick.series.match_score != null && (
-                        <p style={{ fontSize: 10, color: "#D4A853", fontWeight: 600, margin: "2px 0 0", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>★ {tonightPick.series.match_score}%</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-
-        {/* Partner invite button */}
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <button
-            onClick={() => setShowPartnerInvite(true)}
-            style={{ background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(212,168,83,0.25)", borderRadius: 999, padding: "10px 24px", cursor: "pointer", transition: "all 0.2s ease" }}
-            onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(212,168,83,0.1)"; el.style.borderColor = "rgba(212,168,83,0.4)"; }}
-            onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.05)"; el.style.borderColor = "rgba(212,168,83,0.25)"; }}
-          >
-            <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>
-              {partnerName
-                ? <>{partnerName} {locale === "no" ? "har" : "has"} <span style={{ color: "#D4A853" }}>Premium</span></>
-                : <>{locale === "no" ? "Partneren får" : "Partner gets"} <span style={{ color: "#D4A853" }}>Premium</span> {locale === "no" ? "gratis" : "free"}</>
-              }
-            </span>
-          </button>
-        </div>
-
-        {/* 3. 4-column feature grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 14 }} className="sm:grid-cols-4!">
-
-          {/* Curator AI */}
-          <Link href="/curator" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 18, padding: "22px 18px", display: "flex", flexDirection: "column", gap: 14, transition: "all 0.2s ease", cursor: "pointer", height: "100%" }} className="premium-card"
-              onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.07)"; el.style.transform = "translateY(-2px)"; }}
-              onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.04)"; el.style.transform = "translateY(0)"; }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, rgba(212,168,83,0.15), rgba(212,168,83,0.05))", border: "0.5px solid rgba(212,168,83,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#gold1)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <defs><linearGradient id="gold1" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stopColor="#E8C86A"/><stop offset="100%" stopColor="#C4944A"/></linearGradient></defs>
-                  <path d="M12 3c.5 0 2.5 4 2.5 4s4.5.5 4.5 1-3 3.5-3 3.5.5 4.5 0 4.5-3.5-2.5-4-2.5-3.5 3-4 2.5.5-4.5 0-4.5-3-3-3-3.5 4.5-1 4.5-1S11.5 3 12 3z"/>
-                  <circle cx="12" cy="12" r="3" strokeWidth="1.2"/>
-                  <path d="M12 2v2M12 20v2M2 12h2M20 12h2" strokeWidth="1" opacity="0.5"/>
-                </svg>
-              </div>
-              <div>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>Curator AI</p>
-                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: "6px 0 0", lineHeight: 1.4 }}>
-                  {locale === "no" ? "Ubegrenset AI-filmrådgiver som kjenner smaken din." : "Unlimited AI film advisor that knows your taste."}
-                </p>
-              </div>
-            </div>
-          </Link>
-
-          {/* Smaksprofil */}
-          <Link href="/taste" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 18, padding: "22px 18px", display: "flex", flexDirection: "column", gap: 14, transition: "all 0.2s ease", cursor: "pointer", height: "100%" }} className="premium-card"
-              onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.07)"; el.style.transform = "translateY(-2px)"; }}
-              onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.04)"; el.style.transform = "translateY(0)"; }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, rgba(212,168,83,0.15), rgba(212,168,83,0.05))", border: "0.5px solid rgba(212,168,83,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#gold2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <defs><linearGradient id="gold2" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stopColor="#E8C86A"/><stop offset="100%" stopColor="#C4944A"/></linearGradient></defs>
-                  <circle cx="12" cy="12" r="9"/>
-                  <path d="M12 8v4l2.5 1.5"/>
-                  <path d="M8.5 3.5L7 2M15.5 3.5L17 2" strokeWidth="1.2"/>
-                  <path d="M16.5 16.5l1.5 1.5M7.5 16.5L6 18" opacity="0.4"/>
-                </svg>
-              </div>
-              <div>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>{locale === "no" ? "Smaksprofil" : "Taste Profile"}</p>
-                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: "6px 0 0", lineHeight: 1.4 }}>
-                  {locale === "no" ? "AI-analyse av din filmsmak og foretrekkinger." : "AI analysis of your film taste and preferences."}
-                </p>
-              </div>
-            </div>
-          </Link>
-
-          {/* Par-rapport */}
-          <Link href="/couple-report" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 18, padding: "22px 18px", display: "flex", flexDirection: "column", gap: 14, transition: "all 0.2s ease", cursor: "pointer", height: "100%" }} className="premium-card"
-              onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.07)"; el.style.transform = "translateY(-2px)"; }}
-              onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.04)"; el.style.transform = "translateY(0)"; }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, rgba(212,168,83,0.15), rgba(212,168,83,0.05))", border: "0.5px solid rgba(212,168,83,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <defs><linearGradient id="gold3" x1="4" y1="4" x2="20" y2="20"><stop offset="0%" stopColor="#E8C86A"/><stop offset="100%" stopColor="#C4944A"/></linearGradient></defs>
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="url(#gold3)" fill="url(#gold3)" fillOpacity="0.15"/>
-                </svg>
-              </div>
-              <div>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>{locale === "no" ? "Par-rapport" : "Couple Report"}</p>
-                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: "6px 0 0", lineHeight: 1.4 }}>
-                  {locale === "no" ? "Kompatibilitet og matchhistorikk for dere." : "Compatibility and match history for you both."}
-                </p>
-              </div>
-            </div>
-          </Link>
-
-          {/* Founding Member */}
-          <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 18, padding: "22px 18px", display: "flex", flexDirection: "column", gap: 14, transition: "all 0.2s ease", cursor: "pointer", height: "100%" }} className="premium-card"
-            onClick={() => setShowPartnerInvite(true)}
-            onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.07)"; el.style.transform = "translateY(-2px)"; }}
-            onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.04)"; el.style.transform = "translateY(0)"; }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, rgba(212,168,83,0.2), rgba(212,168,83,0.08))", border: "0.5px solid rgba(212,168,83,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <defs><linearGradient id="gold4" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stopColor="#F0D67B"/><stop offset="100%" stopColor="#C4944A"/></linearGradient></defs>
-                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6L12 2z" stroke="url(#gold4)" fill="url(#gold4)" fillOpacity="0.2"/>
-              </svg>
-            </div>
-            <div>
-              <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>Founding Member</p>
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", margin: "6px 0 0", lineHeight: 1.4 }}>
-                {foundingDate
-                  ? (locale === "no" ? `Medlem siden ${foundingDate}` : `Member since ${foundingDate}`)
-                  : (locale === "no" ? "Inviter partneren din." : "Invite your partner.")}
-              </p>
-            </div>
+      {/* Non-premium: blurred Tonight's Pick */}
+      {!isPremium && (
+        <div className="rounded-2xl mb-6 flex items-center gap-4 p-4 relative overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", maxHeight: 120 }}>
+          <div className="flex-shrink-0 rounded-lg" style={{ width: 60, height: 90, background: "rgba(255,255,255,0.05)", filter: "blur(4px)" }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-white/30 mb-1">{s.tonightPick}</p>
+            <div className="h-3 rounded bg-white/10 mb-1 w-3/4" style={{ filter: "blur(3px)" }} />
+            <div className="h-2 rounded bg-white/5 w-1/2" style={{ filter: "blur(3px)" }} />
           </div>
-
-        </div>
-
-      </div>
-
-      {/* Partner invite modal */}
-      {showPartnerInvite && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowPartnerInvite(false)} />
-          <div className="relative w-full max-w-sm rounded-2xl p-6 text-center"
-            style={{ background: "rgba(20,20,20,0.98)", backdropFilter: "blur(30px)", border: "0.5px solid rgba(232,168,48,0.3)", boxShadow: "0 0 60px rgba(232,168,48,0.1)" }}>
-            <p className="text-lg font-bold text-white mb-2">
-              {locale === "no" ? "Inviter partneren din 💑" : "Invite your partner 💑"}
-            </p>
-            <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.5)" }}>
-              {locale === "no" ? "Du har betalt — nå kan partneren din få premium gratis. Del lenken:" : "You've paid — now your partner can get premium for free. Share the link:"}
-            </p>
-            {inviteLoading ? (
-              <p className="text-xs mb-6" style={{ color: "rgba(255,255,255,0.3)" }}>{locale === "no" ? "Genererer lenke..." : "Generating link..."}</p>
-            ) : inviteCode ? (
-              <div className="flex flex-col gap-3 mb-6">
-                {(() => {
-                  const inviteUrl = `https://logflix.app/settings?invite=${inviteCode}`;
-                  const shareText = locale === "no"
-                    ? `Jeg har Logflix Premium! Bruk denne lenken for å koble kontoen din og få premium gratis: ${inviteUrl}`
-                    : `I have Logflix Premium! Use this link to connect your account and get premium for free: ${inviteUrl}`;
-                  return (
-                    <>
-                      <a href={`sms:?body=${encodeURIComponent(shareText)}`}
-                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white"
-                        style={{ background: "linear-gradient(135deg, #34C759, #28a745)" }}>
-                        {locale === "no" ? "Send iMessage" : "Send iMessage"}
-                      </a>
-                      <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white"
-                        style={{ background: "linear-gradient(135deg, #25D366, #128C7E)" }}>
-                        {locale === "no" ? "Send WhatsApp" : "Send WhatsApp"}
-                      </a>
-                      <button onClick={async () => { await navigator.clipboard.writeText(inviteUrl); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); }}
-                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold border"
-                        style={{ background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.8)" }}>
-                        {linkCopied ? (locale === "no" ? "Kopiert!" : "Copied!") : (locale === "no" ? "Kopier lenke" : "Copy link")}
-                      </button>
-                    </>
-                  );
-                })()}
-              </div>
-            ) : null}
-            <button onClick={() => setShowPartnerInvite(false)} className="text-xs transition-colors" style={{ color: "rgba(255,255,255,0.3)" }}>
-              {locale === "no" ? "Gjør dette senere" : "Do this later"}
+          <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }}>
+            <button onClick={() => setShowModal(true)} className="px-3 py-1.5 rounded-lg text-[11px] font-bold" style={{ background: "rgba(255,184,0,0.15)", border: "1px solid rgba(255,184,0,0.3)", color: "#FFB800" }}>
+              🔒 {s.upgradeCta}
             </button>
           </div>
         </div>
       )}
+
+      {/* ── SECTION 2: Feature grid ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+        <FeatureCard
+          href="/curator"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff2a2a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3c.5 0 2.5 4 2.5 4s4.5.5 4.5 1-3 3.5-3 3.5.5 4.5 0 4.5-3.5-2.5-4-2.5-3.5 3-4 2.5.5-4.5 0-4.5-3-3-3-3.5 4.5-1 4.5-1S11.5 3 12 3z"/><circle cx="12" cy="12" r="3" strokeWidth="1.2"/></svg>}
+          title={s.curatorTitle}
+          desc={s.curatorDesc}
+          cta={s.curatorCta}
+          locked={isLocked}
+        />
+        <FeatureCard
+          href="/recommendations"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff2a2a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/><path d="M18 5l.5 1.5L20 7l-1.5.5L18 9l-.5-1.5L16 7l1.5-.5L18 5z" strokeWidth="1.2"/></svg>}
+          title={s.recTitle}
+          desc={s.recDesc}
+          cta={s.recCta}
+          locked={isLocked}
+        />
+        <FeatureCard
+          href={`/wrapped/${wrappedSlug}`}
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff2a2a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8v12M3 12h18M12 8c-2 0-4-2.5-4-4s2-2 4 0 4-2 4 0-2 4-4 4z"/></svg>}
+          title={s.wrappedTitle}
+          desc={s.wrappedDesc}
+          cta={s.wrappedCta}
+          locked={isLocked}
+        />
+        <FeatureCard
+          href="/taste-evolution"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff2a2a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>}
+          title={s.tasteTitle}
+          desc={s.tasteDesc}
+          cta={s.tasteCta}
+          locked={isLocked}
+        />
+        <FeatureCard
+          href="/couple-report"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff2a2a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>}
+          title={s.coupleTitle}
+          desc={s.coupleDesc}
+          cta={s.coupleCta}
+          locked={isLocked}
+        />
+        {/* Founding Member — gold accent, no lock */}
+        <div className="rounded-2xl p-5 flex flex-col gap-3 h-full" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,184,0,0.2)" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,184,0,0.1)", border: "1px solid rgba(255,184,0,0.25)" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFB800" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold mb-1" style={{ color: "#FFB800" }}>{s.foundingTitle}</p>
+            <p className="text-xs text-white/40 leading-relaxed">
+              {isPremium && foundingDate ? s.foundingDesc(foundingDate) : isPremium ? s.foundingFallback : s.lockedDesc}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── SECTION 3: Partner banner ── */}
+      <div className="rounded-2xl p-4 flex items-center justify-between" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex items-center gap-3">
+          <span className="text-lg">💑</span>
+          <p className="text-sm text-white/60">
+            {partnerName ? s.partnerHas(partnerName) : s.partnerBanner}
+          </p>
+        </div>
+        {!partnerName && isPremium && (
+          <Link href="/settings" className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-90" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)", textDecoration: "none" }}>
+            {s.invitePartner}
+          </Link>
+        )}
+      </div>
 
       <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} source="premium_hub" userName={profileName} titleCount={profileTitleCount} />
 
