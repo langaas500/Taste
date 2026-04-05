@@ -56,8 +56,8 @@ export default function FilmerMedKjaerestenPage() {
       <SeoGuideLayout
         locale="no"
         h1="Filmer å se med kjæresten"
-        heroSubtitle="Slutt å krangle om hva dere skal se. Sveip hver for dere og finn noe dere begge faktisk vil se."
-        ctaText="Prøv Se Sammen — gratis"
+        heroSubtitle={`"Du velger." Så du gjør det. "Hmm, kanskje noe annet." Kjent?`}
+        ctaText="Slutt å gjette. Finn noe på 3 minutter."
         trustLine="Gratis · 3 minutter · Ingen app · Ingen konto"
         relatedLinks={[
           { href: "/en/what-to-watch-together", label: "What to watch together (English)" },
@@ -73,18 +73,26 @@ export default function FilmerMedKjaerestenPage() {
             Filmkveld-loopen alle kjenner
           </h2>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>
-            Du spør hva hen vil se. &quot;Hva som helst.&quot; Du foreslår noe. &quot;Hmm, kanskje noe annet.&quot; Etter 30 minutter med scrolling ender dere opp med å se Friends for tredje gang. Filmkvelden er over før den begynte.
+            &laquo;Hva skal vi se?&raquo;
+            <br />&laquo;Hva som helst.&raquo;
           </p>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>
-            Problemet er ikke smaken deres. Det er prosessen. Å foreslå filmer ansikt til ansikt legger press på hvert forslag — ingen vil skyte ned den andres ide, så begge spiller det trygt.
+            Så du foreslår noe. Pause.
+            <br />&laquo;Kanskje noe annet.&raquo;
+            <br />Du prøver igjen. Samme reaksjon.
+            <br />Til slutt ser dere Friends. Igjen.
+          </p>
+          <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>
+            Det er ikke smaken.
+            <br />Det er prosessen. Å foreslå ansikt til ansikt gjør hvert valg til en test.
           </p>
           <ul style={{ paddingLeft: 20, margin: "0 0 12px" }}>
             {[
-              "For mange valg spredt over Netflix, HBO Max, Disney+, Viaplay og TV 2 Play",
-              "Å foreslå en film føles som en test du kan feile",
-              "\"Hva som helst\" betyr egentlig \"velg noe jeg også liker, men jeg sier ikke hva\"",
-              "Dere unngår egne favoritter fordi dere er usikre på om den andre liker det",
-              "Dere defaulter til å se noe om igjen fordi det er det eneste trygge valget",
+              "Du foreslår noe — den andre nøler. Nå føler du deg avvist.",
+              "Den andre foreslår noe — du sier kanskje. Nå slutter de å prøve.",
+              "\"Hva som helst\" betyr \"velg noe jeg liker, men jeg sier ikke hva\"",
+              "Dere holder tilbake favorittene fordi avslag stikker",
+              "Dere ser noe om igjen fordi det er tryggere enn å feile",
             ].map((item) => (
               <li key={item} style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 6 }}>{item}</li>
             ))}
@@ -93,18 +101,18 @@ export default function FilmerMedKjaerestenPage() {
 
         <section style={{ marginBottom: 32 }}>
           <h2 style={{ color: "#ffffff", fontSize: "1.1rem", fontWeight: 700, marginBottom: 12 }}>
-            Sveip hver for dere — finn overlappen
+            Dere foreslår ikke. Dere forhandler ikke. Dere matcher.
           </h2>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 16 }}>
-            Se Sammen fjerner forhandlingen helt. Begge sveiper gjennom filmer og serier på egen telefon. Ingen ser hva den andre velger. Når likesene overlapper — det er matchen deres.
+            Begge sveiper på egen telefon. Ingen ser hva den andre velger. Når likesene overlapper — det er det dere ser. Ingen forslag. Ingen veto. Ingen &laquo;er du sikker?&raquo;
           </p>
           <ol style={{ paddingLeft: 20, margin: 0, marginBottom: 16 }}>
             {[
-              { title: "Åpne logflix.app/together", desc: "Ingen app, ingen konto. Funker i alle nettlesere." },
-              { title: "Velg strømmetjenester", desc: "Huk av Netflix, Disney+, HBO Max, Viaplay — det dere har. Bare tilgjengelige titler vises." },
-              { title: "Del koden", desc: "Kjæresten scanner QR-koden eller taster inn 6-bokstavskoden. Koblet på sekunder." },
-              { title: "Sveip uavhengig", desc: "25 titler hver. Høyre = interessert, venstre = nei takk. Ingen ser den andres valg." },
-              { title: "Se matchen", desc: "Bare titler dere BEGGE likte vises. Trykk for å åpne i Netflix, HBO eller hvor den strømmes." },
+              { title: "Åpne logflix.app/together", desc: "Ingen app. Ingen konto. Bare åpne." },
+              { title: "Velg tjenester", desc: "Netflix, HBO, Disney+, Viaplay — det dere har. Dere ser bare det som faktisk er tilgjengelig." },
+              { title: "Send koden", desc: "6 bokstaver. Kjæresten er koblet på sekunder." },
+              { title: "Sveip privat", desc: "25 titler. Høyre = ja, venstre = nei. Ingen ser hva du velger." },
+              { title: "Se overlappen", desc: "Bare det dere BEGGE likte. Trykk for å se." },
             ].map((step, i) => (
               <li key={i} style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 10 }}>
                 <strong style={{ color: "rgba(255,255,255,0.75)" }}>{step.title}.</strong> {step.desc}
@@ -112,22 +120,22 @@ export default function FilmerMedKjaerestenPage() {
             ))}
           </ol>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7 }}>
-            Hele greia tar 2–5 minutter. Dere ser bare det dere begge vil se — ingen kompromiss, ingen diskusjon.
+            3 minutter. Dere ser bare det dere begge vil ha.
           </p>
         </section>
 
         <section style={{ marginBottom: 32 }}>
           <h2 style={{ color: "#ffffff", fontSize: "1.1rem", fontWeight: 700, marginBottom: 12 }}>
-            Par-favoritter som funker for begge
+            Lav risiko — dere sier ja til disse
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {[
-              { title: "Forbrytelse", year: 2024, type: "Serie", note: "Norsk thriller som holder dere begge våkne. Kort og intens." },
-              { title: "Anatomie d'une chute", year: 2023, type: "Film", note: "Rettsdrama som trigger diskusjon etterpå. Perfekt filmkveld-valg." },
-              { title: "The Bear", year: 2022, type: "Serie", note: "Intenst, kort episoder, og overraskende følelsesladet. Vanskelig å stoppe." },
-              { title: "Past Lives", year: 2023, type: "Film", note: "Stille og vakker. Ideell for en romantisk kveld." },
-              { title: "Shogun", year: 2024, type: "Serie", note: "Episk fortelling med fantastisk visuelt uttrykk. For par som liker slow-burn." },
-              { title: "Saltburn", year: 2023, type: "Film", note: "Mørk, visuell og uforutsigbar. Dere vil snakke om den etterpå." },
+              { title: "Forbrytelse", year: 2024, type: "Serie", note: "Norsk, kort, intens. Enkelt ja fra begge. Dere ser den ferdig i kveld." },
+              { title: "Anatomie d'une chute", year: 2023, type: "Film", note: "Dere kommer til å diskutere etterpå. Det er hele poenget." },
+              { title: "The Bear", year: 2022, type: "Serie", note: "20 minutter per episode. Lav terskel å starte, umulig å stoppe." },
+              { title: "Past Lives", year: 2023, type: "Film", note: "For en rolig kveld. Ikke kjedelig — bare stille på den gode måten." },
+              { title: "Shogun", year: 2024, type: "Serie", note: "Trygt valg som ikke føles trygt. Visuelt, stort, og dere vil fortsette." },
+              { title: "Saltburn", year: 2023, type: "Film", note: "Litt uforutsigbar, litt mørk. Dere snakker om den etterpå — garantert." },
             ].map((pick) => (
               <div key={pick.title} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "14px 16px" }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
@@ -140,8 +148,12 @@ export default function FilmerMedKjaerestenPage() {
           </div>
         </section>
 
-        <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 32 }}>
-          Den beste filmkvelden er når dere begge faktisk vil se det som er på skjermen. La Se Sammen finne overlappen — uten krangling, uten kompromiss.
+        <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, fontWeight: 600, lineHeight: 1.6, marginBottom: 8 }}>
+          Den beste filmen er ikke den du velger.
+          <br />Det er den dere begge sier ja til.
+        </p>
+        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, lineHeight: 1.7, marginBottom: 32 }}>
+          Slutt å foreslå. Slutt å gjette. Bare match.
         </p>
 
         <FaqSection title="Vanlige spørsmål" items={faqItems} />
