@@ -6,6 +6,7 @@ import Link from "next/link";
 import PremiumModal from "@/components/PremiumModal";
 import StreamingModal from "@/components/StreamingModal";
 import { track } from "@/lib/posthog";
+import { toggleFavorite } from "@/lib/api";
 import { buildAffiliateUrl, hasAffiliate } from "@/lib/affiliate";
 import type { Locale } from "@/lib/i18n";
 import { useLocale } from "@/hooks/useLocale";
@@ -369,6 +370,7 @@ export default function CuratorPage() {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const [showPremium, setShowPremium] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<{ tmdb_id: number; type: "movie" | "tv"; title: string; poster_path: string | null } | null>(null);
+  const [favs, setFavs] = useState<Record<string, boolean>>({});
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [followUps, setFollowUps] = useState<string[]>([]);
@@ -743,6 +745,13 @@ export default function CuratorPage() {
           title={selectedMovie.title}
           posterPath={selectedMovie.poster_path}
           onClose={() => setSelectedMovie(null)}
+          isFavorite={!!favs[`${selectedMovie.tmdb_id}:${selectedMovie.type}`]}
+          onToggleFavorite={() => {
+            const key = `${selectedMovie.tmdb_id}:${selectedMovie.type}`;
+            const newVal = !favs[key];
+            setFavs((p) => ({ ...p, [key]: newVal }));
+            toggleFavorite(selectedMovie.tmdb_id, selectedMovie.type, newVal);
+          }}
         />
       )}
 

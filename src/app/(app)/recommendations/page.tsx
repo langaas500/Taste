@@ -9,7 +9,7 @@ import StreamingModal from "@/components/StreamingModal";
 import AddToListModal from "@/components/AddToListModal";
 import ConversionWall from "@/components/ConversionWall";
 import PremiumModal from "@/components/PremiumModal";
-import { submitFeedback, addExclusion, logTitle } from "@/lib/api";
+import { submitFeedback, addExclusion, logTitle, toggleFavorite } from "@/lib/api";
 import { prefetchNetflixIds } from "@/lib/prefetch-netflix-ids";
 import type { Recommendation, MediaType } from "@/lib/types";
 import { useLocale } from "@/hooks/useLocale";
@@ -170,6 +170,7 @@ export default function RecommendationsPage() {
   const [isPremium, setIsPremium] = useState(true); // default true to avoid flash
   const [showWall, setShowWall] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [favs, setFavs] = useState<Record<string, boolean>>({});
   const [profileName, setProfileName] = useState<string | null>(null);
   const [profileTitleCount, setProfileTitleCount] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -730,6 +731,13 @@ export default function RecommendationsPage() {
           title={selectedItem.title}
           posterPath={selectedItem.poster_path}
           onClose={() => setSelectedItem(null)}
+          isFavorite={!!favs[`${selectedItem.id}:${selectedItem.type}`]}
+          onToggleFavorite={() => {
+            const key = `${selectedItem.id}:${selectedItem.type}`;
+            const newVal = !favs[key];
+            setFavs((p) => ({ ...p, [key]: newVal }));
+            toggleFavorite(selectedItem.id, selectedItem.type, newVal);
+          }}
           actions={[
             { label: "👍 Likte", action: "liked", variant: "green" },
             { label: "👎 Mislikte", action: "disliked", variant: "red" },

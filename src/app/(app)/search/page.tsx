@@ -8,7 +8,7 @@ import AddToListModal from "@/components/AddToListModal";
 import AdvancedSearchPanel from "@/components/AdvancedSearchPanel";
 import ConversionWall from "@/components/ConversionWall";
 import GlowButton from "@/components/GlowButton";
-import { logTitle } from "@/lib/api";
+import { logTitle, toggleFavorite } from "@/lib/api";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { useGuestMode } from "@/hooks/useGuestMode";
 import { useLocale } from "@/hooks/useLocale";
@@ -342,6 +342,7 @@ export default function SearchPage() {
   const [userRegion, setUserRegion] = useState("US");
   const [actionStates, setActionStates] = useState<Record<string, string>>({});
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
+  const [favs, setFavs] = useState<Record<string, boolean>>({});
   const [addToListItem, setAddToListItem] = useState<{ id: number; type: MediaType; title: string } | null>(null);
 
   // Advanced search state
@@ -1137,6 +1138,13 @@ export default function SearchPage() {
           title={selectedItem.title}
           posterPath={selectedItem.poster_path}
           onClose={() => setSelectedItem(null)}
+          isFavorite={!!favs[`${selectedItem.id}:${selectedItem.type}`]}
+          onToggleFavorite={() => {
+            const key = `${selectedItem.id}:${selectedItem.type}`;
+            const newVal = !favs[key];
+            setFavs((p) => ({ ...p, [key]: newVal }));
+            toggleFavorite(selectedItem.id, selectedItem.type, newVal);
+          }}
           actions={[
             { label: s.likedAction, action: "liked", variant: "green" },
             { label: s.dislikedAction, action: "disliked", variant: "red" },

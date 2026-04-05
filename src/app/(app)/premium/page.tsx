@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import PremiumModal from "@/components/PremiumModal";
 import StreamingModal from "@/components/StreamingModal";
+import { toggleFavorite } from "@/lib/api";
 import { useLocale } from "@/hooks/useLocale";
 import type { Locale } from "@/lib/i18n";
 
@@ -208,6 +209,7 @@ export default function PremiumHubPage() {
   const [profileName, setProfileName] = useState<string | null>(null);
   const [profileTitleCount, setProfileTitleCount] = useState<number | null>(null);
   const [selectedTitle, setSelectedTitle] = useState<{ id: number; type: "movie" | "tv"; title: string; poster_path: string | null } | null>(null);
+  const [favs, setFavs] = useState<Record<string, boolean>>({});
   const locale = useLocale();
   const s = strings[locale] ?? strings.en;
 
@@ -409,6 +411,13 @@ export default function PremiumHubPage() {
           title={selectedTitle.title}
           posterPath={selectedTitle.poster_path}
           onClose={() => setSelectedTitle(null)}
+          isFavorite={!!favs[`${selectedTitle.id}:${selectedTitle.type}`]}
+          onToggleFavorite={() => {
+            const key = `${selectedTitle.id}:${selectedTitle.type}`;
+            const newVal = !favs[key];
+            setFavs((p) => ({ ...p, [key]: newVal }));
+            toggleFavorite(selectedTitle.id, selectedTitle.type, newVal);
+          }}
         />
       )}
     </div>

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import StreamingModal from "@/components/StreamingModal";
-import { logTitle } from "@/lib/api";
+import { logTitle, toggleFavorite } from "@/lib/api";
 import { createSupabaseBrowser, fetchCacheForTitles } from "@/lib/supabase-browser";
 import { prefetchNetflixIds } from "@/lib/prefetch-netflix-ids";
 import type { UserTitle, TitleCache, MediaType, Recommendation } from "@/lib/types";
@@ -427,6 +427,7 @@ export default function HomePage() {
   const [returningBanner, setReturningBanner] = useState<{ type: "day3" | "day7" } | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [wrappedCount, setWrappedCount] = useState(0);
+  const [favs, setFavs] = useState<Record<string, boolean>>({});
   const [logStreak, setLogStreak] = useState(0);
   const [showImportPopup, setShowImportPopup] = useState(false);
   const [importDismissChecked, setImportDismissChecked] = useState(false);
@@ -540,6 +541,11 @@ export default function HomePage() {
     const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
     const thisMonthCount = userTitles.filter((t) => t.status === "watched" && (t.updated_at || "") >= monthStart).length;
     setWrappedCount(thisMonthCount);
+
+    // Build favorites map
+    const favMap: Record<string, boolean> = {};
+    for (const t of userTitles) if (t.favorite) favMap[`${t.tmdb_id}:${t.type}`] = true;
+    setFavs(favMap);
 
     // Logging streak: count consecutive days with at least one logged title
     {
@@ -1221,6 +1227,13 @@ export default function HomePage() {
           title={selectedItem.title}
           posterPath={selectedItem.poster_path}
           onClose={() => setSelectedItem(null)}
+          isFavorite={!!favs[`${selectedItem.id}:${selectedItem.type}`]}
+          onToggleFavorite={() => {
+            const key = `${selectedItem.id}:${selectedItem.type}`;
+            const newVal = !favs[key];
+            setFavs((p) => ({ ...p, [key]: newVal }));
+            toggleFavorite(selectedItem.id, selectedItem.type, newVal);
+          }}
           actions={[
             { label: s.liked, action: "liked", variant: "green" },
             { label: s.disliked, action: "disliked", variant: "red" },
