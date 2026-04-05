@@ -5,17 +5,22 @@ import { tmdbSearch, tmdbSearchKeywords, tmdbDiscover } from "@/lib/tmdb";
 // Norwegian topic terms → English search terms for title + keyword search
 const TOPIC_MAP: Record<string, string[]> = {
   // Bolig & oppussing
-  oppussing: ["renovation", "home improvement", "house flipping", "fixer upper", "home makeover"],
+  oppussing: ["renovation", "home improvement", "house flipping", "fixer upper", "home makeover", "property brothers", "grand designs"],
   oppuss: ["renovation", "home improvement", "home makeover"],
-  renovering: ["renovation", "remodel", "restore"],
+  renovering: ["renovation", "remodel", "restore", "home renovation"],
   snekker: ["carpenter", "woodworking", "construction", "building"],
   snekkeri: ["carpentry", "woodworking"],
-  "interiør": ["interior design", "home decoration", "home design"],
-  "interiørdesign": ["interior design"],
-  hage: ["garden", "gardening", "garden makeover"],
-  hagearbeid: ["gardening", "landscape"],
-  bolig: ["real estate", "house", "home improvement", "property"],
-  eiendom: ["real estate", "property", "house hunting"],
+  "interiør": ["interior design", "home decoration", "home design", "interior"],
+  "interiørdesign": ["interior design", "home decor"],
+  hage: ["garden", "gardening", "garden makeover", "landscape"],
+  hagearbeid: ["gardening", "landscape", "garden rescue"],
+  bolig: ["real estate", "house", "home improvement", "property", "tiny house"],
+  eiendom: ["real estate", "property", "house hunting", "million dollar listing"],
+  livsstil: ["lifestyle", "home improvement", "cooking", "makeover", "reality"],
+  "hjemme hos": ["home makeover", "celebrity home", "house tour"],
+  "rom for": ["room makeover", "home renovation"],
+  bygge: ["building", "construction", "home renovation"],
+  ombygging: ["renovation", "remodel", "home makeover", "extreme makeover"],
 
   // Bil & mekanikk
   bil: ["car", "automobile", "car restoration", "car show"],

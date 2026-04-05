@@ -108,6 +108,18 @@ export async function GET() {
     // Always add "Popular now" at the end
     calls.push(tmdbDiscover("movie", { sort_by: "popularity.desc", "vote_count.gte": "300" }));
 
+    // Lifestyle & Renovation row — keyword-based to catch reality/home shows
+    // TMDB keyword IDs: 1376=renovation, 5765=home improvement, 156216=house flipping,
+    // 6522=interior design, 15289=home makeover, 2685=cooking, 5009=garden
+    const lifestyleKeywords = "1376,5765,156216,6522,15289,2685,5009";
+    calls.push(
+      tmdbDiscover("tv", {
+        with_keywords: lifestyleKeywords,
+        sort_by: "popularity.desc",
+        "vote_count.gte": "10",
+      })
+    );
+
     const results = await Promise.all(calls);
 
     const rows: DiscoveryRow[] = [
@@ -128,6 +140,16 @@ export async function GET() {
         { key: "drama", label: "Drama", results: ((results[2] as { results?: unknown[] }).results || []).slice(0, 20) },
         { key: "comedy", label: "Komedie", results: ((results[3] as { results?: unknown[] }).results || []).slice(0, 20) },
       );
+    }
+
+    // Lifestyle & Renovation row (second-to-last call result)
+    const lifestyleResults = ((results[results.length - 2] as { results?: unknown[] }).results || []).slice(0, 20);
+    if (lifestyleResults.length > 0) {
+      rows.push({
+        key: "lifestyle",
+        label: "Livsstil & Oppussing",
+        results: lifestyleResults,
+      });
     }
 
     // Popular now (last call result)
