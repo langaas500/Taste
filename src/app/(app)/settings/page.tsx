@@ -591,6 +591,7 @@ function SettingsContent() {
   const [authProvider, setAuthProvider] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const [inviteSuccess, setInviteSuccess] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const traktMsg = searchParams.get("trakt");
   const errorMsg = searchParams.get("error");
@@ -878,7 +879,10 @@ function SettingsContent() {
         </div>
       )}
 
-      {/* ── Profile row (full width) ──────────────────── */}
+      {/* ── SEKSJON 1: Profil ──────────────────────────── */}
+      <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-white/40 mb-3">
+        {locale === "no" ? "Profil" : locale === "dk" ? "Profil" : locale === "se" ? "Profil" : locale === "fi" ? "Profiili" : "Profile"}
+      </h2>
       <div className={glassCard} style={glassCardStyle}>
         <p className={sectionLabel}>{s.profile}</p>
         <p className={sectionDesc}>{s.profileDesc}</p>
@@ -940,8 +944,11 @@ function SettingsContent() {
         </div>
       </div>
 
-      {/* ── Email & Password (side by side) ─────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      {/* ── SEKSJON 2: Konto ─────────────────────────── */}
+      <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-white/40 mb-3 mt-8">
+        {locale === "no" ? "Konto" : locale === "dk" ? "Konto" : locale === "se" ? "Konto" : locale === "fi" ? "Tili" : "Account"}
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Change email — hidden for OAuth users */}
         {authProvider !== "google" && (
           <div className={glassCard} style={glassCardStyle}>
@@ -1008,12 +1015,11 @@ function SettingsContent() {
         )}
       </div>
 
-      {/* ── 2-column grid ─────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-
-        {/* ═══ COLUMN 1 — Core Configuration ═══════════ */}
-        <div className="flex flex-col gap-4">
-
+      {/* ── SEKSJON 3: Preferanser ──────────────────── */}
+      <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-white/40 mb-3 mt-8">
+        {locale === "no" ? "Preferanser" : locale === "dk" ? "Præferencer" : locale === "se" ? "Inställningar" : locale === "fi" ? "Asetukset" : "Preferences"}
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Region */}
           <div className={glassCard} style={glassCardStyle}>
             <p className={sectionLabel}>{s.region}</p>
@@ -1064,6 +1070,74 @@ function SettingsContent() {
             </div>
             {savingLocale && <p className="text-[10px] text-white/40 mt-2">{s.saving}</p>}
           </div>
+      </div>
+
+      {/* ── SEKSJON 4: Abonnement ────────────────────── */}
+      <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-white/40 mb-3 mt-8">
+        {locale === "no" ? "Abonnement" : locale === "dk" ? "Abonnement" : locale === "se" ? "Prenumeration" : locale === "fi" ? "Tilaus" : "Subscription"}
+      </h2>
+      <div className={glassCard} style={glassCardStyle}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              {isPremium ? (
+                <>
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
+                  <span className="text-sm font-semibold text-emerald-400">
+                    {isFoundingMember ? "Founding Member" : "Premium"}
+                  </span>
+                </>
+              ) : (
+                <span className="text-sm font-medium text-white/50">
+                  {locale === "no" ? "Gratis plan" : locale === "dk" ? "Gratis plan" : locale === "se" ? "Gratisplan" : locale === "fi" ? "Ilmainen" : "Free plan"}
+                </span>
+              )}
+            </div>
+            {isPremium && premiumSince && (
+              <p className="text-[10px] text-white/30">
+                {locale === "no" ? "Medlem siden" : locale === "dk" ? "Medlem siden" : locale === "se" ? "Medlem sedan" : locale === "fi" ? "Jäsen alkaen" : "Member since"}{" "}
+                {new Date(premiumSince).toLocaleDateString(locale === "fi" ? "fi-FI" : locale === "se" ? "sv-SE" : locale === "dk" ? "da-DK" : locale === "en" ? "en-US" : "nb-NO", { month: "long", year: "numeric" })}
+              </p>
+            )}
+          </div>
+          {isPremium ? (
+            <a href="/api/stripe/portal" className="text-xs font-semibold px-3 py-2 rounded-xl border border-white/[0.1] text-white/60 hover:text-white hover:border-white/[0.2] transition-all" style={{ textDecoration: "none" }}>
+              {locale === "no" ? "Administrer abonnement" : locale === "dk" ? "Administrer abonnement" : locale === "se" ? "Hantera prenumeration" : locale === "fi" ? "Hallinnoi tilausta" : "Manage subscription"}
+            </a>
+          ) : (
+            <Link href="/premium" className="text-xs font-semibold px-3 py-2 rounded-xl text-white transition-all hover:opacity-90" style={{ background: "#ff2a2a", textDecoration: "none" }}>
+              {locale === "no" ? "Oppgrader →" : locale === "dk" ? "Opgrader →" : locale === "se" ? "Uppgradera →" : locale === "fi" ? "Päivitä →" : "Upgrade →"}
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* ── SEKSJON 5: Avansert (kollapsbar) ─────────── */}
+      <button
+        onClick={() => setAdvancedOpen(!advancedOpen)}
+        className="flex items-center gap-2 mt-8 mb-3 cursor-pointer bg-transparent border-0 p-0"
+      >
+        <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-white/40">
+          {locale === "no" ? "Avansert" : locale === "dk" ? "Avanceret" : locale === "se" ? "Avancerat" : locale === "fi" ? "Lisäasetukset" : "Advanced"}
+        </h2>
+        <svg
+          className="w-3 h-3 text-white/30 transition-transform duration-200"
+          style={{ transform: advancedOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+          fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </svg>
+      </button>
+
+      <div
+        style={{
+          maxHeight: advancedOpen ? "3000px" : "0",
+          overflow: "hidden",
+          transition: "max-height 0.3s ease-in-out",
+          opacity: advancedOpen ? 1 : 0,
+        }}
+      >
+        <div className="flex flex-col gap-4">
 
           {/* Content Filters (Streaming Preferences) */}
           <div className={glassCard} style={glassCardStyle}>
@@ -1278,11 +1352,6 @@ function SettingsContent() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* ═══ COLUMN 2 — Integrations & Account ══════ */}
-        <div className="flex flex-col gap-4">
-
           {/* Trakt */}
           <div className={glassCard} style={glassCardStyle}>
             <p className={sectionLabel}>{s.traktSync}</p>
@@ -1372,42 +1441,41 @@ function SettingsContent() {
             </div>
           </div>
 
-          {/* Legal */}
-          <div className={glassCard} style={glassCardStyle}>
-            <p className={sectionLabel}>{s.legal}</p>
-            <p className={sectionDesc}>{s.legalDesc}</p>
-            <div className="flex gap-3">
-              <a href="/privacy" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">{s.privacy}</a>
-              <a href="/terms" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">{s.terms}</a>
-              <a href="/contact" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">{s.contact}</a>
-            </div>
-          </div>
-
-          {/* Credits / TMDB Attribution */}
-          <div className={glassCard} style={glassCardStyle}>
-            <p className={sectionLabel}>{s.credits}</p>
-            <p className={sectionDesc}>{s.creditsDesc}</p>
-            <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer" className="inline-block mb-3">
-              <img src="/tmdb-logo.svg" alt="TMDB" style={{ height: 16 }} />
-            </a>
-            <p className="text-[10px] text-white/30 leading-relaxed">{s.tmdbNotice}</p>
-          </div>
-
-          {/* Danger Zone */}
-          <div
-            className="rounded-2xl border border-red-500/15 p-5 transition-all duration-200"
-            style={{ ...glassCardStyle, background: "rgba(229,9,20,0.02)" }}
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-red-400/50 mb-1">{s.dangerZone}</p>
-            <p className="text-[12px] text-red-400/30 leading-relaxed mb-4">{s.dangerZoneDesc}</p>
-            <GhostButton onClick={handleSignOut} danger>
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-              </svg>
-              {s.signOut}
-            </GhostButton>
-          </div>
         </div>
+      </div>
+
+      {/* ── SEKSJON 6: Juridisk ──────────────────────── */}
+      <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-white/40 mb-3 mt-8">
+        {locale === "no" ? "Juridisk" : locale === "dk" ? "Juridisk" : locale === "se" ? "Juridiskt" : locale === "fi" ? "Juridinen" : "Legal"}
+      </h2>
+      <div className={glassCard} style={glassCardStyle}>
+        <div className="flex gap-4 flex-wrap">
+          <a href="/privacy" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">{s.privacy}</a>
+          <a href="/terms" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">{s.terms}</a>
+          <a href="/contact" className="text-xs text-white/50 hover:text-[rgba(229,9,20,0.8)] transition-colors font-medium">{s.contact}</a>
+        </div>
+        <div className="mt-3 pt-3 border-t border-white/[0.04]">
+          <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer" className="inline-block mb-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/tmdb-logo.svg" alt="TMDB" style={{ height: 14 }} />
+          </a>
+          <p className="text-[10px] text-white/25 leading-relaxed">{s.tmdbNotice}</p>
+        </div>
+      </div>
+
+      {/* ── SEKSJON 7: Faresone ──────────────────────── */}
+      <div
+        className="rounded-2xl border border-red-500/15 p-5 mt-6 transition-all duration-200"
+        style={{ ...glassCardStyle, background: "rgba(229,9,20,0.02)" }}
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-red-400/50 mb-1">{s.dangerZone}</p>
+        <p className="text-[12px] text-red-400/30 leading-relaxed mb-4">{s.dangerZoneDesc}</p>
+        <GhostButton onClick={handleSignOut} danger>
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+          </svg>
+          {s.signOut}
+        </GhostButton>
       </div>
 
       <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="settings" userName={displayName || null} titleCount={settingsTitleCount} />
