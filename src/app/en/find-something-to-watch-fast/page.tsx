@@ -51,8 +51,8 @@ export default function FindSomethingFastPage() {
       <SeoGuideLayout
         locale="en"
         h1="Find Something to Watch — Fast"
-        heroSubtitle="You have 3 hours free. Don't spend 1 of them scrolling. Match on a movie in under 3 minutes."
-        ctaText="Try Watch Together — free"
+        heroSubtitle="You finally have a free evening. Don't waste it scrolling."
+        ctaText="Pick something before you start scrolling again"
         trustLine="Free · 3 minutes · No app · No login"
         relatedLinks={[
           { href: "/en/what-to-watch-together", label: "What to watch together tonight" },
@@ -66,21 +66,25 @@ export default function FindSomethingFastPage() {
 
         <section style={{ marginBottom: 32 }}>
           <h2 style={{ color: "#ffffff", fontSize: "1.1rem", fontWeight: 700, marginBottom: 12 }}>
-            Why Finding Something Takes So Long
+            Your Evening Is Disappearing
           </h2>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>
-            You have a free evening. The couch is ready. But 25 minutes later you&apos;re still scrolling through Netflix, opening and closing trailers, reading reviews on your phone. The evening is slipping away.
+            You open Netflix. Scroll a bit.
+            <br />Open a trailer. Close it. Too much was spoiled.
+            <br />Check reviews on your phone. Conflicting opinions.
+            <br />Back to scrolling.
           </p>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>
-            Every streaming service is designed to keep you browsing. Autoplay trailers, endless rows, &quot;because you watched&quot; carousels — they optimize for time on platform, not for helping you decide quickly.
+            25 minutes gone. You haven&apos;t watched anything.
+            <br />The apps keep you scrolling. Not deciding.
           </p>
           <ul style={{ paddingLeft: 20, margin: "0 0 12px" }}>
             {[
-              "Streaming apps are designed to make you scroll, not decide",
-              "Titles are scattered across 3-5 different services",
-              "Trailers spoil too much and reviews give conflicting opinions",
-              "When another person is waiting, the pressure makes it worse",
-              "You end up choosing by exhaustion, not excitement",
+              "You scroll past good options waiting for a perfect one",
+              "Titles are spread across 4 different apps",
+              "Trailers spoil, reviews confuse, nothing helps you commit",
+              "Someone else is waiting — now there's pressure too",
+              "You pick something out of exhaustion, not excitement",
             ].map((item) => (
               <li key={item} style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 6 }}>{item}</li>
             ))}
@@ -89,18 +93,18 @@ export default function FindSomethingFastPage() {
 
         <section style={{ marginBottom: 32 }}>
           <h2 style={{ color: "#ffffff", fontSize: "1.1rem", fontWeight: 700, marginBottom: 12 }}>
-            Decide in 3 Minutes — Here&apos;s How
+            3 Minutes. Done Before You Overthink It.
           </h2>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 16 }}>
-            Watch Together cuts through the noise. Two people, same deck of titles, independent swiping. You only see what you both liked. The entire process takes less time than watching one trailer.
+            You don&apos;t browse. You don&apos;t compare. You swipe — fast. Both of you. Separately. You only see what you both liked. Faster than watching one trailer.
           </p>
           <ol style={{ paddingLeft: 20, margin: 0, marginBottom: 16 }}>
             {[
-              { title: "Open logflix.app/together", desc: "Browser-based. No app, no account, no setup." },
-              { title: "Select your streaming services", desc: "Only titles on your selected services appear. No matches you can't actually watch." },
-              { title: "Share the code", desc: "Partner joins via 6-letter code or QR. Takes seconds." },
-              { title: "Swipe 25 titles", desc: "Each person swipes independently. Right = yes, left = no. Quick gut reactions, not research." },
-              { title: "Match revealed", desc: "Mutual likes shown instantly. Tap to open on Netflix, HBO, Disney+, or wherever it streams." },
+              { title: "Open logflix.app/together", desc: "No app. No account. Just go." },
+              { title: "Pick your services", desc: "You only see what you can actually watch tonight." },
+              { title: "Send the code", desc: "6 letters. Your partner joins in seconds." },
+              { title: "Swipe 25 titles", desc: "Right = yes, left = no. Gut reactions. No research." },
+              { title: "Match", desc: "What you both liked. Tap to watch. Done." },
             ].map((step, i) => (
               <li key={i} style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 10 }}>
                 <strong style={{ color: "rgba(255,255,255,0.75)" }}>{step.title}.</strong> {step.desc}
@@ -108,24 +112,24 @@ export default function FindSomethingFastPage() {
             ))}
           </ol>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7 }}>
-            Average time from opening to pressing play: under 5 minutes. Most couples match in Round 1.
+            Most couples match in Round 1. You&apos;re watching something before the popcorn gets cold.
           </p>
         </section>
 
         <section style={{ marginBottom: 32 }}>
           <h2 style={{ color: "#ffffff", fontSize: "1.1rem", fontWeight: 700, marginBottom: 12 }}>
-            Quick Picks That Never Disappoint
+            Instant Yes — No Thinking Required
           </h2>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 16 }}>
-            In a rush? These are universally crowd-pleasing titles that get picked fast on Watch Together:
+            Don&apos;t even want to swipe? Just pick one of these and press play:
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {[
-              { title: "Bullet Train", year: 2022, type: "Movie", note: "Pure fun. Fast, funny, and exactly the kind of movie you can commit to in 2 seconds." },
-              { title: "Reacher", year: 2022, type: "Series", note: "Action comfort food. Low-commitment first episode that hooks both of you." },
-              { title: "The Banshees of Inisherin", year: 2022, type: "Movie", note: "Darkly funny and beautiful. Surprisingly gripping for a movie about a friendship breakup." },
-              { title: "Squid Game", year: 2021, type: "Series", note: "If you haven't seen it yet, this is the night. If you have, season 2 is out." },
-              { title: "Top Gun: Maverick", year: 2022, type: "Movie", note: "The definition of 'just pick something and go.' Crowd-pleasing in the best way." },
+              { title: "Bullet Train", year: 2022, type: "Movie", note: "2-second decision. Fast, dumb fun. Nobody regrets this pick." },
+              { title: "Reacher", year: 2022, type: "Series", note: "One episode to decide. You'll both be in by minute 10." },
+              { title: "The Banshees of Inisherin", year: 2022, type: "Movie", note: "Looks quiet, hits hard. The kind of film you don't expect to love." },
+              { title: "Squid Game", year: 2021, type: "Series", note: "Haven't seen it? Tonight. Already seen it? Season 2." },
+              { title: "Top Gun: Maverick", year: 2022, type: "Movie", note: "Just press play. Zero risk. Maximum popcorn." },
             ].map((pick) => (
               <div key={pick.title} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "14px 16px" }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
@@ -138,8 +142,12 @@ export default function FindSomethingFastPage() {
           </div>
         </section>
 
-        <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.7, marginBottom: 32 }}>
-          Your problem isn&apos;t finding content — streaming services have more than you&apos;ll ever watch. Your problem is deciding. Watch Together solves that in minutes, not hours.
+        <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, fontWeight: 600, lineHeight: 1.6, marginBottom: 8 }}>
+          You don&apos;t need more options.
+          <br />You need to decide faster.
+        </p>
+        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, lineHeight: 1.7, marginBottom: 32 }}>
+          3 minutes. Match. Play.
         </p>
 
         <FaqSection title="Frequently Asked Questions" items={faqItems} />
