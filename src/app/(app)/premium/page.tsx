@@ -293,7 +293,7 @@ export default function PremiumHubPage() {
   }) {
     const content = (
       <div
-        className="group relative rounded-2xl p-5 flex flex-col gap-3 transition-all duration-200 h-full"
+        className="group relative rounded-2xl p-3.5 sm:p-5 flex flex-col gap-2.5 sm:gap-3 transition-all duration-200 h-full"
         style={{
           background: "rgba(255,255,255,0.03)",
           border: gold ? "1px solid rgba(255,184,0,0.25)" : "1px solid rgba(255,255,255,0.06)",
@@ -342,7 +342,7 @@ export default function PremiumHubPage() {
             <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-2" style={{ color: "#E50914" }}>Logflix Premium</p>
             <h1 className="text-xl font-extrabold text-white tracking-tight mb-2">{s.heroTitle}</h1>
             <p className="text-sm text-white/40 mb-4">{priceLabel ? `${priceLabel} — ${s.forBoth}` : "\u00A0"}</p>
-            <button onClick={() => setShowModal(true)} className="px-6 py-3 rounded-xl text-sm font-bold text-white cursor-pointer transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #E50914, #82060c)" }}>
+            <button onClick={() => setShowModal(true)} className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs sm:text-sm font-bold text-white cursor-pointer transition-all hover:opacity-90 text-center" style={{ background: "linear-gradient(135deg, #E50914, #82060c)" }}>
               {isFoundingAvailable ? `${s.heroCta} — ${priceLabel || "..."} →` : `${s.startPremium} — ${priceLabel || "..."} →`}
             </button>
             {isFoundingAvailable && spotsLeft !== null && spotsLeft <= 100 && (
@@ -357,33 +357,33 @@ export default function PremiumHubPage() {
         const pick = tonightPick.movie || tonightPick.series;
         if (!pick) return null;
         return (
-          <div className="rounded-2xl mb-6 flex items-center gap-4 p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", maxHeight: 120 }}>
+          <div className="rounded-2xl mb-6 flex items-center gap-3 p-3 sm:p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
             {/* Poster */}
             {pick.poster_path && (
-              <div className="relative flex-shrink-0 rounded-lg overflow-hidden cursor-pointer" style={{ width: 60, height: 90 }}
+              <div className="relative flex-shrink-0 rounded-lg overflow-hidden cursor-pointer" style={{ width: 52, height: 78 }}
                 onClick={() => setSelectedTitle({ id: pick.tmdb_id, type: pick.type as "movie" | "tv", title: pick.title, poster_path: pick.poster_path })}>
-                <Image src={`https://image.tmdb.org/t/p/w185${pick.poster_path}`} alt={pick.title} fill className="object-cover" sizes="60px" />
+                <Image src={`https://image.tmdb.org/t/p/w185${pick.poster_path}`} alt={pick.title} fill className="object-cover" sizes="52px" />
               </div>
             )}
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-white/30 mb-1">{s.tonightPick}</p>
-              <p className="text-sm font-bold text-white/90 truncate">{pick.title}</p>
+              <p className="text-[9px] font-bold uppercase tracking-wider text-white/30 mb-0.5">{s.tonightPick}</p>
+              <p className="text-xs sm:text-sm font-bold text-white/90 truncate">{pick.title}</p>
               {pick.match_score != null && (
-                <p className="text-[11px] mt-0.5" style={{ color: "#FFB800" }}>★ {pick.match_score}% {s.match}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: "#FFB800" }}>★ {pick.match_score}% {s.match}</p>
               )}
-            </div>
-            {/* Actions */}
-            <div className="flex flex-col gap-2 flex-shrink-0">
-              <button
-                onClick={() => setSelectedTitle({ id: pick.tmdb_id, type: pick.type as "movie" | "tv", title: pick.title, poster_path: pick.poster_path })}
-                className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition-all hover:opacity-90"
-                style={{ background: "#ff2a2a" }}
-              >{s.watchNow}</button>
-              <button onClick={handleReroll} disabled={tpRerolling}
-                className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-white/40 transition-all hover:text-white/60"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
-              >{tpRerolling ? "..." : `↻ ${s.newPick}`}</button>
+              {/* Actions inline on mobile */}
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => setSelectedTitle({ id: pick.tmdb_id, type: pick.type as "movie" | "tv", title: pick.title, poster_path: pick.poster_path })}
+                  className="px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold text-white transition-all hover:opacity-90"
+                  style={{ background: "#ff2a2a" }}
+                >{s.watchNow}</button>
+                <button onClick={handleReroll} disabled={tpRerolling}
+                  className="px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-medium text-white/40 transition-all hover:text-white/60"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                >{tpRerolling ? "..." : `↻ ${s.newPick}`}</button>
+              </div>
             </div>
           </div>
         );
@@ -391,15 +391,15 @@ export default function PremiumHubPage() {
 
       {/* Non-premium: blurred Tonight's Pick */}
       {!isPremium && (
-        <div className="rounded-2xl mb-6 flex items-center gap-4 p-4 relative overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", maxHeight: 120 }}>
-          <div className="flex-shrink-0 rounded-lg" style={{ width: 60, height: 90, background: "rgba(255,255,255,0.05)", filter: "blur(4px)" }} />
+        <div className="rounded-2xl mb-6 flex items-center gap-3 p-3 sm:p-4 relative overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="flex-shrink-0 rounded-lg" style={{ width: 52, height: 78, background: "rgba(255,255,255,0.05)", filter: "blur(4px)" }} />
           <div className="flex-1 min-w-0">
-            <p className="text-[9px] font-bold uppercase tracking-wider text-white/30 mb-1">{s.tonightPick}</p>
+            <p className="text-[9px] font-bold uppercase tracking-wider text-white/30 mb-0.5">{s.tonightPick}</p>
             <div className="h-3 rounded bg-white/10 mb-1 w-3/4" style={{ filter: "blur(3px)" }} />
             <div className="h-2 rounded bg-white/5 w-1/2" style={{ filter: "blur(3px)" }} />
           </div>
           <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }}>
-            <button onClick={() => setShowModal(true)} className="px-3 py-1.5 rounded-lg text-[11px] font-bold" style={{ background: "rgba(255,184,0,0.15)", border: "1px solid rgba(255,184,0,0.3)", color: "#FFB800" }}>
+            <button onClick={() => setShowModal(true)} className="px-3 py-1.5 rounded-lg text-[10px] sm:text-[11px] font-bold" style={{ background: "rgba(255,184,0,0.15)", border: "1px solid rgba(255,184,0,0.3)", color: "#FFB800" }}>
               🔒 {s.upgradeCta}
             </button>
           </div>
@@ -449,7 +449,7 @@ export default function PremiumHubPage() {
           locked={isLocked}
         />
         {/* Founding Member — gold accent, no lock */}
-        <div className="rounded-2xl p-5 flex flex-col gap-3 h-full" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,184,0,0.2)" }}>
+        <div className="rounded-2xl p-3.5 sm:p-5 flex flex-col gap-2.5 sm:gap-3 h-full" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,184,0,0.2)" }}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,184,0,0.1)", border: "1px solid rgba(255,184,0,0.25)" }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFB800" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           </div>
@@ -463,15 +463,15 @@ export default function PremiumHubPage() {
       </div>
 
       {/* ── SECTION 3: Partner banner ── */}
-      <div className="rounded-2xl p-4 flex items-center justify-between" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="flex items-center gap-3">
-          <span className="text-lg">💑</span>
-          <p className="text-sm text-white/60">
+      <div className="rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex items-center gap-2.5">
+          <span className="text-base sm:text-lg">💑</span>
+          <p className="text-xs sm:text-sm text-white/60">
             {partnerName ? s.partnerHas(partnerName) : s.partnerBanner}
           </p>
         </div>
         {!partnerName && isPremium && (
-          <Link href="/settings" className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-90" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)", textDecoration: "none" }}>
+          <Link href="/settings" className="text-[11px] sm:text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-90 flex-shrink-0" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)", textDecoration: "none" }}>
             {s.invitePartner}
           </Link>
         )}
