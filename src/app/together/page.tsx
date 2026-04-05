@@ -3085,7 +3085,7 @@ export default function WTBetaPage() {
       {/* ── Guest signup prompt (bottom-sheet after match) ── */}
       {showGuestSignup && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }} onClick={() => setShowGuestSignup(false)} />
+          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }} onClick={() => { setShowGuestSignup(false); track("guest_signup_dismissed", { method: "backdrop" }); }} />
           <div
             className="relative w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-6 animate-fade-in-up"
             style={{
@@ -3144,7 +3144,7 @@ export default function WTBetaPage() {
               </Link>
               <span style={{ color: "rgba(255,255,255,0.12)" }}>·</span>
               <button
-                onClick={() => { setShowGuestSignup(false); track("guest_signup_dismissed"); }}
+                onClick={() => { setShowGuestSignup(false); track("guest_signup_dismissed", { method: "button" }); }}
                 className="text-xs bg-transparent border-0 cursor-pointer transition-colors hover:text-white/60"
                 style={{ color: "rgba(255,255,255,0.35)" }}
               >
