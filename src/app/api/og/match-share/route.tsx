@@ -4,20 +4,36 @@ import { NextRequest } from "next/server";
 export const runtime = "edge";
 export const revalidate = 3600;
 
-const matchText: Record<string, string> = {
+const matchedOnText: Record<string, string> = {
+  no: "matchet på",
+  en: "matched on",
+  se: "matchade på",
+  dk: "matchede på",
+  fi: "osui kohteeseen",
+};
+
+const foundInText: Record<string, string> = {
+  no: "Funnet på",
+  en: "Found in",
+  se: "Hittad på",
+  dk: "Fundet på",
+  fi: "Löydetty",
+};
+
+const challengeText: Record<string, string> = {
+  no: "Kan dere slå oss?",
+  en: "Can you beat our time?",
+  se: "Kan ni slå oss?",
+  dk: "Kan I slå os?",
+  fi: "Voitteko meidät?",
+};
+
+const fallbackHeading: Record<string, string> = {
   no: "Det er en match! 🎬",
   en: "It's a match! 🎬",
   se: "Det är en match! 🎬",
   dk: "Det er et match! 🎬",
   fi: "Se on match! 🎬",
-};
-
-const bottomText: Record<string, string> = {
-  no: "Finn din neste filmkveld på logflix.app",
-  en: "Find your next movie night at logflix.app",
-  se: "Hitta din nästa filmkväll på logflix.app",
-  dk: "Find din næste filmaften på logflix.app",
-  fi: "Löydä seuraava leffailtasi osoitteessa logflix.app",
 };
 
 export async function GET(req: NextRequest) {
@@ -26,14 +42,20 @@ export async function GET(req: NextRequest) {
   const title = searchParams.get("title") || "Ukjent tittel";
   const poster = searchParams.get("poster") || "";
   const locale = searchParams.get("locale") || "no";
+  const names = searchParams.get("names") || "";
+  const time = searchParams.get("time") || "";
 
   const hasPoster = poster.length > 0;
   const posterUrl = hasPoster
     ? `https://image.tmdb.org/t/p/w780${poster}`
     : "";
 
-  const heading = matchText[locale] || matchText.en;
-  const footer = bottomText[locale] || bottomText.en;
+  const hasNames = names.length > 0;
+  const hasTime = time.length > 0;
+  const heading = hasNames ? names : (fallbackHeading[locale] || fallbackHeading.en);
+  const subHeading = hasNames ? (matchedOnText[locale] || matchedOnText.en) : "";
+  const timeLabel = hasTime ? `${foundInText[locale] || foundInText.en} ${time} ⚡` : "";
+  const challenge = hasTime ? (challengeText[locale] || challengeText.en) : "";
 
   return new ImageResponse(
     (
@@ -131,19 +153,19 @@ export async function GET(req: NextRequest) {
           {/* Middle: spacer */}
           <div style={{ display: "flex", flex: 1 }} />
 
-          {/* Bottom section: match heading + title + footer */}
+          {/* Bottom section: names + title + time + challenge */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: 20,
+              gap: 12,
             }}
           >
-            {/* Match heading */}
+            {/* Names or fallback heading */}
             <div
               style={{
-                fontSize: 52,
+                fontSize: hasNames ? 48 : 52,
                 fontWeight: 800,
                 color: "#ffffff",
                 textAlign: "center",
@@ -152,6 +174,21 @@ export async function GET(req: NextRequest) {
             >
               {heading}
             </div>
+
+            {/* "matchet på" sub-heading (only when names present) */}
+            {subHeading && (
+              <div
+                style={{
+                  fontSize: 28,
+                  fontWeight: 500,
+                  color: "rgba(255,255,255,0.5)",
+                  textAlign: "center",
+                  display: "flex",
+                }}
+              >
+                {subHeading}
+              </div>
+            )}
 
             {/* Title */}
             <div
@@ -163,6 +200,7 @@ export async function GET(req: NextRequest) {
                 lineHeight: 1.15,
                 maxWidth: 900,
                 textShadow: "0 2px 20px rgba(0,0,0,0.7)",
+                marginTop: 8,
               }}
             >
               {title}
@@ -181,7 +219,38 @@ export async function GET(req: NextRequest) {
               }}
             />
 
-            {/* Footer */}
+            {/* Time label */}
+            {timeLabel && (
+              <div
+                style={{
+                  fontSize: 28,
+                  fontWeight: 700,
+                  color: "rgba(255,200,100,0.9)",
+                  textAlign: "center",
+                  marginTop: 8,
+                  display: "flex",
+                }}
+              >
+                {timeLabel}
+              </div>
+            )}
+
+            {/* Challenge text */}
+            {challenge && (
+              <div
+                style={{
+                  fontSize: 26,
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.6)",
+                  textAlign: "center",
+                  display: "flex",
+                }}
+              >
+                {challenge}
+              </div>
+            )}
+
+            {/* Footer: logflix.app/together */}
             <div
               style={{
                 fontSize: 24,
@@ -191,7 +260,7 @@ export async function GET(req: NextRequest) {
                 marginTop: 16,
               }}
             >
-              {footer}
+              logflix.app/together
             </div>
           </div>
         </div>

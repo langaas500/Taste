@@ -746,18 +746,28 @@ export default function WTBetaPage() {
   async function handleShareStory() {
     if (!finalWinner) return;
     try {
+      // Build time string from session start
+      const elapsed = sessionStartTime.current > 0 ? Math.round((Date.now() - sessionStartTime.current) / 1000) : 0;
+      const timeStr = elapsed > 0 && elapsed < 600 ? (elapsed >= 60 ? `${Math.floor(elapsed / 60)}m ${elapsed % 60}s` : `${elapsed}s`) : "";
+
+      // Build names from auth user email prefix
+      const userName = authUser?.email?.split("@")[0] || "";
+
       const params = new URLSearchParams({
         title: finalWinner.title,
         poster: finalWinner.poster_path || "",
         locale,
       });
+      if (userName) params.set("names", userName);
+      if (timeStr) params.set("time", timeStr);
+
       const res = await fetch(`/api/og/match-share?${params}`);
       if (!res.ok) return;
       const blob = await res.blob();
       const file = new File([blob], "logflix-match.png", { type: "image/png" });
       if (typeof navigator !== "undefined" && navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: finalWinner.title });
-        track("match_story_shared", { session_id: sessionId, tmdb_id: finalWinner.tmdb_id, method: "native_share" });
+        track("match_story_shared", { session_id: sessionId, tmdb_id: finalWinner.tmdb_id, method: "native_share", has_names: !!userName, has_time: !!timeStr });
       } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -765,7 +775,7 @@ export default function WTBetaPage() {
         a.download = "logflix-match.png";
         a.click();
         URL.revokeObjectURL(url);
-        track("match_story_shared", { session_id: sessionId, tmdb_id: finalWinner.tmdb_id, method: "download" });
+        track("match_story_shared", { session_id: sessionId, tmdb_id: finalWinner.tmdb_id, method: "download", has_names: !!userName, has_time: !!timeStr });
       }
     } catch { /* ignore */ }
   }
@@ -1483,11 +1493,16 @@ export default function WTBetaPage() {
             )}
 
             <div className="text-center max-w-sm w-full relative z-10">
-              {/* Pulsing red dot */}
-              <div style={{
-                width: 8, height: 8, borderRadius: "50%", background: RED,
-                margin: "0 auto 32px", animation: "dot-pulse 1.5s ease-in-out infinite",
-              }} />
+              {/* Pulsing red dot + polling status */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: "50%", background: RED,
+                  marginBottom: 8, animation: "dot-pulse 1.5s ease-in-out infinite",
+                }} />
+                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", letterSpacing: "0.05em" }}>
+                  {locale === "no" ? "Venter på partner..." : locale === "se" ? "Väntar på partner..." : locale === "dk" ? "Venter på partner..." : locale === "fi" ? "Odotetaan kumppania..." : "Waiting for partner..."}
+                </span>
+              </div>
               <h2 className="text-xl font-bold text-white mb-2">{t(locale, "waiting", "headline")}</h2>
               <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>{t(locale, "waiting", "ingress")}</p>
               {qrDataUrl && (
@@ -2526,6 +2541,17 @@ export default function WTBetaPage() {
                   >
                     {getMessages(locale, "waitingAfterDone")[waitingFactIndex % getMessages(locale, "waitingAfterDone").length]}
                   </p>
+
+                  {/* Partner timeout — show "continue alone" after 45s of no partner progress */}
+                  {timer <= (round === 1 ? ROUND1_DURATION - 45 : ROUND2_DURATION - 45) && partnerSwipeCount === 0 && (
+                    <button
+                      onClick={() => { endRound(round); }}
+                      className="mt-6 px-5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-all"
+                      style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.6)" }}
+                    >
+                      {locale === "no" ? "Partner svarer ikke — fortsett alene" : locale === "se" ? "Partnern svarar inte — fortsätt ensam" : locale === "dk" ? "Partner svarer ikke — fortsæt alene" : locale === "fi" ? "Kumppani ei vastaa — jatka yksin" : "Partner not responding — continue alone"}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -2827,15 +2853,21 @@ export default function WTBetaPage() {
                   </button>
 
                   {/* Super-like */}
-                  <button
-                    onClick={handleSuperLike}
-                    disabled={superLikesUsed >= SUPERLIKES_PER_ROUND}
-                    className="wt-superlike-btn"
-                    aria-label="Super-like"
-                  >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="#FFB800" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", opacity: 0.7 }}>{SUPERLIKES_PER_ROUND - superLikesUsed}</span>
-                  </button>
+                  <div className="flex flex-col items-center gap-1">
+                    <button
+                      onClick={handleSuperLike}
+                      disabled={superLikesUsed >= SUPERLIKES_PER_ROUND}
+                      className="wt-superlike-btn"
+                      aria-label="Super-like"
+                    >
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="#FFB800" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </button>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: superLikesUsed >= SUPERLIKES_PER_ROUND ? "rgba(255,255,255,0.15)" : "#FFB800" }}>
+                      {superLikesUsed >= SUPERLIKES_PER_ROUND
+                        ? (locale === "no" ? "Brukt opp" : locale === "se" ? "Slut" : locale === "dk" ? "Brugt op" : locale === "fi" ? "Käytetty" : "Used up")
+                        : `⭐ ${SUPERLIKES_PER_ROUND - superLikesUsed} ${locale === "no" ? "igjen" : locale === "se" ? "kvar" : locale === "dk" ? "tilbage" : locale === "fi" ? "jäljellä" : "left"}`}
+                    </span>
+                  </div>
 
                   {/* Like */}
                   <button
