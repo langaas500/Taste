@@ -390,7 +390,6 @@ export default function WatchlistPage() {
               onClick={() => setSelectedItem({ id: t.tmdb_id, type: t.type, title: t.cache?.title || `TMDB:${t.tmdb_id}`, poster_path: t.cache?.poster_path || null })}
               onAction={(action) => handleAction(t, action)}
               actions={[
-                { label: "List+", action: "add-to-list", variant: "accent" },
                 { label: "👍 Likte", action: "liked", variant: "green" },
                 { label: "👎 Mislikte", action: "disliked", variant: "red" },
                 { label: "✕", action: "remove", variant: "default" },

@@ -265,9 +265,9 @@ export default function LibraryPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const libraryTabs = [
-    { href: "/library", label: s.watched },
+    { href: "/library", label: s.myLibrary, primary: true },
+    { href: "/watchlist", label: s.wantToSee, primary: true },
     { href: "/watch-bank", label: s.watchingNow },
-    { href: "/watchlist", label: s.wantToSee },
     { href: "/lists", label: s.lists },
   ];
 
@@ -426,14 +426,14 @@ export default function LibraryPage() {
     <div className="animate-fade-in-up">
       {/* Library sub-nav */}
       <div className="mb-6 flex border-b border-white/[0.06]">
-        {libraryTabs.map(({ href, label }) => {
+        {libraryTabs.map(({ href, label, primary }) => {
           const active = pathname === href;
           return (
             <Link
               key={href}
               href={href}
-              className="relative px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors"
-              style={{ color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)" }}
+              className={`relative whitespace-nowrap transition-colors ${primary ? "px-4 py-2.5 text-sm font-semibold" : "px-3 py-2.5 text-xs font-medium"}`}
+              style={{ color: active ? "rgba(255,255,255,0.95)" : primary ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.35)" }}
             >
               {label}
               {active && (
@@ -688,7 +688,6 @@ export default function LibraryPage() {
                 if (action === "add-to-list") setAddToListItem({ tmdb_id: t.tmdb_id, type: t.type, title: t.cache?.title || `TMDB:${t.tmdb_id}` });
               }}
               actions={[
-                { label: "List+", action: "add-to-list", variant: "accent" as const },
                 ...(excludedSet.has(`${t.tmdb_id}:${t.type}`)
                   ? [{ label: s.excludedAction, action: "excluded", variant: "red" as const }]
                   : [{ label: s.exclude, action: "exclude", variant: "red" as const }]),
@@ -831,7 +830,6 @@ export default function LibraryPage() {
             onToggleFavorite={() => handleToggleFavorite(selectedItem.id, selectedItem.type)}
             friendOverlap={friendOverlaps[`${selectedItem.id}:${selectedItem.type}`]}
             actions={[
-              { label: "List+", action: "add-to-list", variant: "accent" },
               ...(excludedSet.has(`${selectedItem.id}:${selectedItem.type}`)
                 ? [{ label: s.excludedAction, action: "excluded", variant: "red" as const }]
                 : [{ label: s.exclude, action: "exclude", variant: "red" as const }]),

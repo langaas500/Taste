@@ -288,7 +288,6 @@ export default function WatchBankPage() {
             progress={t?.last_season && t?.last_episode ? { season: t.last_season, episode: t.last_episode } : null}
             onUpdateProgress={(season, episode) => handleUpdateProgress(selectedItem.id, selectedItem.type, season, episode)}
             actions={[
-              { label: "List+", action: "add-to-list", variant: "accent" },
               { label: s.doneUp, action: "liked", variant: "green" },
               { label: s.doneDown, action: "disliked", variant: "red" },
               { label: s.remove, action: "remove", variant: "default" },

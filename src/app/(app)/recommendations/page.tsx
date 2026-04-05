@@ -733,8 +733,7 @@ export default function RecommendationsPage() {
           actions={[
             { label: "👍 Likte", action: "liked", variant: "green" },
             { label: "👎 Mislikte", action: "disliked", variant: "red" },
-            { label: "+ Se-liste", action: "watchlist", variant: "default" },
-            { label: "List+", action: "add-to-list", variant: "accent" },
+            { label: "📌 Lagre", action: "watchlist", variant: "default" },
           ]}
           onAction={(action) => {
             if (action === "add-to-list") {
