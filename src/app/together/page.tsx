@@ -103,6 +103,10 @@ export default function WTBetaPage() {
   const [superLikesUsed, setSuperLikesUsed] = useState(0);
   const [iAmDone, setIAmDone] = useState(false);
   const [showPostMatchPremium, setShowPostMatchPremium] = useState(false);
+  const [showKeyboardHint, setShowKeyboardHint] = useState(false);
+  const [lastSwipedTitle, setLastSwipedTitle] = useState<{ title: WTTitle; index: number; action: SwipeAction } | null>(null);
+  const [undoUsedThisRound, setUndoUsedThisRound] = useState(false);
+  const [timerPaused, setTimerPaused] = useState(false);
   const [showGuestSignup, setShowGuestSignup] = useState(false);
   const [waitingFactIndex, setWaitingFactIndex] = useState(0);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
@@ -181,6 +185,16 @@ export default function WTBetaPage() {
       return () => clearTimeout(timer);
     }
   }, [finalWinner, authUser]);
+
+  /* ── keyboard hint (desktop, first visit) ── */
+  useEffect(() => {
+    if (screen !== "together" || roundPhase !== "swiping" || !isDesktop) return;
+    try { if (localStorage.getItem("wt_keyboard_hint_shown")) return; } catch {}
+    setShowKeyboardHint(true);
+    localStorage.setItem("wt_keyboard_hint_shown", "1");
+    const t = setTimeout(() => setShowKeyboardHint(false), 5000);
+    return () => clearTimeout(t);
+  }, [screen, roundPhase, isDesktop]);
 
   /* ── mount ── */
   useEffect(() => {
@@ -683,6 +697,9 @@ export default function WTBetaPage() {
     setIsFallbackCompromise(false);
     setFinalWinner(null);
     setMatchMoreOpen(false);
+    setLastSwipedTitle(null);
+    setUndoUsedThisRound(false);
+    setTimerPaused(false);
     setWatchlistAdded(false);
     setWatchedLogged(false);
     resetReveal();
@@ -834,6 +851,7 @@ export default function WTBetaPage() {
       swipeTimings.current[t.tmdb_id] = Date.now() - cardStartTime.current;
     }
     sessionSwipes.current[t.tmdb_id] = action;
+    setLastSwipedTitle({ title: t, index: deckIndex, action });
     if (mode === "paired") {
       enqueueSwipe(t.tmdb_id, t.type, action === "meh" ? "nope" : action);
       setDeckIndex((i) => i + 1);
@@ -1614,17 +1632,34 @@ export default function WTBetaPage() {
               <h2 className="text-xl font-bold text-white mb-2">{t(locale, "join", "headline")}</h2>
               <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>{t(locale, "join", "ingress")}</p>
               <div className="flex flex-col items-center gap-3">
-                <input
-                  type="text"
-                  maxLength={6}
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, ""))}
-                  onKeyDown={(e) => { if (e.key === "Enter") joinSession(); }}
-                  placeholder={t(locale, "join", "placeholder")}
-                  className="w-48 text-center text-2xl font-mono font-black tracking-[0.3em] py-3 rounded-xl border-0 outline-none"
-                  style={{ background: "rgba(255,255,255,0.06)", color: "white", caretColor: RED }}
-                  autoFocus
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, ""))}
+                    onKeyDown={(e) => { if (e.key === "Enter") joinSession(); }}
+                    placeholder={t(locale, "join", "placeholder")}
+                    className="w-48 text-center text-2xl font-mono font-black tracking-[0.3em] py-3 rounded-xl border-0 outline-none"
+                    style={{ background: "rgba(255,255,255,0.06)", color: "white", caretColor: RED }}
+                    autoFocus
+                  />
+                  {typeof navigator !== "undefined" && navigator.clipboard?.readText && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          const text = await navigator.clipboard.readText();
+                          const clean = text.trim().toUpperCase().replace(/[^A-Z2-9]/g, "").slice(0, 6);
+                          if (clean.length > 0) setJoinCode(clean);
+                        } catch { /* permission denied or empty */ }
+                      }}
+                      className="px-3 py-3 rounded-xl text-xs font-medium cursor-pointer transition-all"
+                      style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}
+                    >
+                      {locale === "no" ? "Lim inn" : locale === "se" ? "Klistra in" : locale === "dk" ? "Indsæt" : locale === "fi" ? "Liitä" : "Paste"}
+                    </button>
+                  )}
+                </div>
                 <button
                   onClick={() => joinSession()}
                   disabled={joinCode.length < 6 || titlesLoading}
@@ -2601,6 +2636,23 @@ export default function WTBetaPage() {
               </div>
             )}
 
+            {/* Keyboard hint tooltip (desktop, first visit) */}
+            {showKeyboardHint && (
+              <div
+                onClick={() => setShowKeyboardHint(false)}
+                className="fixed top-20 left-1/2 z-50 cursor-pointer animate-fade-in-up"
+                style={{ transform: "translateX(-50%)", background: "rgba(0,0,0,0.85)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, padding: "10px 20px", backdropFilter: "blur(12px)" }}
+              >
+                <p className="text-xs text-white/70 text-center whitespace-nowrap">
+                  💡 <span style={{ color: "rgba(255,255,255,0.4)" }}>←</span> {locale === "no" ? "Nei" : "No"}
+                  <span style={{ color: "rgba(255,255,255,0.15)", margin: "0 8px" }}>|</span>
+                  <span style={{ color: "rgba(255,255,255,0.4)" }}>→</span> {locale === "no" ? "Ja" : "Yes"}
+                  <span style={{ color: "rgba(255,255,255,0.15)", margin: "0 8px" }}>|</span>
+                  <span style={{ color: "#FFB800" }}>Space</span> = Superlike
+                </p>
+              </div>
+            )}
+
             {/* ── SWIPING PHASE — centered card layout ── */}
             {roundPhase === "swiping" && !deckExhausted && !iAmDone && (
               <div className="flex-1 flex flex-col relative overflow-hidden" style={{ paddingTop: "2px" }}>
@@ -2624,11 +2676,31 @@ export default function WTBetaPage() {
                   ←
                 </button>
 
-                {/* Top row: Runde label */}
-                <div className="flex items-center justify-center px-5 pt-4 pb-2">
+                {/* Top row: Undo + Runde label */}
+                <div className="flex items-center justify-between px-5 pt-4 pb-2">
+                  {/* Undo button — 1 per round */}
+                  {lastSwipedTitle && !undoUsedThisRound ? (
+                    <button
+                      onClick={() => {
+                        setDeckIndex(lastSwipedTitle.index);
+                        delete sessionSwipes.current[lastSwipedTitle.title.tmdb_id];
+                        delete swipeTimings.current[lastSwipedTitle.title.tmdb_id];
+                        if (mode === "paired") {
+                          enqueueSwipe(lastSwipedTitle.title.tmdb_id, lastSwipedTitle.title.type, "nope");
+                        }
+                        setLastSwipedTitle(null);
+                        setUndoUsedThisRound(true);
+                      }}
+                      className="text-xs font-medium cursor-pointer transition-all"
+                      style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "4px 10px", color: "rgba(255,255,255,0.5)" }}
+                    >
+                      ↩ {locale === "no" ? "Angre" : locale === "se" ? "Ångra" : locale === "dk" ? "Fortryd" : locale === "fi" ? "Kumoa" : "Undo"}
+                    </button>
+                  ) : <div style={{ width: 60 }} />}
                   <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", fontWeight: 400 }}>
                     {round === 1 ? t(locale, "together", "round1") : t(locale, "together", "round2")}
                   </span>
+                  <div style={{ width: 60 }} />
                 </div>
 
                 {/* Card area — centered */}
