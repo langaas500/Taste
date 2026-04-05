@@ -2014,6 +2014,16 @@ export default function WTBetaPage() {
                       </div>
                     </div>
                   )}
+                  {/* Round 2 explanation — no mutual match, fastest decision picked */}
+                  {round === 2 && compromiseTitle && (
+                    <p style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginBottom: 12, fontStyle: "italic" }}>
+                      {locale === "no" ? "Ingen felles match — valgt basert på raskest avgjørelse"
+                        : locale === "se" ? "Ingen gemensam match — vald baserat på snabbast beslut"
+                        : locale === "dk" ? "Ingen fælles match — valgt baseret på hurtigste beslutning"
+                        : locale === "fi" ? "Ei yhteistä osumaa — valittu nopeimman päätöksen perusteella"
+                        : "No mutual match — picked based on fastest decision"}
+                    </p>
+                  )}
                   {compromiseTitle && (() => {
                     const wi = getWatchInfo(compromiseTitle.title, compromiseTitle.tmdb_id, compromiseTitle.type, selectedProviders);
                     const label = wi.providerName
@@ -2461,13 +2471,20 @@ export default function WTBetaPage() {
                           </Link>
                         )}
 
-                        {/* Couple report */}
+                        {/* Couple report — teaser at 1-2 matches, link at 3+ */}
                         {authUser && matchCount >= 3 && (
                           <Link href="/couple-report" className="block w-full py-2 text-xs font-medium text-center" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none" }}
                             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }}
                             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}>
                             {t(locale, "winner", "coupleReportWithCount").replace("{n}", String(matchCount))}
                           </Link>
+                        )}
+                        {authUser && matchCount >= 1 && matchCount < 3 && (
+                          <p className="w-full py-2 text-[10px] text-center" style={{ color: "rgba(255,255,255,0.2)" }}>
+                            {matchCount === 1
+                              ? (locale === "no" ? "2 matcher til for å låse opp par-rapport 📊" : locale === "se" ? "2 matcher till för att låsa upp parrapport 📊" : locale === "dk" ? "2 matcher til for at låse op parrapport 📊" : locale === "fi" ? "2 osumaa vielä pariraportin avaamiseen 📊" : "2 more matches to unlock couple report 📊")
+                              : (locale === "no" ? "Neste match låser opp par-rapport 📊" : locale === "se" ? "Nästa match låser upp parrapport 📊" : locale === "dk" ? "Næste match låser op parrapport 📊" : locale === "fi" ? "Seuraava osuma avaa pariraportin 📊" : "Next match unlocks couple report 📊")}
+                          </p>
                         )}
 
                         {/* Solo invite */}
