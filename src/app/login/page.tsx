@@ -274,6 +274,22 @@ function LoginContent() {
     }
   }, []);
 
+  // Auto-trigger Google OAuth when ?provider=google is set (from guest signup prompt)
+  useEffect(() => {
+    if (searchParams.get("provider") !== "google") return;
+    setOauthLoading(true);
+    track("google_oauth_clicked");
+    const supabase = createSupabaseBrowser();
+    const from = searchParams.get("from");
+    const wtCode = searchParams.get("wt_code");
+    const cbParams = [from && `from=${from}`, wtCode && `wt_code=${wtCode}`].filter(Boolean).join("&");
+    const callbackUrl = `${window.location.origin}/api/auth/callback${cbParams ? `?${cbParams}` : ""}`;
+    supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: callbackUrl },
+    }).catch(() => { setOauthLoading(false); });
+  }, [searchParams]);
+
   async function handleResetPassword() {
     setResetMsg("");
     setResetError("");
