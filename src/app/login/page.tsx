@@ -326,7 +326,7 @@ function LoginContent() {
         if (rememberMe) localStorage.setItem("logflix_remember_me", "1");
         else localStorage.removeItem("logflix_remember_me");
         const wtCode = searchParams.get("wt_code");
-        window.location.href = isTogether ? `/onboarding?from=together${wtCode ? `&wt_code=${wtCode}` : ""}` : "/onboarding";
+        window.location.href = `/together${wtCode ? `?code=${wtCode}` : ""}`;
         setLoading(false);
         return;
       }
@@ -351,7 +351,7 @@ function LoginContent() {
             if (rememberMe) localStorage.setItem("logflix_remember_me", "1");
             else localStorage.removeItem("logflix_remember_me");
             const wtCode2 = searchParams.get("wt_code");
-            window.location.href = isTogether ? `/onboarding?from=together${wtCode2 ? `&wt_code=${wtCode2}` : ""}` : "/onboarding";
+            window.location.href = `/together${wtCode2 ? `?code=${wtCode2}` : ""}`;
             setLoading(false);
             return;
           }

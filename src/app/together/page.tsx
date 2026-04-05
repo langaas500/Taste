@@ -102,6 +102,7 @@ export default function WTBetaPage() {
   const [matchCount, setMatchCount] = useState<number>(0);
   const [superLikesUsed, setSuperLikesUsed] = useState(0);
   const [iAmDone, setIAmDone] = useState(false);
+  const [showPostMatchPremium, setShowPostMatchPremium] = useState(false);
   const [waitingFactIndex, setWaitingFactIndex] = useState(0);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
   const [showSuperLikeFlash, setShowSuperLikeFlash] = useState(false);
@@ -155,6 +156,18 @@ export default function WTBetaPage() {
   );
   const isDesktop = mounted && !isTouch;
   const router = useRouter();
+
+  /* ── post-match premium modal (first match only) ── */
+  useEffect(() => {
+    if (!finalWinner) return;
+    try { if (localStorage.getItem("logflix_premium_modal_shown")) return; } catch {}
+    const timer = setTimeout(() => {
+      setShowPostMatchPremium(true);
+      try { localStorage.setItem("logflix_premium_modal_shown", "1"); } catch {}
+      track("post_match_premium_shown", { tmdb_id: finalWinner.tmdb_id });
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [finalWinner]);
 
   /* ── mount ── */
   useEffect(() => {
@@ -3008,6 +3021,33 @@ export default function WTBetaPage() {
             </span>
           )}
         </button>
+
+      {/* ── Post-match premium modal ── */}
+      {showPostMatchPremium && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
+          <div className="relative w-full max-w-sm rounded-2xl p-6 text-center" style={{ background: "linear-gradient(180deg, rgba(15,18,30,0.95) 0%, rgba(10,12,20,0.98) 100%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 24px 80px rgba(0,0,0,0.6)" }}>
+            <button onClick={() => setShowPostMatchPremium(false)} className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full cursor-pointer" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "none" }}>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <span className="text-3xl block mb-3">🎁</span>
+            <h2 className="text-lg font-bold text-white mb-2">
+              {locale === "no" ? "7 dager gratis Premium" : locale === "se" ? "7 dagars gratis Premium" : locale === "dk" ? "7 dages gratis Premium" : locale === "fi" ? "7 päivää ilmaista Premiumia" : "7 days free Premium"}
+            </h2>
+            <p className="text-xs text-white/50 leading-relaxed mb-1">
+              {locale === "no" ? "Ingen kortinfo nødvendig." : locale === "se" ? "Inget kortinfo behövs." : locale === "dk" ? "Ingen kortinfo nødvendig." : locale === "fi" ? "Ei korttitietoja tarvita." : "No credit card needed."}
+            </p>
+            <p className="text-xs text-white/40 leading-relaxed mb-5">
+              {locale === "no" ? "Tonight's Pick, ubegrenset Curator, partner får det gratis." : locale === "se" ? "Tonight's Pick, obegränsad Curator, partnern får det gratis." : locale === "dk" ? "Tonight's Pick, ubegrænset Curator, partneren får det gratis." : locale === "fi" ? "Tonight's Pick, rajaton Curator, kumppani saa sen ilmaiseksi." : "Tonight's Pick, unlimited Curator, partner gets it free."}
+            </p>
+            <a href="/premium" className="block w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90" style={{ background: "#ff2a2a", textDecoration: "none" }}>
+              {locale === "no" ? "Aktiver gratis →" : locale === "se" ? "Aktivera gratis →" : locale === "dk" ? "Aktiver gratis →" : locale === "fi" ? "Aktivoi ilmaiseksi →" : "Activate free →"}
+            </a>
+            <button onClick={() => setShowPostMatchPremium(false)} className="mt-3 text-xs bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.3)" }}>
+              {locale === "no" ? "Senere" : locale === "se" ? "Senare" : locale === "dk" ? "Senere" : locale === "fi" ? "Myöhemmin" : "Later"}
+            </button>
+          </div>
+        </div>
+      )}
 
       </div>
     </div>

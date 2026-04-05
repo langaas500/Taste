@@ -431,6 +431,8 @@ export default function HomePage() {
   const [logStreak, setLogStreak] = useState(0);
   const [showImportPopup, setShowImportPopup] = useState(false);
   const [importDismissChecked, setImportDismissChecked] = useState(false);
+  const [showTasteHint, setShowTasteHint] = useState(false);
+  const [swipeCount, setSwipeCount] = useState(0);
 
   useEffect(() => {
     loadDashboard();
@@ -473,6 +475,22 @@ export default function HomePage() {
       ]);
       const premium = !!profileRes?.profile?.is_premium;
       setIsPremium(premium);
+
+      // Lazy onboarding hint — show if not completed and has swipe data
+      if (!profileRes?.profile?.onboarding_completed && !tasteRes?.summary) {
+        try {
+          const { count } = await createSupabaseBrowser()
+            .from("wt_session_swipes")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", profileRes?.profile?.id || "");
+          if (count && count >= 5) {
+            setSwipeCount(count);
+            if (!localStorage.getItem("logflix_taste_hint_dismissed")) {
+              setShowTasteHint(true);
+            }
+          }
+        } catch { /* ignore */ }
+      }
       setIsTrial(!!profileRes?.profile?.is_trial);
       setTrialEndsAt(profileRes?.profile?.trial_ends_at ?? null);
       if (!premium) setTpLoading(false);
@@ -715,6 +733,38 @@ export default function HomePage() {
           </div>
         );
       })()}
+
+      {/* Lazy onboarding — taste hint */}
+      {showTasteHint && (
+        <div
+          className="rounded-2xl p-4 flex items-center gap-3 animate-fade-in-up"
+          style={{ background: "rgba(255,42,42,0.04)", border: "1px solid rgba(255,42,42,0.15)" }}
+        >
+          <span className="text-xl flex-shrink-0">✨</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white/80">
+              {locale === "no" ? `Du har sveipet ${swipeCount} titler — vil du se smaksprofilen din?`
+                : locale === "se" ? `Du har svajpat ${swipeCount} titlar — vill du se din smakprofil?`
+                : locale === "dk" ? `Du har swipet ${swipeCount} titler — vil du se din smagsprofil?`
+                : locale === "fi" ? `Olet swaipannut ${swipeCount} nimikettä — haluatko nähdä makuprofiilisi?`
+                : `You've swiped ${swipeCount} titles — want to see your taste profile?`}
+            </p>
+          </div>
+          <Link
+            href="/onboarding"
+            className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
+            style={{ background: "#ff2a2a", textDecoration: "none" }}
+          >
+            {locale === "no" ? "Ja, vis meg" : locale === "se" ? "Ja, visa mig" : locale === "dk" ? "Ja, vis mig" : locale === "fi" ? "Kyllä, näytä" : "Yes, show me"}
+          </Link>
+          <button
+            onClick={() => { setShowTasteHint(false); try { localStorage.setItem("logflix_taste_hint_dismissed", "1"); } catch {} }}
+            className="flex-shrink-0 text-white/25 hover:text-white/50 transition-colors cursor-pointer bg-transparent border-0 p-1"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
 
       {/* Returning user hook — day 3/7 */}
       {returningBanner && !hasTaste && (

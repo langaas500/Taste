@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       let destination: string;
       const wtParam = wtCode ? `&wt_code=${wtCode}` : "";
       if (count === 0) {
-        destination = from === "together" ? `/onboarding?from=together${wtParam}` : "/onboarding";
+        destination = `/together${wtCode ? `?code=${wtCode}` : ""}`;
       } else {
         destination = from === "together" ? `/together${wtCode ? `?code=${wtCode}` : ""}` : next;
       }
