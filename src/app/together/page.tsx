@@ -682,6 +682,7 @@ export default function WTBetaPage() {
     setCompromiseTitle(null);
     setIsFallbackCompromise(false);
     setFinalWinner(null);
+    setMatchMoreOpen(false);
     setWatchlistAdded(false);
     setWatchedLogged(false);
     resetReveal();
@@ -1789,13 +1790,17 @@ export default function WTBetaPage() {
                     );
                   })}
                 </div>
-                {selectedMood && (
+                {selectedMood ? (
                   <button
                     onClick={() => setSelectedMood(null)}
                     style={{ marginTop: 6, fontSize: "0.65rem", color: "rgba(255,255,255,0.3)", background: "none", border: "none", cursor: "pointer", padding: "2px 0" }}
                   >
                     {t(locale, "mood", "noPreference")}
                   </button>
+                ) : (
+                  <p style={{ marginTop: 6, fontSize: "0.6rem", color: "rgba(255,255,255,0.2)", fontStyle: "italic" }}>
+                    {locale === "no" ? "Ingen valgt = alle stemninger" : locale === "se" ? "Inget valt = alla stämningar" : locale === "dk" ? "Intet valgt = alle stemninger" : locale === "fi" ? "Ei valintaa = kaikki tunnelmat" : "No selection = all moods"}
+                  </p>
                 )}
               </div>
 
@@ -2068,7 +2073,13 @@ export default function WTBetaPage() {
                     className="fixed inset-0 z-40 pointer-events-none"
                     style={{ width: "100%", height: "100%" }}
                     ref={(canvas) => {
-                      if (!canvas || canvas.dataset.started) return;
+                      if (!canvas) return;
+                      // Reset canvas for re-entry (new match)
+                      if (canvas.dataset.started) {
+                        const ctx = canvas.getContext("2d");
+                        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        canvas.dataset.started = "";
+                      }
                       canvas.dataset.started = "1";
                       const ctx = canvas.getContext("2d");
                       if (!ctx) return;
@@ -2086,9 +2097,10 @@ export default function WTBetaPage() {
                         gravity: 0.08 + Math.random() * 0.04,
                       }));
                       const start = performance.now();
+                      let rafId = 0;
                       const loop = (now: number) => {
                         const elapsed = now - start;
-                        if (elapsed > 3500) { ctx.clearRect(0, 0, W, H); return; }
+                        if (elapsed > 3500) { ctx.clearRect(0, 0, W, H); canvas.dataset.started = ""; return; }
                         ctx.clearRect(0, 0, W, H);
                         for (const p of particles) {
                           p.vy += p.gravity; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
@@ -2098,9 +2110,11 @@ export default function WTBetaPage() {
                           ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
                           ctx.restore();
                         }
-                        requestAnimationFrame(loop);
+                        rafId = requestAnimationFrame(loop);
                       };
-                      requestAnimationFrame(loop);
+                      rafId = requestAnimationFrame(loop);
+                      // Safety cleanup after 4s
+                      setTimeout(() => { cancelAnimationFrame(rafId); ctx.clearRect(0, 0, W, H); canvas.dataset.started = ""; }, 4000);
                     }}
                   />
                 )}
