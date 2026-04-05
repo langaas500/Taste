@@ -10,8 +10,6 @@ import { t, cardsLeft, type Locale } from "./strings";
 import { useLocale } from "@/hooks/useLocale";
 import useQrCode from "./hooks/useQrCode";
 import { track } from "@/lib/posthog";
-import GuestHeader from "@/components/GuestHeader";
-
 /* ── extracted modules ─────────────────────────────────── */
 
 import {
@@ -1093,7 +1091,7 @@ export default function WTBetaPage() {
       />
 
       <div className="relative z-10 min-h-dvh flex flex-col">
-        {!authUser && !finalWinner && <GuestHeader locale={locale} />}
+        {/* GuestHeader removed — together has its own auth CTAs in match/results screens */}
 
         {/* ── INTRO ── */}
         {screen === "intro" && (
