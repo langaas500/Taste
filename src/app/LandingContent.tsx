@@ -8,8 +8,8 @@ export type Locale = "no" | "en" | "sv" | "da" | "fi";
 
 const strings = {
   no: {
-    hero: "Enig om filmen på 3 minutter",
-    sub: "Sveip filmer hver for dere. Kun felles likes gir match. Gratis, ingen konto.",
+    hero: "Bli enig om hva dere skal se",
+    sub: "Sveip filmer og serier hver for dere. Kun felles likes gir match. Gratis, ingen konto.",
     cta: "Start nå — gratis →",
     noFriction: "Ingen konto. Ingen nedlasting. Bare sveip.",
     socialProof: "Hundrevis av par har allerede funnet noe å se",
@@ -25,8 +25,8 @@ const strings = {
     alsoTaste: "Smaksprofil",
   },
   en: {
-    hero: "Agree on a movie in 3 minutes",
-    sub: "Swipe movies independently. Only mutual likes match. Free, no account needed.",
+    hero: "Agree on what to watch tonight",
+    sub: "Swipe movies and series separately. Only mutual likes become a match. Free, no account needed.",
     cta: "Start now — free →",
     noFriction: "No account. No download. Just swipe.",
     socialProof: "Hundreds of couples have already found something to watch",
@@ -42,8 +42,8 @@ const strings = {
     alsoTaste: "Taste profile",
   },
   sv: {
-    hero: "Överens om filmen på 3 minuter",
-    sub: "Svep filmer var för sig. Bara gemensamma likes matchar. Gratis, inget konto.",
+    hero: "Kom överens om vad ni ska se",
+    sub: "Svep filmer och serier var för sig. Bara gemensamma likes blir en match. Gratis, inget konto.",
     cta: "Börja nu — gratis →",
     noFriction: "Inget konto. Ingen nedladdning. Bara svep.",
     socialProof: "Hundratals par har redan hittat något att se",
@@ -59,8 +59,8 @@ const strings = {
     alsoTaste: "Smakprofil",
   },
   da: {
-    hero: "Enige om filmen på 3 minutter",
-    sub: "Swipe film hver for jer. Kun fælles likes giver match. Gratis, ingen konto.",
+    hero: "Bliv enige om hvad I skal se",
+    sub: "Swip film og serier hver for sig. Kun fælles likes giver et match. Gratis, ingen konto.",
     cta: "Start nu — gratis →",
     noFriction: "Ingen konto. Ingen download. Bare swipe.",
     socialProof: "Hundredvis af par har allerede fundet noget at se",
@@ -76,8 +76,8 @@ const strings = {
     alsoTaste: "Smagsprofil",
   },
   fi: {
-    hero: "Yhtä mieltä elokuvasta 3 minuutissa",
-    sub: "Pyyhkäise elokuvia erikseen. Vain yhteiset tykkäykset täsmäävät. Ilmainen, ei tiliä.",
+    hero: "Sopikaa mitä katsotte",
+    sub: "Selaa elokuvia ja sarjoja erikseen. Vain yhteiset tykkäykset johtavat matchiin. Ilmainen, ei tiliä.",
     cta: "Aloita nyt — ilmainen →",
     noFriction: "Ei tiliä. Ei latausta. Vain pyyhkäisy.",
     socialProof: "Sadat parit ovat jo löytäneet katsottavaa",
