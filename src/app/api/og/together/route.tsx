@@ -25,32 +25,70 @@ export async function GET() {
           background: "#0a0a0f",
         }}
       >
-        {/* Red glow at top */}
+        {/* Ambient glow — top center */}
         <div
           style={{
             position: "absolute",
-            top: -80,
+            top: -120,
             left: "50%",
-            width: 600,
-            height: 300,
+            width: 800,
+            height: 400,
             borderRadius: "50%",
-            background: "radial-gradient(ellipse, rgba(229,9,20,0.2) 0%, transparent 70%)",
+            background: "radial-gradient(ellipse, rgba(229,9,20,0.25) 0%, transparent 60%)",
             transform: "translateX(-50%)",
             display: "flex",
           }}
         />
 
-        {/* Red glow at bottom */}
+        {/* Ambient glow — bottom center */}
         <div
           style={{
             position: "absolute",
-            bottom: -60,
+            bottom: -80,
             left: "50%",
-            width: 500,
-            height: 250,
+            width: 700,
+            height: 350,
             borderRadius: "50%",
-            background: "radial-gradient(ellipse, rgba(229,9,20,0.15) 0%, transparent 70%)",
+            background: "radial-gradient(ellipse, rgba(229,9,20,0.2) 0%, transparent 60%)",
             transform: "translateX(-50%)",
+            display: "flex",
+          }}
+        />
+
+        {/* Subtle side glow — left */}
+        <div
+          style={{
+            position: "absolute",
+            top: "40%",
+            left: -100,
+            width: 400,
+            height: 400,
+            borderRadius: "50%",
+            background: "radial-gradient(ellipse, rgba(229,9,20,0.08) 0%, transparent 70%)",
+            display: "flex",
+          }}
+        />
+
+        {/* Subtle side glow — right */}
+        <div
+          style={{
+            position: "absolute",
+            top: "30%",
+            right: -100,
+            width: 400,
+            height: 400,
+            borderRadius: "50%",
+            background: "radial-gradient(ellipse, rgba(120,20,60,0.1) 0%, transparent 70%)",
+            display: "flex",
+          }}
+        />
+
+        {/* Noise/grain overlay for depth */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.3) 100%)",
             display: "flex",
           }}
         />
@@ -115,9 +153,9 @@ export async function GET() {
           src={logoBase64}
           style={{
             position: "absolute",
-            bottom: 32,
-            right: 40,
-            height: 36,
+            bottom: 28,
+            right: 36,
+            height: 56,
           }}
         />
       </div>
