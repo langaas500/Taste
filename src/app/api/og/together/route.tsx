@@ -63,13 +63,6 @@ export async function GET() {
             gap: 32,
           }}
         >
-          {/* Logo */}
-          <img
-            src={logoUrl}
-            alt="Logflix"
-            style={{ height: 80, width: "auto" }}
-          />
-
           {/* Headline */}
           <div
             style={{
@@ -113,34 +106,18 @@ export async function GET() {
             Match in 2 min · Free · No account needed
           </div>
 
-          {/* Dot */}
-          <div
+          {/* Logo bottom-right */}
+          <img
+            src={logoUrl}
+            alt="Logflix"
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginTop: 8,
+              position: "absolute",
+              bottom: 32,
+              right: 40,
+              height: 36,
+              width: "auto",
             }}
-          >
-            <div
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: "#E50914",
-              }}
-            />
-            <span
-              style={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: "rgba(255,255,255,0.3)",
-                letterSpacing: "0.04em",
-              }}
-            >
-              Logflix · Watch Together
-            </span>
-          </div>
+          />
         </div>
       </div>
     ),
