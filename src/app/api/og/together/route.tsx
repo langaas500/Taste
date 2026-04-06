@@ -4,7 +4,10 @@ export const runtime = "edge";
 export const revalidate = 86400;
 
 export async function GET() {
-  const logoUrl = "https://logflix.app/logo.png";
+  // Fetch logo and convert to data URI (Satori can't reliably load external URLs)
+  const logoRes = await fetch(new URL("/logo.png", "https://logflix.app"));
+  const logoBuffer = await logoRes.arrayBuffer();
+  const logoBase64 = `data:image/png;base64,${Buffer.from(logoBuffer).toString("base64")}`;
 
   return new ImageResponse(
     (
@@ -105,20 +108,18 @@ export async function GET() {
           >
             Match in 2 min · Free · No account needed
           </div>
-
-          {/* Logo bottom-right */}
-          <img
-            src={logoUrl}
-            alt="Logflix"
-            style={{
-              position: "absolute",
-              bottom: 32,
-              right: 40,
-              height: 36,
-              width: "auto",
-            }}
-          />
         </div>
+
+        {/* Logo bottom-right */}
+        <img
+          src={logoBase64}
+          style={{
+            position: "absolute",
+            bottom: 32,
+            right: 40,
+            height: 36,
+          }}
+        />
       </div>
     ),
     { width: 1200, height: 630 },
