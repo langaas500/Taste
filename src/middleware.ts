@@ -15,7 +15,8 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/api/sitemap/") ||
     request.nextUrl.pathname === "/api/backfill-slugs" ||
     request.nextUrl.pathname === "/api/backfill-providers" ||
-    request.nextUrl.pathname.startsWith("/api/cron/")
+    request.nextUrl.pathname.startsWith("/api/cron/") ||
+    request.nextUrl.pathname.startsWith("/api/og/")
   ) {
     return NextResponse.next();
   }
