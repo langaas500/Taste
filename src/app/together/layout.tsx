@@ -30,11 +30,13 @@ export const metadata: Metadata = {
     url: "https://logflix.app/together",
     siteName: "Logflix",
     type: "website",
+    images: [{ url: "/og-together.png", width: 1200, height: 630, alt: "Watch Together on Logflix – Swipe apart, match together" }],
   },
   twitter: {
     card: "summary_large_image",
     title: defaultTitle,
     description: defaultDescription,
+    images: ["/og-together.png"],
   },
 };
 
