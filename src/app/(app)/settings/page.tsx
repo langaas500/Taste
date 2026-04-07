@@ -176,8 +176,16 @@ const strings = {
     passwordTooShort: "Passordet må være minst 8 tegn.",
     passwordMismatch: "Passordene stemmer ikke overens.",
     dangerZone: "Faresone",
-    dangerZoneDesc: "Logg ut av kontoen din. Du kan logge inn igjen når som helst.",
+    dangerZoneDesc: "Logg ut eller slett kontoen din permanent.",
     signOut: "Logg ut",
+    deleteAccount: "Slett konto",
+    deleteAccountDesc: "Sletter all data permanent. Dette kan ikke angres.",
+    deleteConfirmTitle: "Slett kontoen din?",
+    deleteConfirmBody: "All data blir slettet permanent — bibliotek, lister, anbefalinger og profil. Dette kan ikke angres.",
+    deletePasswordLabel: "Skriv inn passordet ditt for å bekrefte:",
+    deleteConfirmButton: "Ja, slett kontoen min",
+    deleting: "Sletter...",
+    deleteWrongPassword: "Feil passord.",
   },
   en: {
     loadingSettings: "Loading settings...",
@@ -267,8 +275,16 @@ const strings = {
     passwordTooShort: "Password must be at least 8 characters.",
     passwordMismatch: "Passwords do not match.",
     dangerZone: "Danger zone",
-    dangerZoneDesc: "Sign out of your account. You can sign back in anytime.",
+    dangerZoneDesc: "Sign out or permanently delete your account.",
     signOut: "Sign out",
+    deleteAccount: "Delete account",
+    deleteAccountDesc: "Permanently deletes all your data. This cannot be undone.",
+    deleteConfirmTitle: "Delete your account?",
+    deleteConfirmBody: "All your data will be permanently deleted — library, lists, recommendations and profile. This cannot be undone.",
+    deletePasswordLabel: "Enter your password to confirm:",
+    deleteConfirmButton: "Yes, delete my account",
+    deleting: "Deleting...",
+    deleteWrongPassword: "Wrong password.",
   },
   dk: {
     loadingSettings: "Indlæser indstillinger...",
@@ -358,8 +374,16 @@ const strings = {
     passwordTooShort: "Adgangskoden skal være mindst 8 tegn.",
     passwordMismatch: "Adgangskoderne stemmer ikke overens.",
     dangerZone: "Farezone",
-    dangerZoneDesc: "Log ud af din konto. Du kan logge ind igen når som helst.",
+    dangerZoneDesc: "Log ud eller slet din konto permanent.",
     signOut: "Log ud",
+    deleteAccount: "Slet konto",
+    deleteAccountDesc: "Sletter alle data permanent. Dette kan ikke fortrydes.",
+    deleteConfirmTitle: "Slet din konto?",
+    deleteConfirmBody: "Alle data slettes permanent — bibliotek, lister, anbefalinger og profil. Dette kan ikke fortrydes.",
+    deletePasswordLabel: "Indtast din adgangskode for at bekræfte:",
+    deleteConfirmButton: "Ja, slet min konto",
+    deleting: "Sletter...",
+    deleteWrongPassword: "Forkert adgangskode.",
   },
   se: {
     loadingSettings: "Laddar inställningar...",
@@ -449,8 +473,16 @@ const strings = {
     passwordTooShort: "Lösenordet måste vara minst 8 tecken.",
     passwordMismatch: "Lösenorden stämmer inte överens.",
     dangerZone: "Farozon",
-    dangerZoneDesc: "Logga ut från ditt konto. Du kan logga in igen när som helst.",
+    dangerZoneDesc: "Logga ut eller radera ditt konto permanent.",
     signOut: "Logga ut",
+    deleteAccount: "Radera konto",
+    deleteAccountDesc: "Raderar all data permanent. Detta kan inte ångras.",
+    deleteConfirmTitle: "Radera ditt konto?",
+    deleteConfirmBody: "All data raderas permanent — bibliotek, listor, rekommendationer och profil. Detta kan inte ångras.",
+    deletePasswordLabel: "Ange ditt lösenord för att bekräfta:",
+    deleteConfirmButton: "Ja, radera mitt konto",
+    deleting: "Raderar...",
+    deleteWrongPassword: "Fel lösenord.",
   },
   fi: {
     loadingSettings: "Ladataan asetuksia...",
@@ -540,8 +572,16 @@ const strings = {
     passwordTooShort: "Salasanan on oltava vähintään 8 merkkiä.",
     passwordMismatch: "Salasanat eivät täsmää.",
     dangerZone: "Vaaravyöhyke",
-    dangerZoneDesc: "Kirjaudu ulos tililtäsi. Voit kirjautua takaisin milloin tahansa.",
+    dangerZoneDesc: "Kirjaudu ulos tai poista tilisi pysyvästi.",
     signOut: "Kirjaudu ulos",
+    deleteAccount: "Poista tili",
+    deleteAccountDesc: "Poistaa kaikki tiedot pysyvästi. Tätä ei voi kumota.",
+    deleteConfirmTitle: "Poista tilisi?",
+    deleteConfirmBody: "Kaikki tiedot poistetaan pysyvästi — kirjasto, listat, suositukset ja profiili. Tätä ei voi kumota.",
+    deletePasswordLabel: "Syötä salasanasi vahvistaaksesi:",
+    deleteConfirmButton: "Kyllä, poista tilini",
+    deleting: "Poistetaan...",
+    deleteWrongPassword: "Väärä salasana.",
   },
 } as const;
 
@@ -851,6 +891,40 @@ function SettingsContent() {
     const supabase = createSupabaseBrowser();
     await supabase.auth.signOut();
     window.location.href = "/login";
+  }
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+
+  async function handleDeleteAccount() {
+    if (!deletePassword) return;
+    setDeleteError("");
+    setDeletingAccount(true);
+    try {
+      const res = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: deletePassword }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: "Error" }));
+        if (data.error === "wrong_password") {
+          setDeleteError(s.deleteWrongPassword);
+        } else {
+          setDeleteError(data.error || "Error");
+        }
+        setDeletingAccount(false);
+        return;
+      }
+      const supabase = createSupabaseBrowser();
+      await supabase.auth.signOut();
+      window.location.href = "/";
+    } catch {
+      setDeleteError("Error");
+      setDeletingAccount(false);
+    }
   }
 
   if (loading) return <LoadingSpinner text={s.loadingSettings} />;
@@ -1470,12 +1544,49 @@ function SettingsContent() {
       >
         <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-red-400/50 mb-1">{s.dangerZone}</p>
         <p className="text-[12px] text-red-400/30 leading-relaxed mb-4">{s.dangerZoneDesc}</p>
-        <GhostButton onClick={handleSignOut} danger>
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-          </svg>
-          {s.signOut}
-        </GhostButton>
+        <div className="flex flex-col gap-3">
+          <GhostButton onClick={handleSignOut} danger>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+            </svg>
+            {s.signOut}
+          </GhostButton>
+
+          <div className="pt-3 border-t border-red-500/10">
+            <p className="text-[11px] text-red-400/30 mb-2">{s.deleteAccountDesc}</p>
+            {!showDeleteConfirm ? (
+              <GhostButton onClick={() => setShowDeleteConfirm(true)} danger>
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+                {s.deleteAccount}
+              </GhostButton>
+            ) : (
+              <div className="rounded-xl border border-red-500/20 p-4" style={{ background: "rgba(229,9,20,0.05)" }}>
+                <p className="text-xs font-semibold text-red-400/80 mb-1">{s.deleteConfirmTitle}</p>
+                <p className="text-[11px] text-red-400/50 mb-3 leading-relaxed">{s.deleteConfirmBody}</p>
+                <label className="block text-[11px] text-red-400/50 mb-1.5">{s.deletePasswordLabel}</label>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(""); }}
+                  className="w-full rounded-lg border border-red-500/20 bg-black/30 px-3 py-2 text-xs text-white/80 placeholder-white/20 outline-none focus:border-red-500/40 mb-3"
+                  disabled={deletingAccount}
+                  autoComplete="current-password"
+                />
+                {deleteError && <p className="text-[11px] text-red-400 mb-2">{deleteError}</p>}
+                <div className="flex gap-2">
+                  <GhostButton onClick={handleDeleteAccount} disabled={deletingAccount || !deletePassword} danger>
+                    {deletingAccount ? s.deleting : s.deleteConfirmButton}
+                  </GhostButton>
+                  <GhostButton onClick={() => { setShowDeleteConfirm(false); setDeletePassword(""); setDeleteError(""); }} disabled={deletingAccount}>
+                    {s.cancel}
+                  </GhostButton>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="settings" userName={displayName || null} titleCount={settingsTitleCount} />
