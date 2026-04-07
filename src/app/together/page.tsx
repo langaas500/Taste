@@ -2716,7 +2716,7 @@ export default function WTBetaPage() {
                 </div>
 
                 {/* Card area — centered */}
-                <div className="flex-1 flex flex-col items-center justify-center px-5" style={{ minHeight: 0 }}>
+                <div className="flex-1 md:flex-none md:max-h-[60vh] flex flex-col items-center justify-center px-5" style={{ minHeight: 0 }}>
                   {top && (
                     <div
                       onPointerDown={handlePointerDown}
