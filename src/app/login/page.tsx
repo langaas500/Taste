@@ -16,6 +16,8 @@ const strings = {
     tabSignup: "Opprett gratis konto",
     continueGoogle: "Fortsett med Google",
     connectingGoogle: "Kobler til...",
+    continueApple: "Sign in with Apple",
+    connectingApple: "Kobler til...",
     or: "eller",
     emailLabel: "E-post",
     emailPlaceholder: "din@epost.no",
@@ -58,6 +60,8 @@ const strings = {
     tabSignup: "Create free account",
     continueGoogle: "Continue with Google",
     connectingGoogle: "Connecting...",
+    continueApple: "Sign in with Apple",
+    connectingApple: "Connecting...",
     or: "or",
     emailLabel: "Email",
     emailPlaceholder: "your@email.com",
@@ -100,6 +104,8 @@ const strings = {
     tabSignup: "Opret gratis konto",
     continueGoogle: "Fortsæt med Google",
     connectingGoogle: "Forbinder...",
+    continueApple: "Sign in with Apple",
+    connectingApple: "Forbinder...",
     or: "eller",
     emailLabel: "E-mail",
     emailPlaceholder: "din@email.dk",
@@ -142,6 +148,8 @@ const strings = {
     tabSignup: "Skapa gratis konto",
     continueGoogle: "Fortsätt med Google",
     connectingGoogle: "Ansluter...",
+    continueApple: "Sign in with Apple",
+    connectingApple: "Ansluter...",
     or: "eller",
     emailLabel: "E-post",
     emailPlaceholder: "din@epost.se",
@@ -184,6 +192,8 @@ const strings = {
     tabSignup: "Luo ilmainen tili",
     continueGoogle: "Jatka Googlella",
     connectingGoogle: "Yhdistetään...",
+    continueApple: "Sign in with Apple",
+    connectingApple: "Yhdistetään...",
     or: "tai",
     emailLabel: "Sähköposti",
     emailPlaceholder: "sinun@sposti.fi",
@@ -250,6 +260,7 @@ function LoginContent() {
   );
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const locale = useLocale();
@@ -528,6 +539,45 @@ function LoginContent() {
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                     </svg>
                     {s.continueGoogle}
+                  </>
+                )}
+              </button>
+
+              {/* Apple OAuth */}
+              <button
+                type="button"
+                disabled={appleLoading}
+                onClick={async () => {
+                  setAppleLoading(true);
+                  try {
+                    track("apple_oauth_clicked");
+                    const supabase = createSupabaseBrowser();
+                    const from = searchParams.get("from");
+                    const wtCode = searchParams.get("wt_code");
+                    const cbParams = [from && `from=${from}`, wtCode && `wt_code=${wtCode}`].filter(Boolean).join("&");
+                    const callbackUrl = `${window.location.origin}/api/auth/callback${cbParams ? `?${cbParams}` : ""}`;
+                    await supabase.auth.signInWithOAuth({
+                      provider: "apple",
+                      options: { redirectTo: callbackUrl },
+                    });
+                  } finally {
+                    setAppleLoading(false);
+                  }
+                }}
+                className="btn-press w-full flex items-center justify-center gap-3 py-3.5 bg-black hover:bg-black/90 text-white rounded-[var(--radius-md)] font-semibold text-base transition-all duration-200 mb-6 disabled:opacity-40 disabled:pointer-events-none border border-white/10"
+                style={{ minHeight: 52 }}
+              >
+                {appleLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    {s.connectingApple}
+                  </>
+                ) : (
+                  <>
+                    <svg width="20" height="24" viewBox="0 0 17 20" fill="white">
+                      <path d="M13.545 10.239c-.022-2.234 1.823-3.306 1.906-3.358-.037-.054-1.494-2.196-3.82-2.196-1.626 0-2.94.975-3.72.975-.807 0-2.026-.95-3.344-.924C2.78 4.764 1.15 5.862.6 7.527c-1.126 3.395.86 8.428 2.486 5.614 1.076 7.373 2.094.52.793 1.06 1.56 1.06 2.504 0 .96-.617 1.862-1.522 2.423.97 1.424 2.135 2.844 3.65 2.79 1.466-.057 2.022-.949 3.787-.949s2.268.949 3.815.919c1.576-.03 2.555-1.326 3.508-2.759 1.107-1.582 1.563-3.116 1.59-3.196-.035-.015-3.05-1.17-3.08-4.643zM10.659 3.098C11.56 1.995 12.18.526 12.025 0 10.754.05 9.212.838 8.278 1.937c-.837.971-1.574 2.519-1.377 4.006 1.418.11 2.865-.712 3.758-1.845z"/>
+                    </svg>
+                    {s.continueApple}
                   </>
                 )}
               </button>
