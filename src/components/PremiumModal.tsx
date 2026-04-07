@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { track } from "@/lib/posthog";
 import { useLocale } from "@/hooks/useLocale";
+
+/* ── iOS app detection ──────────────────────────────────── */
+function getIsIOSApp() {
+  if (typeof window === "undefined") return false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return !!(window as any).webkit?.messageHandlers?.["iap-purchase"];
+}
 
 /* ── personalized sub ───────────────────────────────────── */
 const personalizedSub = {
@@ -35,6 +42,10 @@ const strings = {
     footer: "Ingen binding. Avslutt når du vil.",
     error: "Noe gikk galt, prøv igjen",
     loading: "Venter...",
+    iosCta: "Kjøp via App Store — 29 kr/mnd",
+    iosRestore: "Gjenopprett kjøp",
+    iosSuccess: "Du er nå premium!",
+    iosFailed: "Kjøpet mislyktes. Prøv igjen.",
   },
   en: {
     heading: "29 NOK/mo (~€2.50) — for both of you",
@@ -49,6 +60,10 @@ const strings = {
     footer: "No commitment. Cancel anytime.",
     error: "Something went wrong, try again",
     loading: "Please wait...",
+    iosCta: "Subscribe via App Store — 29 NOK/mo",
+    iosRestore: "Restore purchase",
+    iosSuccess: "You're now premium!",
+    iosFailed: "Purchase failed. Try again.",
   },
   dk: {
     heading: "29 NOK/md (~€2,50) — for jer begge",
@@ -63,6 +78,10 @@ const strings = {
     footer: "Ingen binding. Opsig når du vil.",
     error: "Noget gik galt, prøv igen",
     loading: "Vent venligst...",
+    iosCta: "Køb via App Store — 29 NOK/md",
+    iosRestore: "Gendan køb",
+    iosSuccess: "Du er nu premium!",
+    iosFailed: "Købet mislykkedes. Prøv igen.",
   },
   se: {
     heading: "29 NOK/mån (~€2,50) — för er båda",
@@ -77,6 +96,10 @@ const strings = {
     footer: "Ingen bindningstid. Avsluta när du vill.",
     error: "Något gick fel, försök igen",
     loading: "Vänta...",
+    iosCta: "Köp via App Store — 29 NOK/mån",
+    iosRestore: "Återställ köp",
+    iosSuccess: "Du är nu premium!",
+    iosFailed: "Köpet misslyckades. Försök igen.",
   },
   fi: {
     heading: "29 NOK/kk (~€2,50) — teille molemmille",
@@ -91,6 +114,10 @@ const strings = {
     footer: "Ei sitoutumista. Peru milloin vain.",
     error: "Jokin meni pieleen, yritä uudelleen",
     loading: "Odota...",
+    iosCta: "Osta App Storesta — 29 NOK/kk",
+    iosRestore: "Palauta ostos",
+    iosSuccess: "Olet nyt premium!",
+    iosFailed: "Osto epäonnistui. Yritä uudelleen.",
   },
 } as const;
 
@@ -109,8 +136,30 @@ export default function PremiumModal({ isOpen, onClose, source, userName, titleC
   const [error, setError] = useState("");
   const [priceLabel, setPriceLabel] = useState("");
   const [spotsLeft, setSpotsLeft] = useState<number | null>(null);
+  const [isIOSApp, setIsIOSApp] = useState(false);
+  const [iosToast, setIosToast] = useState<string | null>(null);
   const locale = useLocale();
   const s = strings[locale] ?? strings.en;
+
+  useEffect(() => { setIsIOSApp(getIsIOSApp()); }, []);
+
+  const handleIapStatus = useCallback((e: Event) => {
+    const detail = (e as CustomEvent).detail;
+    if (detail?.premium === true) {
+      setIosToast(s.iosSuccess);
+      setTimeout(() => { setIosToast(null); onClose(); }, 1500);
+    } else {
+      setIosToast(s.iosFailed);
+      setTimeout(() => setIosToast(null), 3000);
+    }
+    setLoading(false);
+  }, [s, onClose]);
+
+  useEffect(() => {
+    if (!isIOSApp) return;
+    window.addEventListener("iap-status", handleIapStatus);
+    return () => window.removeEventListener("iap-status", handleIapStatus);
+  }, [isIOSApp, handleIapStatus]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -240,22 +289,62 @@ export default function PremiumModal({ isOpen, onClose, source, userName, titleC
           <p className="text-xs text-red-400 mb-3 text-center">{error}</p>
         )}
 
+        {/* iOS toast */}
+        {iosToast && (
+          <div className="mb-3 text-center text-sm font-medium py-2 px-3 rounded-lg bg-white/10 text-white">
+            {iosToast}
+          </div>
+        )}
+
         {/* CTA */}
         <style>{`@keyframes ctaGlow{0%,100%{box-shadow:0 0 20px rgba(229,9,20,0.35)}50%{box-shadow:0 0 32px rgba(229,9,20,0.55)}}`}</style>
-        <button
-          onClick={handleCheckout}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white text-center transition-all hover:opacity-90 hover:-translate-y-[2px] disabled:opacity-50"
-          style={{
-            background: "linear-gradient(135deg, #B00000, #E50914)",
-            minHeight: 44,
-            animation: "ctaGlow 2s ease-in-out infinite",
-          }}
-        >
-          {loading ? s.loading : priceLabel
-            ? `${locale === "no" ? "Start Logflix Par" : locale === "dk" ? "Start Logflix Par" : locale === "se" ? "Starta Logflix Par" : locale === "fi" ? "Aloita Logflix Par" : "Start Logflix Par"} — ${priceLabel}`
-            : s.cta}
-        </button>
+        {isIOSApp ? (
+          <>
+            <button
+              onClick={() => {
+                setLoading(true);
+                track("iap_purchase_initiated", { source });
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (window as any).webkit.messageHandlers["iap-purchase"].postMessage({});
+              }}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white text-center transition-all hover:opacity-90 hover:-translate-y-[2px] disabled:opacity-50"
+              style={{
+                background: "linear-gradient(135deg, #B00000, #E50914)",
+                minHeight: 44,
+                animation: "ctaGlow 2s ease-in-out infinite",
+              }}
+            >
+              {loading ? s.loading : s.iosCta}
+            </button>
+            <button
+              onClick={() => {
+                track("iap_restore_initiated", { source });
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (window as any).webkit.messageHandlers["iap-purchase"].postMessage({ restore: true });
+              }}
+              className="w-full text-center text-xs mt-2 transition-colors"
+              style={{ color: "rgba(255,255,255,0.4)" }}
+            >
+              {s.iosRestore}
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={handleCheckout}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white text-center transition-all hover:opacity-90 hover:-translate-y-[2px] disabled:opacity-50"
+            style={{
+              background: "linear-gradient(135deg, #B00000, #E50914)",
+              minHeight: 44,
+              animation: "ctaGlow 2s ease-in-out infinite",
+            }}
+          >
+            {loading ? s.loading : priceLabel
+              ? `${locale === "no" ? "Start Logflix Par" : locale === "dk" ? "Start Logflix Par" : locale === "se" ? "Starta Logflix Par" : locale === "fi" ? "Aloita Logflix Par" : "Start Logflix Par"} — ${priceLabel}`
+              : s.cta}
+          </button>
+        )}
 
         {/* Spots left */}
         {spotsLeft !== null && spotsLeft <= 100 && (
