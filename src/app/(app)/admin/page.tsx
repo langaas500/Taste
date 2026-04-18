@@ -25,7 +25,6 @@ interface SeoTitle {
   title: string;
   slug: string;
   has_providers: boolean;
-  has_curator: boolean;
   has_mood_tags: boolean;
   updated_at: string;
 }
@@ -48,11 +47,9 @@ interface Stats {
     wau: number;
     new_per_day: Record<string, number>;
   };
-  curator: {
+  seoContent: {
     total_with_slug: number;
-    has_curator: number;
     has_mood_tags: number;
-    missing_curator: number;
   };
   providers: {
     no_providers: number;
@@ -141,8 +138,6 @@ export default function AdminPage() {
   const [wtStats, setWtStats] = useState<WtStats | null>(null);
   const [page, setPage] = useState(0);
   const [error, setError] = useState("");
-  const [triggering, setTriggering] = useState(false);
-  const [triggerResult, setTriggerResult] = useState("");
   const [userQuery, setUserQuery] = useState("");
   const [userResults, setUserResults] = useState<UserResult[]>([]);
   const [userSearching, setUserSearching] = useState(false);
@@ -179,23 +174,6 @@ export default function AdminPage() {
       setStats(await res.json());
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Feil ved lasting");
-    }
-  }
-
-  async function handleTriggerCron() {
-    setTriggering(true);
-    setTriggerResult("");
-    try {
-      const res = await fetch("/api/admin/trigger-cron", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      setTriggerResult(`OK: ${data.processed || 0} processed, ${data.failed || 0} failed`);
-      // Refresh stats after cron
-      fetchStats(page);
-    } catch (e: unknown) {
-      setTriggerResult(e instanceof Error ? e.message : "Feil");
-    } finally {
-      setTriggering(false);
     }
   }
 
@@ -372,60 +350,6 @@ export default function AdminPage() {
             )}
           </div>
 
-          {/* ── 1. Curator Generation Progress ──────── */}
-          <div className={glassCard} style={glassCardStyle}>
-            <p className={sectionLabel}>Curator Generation</p>
-            <p className={sectionDesc}>Fremdrift for AI-generert curator-innhold på SEO-sider.</p>
-
-            <div className="space-y-3 mb-4">
-              <ProgressBar
-                value={stats.curator.has_curator}
-                max={stats.curator.total_with_slug}
-                label="Har curator_hook"
-              />
-              <ProgressBar
-                value={stats.curator.has_mood_tags}
-                max={stats.curator.total_with_slug}
-                label="Har mood_tags"
-              />
-            </div>
-
-            <div className="flex flex-wrap gap-3 mb-4">
-              <StatBox label="Totalt m/ slug" value={stats.curator.total_with_slug} />
-              <StatBox label="Har curator" value={stats.curator.has_curator} />
-              <StatBox label="Mangler" value={stats.curator.missing_curator} />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleTriggerCron}
-                disabled={triggering}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 border cursor-pointer disabled:opacity-40 disabled:pointer-events-none border-white/[0.08] text-white/65 hover:bg-[rgba(229,9,20,0.08)] hover:text-white hover:border-[rgba(229,9,20,0.3)]"
-              >
-                {triggering ? (
-                  <>
-                    <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                      <path d="M12 2v4m0 12v4m-7.07-3.93l2.83-2.83m8.48-8.48l2.83-2.83M2 12h4m12 0h4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83" />
-                    </svg>
-                    Kjører...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
-                    </svg>
-                    Trigger cron nå
-                  </>
-                )}
-              </button>
-              {triggerResult && (
-                <span className={`text-xs ${triggerResult.startsWith("OK") ? "text-emerald-400" : "text-red-400"}`}>
-                  {triggerResult}
-                </span>
-              )}
-            </div>
-          </div>
-
           {/* ── 2. Provider Coverage ───────────────── */}
           <div className={glassCard} style={glassCardStyle}>
             <p className={sectionLabel}>Provider Coverage</p>
@@ -474,11 +398,10 @@ export default function AdminPage() {
             </p>
 
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_50px_36px_36px_36px_90px] gap-2 items-center px-2 pb-2 border-b border-white/[0.06]">
+            <div className="grid grid-cols-[1fr_50px_36px_36px_90px] gap-2 items-center px-2 pb-2 border-b border-white/[0.06]">
               <span className="text-[9px] font-bold uppercase tracking-wider text-white/40">Tittel</span>
               <span className="text-[9px] font-bold uppercase tracking-wider text-white/40">Type</span>
               <span className="text-[9px] font-bold uppercase tracking-wider text-white/40 text-center" title="Har providers">Prov</span>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-white/40 text-center" title="Har curator">Cur</span>
               <span className="text-[9px] font-bold uppercase tracking-wider text-white/40 text-center" title="Har mood tags">Mood</span>
               <span className="text-[9px] font-bold uppercase tracking-wider text-white/40 text-right">Oppdatert</span>
             </div>
@@ -488,7 +411,7 @@ export default function AdminPage() {
               {stats.seo.titles.map((t) => (
                 <div
                   key={`${t.tmdb_id}:${t.type}`}
-                  className="grid grid-cols-[1fr_50px_36px_36px_36px_90px] gap-2 items-center px-2 py-2 hover:bg-white/[0.02] transition-colors"
+                  className="grid grid-cols-[1fr_50px_36px_36px_90px] gap-2 items-center px-2 py-2 hover:bg-white/[0.02] transition-colors"
                 >
                   <div className="min-w-0">
                     <span className="text-xs text-white/70 truncate block">{t.title}</span>
@@ -496,7 +419,6 @@ export default function AdminPage() {
                   </div>
                   <span className="text-[9px] font-bold uppercase tracking-wider text-white/50">{t.type}</span>
                   <span className="text-center"><Dot ok={t.has_providers} /></span>
-                  <span className="text-center"><Dot ok={t.has_curator} /></span>
                   <span className="text-center"><Dot ok={t.has_mood_tags} /></span>
                   <span className="text-[10px] text-white/30 font-mono text-right">
                     {new Date(t.updated_at).toLocaleDateString("no-NO", { day: "2-digit", month: "short" })}

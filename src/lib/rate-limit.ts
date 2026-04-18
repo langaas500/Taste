@@ -18,7 +18,6 @@ const upstashLimiters = redis
       recommendations: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(5, "60 s"), prefix: "rl:recs" }),
       tasteSummary: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(3, "60 s"), prefix: "rl:taste" }),
       tmdb: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(30, "60 s"), prefix: "rl:tmdb" }),
-      curator: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "60 s"), prefix: "rl:curator" }),
     }
   : null;
 
@@ -61,14 +60,13 @@ function memoryCheck(
 
 // --- Public API ---
 
-export type RateLimitBucket = "join" | "recommendations" | "tasteSummary" | "tmdb" | "curator";
+export type RateLimitBucket = "join" | "recommendations" | "tasteSummary" | "tmdb";
 
 const BUCKET_CONFIG: Record<RateLimitBucket, { limit: number; windowMs: number }> = {
   join: { limit: 10, windowMs: 60_000 },
   recommendations: { limit: 5, windowMs: 60_000 },
   tasteSummary: { limit: 3, windowMs: 60_000 },
   tmdb: { limit: 30, windowMs: 60_000 },
-  curator: { limit: 10, windowMs: 60_000 },
 };
 
 /**

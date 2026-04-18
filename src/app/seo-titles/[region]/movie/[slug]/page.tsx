@@ -25,14 +25,6 @@ const REGION_COUNTRY: Record<string, string> = {
   no: "NO", dk: "DK", fi: "FI", se: "SE", en: "US",
 };
 
-const REGION_LOCALE: Record<string, string> = {
-  no: "nb", se: "sv", dk: "da", fi: "fi", en: "en",
-};
-
-function regionToLocale(region: string): string {
-  return REGION_LOCALE[region] ?? "nb";
-}
-
 type Params = { region: string; slug: string };
 
 function buildOgImageUrl(title: string, posterPath: string | null, year: number | null, type: "movie" | "tv", rating: number | null, provider?: string | null): string {
@@ -274,28 +266,6 @@ export default async function MoviePage({
         .limit(4)).data || []
     : [];
 
-  // Localized curator text: use i18n table for se/dk/fi, fallback to titles_cache (nb)
-  let curatorHook = title.curator_hook ?? null;
-  let curatorBody = title.curator_body ?? null;
-  let curatorVerdict = title.curator_verdict ?? null;
-
-  if (region !== "no") {
-    const locale = regionToLocale(region);
-    const { data: i18n } = await createSupabaseAdmin()
-      .from("titles_cache_i18n")
-      .select("curator_hook, curator_body, curator_verdict")
-      .eq("tmdb_id", title.tmdb_id)
-      .eq("type", "movie")
-      .eq("locale", locale)
-      .single();
-
-    if (i18n) {
-      curatorHook = i18n.curator_hook ?? curatorHook;
-      curatorBody = i18n.curator_body ?? curatorBody;
-      curatorVerdict = i18n.curator_verdict ?? curatorVerdict;
-    }
-  }
-
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Movie",
@@ -342,9 +312,6 @@ export default async function MoviePage({
         slug={title.slug || slug}
         region={region}
         providers={providers}
-        curatorHook={curatorHook}
-        curatorBody={curatorBody}
-        curatorVerdict={curatorVerdict}
         moodTags={title.mood_tags ?? null}
         similarTitles={similarTitles}
       />

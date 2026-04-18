@@ -333,9 +333,6 @@ export default function LandingContent({ locale }: { locale: Locale }) {
         <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 24 }} />
         <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", marginBottom: 8 }}>{s.also}</p>
         <div style={{ display: "flex", justifyContent: "center", gap: 20 }}>
-          <span onClick={() => { window.location.href = "/curator"; }} style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }} onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}>
-            {s.alsoAI}
-          </span>
           <span onClick={() => { window.location.href = "/library"; }} style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }} onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}>
             {s.alsoLibrary}
           </span>

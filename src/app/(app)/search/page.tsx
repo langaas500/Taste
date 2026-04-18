@@ -799,32 +799,6 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* Mood pills → Curator */}
-      {!query.trim() && !isAdvancedMode && (
-        <div className="flex flex-wrap gap-2 mb-5">
-          {[
-            { label: locale === "no" ? "Mørkt og intenst" : "Dark and intense", emoji: "🖤" },
-            { label: locale === "no" ? "Koselig kveld" : "Cozy night in", emoji: "🛋️" },
-            { label: locale === "no" ? "Latter og hygge" : "Laugh and chill", emoji: "😂" },
-            { label: locale === "no" ? "Overrask meg" : "Surprise me", emoji: "🎲" },
-          ].map((pill) => (
-            <Link
-              key={pill.label}
-              href={`/curator?prompt=${encodeURIComponent(pill.label)}`}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 hover:-translate-y-0.5"
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "0.5px solid rgba(255,255,255,0.12)",
-                color: "rgba(255,255,255,0.7)",
-              }}
-            >
-              <span style={{ fontSize: 13 }}>{pill.emoji}</span>
-              {pill.label}
-            </Link>
-          ))}
-        </div>
-      )}
-
       {/* Advanced panel */}
       <AdvancedSearchPanel
         isOpen={advancedOpen}

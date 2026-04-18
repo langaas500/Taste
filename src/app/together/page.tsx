@@ -2073,7 +2073,7 @@ export default function WTBetaPage() {
                       className="block w-full py-2.5 mt-2 rounded-xl text-sm font-semibold text-center transition-all"
                       style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", textDecoration: "none" }}
                     >
-                      {locale === "no" ? "For deg — anbefalinger, Curator, Wrapped →" : locale === "se" ? "För dig — rekommendationer, Curator, Wrapped →" : locale === "dk" ? "For dig — anbefalinger, Curator, Wrapped →" : locale === "fi" ? "Sinulle — suositukset, Curator, Wrapped →" : "For You — recommendations, Curator, Wrapped →"}
+                      {locale === "no" ? "For deg — anbefalinger og Wrapped →" : locale === "se" ? "För dig — rekommendationer och Wrapped →" : locale === "dk" ? "For dig — anbefalinger og Wrapped →" : locale === "fi" ? "Sinulle — suositukset ja Wrapped →" : "For You — recommendations and Wrapped →"}
                     </Link>
                   )}
                 </div>
@@ -2467,7 +2467,7 @@ export default function WTBetaPage() {
                             className="block w-full py-2.5 mt-1 rounded-xl text-sm font-semibold text-center transition-all"
                             style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", textDecoration: "none" }}
                           >
-                            {locale === "no" ? "For deg — anbefalinger, Curator, Wrapped →" : locale === "se" ? "För dig — rekommendationer, Curator, Wrapped →" : locale === "dk" ? "For dig — anbefalinger, Curator, Wrapped →" : locale === "fi" ? "Sinulle — suositukset, Curator, Wrapped →" : "For You — recommendations, Curator, Wrapped →"}
+                            {locale === "no" ? "For deg — anbefalinger og Wrapped →" : locale === "se" ? "För dig — rekommendationer och Wrapped →" : locale === "dk" ? "For dig — anbefalinger og Wrapped →" : locale === "fi" ? "Sinulle — suositukset ja Wrapped →" : "For You — recommendations and Wrapped →"}
                           </Link>
                         )}
 
@@ -2748,12 +2748,12 @@ export default function WTBetaPage() {
                         >
                           {top.title}{top.year ? ` \u2022 ${top.year}` : ""}
                         </div>
-                        {(top.curator_hook || top.overview) && (
+                        {top.overview && (
                           <div
                             className="mt-1.5 line-clamp-2"
-                            style={{ fontSize: "0.8rem", color: top.curator_hook ? "rgba(255,220,160,0.85)" : "rgba(255,255,255,0.6)", lineHeight: 1.45 }}
+                            style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.45 }}
                           >
-                            {top.curator_hook || (top.overview.length > 100 ? top.overview.slice(0, 100) + "..." : top.overview)}
+                            {top.overview.length > 100 ? top.overview.slice(0, 100) + "..." : top.overview}
                           </div>
                         )}
                       </div>

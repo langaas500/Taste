@@ -29,9 +29,7 @@ export async function GET(req: NextRequest) {
 
     const [
       slugCountRes,
-      curatorCountRes,
       moodCountRes,
-      missingCuratorCountRes,
       provNORes,
       provDKRes,
       provFIRes,
@@ -50,26 +48,12 @@ export async function GET(req: NextRequest) {
         .select("*", { count: "exact", head: true })
         .not("slug", "is", null),
 
-      // Has curator_hook
-      admin
-        .from("titles_cache")
-        .select("*", { count: "exact", head: true })
-        .not("slug", "is", null)
-        .not("curator_hook", "is", null),
-
       // Has mood_tags (non-empty array)
       admin
         .from("titles_cache")
         .select("*", { count: "exact", head: true })
         .not("slug", "is", null)
         .not("mood_tags", "is", null),
-
-      // Missing curator (has slug but no curator_hook)
-      admin
-        .from("titles_cache")
-        .select("*", { count: "exact", head: true })
-        .not("slug", "is", null)
-        .is("curator_hook", null),
 
       // Provider counts per country
       admin
@@ -97,7 +81,7 @@ export async function GET(req: NextRequest) {
       // SEO titles paginated
       admin
         .from("titles_cache")
-        .select("tmdb_id, type, title, slug, curator_hook, mood_tags, updated_at")
+        .select("tmdb_id, type, title, slug, mood_tags, updated_at")
         .not("slug", "is", null)
         .order("updated_at", { ascending: false })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1),
@@ -151,13 +135,12 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const seoData = seoTitles.map((t: { tmdb_id: number; type: string; title: string; slug: string; curator_hook: string | null; mood_tags: string[] | null; updated_at: string }) => ({
+    const seoData = seoTitles.map((t: { tmdb_id: number; type: string; title: string; slug: string; mood_tags: string[] | null; updated_at: string }) => ({
       tmdb_id: t.tmdb_id,
       type: t.type,
       title: t.title,
       slug: t.slug,
       has_providers: providerSet.has(`${t.tmdb_id}:${t.type}`),
-      has_curator: !!t.curator_hook,
       has_mood_tags: Array.isArray(t.mood_tags) && t.mood_tags.length > 0,
       updated_at: t.updated_at,
     }));
@@ -186,11 +169,9 @@ export async function GET(req: NextRequest) {
         wau: wauRes.count || 0,
         new_per_day: newUsersPerDay,
       },
-      curator: {
+      seoContent: {
         total_with_slug: slugCountRes.count || 0,
-        has_curator: curatorCountRes.count || 0,
         has_mood_tags: moodCountRes.count || 0,
-        missing_curator: missingCuratorCountRes.count || 0,
       },
       providers: {
         no_providers: noProvidersCount,

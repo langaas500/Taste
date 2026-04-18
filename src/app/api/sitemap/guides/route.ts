@@ -75,7 +75,6 @@ export function GET() {
     ]),
     ...["no", "se", "dk", "fi", "en"].flatMap((r) => [
       entry(`${base}/${r}/tonight-pick`, lastmod, "monthly", "0.7", { nb: `${base}/no/tonight-pick`, sv: `${base}/se/tonight-pick`, da: `${base}/dk/tonight-pick`, fi: `${base}/fi/tonight-pick`, en: `${base}/en/tonight-pick`, "x-default": `${base}/en/tonight-pick` }),
-      entry(`${base}/${r}/ai-curator`, lastmod, "monthly", "0.7", { nb: `${base}/no/ai-curator`, sv: `${base}/se/ai-curator`, da: `${base}/dk/ai-curator`, fi: `${base}/fi/ai-curator`, en: `${base}/en/ai-curator`, "x-default": `${base}/en/ai-curator` }),
       entry(`${base}/${r === "en" ? "en/couple-report" : `${r}/par-rapport`}`, lastmod, "monthly", "0.7", { nb: `${base}/no/par-rapport`, sv: `${base}/se/par-rapport`, da: `${base}/dk/par-rapport`, fi: `${base}/fi/par-rapport`, en: `${base}/en/couple-report`, "x-default": `${base}/en/couple-report` }),
     ]),
     ...["no", "se", "dk", "fi", "en"].flatMap((r) => [

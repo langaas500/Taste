@@ -23,9 +23,6 @@ export interface TitleCache {
   updated_at: string;
   // SEO title page columns (migration 019/020)
   slug: string | null;
-  curator_hook: string | null;
-  curator_body: string | null;
-  curator_verdict: string | null;
   mood_tags: string[] | null;
   backfill_status: BackfillStatus;
 }

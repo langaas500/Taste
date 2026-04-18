@@ -21,9 +21,6 @@ export interface TitlePageProps {
   slug: string;
   region: string;
   providers: WatchProviderData | null;
-  curatorHook: string | null;
-  curatorBody: string | null;
-  curatorVerdict: string | null;
   moodTags: string[] | null;
   voteCount: number | null;
   similarTitles?: { tmdb_id: number; type: string; title: string; poster_path: string | null; slug: string; year: number | null }[];
@@ -304,7 +301,7 @@ function buildProviderAnswer(
 }
 
 function buildFaqSchema(props: TitlePageProps) {
-  const { title, region, providers, curatorHook, curatorVerdict } = props;
+  const { title, region, providers } = props;
   const t = resolveT(region);
   const regionName = REGION_NAME[region] || region.toUpperCase();
 
@@ -318,13 +315,6 @@ function buildFaqSchema(props: TitlePageProps) {
       a: buildNetflixAnswer(title, region, providers),
     },
   ];
-
-  if (curatorHook && curatorVerdict) {
-    questions.push({
-      q: t.faqQ3(title),
-      a: `${curatorHook} ${curatorVerdict}`,
-    });
-  }
 
   questions.push({
     q: t.faqQ4,
@@ -452,9 +442,6 @@ export default function TitlePageContent(props: TitlePageProps) {
     slug,
     region,
     providers,
-    curatorHook,
-    curatorBody,
-    curatorVerdict,
     moodTags,
   } = props;
 
@@ -465,7 +452,6 @@ export default function TitlePageContent(props: TitlePageProps) {
   const flatrate = providers?.flatrate || [];
   const rent = providers?.rent || [];
   const buy = providers?.buy || [];
-  const hasCurator = curatorHook || curatorBody || curatorVerdict;
 
   return (
     <>
@@ -628,30 +614,6 @@ export default function TitlePageContent(props: TitlePageProps) {
             </p>
           )}
         </section>
-
-        {/* ── Curator ──────────────────────────────────── */}
-        {hasCurator && (
-          <section className="mb-8 rounded-2xl border border-white/[0.06] p-6" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(30px)" }}>
-            <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/80">
-              Logflix Curator
-            </h2>
-            {curatorHook && (
-              <p className="mb-3 text-lg font-semibold text-white/90">
-                {curatorHook}
-              </p>
-            )}
-            {curatorBody && (
-              <p className="mb-3 text-sm leading-relaxed text-white/60">
-                {curatorBody}
-              </p>
-            )}
-            {curatorVerdict && (
-              <p className="inline-block rounded-lg border border-[rgba(229,9,20,0.2)] bg-[rgba(229,9,20,0.06)] px-3 py-1.5 text-sm font-medium text-[rgba(229,9,20,0.85)]">
-                {curatorVerdict}
-              </p>
-            )}
-          </section>
-        )}
 
         {/* ── Mood Tags ────────────────────────────────── */}
         {moodTags && moodTags.length > 0 && (

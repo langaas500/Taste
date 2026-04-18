@@ -49,18 +49,6 @@
       "schedule": "0 10 1 * *"
     },
     {
-      "path": "/api/cron/curator-weekly",
-      "schedule": "0 15 * * 5"
-    },
-    {
-      "path": "/api/cron/trial-reminder",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/curator-push",
-      "schedule": "0 16 * * 5"
-    },
-    {
       "path": "/api/cron/enrich-directors",
       "schedule": "0 3 * * *"
     },
