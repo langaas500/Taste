@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { cacheGet, cacheSet, hashKey } from "@/lib/cache";
 
 interface GenreEntry { id: number; name: string }
 interface CrewMember { name: string; job: string }
@@ -186,23 +187,31 @@ export async function GET() {
         };
       });
 
-    // AI insight
+    // AI insight (cached for 24h per user+profile-signature)
     let aiInsight: string | null = null;
     {
-      try {
-        const summary = `${rows.length} titles. Genres: ${genreBreakdown.slice(0, 5).map((g) => `${g.name} ${g.pct}%`).join(", ")}. ${movieCount} movies, ${tvCount} series. Top directors: ${topDirectors.map((d) => d.name).join(", ")}. Moods: ${topMoods.join(", ")}. Countries: ${countrySet.size}. Rating avg: ${ratingCount > 0 ? (ratingSum / ratingCount).toFixed(1) : "N/A"}.`;
-        const res = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-api-key": process.env.ANTHROPIC_API_KEY || "", "anthropic-version": "2023-06-01" },
-          body: JSON.stringify({
-            model: "claude-haiku-4-5-20251001", max_tokens: 150, temperature: 0.8,
-            system: "You are a witty film critic writing about someone's taste. Write 2-3 sentences that are insightful, warm, and make the person feel good about their taste. Be specific — reference their actual genres, directors, or patterns. No generic praise.",
-            messages: [{ role: "user", content: `Film profile: ${summary}` }],
-          }),
-          signal: AbortSignal.timeout(5000),
-        });
-        if (res.ok) { const d = await res.json(); aiInsight = d?.content?.[0]?.text ?? null; }
-      } catch { /* non-fatal */ }
+      const summary = `${rows.length} titles. Genres: ${genreBreakdown.slice(0, 5).map((g) => `${g.name} ${g.pct}%`).join(", ")}. ${movieCount} movies, ${tvCount} series. Top directors: ${topDirectors.map((d) => d.name).join(", ")}. Moods: ${topMoods.join(", ")}. Countries: ${countrySet.size}. Rating avg: ${ratingCount > 0 ? (ratingSum / ratingCount).toFixed(1) : "N/A"}.`;
+      const cacheKey = `taste-evo-ai:${user.id}:${hashKey(summary)}`;
+      aiInsight = await cacheGet<string>(cacheKey);
+      if (!aiInsight) {
+        try {
+          const res = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-api-key": process.env.ANTHROPIC_API_KEY || "", "anthropic-version": "2023-06-01" },
+            body: JSON.stringify({
+              model: "claude-haiku-4-5-20251001", max_tokens: 150, temperature: 0.8,
+              system: "You are a witty film critic writing about someone's taste. Write 2-3 sentences that are insightful, warm, and make the person feel good about their taste. Be specific — reference their actual genres, directors, or patterns. No generic praise.",
+              messages: [{ role: "user", content: `Film profile: ${summary}` }],
+            }),
+            signal: AbortSignal.timeout(5000),
+          });
+          if (res.ok) {
+            const d = await res.json();
+            aiInsight = d?.content?.[0]?.text ?? null;
+            if (aiInsight) await cacheSet(cacheKey, aiInsight, 24 * 60 * 60);
+          }
+        } catch { /* non-fatal */ }
+      }
     }
 
     return NextResponse.json({

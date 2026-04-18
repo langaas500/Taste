@@ -324,8 +324,9 @@ function PlainText({ text }: { text: string }) {
 /* ── Page ────────────────────────────────────────────── */
 export default function TastePage() {
   const [summary, setSummary] = useState<TasteSummary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [started, setStarted] = useState(false);
   const [error, setError] = useState("");
   const [titleCount, setTitleCount] = useState<number | null>(null);
   const [enrichment, setEnrichment] = useState<TasteEnrichment>(EMPTY_ENRICHMENT);
@@ -348,11 +349,8 @@ export default function TastePage() {
     });
   }
 
-  useEffect(() => {
-    loadSummary();
-  }, []);
-
   async function loadSummary() {
+    setLoading(true);
     try {
       const res = await fetch("/api/taste-summary");
       const data = await res.json();
@@ -383,15 +381,27 @@ export default function TastePage() {
     setGenerating(false);
   }
 
-  useEffect(() => {
-    if (!loading && !summary && titleCount !== null && titleCount >= MIN_TITLES && !generating) {
-      generate();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, summary, titleCount]);
-
-  if (loading || titleCount === null) return <LoadingSpinner text={s.loading} />;
+  if (loading) return <LoadingSpinner text={s.loading} />;
   if (generating) return <AIThinkingScreen />;
+
+  // On-demand: show start button before any AI/DB calls
+  if (!started) {
+    return (
+      <div className="animate-fade-in-up flex flex-col items-center justify-center text-center px-6 py-16">
+        <span className="text-5xl mb-4">{s.emptyIcon}</span>
+        <h2 className="text-xl font-bold text-white mb-2">{s.filmsmaken}</h2>
+        <p className="text-sm text-white/50 mb-6 max-w-sm">{s.pageTitle}</p>
+        <GlowButton
+          onClick={() => {
+            setStarted(true);
+            loadSummary();
+          }}
+        >
+          {s.analyze}
+        </GlowButton>
+      </div>
+    );
+  }
 
   if (!summary && titleCount === 0) {
     return (
@@ -405,7 +415,7 @@ export default function TastePage() {
     );
   }
 
-  if (!summary && titleCount < MIN_TITLES) {
+  if (!summary && titleCount !== null && titleCount < MIN_TITLES) {
     return (
       <div className="animate-fade-in-up flex flex-col items-center justify-center text-center px-6 py-16">
         <span className="text-5xl mb-4">{s.emptyIcon}</span>

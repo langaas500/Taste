@@ -8,6 +8,7 @@ import { getWatchProvidersCachedBatch } from "@/lib/watch-providers-cache";
 import { withLogger } from "@/lib/logger";
 import { applyRateLimit } from "@/lib/rate-limit";
 import { resolveRegion } from "@/lib/region";
+import { cacheGet, cacheSet, hashKey } from "@/lib/cache";
 
 export const GET = withLogger("/api/recommendations", async (req, { logger }) => {
   try {
@@ -623,16 +624,26 @@ export const GET = withLogger("/api/recommendations", async (req, { logger }) =>
           overview: (item.overview as string) || "",
           genres: ((item.genre_ids as number[]) || []).map((gid) => GENRE_MAP[gid] || "").filter(Boolean),
         }));
-        const aiExplanations = await explainRecommendations(
-          { youLike: tasteSummary.youLike, avoid: tasteSummary.avoid },
-          aiTitles,
-          profile?.preferred_locale ? localeToAILocale(profile.preferred_locale) : regionToAILocale(userRegion),
-        );
+        const aiLocale = profile?.preferred_locale ? localeToAILocale(profile.preferred_locale) : regionToAILocale(userRegion);
+        const titlesKey = hashKey(aiTitles.map((t) => `${t.title}:${t.type}`).join("|"));
+        const tasteKey = hashKey(`${tasteSummary.youLike}|${tasteSummary.avoid}`);
+        const cacheKey = `recs-ai:${user.id}:${tasteKey}:${titlesKey}:${aiLocale}`;
+
+        let aiExplanations = await cacheGet<Array<{ title: string; why: string; tags?: string[] }>>(cacheKey);
+        if (!aiExplanations) {
+          aiExplanations = await explainRecommendations(
+            { youLike: tasteSummary.youLike, avoid: tasteSummary.avoid },
+            aiTitles,
+            aiLocale,
+          );
+          await cacheSet(cacheKey, aiExplanations, 6 * 60 * 60); // 6h
+        }
+
         for (const aiExp of aiExplanations) {
           const rec = recommendations.find((r) => r.title === aiExp.title);
           if (rec && aiExp.why) {
             rec.why = aiExp.why;
-            if (aiExp.tags?.length > 0) rec.tags = aiExp.tags.slice(0, 3);
+            if (aiExp.tags && aiExp.tags.length > 0) rec.tags = aiExp.tags.slice(0, 3);
           }
         }
       } catch {
