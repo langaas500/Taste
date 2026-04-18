@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import PremiumModal from "@/components/PremiumModal";
 import StreamingModal from "@/components/StreamingModal";
 import { track } from "@/lib/posthog";
 import { toggleFavorite } from "@/lib/api";
@@ -247,14 +246,6 @@ function SendIcon({ size = 15, color = "white" }: { size?: number; color?: strin
   );
 }
 
-function LockIcon({ size = 14 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="#FFD700" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-    </svg>
-  );
-}
-
 /* ── Sub-components ────────────────────────────────── */
 
 function ThinkingIndicator() {
@@ -314,61 +305,12 @@ function MessageBubble({ msg }: { msg: Message }) {
   );
 }
 
-/* ── Premium unlock (inline, subtle) ───────────────── */
-
-function PremiumUnlock({ lang, onUpgrade }: { lang: Locale; onUpgrade: () => void }) {
-  const t = i18n[lang] ?? i18n.en;
-  return (
-    <div className="flex gap-3 items-start relative group" style={{ maxWidth: "75%" }}>
-      {/* Ambient Red Glow for the Gate */}
-      <div className="absolute -inset-4 bg-red-600/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-
-      <BotAvatar />
-      <div className="flex-1 relative z-10">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex-1 h-px bg-white/10" />
-          <div className="flex items-center gap-1.5">
-            <LockIcon size={10} />
-            <span className="text-[10px] font-bold tracking-[0.18em] text-red-500 uppercase">Curator Premium</span>
-          </div>
-          <div className="flex-1 h-px bg-white/10" />
-        </div>
-
-        <div className="bg-white/[0.03] border border-red-600/20 px-5 py-5 backdrop-blur-xl shadow-2xl" style={{ borderRadius: "4px 18px 18px 18px" }}>
-          <h3 className="text-lg font-semibold text-white/90 mb-2">{t.premiumTitle}</h3>
-          <p className="text-xs text-white/50 mb-4 leading-relaxed">
-            {t.premiumBody}
-          </p>
-          <div className="flex flex-col gap-2 mb-6">
-            {t.premiumPerks.map((perk, i) => (
-              <div key={i} className="flex items-center gap-2.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-600/60 shadow-[0_0_8px_rgba(229,9,20,0.4)] flex-shrink-0" />
-                <span className="text-xs text-white/40">{perk}</span>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={onUpgrade}
-            className="w-full flex items-center justify-center gap-2 text-white text-sm font-bold px-5 py-3 rounded-xl transition-all cursor-pointer hover:-translate-y-1 active:translate-y-0 hover:opacity-90"
-            style={{ background: "linear-gradient(#B00000, #E50914)", boxShadow: "0 10px 20px rgba(229,9,20,0.3)" }}
-          >
-            <LockIcon size={14} />
-            {t.premiumCta}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ── Main page ─────────────────────────────────────── */
 
 export default function CuratorPage() {
   const lang = useLocale() as Locale;
   const [username, setUsername] = useState<string | null>(null);
   const [profileTitleCount, setProfileTitleCount] = useState<number | null>(null);
-  const [isPremium, setIsPremium] = useState<boolean | null>(null);
-  const [showPremium, setShowPremium] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<{ tmdb_id: number; type: "movie" | "tv"; title: string; poster_path: string | null } | null>(null);
   const [favs, setFavs] = useState<Record<string, boolean>>({});
   const [messages, setMessages] = useState<Message[]>([]);
@@ -377,7 +319,6 @@ export default function CuratorPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const FREE_MESSAGE_LIMIT = 5;
   const t = i18n[lang] ?? i18n.en;
   const isLoading = messages.some((m) => m.loading);
   const userMessageCount = messages.filter((m) => m.role === "user").length;
@@ -387,18 +328,15 @@ export default function CuratorPage() {
       .then((r) => r.json())
       .then((d) => {
         if (d.profile) {
-          setIsPremium(!!d.profile.is_premium);
           const name = d.profile.display_name || t.fallback;
           setUsername(d.profile.display_name || null);
           if (d.profile.title_count != null) setProfileTitleCount(d.profile.title_count);
           setMessages([{ role: "bot", text: t.greeting(name) }]);
         } else {
-          setIsPremium(false);
           setMessages([{ role: "bot", text: t.greeting(t.fallback) }]);
         }
       })
       .catch(() => {
-        setIsPremium(false);
         setMessages([{ role: "bot", text: t.greeting(t.fallback) }]);
       });
   }, [lang, t]);
@@ -411,11 +349,6 @@ export default function CuratorPage() {
     const text = promptText || input.trim();
     if (!text || isLoading) return;
 
-    if (!isPremium && userMessageCount >= FREE_MESSAGE_LIMIT) {
-      track("curator_premium_gate", { action: "blocked", messages_sent: userMessageCount });
-      setShowPremium(true);
-      return;
-    }
 
     setInput("");
     setFollowUps([]);
@@ -436,13 +369,6 @@ export default function CuratorPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, lang, username, messageCount: userMessageCount, history }),
       });
-
-      if (res.status === 403) {
-        setIsPremium(false);
-        setShowPremium(true);
-        setMessages((prev) => prev.filter((m) => !m.loading));
-        return;
-      }
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({ error: "Error" }));
@@ -644,69 +570,8 @@ export default function CuratorPage() {
           )}
 
           {/* Premium unlock — Inline (after free limit hit) + last response smakebit */}
-          {isPremium === false && userMessageCount >= FREE_MESSAGE_LIMIT && (
-            <div className="mt-2">
-              {/* Show last bot response as a "taste" of what premium gives */}
-              {(() => {
-                const lastBot = [...messages].reverse().find((m) => m.role === "bot" && !m.loading);
-                if (!lastBot) return null;
-                return (
-                  <div
-                    className="rounded-xl mb-3 px-4 py-3"
-                    style={{ background: "rgba(245,200,66,0.06)", border: "0.5px solid rgba(245,200,66,0.15)" }}
-                  >
-                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", margin: "0 0 6px" }}>
-                      {lang === "no" ? "Siste smakebit fra Curator:" : lang === "se" ? "Sista smakbit från Curator:" : lang === "dk" ? "Sidste smagsprøve fra Curator:" : "Last taste from Curator:"}
-                    </p>
-                    <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", margin: "0 0 10px", lineHeight: 1.5 }} className="line-clamp-3">
-                      {lastBot.text}
-                    </p>
-                    <button
-                      onClick={() => { track("curator_premium_gate", { action: "smakebit_cta" }); setShowPremium(true); }}
-                      style={{ fontSize: 12, fontWeight: 700, color: "#F5C842", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                    >
-                      {lang === "no" ? "Behold Curator →" : lang === "se" ? "Behåll Curator →" : lang === "dk" ? "Behold Curator →" : lang === "fi" ? "Säilytä Curator →" : "Keep Curator →"}
-                    </button>
-                  </div>
-                );
-              })()}
-              <PremiumUnlock
-                lang={lang}
-                onUpgrade={() => { track("curator_premium_gate", { action: "cta_click" }); setShowPremium(true); }}
-              />
-            </div>
-          )}
-
           <div ref={bottomRef} />
         </div>
-
-        {/* Message counter + upgrade banner */}
-        {isPremium === false && userMessageCount > 0 && userMessageCount < FREE_MESSAGE_LIMIT && (
-          <div className="px-6 pb-1">
-            <div
-              className="rounded-xl px-4 py-2.5"
-              style={{ background: userMessageCount >= 3 ? "rgba(245,200,66,0.08)" : "rgba(255,255,255,0.03)", border: userMessageCount >= 3 ? "0.5px solid rgba(245,200,66,0.2)" : "0.5px solid rgba(255,255,255,0.06)" }}
-            >
-              {/* Progress bar */}
-              <div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", marginBottom: 8, overflow: "hidden" }}>
-                <div style={{ height: "100%", borderRadius: 2, width: `${(userMessageCount / FREE_MESSAGE_LIMIT) * 100}%`, background: userMessageCount >= 4 ? "#ef4444" : userMessageCount >= 3 ? "#F5C842" : "rgba(255,255,255,0.25)", transition: "width 0.3s ease" }} />
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <p style={{ fontSize: 11, fontWeight: 500, color: userMessageCount >= 3 ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.35)", margin: 0 }}>
-                  {userMessageCount >= 4 ? t.counterLast : userMessageCount >= 3 ? t.counterWarning(FREE_MESSAGE_LIMIT - userMessageCount) : t.counterUsed(userMessageCount)}
-                </p>
-                {userMessageCount >= 3 && (
-                  <button
-                    onClick={() => setShowPremium(true)}
-                    style={{ fontSize: 11, fontWeight: 700, color: "#F5C842", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
-                  >
-                    {lang === "no" ? "Behold tilgang →" : lang === "se" ? "Behåll tillgång →" : lang === "dk" ? "Behold adgang →" : lang === "fi" ? "Säilytä pääsy →" : "Keep access →"}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Input Area */}
         <div className="px-6 pt-3 bg-gradient-to-t from-black/40 to-transparent" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}>
@@ -735,8 +600,6 @@ export default function CuratorPage() {
           </div>
         </div>
       </div>
-
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="curator" userName={username} titleCount={profileTitleCount} />
 
       {selectedMovie && (
         <StreamingModal

@@ -177,7 +177,7 @@ export default function TasteProfilePage() {
             Upptäck din filmpersonlighet
           </p>
           <a
-            href="/premium"
+            href="/together"
             style={{
               display: "inline-block",
               padding: "12px 32px",

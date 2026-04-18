@@ -205,7 +205,7 @@ export default function WrappedPage() {
             Start å spore filmåret ditt
           </p>
           <a
-            href="/premium"
+            href="/together"
             style={{
               display: "inline-block",
               padding: "12px 32px",

@@ -41,11 +41,10 @@ export async function GET(req: NextRequest) {
 
   const admin = createSupabaseAdmin();
 
-  // 1. Find eligible premium users with taste_summary and email_digest
+  // 1. Find eligible users with taste_summary and email_digest
   const { data: users } = await admin
     .from("profiles")
     .select("id, taste_summary, preferred_region, display_name")
-    .eq("is_premium", true)
     .eq("email_digest", true)
     .not("taste_summary", "is", null)
     .limit(BATCH_SIZE);

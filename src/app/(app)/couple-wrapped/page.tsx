@@ -132,7 +132,7 @@ interface CoupleWrappedData {
   month: string;
   myName: string | null;
   partnerName: string | null;
-  isPremium: boolean;
+  isPremium?: boolean;
   my: PersonStats;
   partner: PersonStats;
   overlap: {

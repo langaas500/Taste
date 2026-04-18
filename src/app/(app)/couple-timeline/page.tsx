@@ -115,7 +115,7 @@ interface TimelineGroup {
 interface TimelineData {
   myName: string | null;
   partnerName: string | null;
-  isPremium: boolean;
+  isPremium?: boolean;
   linkedSince: string | null;
   timeline: TimelineGroup[];
 }

@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import PremiumModal from "@/components/PremiumModal";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { useLocale } from "@/hooks/useLocale";
 import { fetchLinks, createInvite, acceptInvite, updateLinkSharing, revokeLink, fetchLists } from "@/lib/api";
@@ -612,10 +611,6 @@ function SettingsContent() {
   const [managingLinkId, setManagingLinkId] = useState<string | null>(null);
   const [activePresets, setActivePresets] = useState<string[]>([]);
   const [savingFilters, setSavingFilters] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
-  const [isFoundingMember, setIsFoundingMember] = useState(false);
-  const [premiumSince, setPremiumSince] = useState<string | null>(null);
-  const [showPremium, setShowPremium] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<SupportedRegion>("US");
   const [savingRegion, setSavingRegion] = useState(false);
   const [selectedLocale, setSelectedLocale] = useState<string>("");
@@ -672,9 +667,6 @@ function SettingsContent() {
       if (data.profile) {
         setExplorationSlider(data.profile.exploration_slider ?? 50);
         setDisplayName(data.profile.display_name || "");
-        setIsPremium(!!data.profile.is_premium);
-        setIsFoundingMember(!!data.profile.founding_member);
-        setPremiumSince(data.profile.premium_since || null);
         if (data.profile.preferred_region) setSelectedRegion(data.profile.preferred_region);
         setSelectedLocale(data.profile.preferred_locale || "");
         if (data.profile.title_count != null) setSettingsTitleCount(data.profile.title_count);
@@ -993,29 +985,6 @@ function SettingsContent() {
           </div>
         )}
 
-        {/* Premium badge */}
-        <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-between">
-          {isPremium ? (
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
-                <span className="text-xs font-medium text-emerald-400">{s.premiumMember}</span>
-              </div>
-              {isFoundingMember && premiumSince && (
-                <p className="text-[10px] mt-1.5" style={{ color: "rgba(229,9,20,0.6)" }}>
-                  {s.foundingMemberSince(new Date(premiumSince).toLocaleDateString(locale === "fi" ? "fi-FI" : locale === "se" ? "sv-SE" : locale === "dk" ? "da-DK" : locale === "en" ? "en-US" : "nb-NO", { month: "long", year: "numeric" }))}
-                </p>
-              )}
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowPremium(true)}
-              className="text-xs font-semibold text-white/70 border border-white/[0.1] rounded-xl px-4 py-2 hover:bg-[rgba(229,9,20,0.1)] hover:border-[rgba(229,9,20,0.3)] hover:text-white transition-all cursor-pointer"
-            >
-              {s.upgradeToPremium}
-            </button>
-          )}
-        </div>
       </div>
 
       {/* ── SEKSJON 2: Konto ─────────────────────────── */}
@@ -1144,46 +1113,6 @@ function SettingsContent() {
             </div>
             {savingLocale && <p className="text-[10px] text-white/40 mt-2">{s.saving}</p>}
           </div>
-      </div>
-
-      {/* ── SEKSJON 4: Abonnement ────────────────────── */}
-      <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-white/40 mb-3 mt-8">
-        {locale === "no" ? "Abonnement" : locale === "dk" ? "Abonnement" : locale === "se" ? "Prenumeration" : locale === "fi" ? "Tilaus" : "Subscription"}
-      </h2>
-      <div className={glassCard} style={glassCardStyle}>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              {isPremium ? (
-                <>
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
-                  <span className="text-sm font-semibold text-emerald-400">
-                    {isFoundingMember ? "Founding Member" : "Premium"}
-                  </span>
-                </>
-              ) : (
-                <span className="text-sm font-medium text-white/50">
-                  {locale === "no" ? "Gratis plan" : locale === "dk" ? "Gratis plan" : locale === "se" ? "Gratisplan" : locale === "fi" ? "Ilmainen" : "Free plan"}
-                </span>
-              )}
-            </div>
-            {isPremium && premiumSince && (
-              <p className="text-[10px] text-white/30">
-                {locale === "no" ? "Medlem siden" : locale === "dk" ? "Medlem siden" : locale === "se" ? "Medlem sedan" : locale === "fi" ? "Jäsen alkaen" : "Member since"}{" "}
-                {new Date(premiumSince).toLocaleDateString(locale === "fi" ? "fi-FI" : locale === "se" ? "sv-SE" : locale === "dk" ? "da-DK" : locale === "en" ? "en-US" : "nb-NO", { month: "long", year: "numeric" })}
-              </p>
-            )}
-          </div>
-          {isPremium ? (
-            <a href="/api/stripe/portal" className="text-xs font-semibold px-3 py-2 rounded-xl border border-white/[0.1] text-white/60 hover:text-white hover:border-white/[0.2] transition-all" style={{ textDecoration: "none" }}>
-              {locale === "no" ? "Administrer abonnement" : locale === "dk" ? "Administrer abonnement" : locale === "se" ? "Hantera prenumeration" : locale === "fi" ? "Hallinnoi tilausta" : "Manage subscription"}
-            </a>
-          ) : (
-            <Link href="/premium" className="text-xs font-semibold px-3 py-2 rounded-xl text-white transition-all hover:opacity-90" style={{ background: "#ff2a2a", textDecoration: "none" }}>
-              {locale === "no" ? "Oppgrader →" : locale === "dk" ? "Opgrader →" : locale === "se" ? "Uppgradera →" : locale === "fi" ? "Päivitä →" : "Upgrade →"}
-            </Link>
-          )}
-        </div>
       </div>
 
       {/* ── SEKSJON 5: Avansert (kollapsbar) ─────────── */}
@@ -1589,7 +1518,6 @@ function SettingsContent() {
         </div>
       </div>
 
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="settings" userName={displayName || null} titleCount={settingsTitleCount} />
     </div>
   );
 }

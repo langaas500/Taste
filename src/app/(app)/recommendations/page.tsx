@@ -7,15 +7,11 @@ import EmptyState from "@/components/EmptyState";
 import GlowButton from "@/components/GlowButton";
 import StreamingModal from "@/components/StreamingModal";
 import AddToListModal from "@/components/AddToListModal";
-import ConversionWall from "@/components/ConversionWall";
-import PremiumModal from "@/components/PremiumModal";
 import { submitFeedback, addExclusion, logTitle, toggleFavorite } from "@/lib/api";
 import { prefetchNetflixIds } from "@/lib/prefetch-netflix-ids";
 import type { Recommendation, MediaType } from "@/lib/types";
 import { useLocale } from "@/hooks/useLocale";
 import type { Locale } from "@/lib/i18n";
-
-const FREE_REC_LIMIT = 5;
 
 type TypeFilter = "all" | "tv" | "movie";
 
@@ -167,25 +163,10 @@ export default function RecommendationsPage() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const locale = useLocale();
-  const [isPremium, setIsPremium] = useState(true); // default true to avoid flash
-  const [showWall, setShowWall] = useState(false);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [favs, setFavs] = useState<Record<string, boolean>>({});
-  const [profileName, setProfileName] = useState<string | null>(null);
-  const [profileTitleCount, setProfileTitleCount] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/profile")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.profile) {
-          setIsPremium(!!d.profile.is_premium);
-          if (d.profile.display_name) setProfileName(d.profile.display_name);
-          if (d.profile.title_count != null) setProfileTitleCount(d.profile.title_count);
-        }
-      })
-      .catch(() => {});
     loadRecs();
   }, []);
 
@@ -267,13 +248,7 @@ export default function RecommendationsPage() {
     .filter((r) => !dismissed.has(`${r.tmdb_id}:${r.type}`))
     .filter((r) => typeFilter === "all" || r.type === typeFilter);
 
-  const hitLimit = !isPremium && allVisible.length > FREE_REC_LIMIT;
-
-  // Auto-show premium modal when free limit is hit
-  useEffect(() => {
-    if (hitLimit) setShowPremiumModal(true);
-  }, [hitLimit]);
-  const visible = hitLimit ? allVisible.slice(0, FREE_REC_LIMIT) : allVisible;
+  const visible = allVisible;
 
   const hero = visible[0] ?? null;
   const gridRecs = visible.slice(1);
@@ -339,7 +314,7 @@ export default function RecommendationsPage() {
 
   return (
     <>
-    <div className={`animate-fade-in-up${showPremiumModal ? " opacity-30 blur-sm pointer-events-none" : ""}`} style={{ transition: "opacity 0.3s, filter 0.3s" }}>
+    <div className="animate-fade-in-up">
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-xl font-bold text-[var(--text-primary)]">{s.title}</h2>
@@ -347,38 +322,6 @@ export default function RecommendationsPage() {
           {loaded ? s.refresh : s.fetch}
         </GlowButton>
       </div>
-
-      {/* ── Forvarsel: nær limit ── */}
-      {!isPremium && loaded && allVisible.length > 0 && allVisible.length <= FREE_REC_LIMIT && allVisible.length >= FREE_REC_LIMIT - 2 && (
-        <div
-          className="mb-5 rounded-xl px-4 py-3"
-          style={{ background: "rgba(245,200,66,0.08)", border: "0.5px solid rgba(245,200,66,0.2)" }}
-        >
-          {/* Progress bar */}
-          <div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", marginBottom: 8, overflow: "hidden" }}>
-            <div style={{ height: "100%", borderRadius: 2, width: `${(dismissed.size / FREE_REC_LIMIT) * 100}%`, background: dismissed.size >= FREE_REC_LIMIT - 1 ? "#ef4444" : "#F5C842", transition: "width 0.3s ease" }} />
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", margin: 0 }}>
-              {locale === "no"
-                ? `Bare ${FREE_REC_LIMIT - dismissed.size} anbefalinger igjen — så mister du tilgang`
-                : locale === "se"
-                ? `Bara ${FREE_REC_LIMIT - dismissed.size} rekommendationer kvar — sen förlorar du tillgång`
-                : locale === "dk"
-                ? `Kun ${FREE_REC_LIMIT - dismissed.size} anbefalinger tilbage — så mister du adgang`
-                : locale === "fi"
-                ? `Vain ${FREE_REC_LIMIT - dismissed.size} suositusta jäljellä — sitten menetät pääsyn`
-                : `Only ${FREE_REC_LIMIT - dismissed.size} recommendations left — then you lose access`}
-            </p>
-            <button
-              onClick={() => setShowPremiumModal(true)}
-              style={{ fontSize: 12, fontWeight: 700, color: "#F5C842", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
-            >
-              {locale === "no" ? "Behold tilgang →" : locale === "se" ? "Behåll tillgång →" : locale === "dk" ? "Behold adgang →" : locale === "fi" ? "Säilytä pääsy →" : "Keep access →"}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ── Type filter ── */}
       {loaded && recs.length > 0 && (
@@ -672,47 +615,6 @@ export default function RecommendationsPage() {
         </div>
       )}
 
-      {/* Premium wall after free limit */}
-      {hitLimit && (
-        <div className="mt-6 text-center">
-          {/* Progress bar */}
-          <div style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.08)", marginBottom: 12, overflow: "hidden", maxWidth: 240, margin: "0 auto 12px" }}>
-            <div style={{ height: "100%", borderRadius: 2, width: "100%", background: "#ef4444" }} />
-          </div>
-          <p className="text-sm text-white/50 mb-1">
-            {locale === "no"
-              ? `${allVisible.length - FREE_REC_LIMIT} anbefalinger skjult — du har brukt opp gratiskvoten`
-              : locale === "se"
-              ? `${allVisible.length - FREE_REC_LIMIT} rekommendationer dolda — du har använt gratiskvoten`
-              : locale === "dk"
-              ? `${allVisible.length - FREE_REC_LIMIT} anbefalinger skjult — du har brugt din gratis kvote`
-              : locale === "fi"
-              ? `${allVisible.length - FREE_REC_LIMIT} suositusta piilotettu — ilmaiskiintiösi on käytetty`
-              : `${allVisible.length - FREE_REC_LIMIT} recommendations hidden — you've used your free quota`}
-          </p>
-          <p className="text-xs text-white/25 mb-3">
-            {locale === "no" ? "Uten Premium mister du tilgang til disse"
-              : locale === "se" ? "Utan Premium förlorar du tillgång till dessa"
-              : locale === "dk" ? "Uden Premium mister du adgang til disse"
-              : locale === "fi" ? "Ilman Premiumia menetät pääsyn näihin"
-              : "Without Premium you'll lose access to these"}
-          </p>
-          <button
-            onClick={() => setShowWall(true)}
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ background: "#ff2a2a" }}
-          >
-            {locale === "no" ? "Behold tilgangen — 29 kr/mnd"
-              : locale === "se" ? "Behåll tillgången — 29 NOK/mån"
-              : locale === "dk" ? "Behold adgangen — 29 NOK/md"
-              : locale === "fi" ? "Säilytä pääsy — 29 NOK/kk"
-              : "Keep your access — 29 NOK/mo"}
-          </button>
-        </div>
-      )}
-
-      <ConversionWall open={showWall} onClose={() => setShowWall(false)} premium userName={profileName} titleCount={profileTitleCount} />
-
       {/* Add to List Modal */}
       {addToListItem && (
         <AddToListModal
@@ -754,13 +656,6 @@ export default function RecommendationsPage() {
         />
       )}
     </div>
-    <PremiumModal
-      isOpen={showPremiumModal}
-      onClose={() => setShowPremiumModal(false)}
-      source="recommendations_limit"
-      userName={profileName}
-      titleCount={profileTitleCount}
-    />
     </>
   );
 }

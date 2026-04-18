@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
 
     // 2. Fetch profiles + both users' watched titles this month in parallel
     const [myProfileRes, partnerProfileRes, myTitlesRes, partnerTitlesRes, matchesRes] = await Promise.all([
-      admin.from("profiles").select("display_name, is_premium").eq("id", user.id).single(),
+      admin.from("profiles").select("display_name").eq("id", user.id).single(),
       admin.from("profiles").select("display_name").eq("id", partnerId).single(),
       admin
         .from("user_titles")
@@ -164,7 +164,6 @@ export async function GET(req: NextRequest) {
       month,
       myName: myProfile?.display_name || null,
       partnerName: partnerProfile?.display_name || null,
-      isPremium: !!myProfile?.is_premium,
       my: {
         total: myTitles.length,
         movies: myMovies,

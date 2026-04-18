@@ -102,7 +102,6 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/tmdb/") ||
     pathname.startsWith("/api/together/") ||
     pathname.startsWith("/api/group/") ||
-    pathname === "/api/stripe/webhook" ||
     pathname.startsWith("/wrapped") ||
     pathname === "/api/wrapped-monthly" ||
     isTitlePage ||

@@ -15,7 +15,7 @@ import { sendMonthlyCoupleReport } from "@/lib/email";
 const BATCH_SIZE = 20;
 
 interface LinkRow { id: string; inviter_id: string; invitee_id: string }
-interface ProfileRow { id: string; is_premium: boolean; display_name: string | null }
+interface ProfileRow { id: string; display_name: string | null }
 interface SessionRow { match_tmdb_id: number; match_type: string }
 interface TitleRow { tmdb_id: number; title: string; genres: { id: number; name: string }[] | null }
 
@@ -53,17 +53,13 @@ export async function GET(req: NextRequest) {
 
   const { data: profiles } = await admin
     .from("profiles")
-    .select("id, is_premium, display_name")
+    .select("id, display_name")
     .in("id", userIds);
 
   const profileMap = new Map<string, ProfileRow>();
   for (const p of (profiles || []) as ProfileRow[]) profileMap.set(p.id, p);
 
-  const eligibleLinks = typedLinks.filter((l) => {
-    const inv = profileMap.get(l.inviter_id);
-    const invt = l.invitee_id ? profileMap.get(l.invitee_id) : null;
-    return inv?.is_premium || invt?.is_premium;
-  });
+  const eligibleLinks = typedLinks;
 
   const batch = eligibleLinks.slice(0, BATCH_SIZE);
   let sent = 0;

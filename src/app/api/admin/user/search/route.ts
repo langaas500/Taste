@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     // Search by display_name in profiles
     const { data: nameMatches } = await admin
       .from("profiles")
-      .select("id, display_name, is_premium, founding_member, created_at, trial_ends_at")
+      .select("id, display_name, created_at")
       .ilike("display_name", `%${q}%`)
       .limit(20);
 
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
 
     const { data: profiles } = await admin
       .from("profiles")
-      .select("id, display_name, is_premium, founding_member, created_at, trial_ends_at")
+      .select("id, display_name, created_at")
       .in("id", ids);
 
     const profileMap = new Map<string, Record<string, unknown>>();
@@ -89,9 +89,6 @@ export async function GET(req: NextRequest) {
         id,
         email: emailMap.get(id) || null,
         display_name: (profile as Record<string, unknown>).display_name || null,
-        is_premium: !!(profile as Record<string, unknown>).is_premium,
-        founding_member: !!(profile as Record<string, unknown>).founding_member,
-        trial_ends_at: (profile as Record<string, unknown>).trial_ends_at || null,
         created_at: (profile as Record<string, unknown>).created_at || null,
         title_count: countMap.get(id) || 0,
       };

@@ -102,7 +102,6 @@ export default function WTBetaPage() {
   const [matchCount, setMatchCount] = useState<number>(0);
   const [superLikesUsed, setSuperLikesUsed] = useState(0);
   const [iAmDone, setIAmDone] = useState(false);
-  const [showPostMatchPremium, setShowPostMatchPremium] = useState(false);
   const [showKeyboardHint, setShowKeyboardHint] = useState(false);
   const [lastSwipedTitle, setLastSwipedTitle] = useState<{ title: WTTitle; index: number; action: SwipeAction } | null>(null);
   const [undoUsedThisRound, setUndoUsedThisRound] = useState(false);
@@ -174,14 +173,6 @@ export default function WTBetaPage() {
         try { localStorage.setItem("logflix_guest_signup_shown", "1"); } catch {}
         track("guest_signup_prompt_shown", { tmdb_id: finalWinner.tmdb_id });
       }, 5000);
-      return () => clearTimeout(timer);
-    } else {
-      // Logged in → show premium modal after 3 seconds
-      const timer = setTimeout(() => {
-        setShowPostMatchPremium(true);
-        try { localStorage.setItem("logflix_premium_modal_shown", "1"); } catch {}
-        track("post_match_premium_shown", { tmdb_id: finalWinner.tmdb_id });
-      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [finalWinner, authUser]);
@@ -1477,18 +1468,6 @@ export default function WTBetaPage() {
                   })()}
                 </div>
               )}
-              {/* Frozen streak (cancelled premium) */}
-              {!streakData && frozenStreak > 0 && (
-                <div style={{ marginTop: 14, textAlign: "center" }}>
-                  <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>
-                    ⏸ {t(locale, "streak", "frozenStreak").replace("{n}", String(frozenStreak))}
-                  </p>
-                  <Link href="/premium" style={{ fontSize: "0.65rem", color: "#E50914", textDecoration: "none", fontWeight: 600 }}>
-                    {t(locale, "streak", "frozenCta")}
-                  </Link>
-                </div>
-              )}
-
               {/* SEO crawlable links — visible only on intro screen */}
               <nav className="mt-8 pt-6 text-center" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 <p className="text-xs text-white/25 mb-3">Find something to watch together</p>
@@ -2333,32 +2312,6 @@ export default function WTBetaPage() {
                           {locale === "no" ? "Utfordre et annet par — kan de slå dere? →" : locale === "se" ? "Utmana ett annat par — kan de slå er? →" : locale === "dk" ? "Udfordr et andet par — kan de slå jer? →" : locale === "fi" ? "Haasta toinen pari — voivatko he voittaa teidät? →" : "Challenge another couple — can they beat you? →"}
                         </Link>
                       </div>
-                    )}
-
-                    {/* Premium teaser — logged in users */}
-                    {authUser && (
-                      <Link
-                        href="/premium"
-                        style={{
-                          display: "block",
-                          background: "rgba(245,200,66,0.06)",
-                          border: "0.5px solid rgba(245,200,66,0.2)",
-                          borderRadius: 12,
-                          padding: "12px 16px",
-                          marginBottom: 12,
-                          textDecoration: "none",
-                        }}
-                      >
-                        <p style={{ fontSize: 12, fontWeight: 700, color: "#F5C842", margin: "0 0 2px" }}>
-                          💑 {locale === "no" ? "Lagre matcher + se par-rapport" : locale === "se" ? "Spara matcher + se parrapport" : locale === "dk" ? "Gem matcher + se parrapport" : locale === "fi" ? "Tallenna matchit + katso pariraportti" : "Save matches + see couple report"}
-                        </p>
-                        <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", margin: "0 0 8px" }}>
-                          {locale === "no" ? "Tonight's Pick, Curator ubegrenset + partneren får det gratis" : locale === "se" ? "Tonight's Pick, Curator obegränsat + partnern får det gratis" : locale === "dk" ? "Tonight's Pick, Curator ubegrænset + partneren får det gratis" : locale === "fi" ? "Tonight's Pick, Curator rajaton + kumppanisi saa sen ilmaiseksi" : "Tonight's Pick, unlimited Curator + your partner gets it free"}
-                        </p>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "#F5C842" }}>
-                          {locale === "no" ? "Logflix Par — 29 kr/mnd →" : "Logflix Par — 29 NOK/mo →"}
-                        </span>
-                      </Link>
                     )}
 
                     {/* Separator with "More" toggle */}
@@ -3218,33 +3171,6 @@ export default function WTBetaPage() {
             </span>
           )}
         </button>
-
-      {/* ── Post-match premium modal (logged-in users) ── */}
-      {showPostMatchPremium && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
-          <div className="relative w-full max-w-sm rounded-2xl p-6 text-center" style={{ background: "linear-gradient(180deg, rgba(15,18,30,0.95) 0%, rgba(10,12,20,0.98) 100%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 24px 80px rgba(0,0,0,0.6)" }}>
-            <button onClick={() => setShowPostMatchPremium(false)} className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full cursor-pointer" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "none" }}>
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-            <span className="text-3xl block mb-3">🎁</span>
-            <h2 className="text-lg font-bold text-white mb-2">
-              {locale === "no" ? "7 dager gratis Premium" : locale === "se" ? "7 dagars gratis Premium" : locale === "dk" ? "7 dages gratis Premium" : locale === "fi" ? "7 päivää ilmaista Premiumia" : "7 days free Premium"}
-            </h2>
-            <p className="text-xs text-white/50 leading-relaxed mb-1">
-              {locale === "no" ? "Ingen kortinfo nødvendig." : locale === "se" ? "Inget kortinfo behövs." : locale === "dk" ? "Ingen kortinfo nødvendig." : locale === "fi" ? "Ei korttitietoja tarvita." : "No credit card needed."}
-            </p>
-            <p className="text-xs text-white/40 leading-relaxed mb-5">
-              {locale === "no" ? "Tonight's Pick, ubegrenset Curator, partner får det gratis." : locale === "se" ? "Tonight's Pick, obegränsad Curator, partnern får det gratis." : locale === "dk" ? "Tonight's Pick, ubegrænset Curator, partneren får det gratis." : locale === "fi" ? "Tonight's Pick, rajaton Curator, kumppani saa sen ilmaiseksi." : "Tonight's Pick, unlimited Curator, partner gets it free."}
-            </p>
-            <a href="/premium" className="block w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90" style={{ background: "#ff2a2a", textDecoration: "none" }}>
-              {locale === "no" ? "Aktiver gratis →" : locale === "se" ? "Aktivera gratis →" : locale === "dk" ? "Aktiver gratis →" : locale === "fi" ? "Aktivoi ilmaiseksi →" : "Activate free →"}
-            </a>
-            <button onClick={() => setShowPostMatchPremium(false)} className="mt-3 text-xs bg-transparent border-0 cursor-pointer" style={{ color: "rgba(255,255,255,0.3)" }}>
-              {locale === "no" ? "Senere" : locale === "se" ? "Senare" : locale === "dk" ? "Senere" : locale === "fi" ? "Myöhemmin" : "Later"}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ── Guest signup prompt (bottom-sheet after match) ── */}
       {showGuestSignup && (

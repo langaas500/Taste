@@ -41,9 +41,9 @@ interface RecentTitle {
 interface Stats {
   members: {
     total: number;
-    premium: number;
-    trial: number;
-    founding: number;
+    premium?: number;
+    trial?: number;
+    founding?: number;
     dau: number;
     wau: number;
     new_per_day: Record<string, number>;
@@ -83,9 +83,6 @@ interface UserResult {
   id: string;
   email: string | null;
   display_name: string | null;
-  is_premium: boolean;
-  founding_member: boolean;
-  trial_ends_at: string | null;
   created_at: string | null;
   title_count: number;
 }
@@ -149,7 +146,6 @@ export default function AdminPage() {
   const [userQuery, setUserQuery] = useState("");
   const [userResults, setUserResults] = useState<UserResult[]>([]);
   const [userSearching, setUserSearching] = useState(false);
-  const [togglingUser, setTogglingUser] = useState<string | null>(null);
 
   // Auth check (client-side)
   useEffect(() => {
@@ -221,21 +217,6 @@ export default function AdminPage() {
     setUserSearching(false);
   }
 
-  async function togglePremium(userId: string, currentlyPremium: boolean) {
-    setTogglingUser(userId);
-    try {
-      const res = await fetch(`/api/admin/user/${userId}/toggle-premium`, {
-        method: currentlyPremium ? "DELETE" : "POST",
-      });
-      if (res.ok) {
-        setUserResults((prev) =>
-          prev.map((u) => u.id === userId ? { ...u, is_premium: !currentlyPremium } : u),
-        );
-      }
-    } catch { /* ignore */ }
-    setTogglingUser(null);
-  }
-
   if (loading) return <LoadingSpinner text="Sjekker tilgang..." />;
   if (!authorized) return null;
 
@@ -263,31 +244,10 @@ export default function AdminPage() {
           {/* ── 0. Members ────────────────────────── */}
           <div className={glassCard} style={glassCardStyle}>
             <p className={sectionLabel}>Members</p>
-            <p className={sectionDesc}>Registrerte brukere og betalende medlemmer.</p>
+            <p className={sectionDesc}>Registrerte brukere.</p>
 
             <div className="flex flex-wrap gap-3 mb-3">
               <StatBox label="Totalt" value={stats.members.total} />
-              <StatBox label="Premium" value={stats.members.premium} />
-              <StatBox label="Trial" value={stats.members.trial} />
-              <StatBox label="Founding" value={stats.members.founding} />
-              <StatBox
-                label="Konvertering"
-                value={
-                  stats.members.total > 0
-                    ? `${((stats.members.premium / stats.members.total) * 100).toFixed(1)}%`
-                    : "–"
-                }
-              />
-            </div>
-
-            <ProgressBar
-              value={stats.members.premium}
-              max={stats.members.total}
-              label="Premium-andel"
-            />
-
-            {/* DAU / WAU */}
-            <div className="flex flex-wrap gap-3 mt-4 pt-3 border-t border-white/[0.06]">
               <StatBox label="DAU" value={stats.members.dau} />
               <StatBox label="WAU" value={stats.members.wau} />
             </div>
@@ -399,8 +359,6 @@ export default function AdminPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-white/80 font-medium truncate">{u.display_name || "–"}</span>
-                        {u.is_premium && <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">Premium</span>}
-                        {u.founding_member && <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400">Founding</span>}
                       </div>
                       <div className="flex items-center gap-3 mt-0.5">
                         <span className="text-[11px] text-white/40 truncate">{u.email || "–"}</span>
@@ -408,17 +366,6 @@ export default function AdminPage() {
                         {u.created_at && <span className="text-[10px] text-white/25 font-mono">{new Date(u.created_at).toLocaleDateString("no-NO", { day: "2-digit", month: "short", year: "numeric" })}</span>}
                       </div>
                     </div>
-                    <button
-                      onClick={() => togglePremium(u.id, u.is_premium)}
-                      disabled={togglingUser === u.id}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold border transition-all cursor-pointer disabled:opacity-40 ${
-                        u.is_premium
-                          ? "border-red-500/30 text-red-400 hover:bg-red-500/10"
-                          : "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
-                      }`}
-                    >
-                      {togglingUser === u.id ? "..." : u.is_premium ? "Fjern premium" : "Gi premium"}
-                    </button>
                   </div>
                 ))}
               </div>

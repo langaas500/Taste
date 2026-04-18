@@ -163,14 +163,12 @@ export const GET = withLogger("/api/taste-summary", async (req, { logger }) => {
     logger.setUserId(user.id);
     const supabase = await createSupabaseServer();
 
-    // Check cached summary + premium status
+    // Check cached summary
     const { data: profile } = await supabase
       .from("profiles")
-      .select("taste_summary, taste_summary_updated_at, is_premium")
+      .select("taste_summary, taste_summary_updated_at")
       .eq("id", user.id)
       .single();
-
-    const isPremium = profile?.is_premium === true;
 
     // Load titles + cache for enrichment
     const { titles, cacheMap } = await loadUserTitlesAndCache(supabase, user.id);
@@ -180,13 +178,10 @@ export const GET = withLogger("/api/taste-summary", async (req, { logger }) => {
 
     const ts = profile?.taste_summary;
     if (ts && (ts.youLike || ts.avoid || ts.pacing)) {
-      const summary = isPremium
-        ? ts
-        : { youLike: ts.youLike ?? null, avoid: null, pacing: null };
-      return NextResponse.json({ summary, cached: true, is_premium: isPremium, ...enrichment, recommendations });
+      return NextResponse.json({ summary: ts, cached: true, ...enrichment, recommendations });
     }
 
-    return NextResponse.json({ summary: null, cached: false, is_premium: isPremium, ...enrichment, recommendations });
+    return NextResponse.json({ summary: null, cached: false, ...enrichment, recommendations });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });
@@ -205,13 +200,12 @@ export const POST = withLogger("/api/taste-summary", async (req, { logger }) => 
     const supabase = await createSupabaseServer();
     const admin = createSupabaseAdmin();
 
-    // Check premium status + locale/region
+    // Load locale/region
     const { data: prof } = await supabase
       .from("profiles")
-      .select("is_premium, preferred_region, preferred_locale")
+      .select("preferred_region, preferred_locale")
       .eq("id", user.id)
       .single();
-    const isPremium = prof?.is_premium === true;
     const aiLocale = prof?.preferred_locale
       ? localeToAILocale(prof.preferred_locale)
       : regionToAILocale(prof?.preferred_region || "");
@@ -302,13 +296,10 @@ export const POST = withLogger("/api/taste-summary", async (req, { logger }) => 
       })
       .eq("id", user.id);
 
-    const gatedSummary = isPremium
-      ? summary
-      : { youLike: summary.youLike ?? null, avoid: null, pacing: null };
     const enrichment = buildEnrichment(titles, cacheMap);
     const userTmdbIds = new Set(titles.map((t) => t.tmdb_id));
     const recommendations = await buildRecommendations(userTmdbIds, enrichment.dominant_genres);
-    return NextResponse.json({ summary: gatedSummary, cached: false, is_premium: isPremium, ...enrichment, recommendations });
+    return NextResponse.json({ summary, cached: false, ...enrichment, recommendations });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";
     if (msg === "Unauthorized") return NextResponse.json({ error: msg }, { status: 401 });

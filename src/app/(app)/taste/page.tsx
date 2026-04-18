@@ -5,12 +5,10 @@ import Link from "next/link";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import AIThinkingScreen from "@/components/AIThinkingScreen";
 import GlowButton from "@/components/GlowButton";
-import PremiumModal from "@/components/PremiumModal";
 
 import { useLocale } from "@/hooks/useLocale";
 import type { TasteSummary } from "@/lib/types";
 
-const BLUR_CHAR_LIMIT = 100;
 const MIN_TITLES = 10;
 const TMDB_IMG = "https://image.tmdb.org/t/p/w200";
 
@@ -314,24 +312,12 @@ function RecommendationRow({ title, posterPath, score }: { title: string; poster
   );
 }
 
-/* ── BlurText ───────────────────────────────────────── */
-function BlurText({ text, isPremium, blurHint }: { text: string; isPremium: boolean; blurHint: string }) {
-  const needsBlur = !isPremium && text.length > BLUR_CHAR_LIMIT;
-  const visible = needsBlur ? text.slice(0, BLUR_CHAR_LIMIT) : text;
-  const blurred = needsBlur ? text.slice(BLUR_CHAR_LIMIT) : "";
+/* ── PlainText ────────────────────────────────────────── */
+function PlainText({ text }: { text: string }) {
   return (
-    <div>
-      <p style={{ margin: "0 0 needsBlur ? 12px : 0", fontSize: 14, color: "rgba(255,255,255,0.65)", lineHeight: 1.65 }}>
-        {visible}
-        {needsBlur && <span style={{ filter: "blur(10px)", opacity: 0.6, userSelect: "none" }}>{blurred}</span>}
-      </p>
-      {needsBlur && (
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <svg width={13} height={13} fill="none" viewBox="0 0 24 24" stroke="#FFD700" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{blurHint}</span>
-        </div>
-      )}
-    </div>
+    <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.65)", lineHeight: 1.65 }}>
+      {text}
+    </p>
   );
 }
 
@@ -341,16 +327,12 @@ export default function TastePage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
-  const [isPremium, setIsPremium] = useState(true);
-  const [showPremium, setShowPremium] = useState(false);
   const [titleCount, setTitleCount] = useState<number | null>(null);
-  const [profileName, setProfileName] = useState<string | null>(null);
   const [enrichment, setEnrichment] = useState<TasteEnrichment>(EMPTY_ENRICHMENT);
   const locale = useLocale();
   const s = strings[locale] ?? strings.en;
 
   function applyApiData(data: Record<string, unknown>) {
-    if (data.is_premium !== undefined) setIsPremium(!!data.is_premium);
     if (data.title_count !== undefined) setTitleCount(data.title_count as number);
     setEnrichment({
       confidence_score: (data.confidence_score as number) ?? 0,
@@ -368,9 +350,6 @@ export default function TastePage() {
 
   useEffect(() => {
     loadSummary();
-    fetch("/api/profile").then((r) => r.json()).then((d) => {
-      if (d.profile?.display_name) setProfileName(d.profile.display_name);
-    }).catch(() => {});
   }, []);
 
   async function loadSummary() {
@@ -451,14 +430,8 @@ export default function TastePage() {
           {!summary && (
             <GlowButton onClick={generate} disabled={generating}>{s.analyze}</GlowButton>
           )}
-          {summary && isPremium && (
+          {summary && (
             <GlowButton onClick={generate} disabled={generating}>{s.refresh}</GlowButton>
-          )}
-          {summary && !isPremium && (
-            <button onClick={() => setShowPremium(true)} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:opacity-90 cursor-pointer" style={{ background: "linear-gradient(#B00000,#E50914)" }}>
-              <svg width={13} height={13} fill="none" viewBox="0 0 24 24" stroke="#FFD700" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-              {s.upgradeRefresh}
-            </button>
           )}
         </div>
       </div>
@@ -499,7 +472,7 @@ export default function TastePage() {
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 8px #4ade80" }} />
                 <span style={{ fontSize: 17, fontWeight: 700, color: "#4ade80" }}>{s.youLike}</span>
               </div>
-              <BlurText text={summary.youLike} isPremium={isPremium} blurHint={s.blurHint} />
+              <PlainText text={summary.youLike} />
               {enrichment.like_examples.length > 0 && (
                 <div style={{ marginTop: 16 }}>
                   <p style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)" }}>{s.strongSignals}</p>
@@ -520,7 +493,7 @@ export default function TastePage() {
                 <svg width={16} height={16} viewBox="0 0 24 24" fill="#ff2a2a"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
                 <span style={{ fontSize: 17, fontWeight: 700, color: "#ff4444" }}>{s.avoid}</span>
               </div>
-              <BlurText text={summary.avoid} isPremium={isPremium} blurHint={s.blurHint} />
+              <PlainText text={summary.avoid} />
               {enrichment.avoid_examples.length > 0 && (
                 <div style={{ marginTop: 16 }}>
                   <p style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)" }}>{s.weakSignals}</p>
@@ -567,7 +540,7 @@ export default function TastePage() {
                   )}
                 </div>
               )}
-              <BlurText text={summary.pacing} isPremium={isPremium} blurHint={s.blurHint} />
+              <PlainText text={summary.pacing} />
             </div>
           )}
 
@@ -627,7 +600,6 @@ export default function TastePage() {
         </Link>
       )}
 
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} source="taste_refresh" userName={profileName} titleCount={titleCount} />
     </div>
   );
 }

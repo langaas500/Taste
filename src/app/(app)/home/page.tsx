@@ -408,10 +408,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
   const locale = useLocale();
+  const isPremium = true;
   const [hasTaste, setHasTaste] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
-  const [isTrial, setIsTrial] = useState(false);
-  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   const [homeRecs, setHomeRecs] = useState<Recommendation[]>(() => {
     try {
       const cached = localStorage.getItem("logflix_home_recs");
@@ -473,9 +471,6 @@ export default function HomePage() {
         fetch("/api/taste-summary").then((r) => r.json()).catch(() => ({})),
         fetch("/api/profile").then((r) => r.json()).catch(() => ({})),
       ]);
-      const premium = !!profileRes?.profile?.is_premium;
-      setIsPremium(premium);
-
       // Lazy onboarding hint — show if not completed and has swipe data
       if (!profileRes?.profile?.onboarding_completed && !tasteRes?.summary) {
         try {
@@ -491,9 +486,6 @@ export default function HomePage() {
           }
         } catch { /* ignore */ }
       }
-      setIsTrial(!!profileRes?.profile?.is_trial);
-      setTrialEndsAt(profileRes?.profile?.trial_ends_at ?? null);
-      if (!premium) setTpLoading(false);
       if (tasteRes?.summary) {
         setHasTaste(true);
         try {
@@ -506,7 +498,7 @@ export default function HomePage() {
           }
         } catch { /* ignore */ }
       }
-      if (premium) loadTonightPick();
+      loadTonightPick();
     } catch { /* ignore */ }
   }
 
@@ -697,43 +689,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Trial countdown banner — last 3 days */}
-      {isTrial && trialEndsAt && (() => {
-        const daysLeft = Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86400000));
-        if (daysLeft > 3 || daysLeft <= 0) return null;
-        return (
-          <Link
-            href="/premium"
-            className="block rounded-[var(--radius-lg)] p-4 border transition-all hover:scale-[1.01]"
-            style={{ background: "rgba(255,42,42,0.06)", border: "1px solid rgba(255,42,42,0.2)" }}
-          >
-            <p className="text-sm font-semibold text-white mb-1">{s.trialBanner(daysLeft)}</p>
-            <p className="text-xs font-semibold" style={{ color: "#ff2a2a" }}>{s.trialCta}</p>
-          </Link>
-        );
-      })()}
-
-      {/* Trial expired — show once */}
-      {!isPremium && !isTrial && trialEndsAt && (() => {
-        try { if (localStorage.getItem("logflix_trial_expired_shown")) return null; } catch { /* ignore */ }
-        return (
-          <div
-            className="rounded-[var(--radius-lg)] p-4 border"
-            style={{ background: "rgba(255,42,42,0.04)", border: "1px solid rgba(255,42,42,0.15)" }}
-          >
-            <p className="text-sm text-white/70 mb-2">{s.trialExpired}</p>
-            <Link
-              href="/premium"
-              className="inline-block text-xs font-semibold px-4 py-2 rounded-lg"
-              style={{ background: "#ff2a2a", color: "#fff" }}
-              onClick={() => { try { localStorage.setItem("logflix_trial_expired_shown", "1"); } catch { /* ignore */ } }}
-            >
-              {s.trialExpiredCta}
-            </Link>
-          </div>
-        );
-      })()}
-
       {/* Lazy onboarding — taste hint */}
       {showTasteHint && (
         <div
@@ -885,35 +840,15 @@ export default function HomePage() {
           border: "1px solid rgba(255,255,255,0.08)",
         };
 
-        if (isPremium) {
-          return (
-            <Link
-              href={`/wrapped/${slug}`}
-              onClick={() => track("wrapped_card_clicked", { month: slug, count: wrappedCount })}
-              className="block rounded-2xl p-4 transition-all hover:scale-[1.02] duration-200"
-              style={glassStyle}
-            >
-              {wrappedInner}
-            </Link>
-          );
-        }
-
         return (
-          <div className="relative rounded-2xl overflow-hidden" style={glassStyle}>
-            <div className="p-4" style={{ filter: "blur(4px)", pointerEvents: "none", userSelect: "none" }}>
-              {wrappedInner}
-            </div>
-            <Link
-              href="/premium"
-              onClick={() => track("wrapped_locked_clicked", { month: slug, count: wrappedCount })}
-              className="absolute inset-0 flex flex-col items-center justify-center gap-2"
-              style={{ background: "rgba(10,10,15,0.6)" }}
-            >
-              <span style={{ fontSize: 20 }}>🔒</span>
-              <p className="text-xs font-semibold text-white/90 text-center px-4">{s.wrappedLocked}</p>
-              <span className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: "#ff2a2a", color: "#fff" }}>Premium</span>
-            </Link>
-          </div>
+          <Link
+            href={`/wrapped/${slug}`}
+            onClick={() => track("wrapped_card_clicked", { month: slug, count: wrappedCount })}
+            className="block rounded-2xl p-4 transition-all hover:scale-[1.02] duration-200"
+            style={glassStyle}
+          >
+            {wrappedInner}
+          </Link>
         );
       })()}
 
@@ -926,48 +861,6 @@ export default function HomePage() {
         >
           <p className="text-sm font-medium text-white/70">{s.tasteEvoCta}</p>
         </Link>
-      )}
-
-      {/* Tonight's Pick — premium users (solo + paired) */}
-
-      {/* Tonight's Pick — blurred placeholder for non-premium */}
-      {!isPremium && (
-        <section>
-          <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-4">
-            {s.tpTitleSolo}
-          </h2>
-          <div className="relative grid grid-cols-2 gap-3 max-w-md">
-            {[
-              { label: `🎬 ${s.tpMovie}`, title: "Chinatown", score: `85% ${s.tpMatch}` },
-              { label: `📺 ${s.tpSeries}`, title: "CSI: Crime Scene Investigation", score: `85% ${s.tpMatch}` },
-            ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-white/[0.06] p-3 flex flex-col"
-                style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", minHeight: 120 }}>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2">{item.label}</p>
-                <div className="relative w-full rounded-lg overflow-hidden mb-2" style={{ aspectRatio: "2/3", maxHeight: 180, background: "rgba(255,255,255,0.05)", filter: "blur(6px)" }} />
-                <p className="text-xs font-semibold text-white/85 truncate" style={{ filter: "blur(4px)" }}>{item.title}</p>
-                <p className="text-[10px] mt-0.5" style={{ filter: "blur(4px)", color: "rgba(245,200,66,0.8)" }}>★ {item.score}</p>
-              </div>
-            ))}
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl"
-              style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(2px)" }}>
-              <div className="text-center px-4">
-                <p className="text-sm font-bold text-white mb-1">🔓 Tonight&apos;s Pick</p>
-                <p className="text-xs text-white/60 mb-3">
-                  {locale === "no" ? "Daglig film + serie basert på smaken din" : locale === "se" ? "Daglig film + serie baserat på din smak" : locale === "dk" ? "Daglig film + serie baseret på din smag" : locale === "fi" ? "Päivittäinen elokuva + sarja makusi perusteella" : "Daily movie + series based on your taste"}
-                </p>
-                <Link href="/premium"
-                  className="block px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                  style={{ background: "rgba(245,200,66,0.15)", border: "0.5px solid rgba(245,200,66,0.4)", color: "#F5C842" }}>
-                  {locale === "no" ? "🔓 Lås opp Tonight's Pick" : locale === "se" ? "🔓 Lås upp Tonight's Pick" : locale === "dk" ? "🔓 Lås op Tonight's Pick" : locale === "fi" ? "🔓 Avaa Tonight's Pick" : "🔓 Unlock Tonight's Pick"}
-                </Link>
-                <p style={{ fontSize: 11, color: "rgba(245,200,66,0.7)", marginTop: 6, textAlign: "center" }}>
-                  {locale === "no" ? "29 kr/mnd · Partneren din får det gratis" : locale === "se" ? "29 kr/mån · Din partner får det gratis" : locale === "dk" ? "29 kr/md · Din partner får det gratis" : locale === "fi" ? "29 kr/kk · Kumppanisi saa sen ilmaiseksi" : "29 NOK/mo · Your partner gets it for free"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
       )}
 
       {/* Tonight's Pick + Recommendations — side by side on desktop */}

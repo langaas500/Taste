@@ -60,20 +60,6 @@ export async function POST() {
     const user = await requireUser();
     const admin = createSupabaseAdmin();
 
-    // Check premium (including active trial)
-    const { data: profile } = await admin
-      .from("profiles")
-      .select("is_premium, trial_ends_at")
-      .eq("id", user.id)
-      .single();
-
-    const isPremium = profile?.is_premium ||
-      (profile?.trial_ends_at && new Date(profile.trial_ends_at) > new Date());
-
-    if (!isPremium) {
-      return NextResponse.json({ error: "Premium required" }, { status: 403 });
-    }
-
     // Find accepted partner link (optional — solo users won't have one)
     const { data: link } = await admin
       .from("account_links")

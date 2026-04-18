@@ -7,15 +7,7 @@ export async function GET() {
     const user = await requireUser();
     const supabase = await createSupabaseServer();
 
-    // Check premium status
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_premium")
-      .eq("id", user.id)
-      .single();
-    const isPremium = !!profile?.is_premium;
-
-    // Count total matches for gate display
+    // Count total matches
     const { count: totalCount } = await supabase
       .from("wt_sessions")
       .select("id", { count: "exact", head: true })
@@ -23,7 +15,7 @@ export async function GET() {
       .eq("status", "matched")
       .not("match_tmdb_id", "is", null);
 
-    // Fetch matched sessions (limited for free users)
+    // Fetch matched sessions
     const { data: sessions } = await supabase
       .from("wt_sessions")
       .select("id, match_tmdb_id, match_type, created_at")
@@ -31,7 +23,7 @@ export async function GET() {
       .eq("status", "matched")
       .not("match_tmdb_id", "is", null)
       .order("created_at", { ascending: false })
-      .limit(isPremium ? 50 : 10);
+      .limit(50);
 
     const rows = (sessions || []) as {
       id: string;
@@ -44,7 +36,6 @@ export async function GET() {
       return NextResponse.json({
         matches: [],
         stats: { total_matches: 0, top_genre: null, last_match: null },
-        is_premium: isPremium,
         total_count: totalCount ?? 0,
       });
     }
@@ -96,7 +87,6 @@ export async function GET() {
         top_genre: topGenre,
         last_match: matches[0] || null,
       },
-      is_premium: isPremium,
       total_count: totalCount ?? rows.length,
     });
   } catch (e: unknown) {

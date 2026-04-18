@@ -251,12 +251,8 @@ function OnboardingContent() {
   const [copied, setCopied] = useState(false);
   const [userRegion, setUserRegion] = useState("US");
   const locale = useLocale();
-  const [isPremium, setIsPremium] = useState(false);
   const [emailOptIn, setEmailOptIn] = useState(false);
   const [emailSaving, setEmailSaving] = useState(false);
-  const [trialActivated, setTrialActivated] = useState(false);
-  const [trialDays, setTrialDays] = useState(7);
-  const trialActivating = useRef(false);
   const [loadingTextIdx, setLoadingTextIdx] = useState(0);
   const loadingTexts = locale === "no"
     ? ["Analyserer sjangerne dine...", "Finner mønstre i smaken din...", "Bygger filmprofilen din...", "Nesten klar..."]
@@ -287,30 +283,6 @@ function OnboardingContent() {
       try { localStorage.setItem("logflix_onboarding_selections", JSON.stringify(Array.from(selections.entries()))); } catch { /* ignore */ }
     }
   }, [selections]);
-
-  // Fetch isPremium + activate trial when reaching step 3
-  useEffect(() => {
-    fetch("/api/profile").then((r) => r.json()).then((d) => {
-      if (d.profile?.is_premium) setIsPremium(true);
-      if (d.profile?.trial_ends_at) {
-        const daysLeft = Math.ceil((new Date(d.profile.trial_ends_at).getTime() - Date.now()) / 86400000);
-        if (daysLeft > 0) { setTrialActivated(true); setTrialDays(daysLeft); setIsPremium(true); }
-      }
-    }).catch(() => {});
-  }, []);
-
-  // Auto-activate trial on step 3 for non-premium users
-  useEffect(() => {
-    if (step !== 3 || isPremium || trialActivated || trialActivating.current) return;
-    trialActivating.current = true;
-    fetch("/api/trial/activate", { method: "POST" })
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.success) { setTrialActivated(true); setTrialDays(7); setIsPremium(true); }
-      })
-      .catch(() => {})
-      .finally(() => { trialActivating.current = false; });
-  }, [step, isPremium, trialActivated]);
 
   // Detect region via the ribbon endpoint
   useEffect(() => {
@@ -832,24 +804,6 @@ function OnboardingContent() {
               </div>
             )}
 
-            {/* Trial activated banner */}
-            {!tasteLoading && trialActivated && (
-              <div
-                className="w-full max-w-md rounded-xl px-4 py-3 mb-4 text-center"
-                style={{ background: "rgba(245,200,66,0.08)", border: "0.5px solid rgba(245,200,66,0.25)" }}
-              >
-                <p style={{ fontSize: 13, fontWeight: 700, color: "#F5C842", margin: "0 0 2px" }}>
-                  🎁 {locale === "no" ? "7 dager gratis Premium aktivert!" : locale === "se" ? "7 dagars gratis Premium aktiverat!" : locale === "dk" ? "7 dages gratis Premium aktiveret!" : locale === "fi" ? "7 päivän ilmainen Premium aktivoitu!" : "7 days free Premium activated!"}
-                </p>
-                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", margin: "0 0 4px" }}>
-                  {locale === "no" ? "Tonight's Pick, Curator ubegrenset + partneren får det gratis" : "Tonight's Pick, unlimited Curator + your partner gets it free"}
-                </p>
-                <p style={{ fontSize: 10, color: "rgba(245,200,66,0.6)", margin: 0 }}>
-                  {trialDays} {locale === "no" ? "dager gjenstår" : locale === "se" ? "dagar kvar" : locale === "dk" ? "dage tilbage" : locale === "fi" ? "päivää jäljellä" : "days remaining"}
-                </p>
-              </div>
-            )}
-
             {/* Email capture */}
             {!tasteLoading && !emailOptIn && (
               <div
@@ -885,7 +839,7 @@ function OnboardingContent() {
                 </button>
               </div>
             )}
-            {!tasteLoading && emailOptIn && !trialActivated && (
+            {!tasteLoading && emailOptIn && (
               <p style={{ fontSize: 11, color: "rgba(245,200,66,0.7)", margin: "0 0 12px", textAlign: "center" }}>
                 ✅ {locale === "no" ? "Du får Tonight's Pick på e-post!" : "You'll get Tonight's Pick by email!"}
               </p>
@@ -908,36 +862,6 @@ function OnboardingContent() {
                   </button>
                 )}
 
-                {/* Premium trial teaser */}
-                {!isPremium && (
-                  <Link
-                    href="/premium"
-                    style={{ display: "block", fontSize: 11, color: "rgba(245,200,66,0.8)", textAlign: "center", marginTop: 8, textDecoration: "none" }}
-                  >
-                    ✨ {locale === "no" || locale === "dk" ? "Du får 7 dager gratis Premium når du inviterer partneren din" : locale === "se" ? "Du får 7 dagars gratis Premium när du bjuder in din partner" : locale === "fi" ? "Saat 7 päivää ilmaista Premiumia kun kutsut kumppanisi" : "Get 7 days free Premium when you invite your partner"}
-                  </Link>
-                )}
-
-                {/* Par teaser — only for non-premium */}
-                {!isPremium && (
-                  <button
-                    onClick={() => router.push("/premium")}
-                    className="w-full mt-6 rounded-[var(--radius-lg)] p-4 text-left transition-all hover:border-[var(--accent)]/30"
-                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(229,9,20,0.15)", cursor: "pointer" }}
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="text-xl flex-shrink-0 mt-0.5">💑</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">{s.parTitle}</p>
-                        <p className="text-xs text-[var(--text-tertiary)] leading-relaxed mb-2">{s.parDesc}</p>
-                        <span className="text-xs font-semibold" style={{ color: "#E50914" }}>{s.parCta}</span>
-                        <p style={{ fontSize: 11, color: "rgba(245,200,66,0.7)", marginTop: 4 }}>
-                          💑 {locale === "no" || locale === "dk" ? "Partneren din får det gratis — 14,50 kr per person" : locale === "se" ? "Din partner får det gratis — 14,50 kr per person" : locale === "fi" ? "Kumppanisi saa sen ilmaiseksi — 14,50 kr per henkilö" : "Your partner gets it for free — 7 NOK per person"}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                )}
               </div>
             )}
           </div>

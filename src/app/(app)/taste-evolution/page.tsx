@@ -271,12 +271,6 @@ export default function TasteEvolutionPage() {
           <p className="text-sm text-white/70 italic leading-relaxed">{d.aiInsight}</p>
         </div>
       )}
-      {!d.aiInsight && !d.isPremium && (
-        <Link href="/premium" className={`block ${glass} p-3 mb-4 text-center text-xs`} style={{ ...glassStyle, color: "rgba(255,255,255,0.3)" }}>
-          {s.premiumAi}
-        </Link>
-      )}
-
       {/* Stat cards grid */}
       <div className="grid grid-cols-3 gap-2 mb-4">
         <StatCard label={s.movies} value={`${moviePct}%`} sub={`${d.movieCount} ${s.movies.toLowerCase()}`} />

@@ -222,7 +222,7 @@ interface ReportData {
   partner_founding: boolean;
   my_name: string;
   my_founding: boolean;
-  is_premium: boolean;
+  is_premium?: boolean;
   tonight_pick: TonightPick | null;
 }
 
@@ -299,7 +299,6 @@ export default function CoupleReportPage() {
 
   if (!data) return null;
 
-  const blurred = !data.is_premium;
   const names = `${data.my_name} & ${data.partner_name}`;
   const isFounding = data.my_founding || data.partner_founding;
 
@@ -396,42 +395,8 @@ export default function CoupleReportPage() {
         </section>
       )}
 
-      {/* Premium gate overlay for free users */}
-      <div className={blurred ? "relative" : ""}>
-        {blurred && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-2xl" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
-            {frozenData ? (
-              <div className="text-center px-6">
-                <p className="text-lg font-bold text-white mb-2">⏸ {s.frozenTitle}</p>
-                <p className="text-sm text-white/60 mb-1">{s.frozenScore(frozenData.score, frozenData.matches)}</p>
-                {frozenData.streak > 0 && (
-                  <p className="text-sm text-white/50 mb-4">{s.frozenStreak(frozenData.streak)}</p>
-                )}
-                <Link
-                  href="/premium"
-                  className="inline-block px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 mb-1.5"
-                  style={{ background: "#E50914" }}
-                >
-                  {s.frozenCta}
-                </Link>
-                <p className="text-[11px] text-white/30">{s.frozenSub}</p>
-              </div>
-            ) : (
-              <>
-                <p className="text-sm text-white/70 text-center px-6 mb-4">{s.premiumGate}</p>
-                <Link
-                  href="/premium"
-                  className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-                  style={{ background: "#E50914" }}
-                >
-                  {s.upgradeCta}
-                </Link>
-              </>
-            )}
-          </div>
-        )}
-
-        <div className={blurred ? "filter blur-sm pointer-events-none select-none" : ""}>
+      <div>
+        <div>
           {/* Favorites */}
           {data.favorite_titles.length > 0 && (
             <section className="mb-8">
@@ -529,16 +494,14 @@ export default function CoupleReportPage() {
       </div>
 
       {/* Share button */}
-      {data.is_premium && (
-        <div className="flex justify-center">
-          <button
-            onClick={handleShare}
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white/80 border border-white/[0.1] hover:border-white/[0.2] hover:bg-white/[0.04] transition-all cursor-pointer"
-          >
-            {s.share}
-          </button>
-        </div>
-      )}
+      <div className="flex justify-center">
+        <button
+          onClick={handleShare}
+          className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white/80 border border-white/[0.1] hover:border-white/[0.2] hover:bg-white/[0.04] transition-all cursor-pointer"
+        >
+          {s.share}
+        </button>
+      </div>
     </div>
   );
 }

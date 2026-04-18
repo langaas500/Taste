@@ -172,7 +172,7 @@ export default function TasteProfilePage() {
             Discover your movie personality
           </p>
           <a
-            href="/premium"
+            href="/together"
             style={{
               display: "inline-block",
               padding: "12px 32px",

@@ -91,9 +91,6 @@ export function GET() {
     ...enOnlyPages.map((path) =>
       entry(`${base}${path}`, lastmod, "weekly", "0.85", { en: `${base}${path}`, nb: `${base}/no/`, sv: `${base}/se/`, da: `${base}/dk/`, fi: `${base}/fi/`, "x-default": `${base}${path}` }),
     ),
-    ...["no/priser", "se/priser", "dk/priser", "fi/hinnat", "en/pricing"].map((p) =>
-      entry(`${base}/${p}`, lastmod, "monthly", "0.7", { nb: `${base}/no/priser`, sv: `${base}/se/priser`, da: `${base}/dk/priser`, fi: `${base}/fi/hinnat`, en: `${base}/en/pricing`, "x-default": `${base}/en/pricing` }),
-    ),
     entry(`${base}/en/taste-profile`, lastmod, "monthly", "0.7", { en: `${base}/en/taste-profile`, "x-default": `${base}/en/taste-profile` }),
     entry(`${base}/en/couple-streak`, lastmod, "monthly", "0.7", { en: `${base}/en/couple-streak`, "x-default": `${base}/en/couple-streak` }),
     entry(`${base}/en/wrapped`, lastmod, "monthly", "0.7", { en: `${base}/en/wrapped`, "x-default": `${base}/en/wrapped` }),

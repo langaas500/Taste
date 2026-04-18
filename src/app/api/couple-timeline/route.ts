@@ -33,7 +33,7 @@ export async function GET() {
     const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
 
     const [myProfileRes, partnerProfileRes, myTitlesRes, partnerTitlesRes, matchesRes] = await Promise.all([
-      admin.from("profiles").select("display_name, is_premium").eq("id", user.id).single(),
+      admin.from("profiles").select("display_name").eq("id", user.id).single(),
       admin.from("profiles").select("display_name").eq("id", partnerId).single(),
       admin
         .from("user_titles")
@@ -181,7 +181,6 @@ export async function GET() {
     return NextResponse.json({
       myName: myProfile?.display_name || null,
       partnerName: partnerProfile?.display_name || null,
-      isPremium: !!myProfile?.is_premium,
       linkedSince: link.accepted_at || null,
       timeline: grouped.slice(0, 30),
     });

@@ -54,18 +54,12 @@ export default function HistoryPage() {
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isFoundingMember, setIsFoundingMember] = useState(false);
-  const [isPremium, setIsPremium] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
-
   useEffect(() => {
     fetch("/api/together/history")
       .then((r) => r.json())
       .then((data) => {
         if (data.matches) setMatches(data.matches);
         if (data.stats) setStats(data.stats);
-        if (data.is_premium !== undefined) setIsPremium(data.is_premium);
-        if (data.total_count !== undefined) setTotalCount(data.total_count);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -73,8 +67,7 @@ export default function HistoryPage() {
       const sb = createSupabaseBrowser();
       sb.auth.getUser().then(({ data: { user } }) => {
         if (user) {
-          sb.from("profiles").select("founding_member").eq("id", user.id).single()
-            .then(({ data }) => setIsFoundingMember(!!data?.founding_member));
+          // no-op
         }
       });
     });
@@ -114,19 +107,13 @@ export default function HistoryPage() {
             {s("back", locale)}
           </Link>
         </div>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: isFoundingMember ? 4 : 20 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 20 }}>
           {s("title", locale)}
         </h1>
-        {isFoundingMember && (
-          <p style={{ fontSize: 11, color: "rgba(229,9,20,0.6)", fontWeight: 600, marginBottom: 16 }}>
-            {s("foundingMember", locale)}
-          </p>
-        )}
       </div>
 
-      {/* Couple report banner — premium users */}
-      {isPremium && (
-        <div style={{ padding: "0 16px 12px", maxWidth: 560, margin: "0 auto" }}>
+      {/* Couple report banner */}
+      <div style={{ padding: "0 16px 12px", maxWidth: 560, margin: "0 auto" }}>
           <Link
             href="/couple-report"
             style={{
@@ -143,7 +130,6 @@ export default function HistoryPage() {
             <span style={{ flexShrink: 0, padding: "6px 12px", borderRadius: 8, background: "#ff2a2a", color: "#fff", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>{s("crCta", locale)}</span>
           </Link>
         </div>
-      )}
 
       <div style={{ padding: "0 16px 32px", maxWidth: 560, margin: "0 auto" }}>
         {loading ? (
@@ -249,51 +235,6 @@ export default function HistoryPage() {
               ))}
             </div>
 
-            {/* Premium gate */}
-            {!isPremium && totalCount > 10 && (
-              <div style={{ position: "relative", marginTop: 6 }}>
-                {/* Blurred preview of next match */}
-                <div style={{
-                  display: "flex", alignItems: "center", gap: 12, padding: "10px 12px",
-                  background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)",
-                  borderRadius: 12, filter: "blur(6px)", opacity: 0.4, pointerEvents: "none",
-                }}>
-                  <div style={{ width: 40, height: 60, borderRadius: 6, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ height: 14, width: "60%", borderRadius: 4, background: "rgba(255,255,255,0.1)", marginBottom: 6 }} />
-                    <div style={{ height: 10, width: "35%", borderRadius: 4, background: "rgba(255,255,255,0.06)" }} />
-                  </div>
-                </div>
-
-                {/* Gate card */}
-                <div style={{
-                  marginTop: 12, padding: "24px 20px", borderRadius: 16, textAlign: "center",
-                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(229,9,20,0.2)",
-                  backdropFilter: "blur(30px)", WebkitBackdropFilter: "blur(30px)",
-                }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>
-                    + {totalCount - 10} {s("hiddenMatches", locale)}
-                  </p>
-                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 20, lineHeight: 1.5 }}>
-                    {s("gateText", locale)}
-                  </p>
-                  <Link
-                    href="/premium"
-                    style={{
-                      display: "inline-block", padding: "12px 28px", borderRadius: 12,
-                      background: "linear-gradient(135deg, #E50914, #82060c)",
-                      boxShadow: "0 0 30px rgba(229,9,20,0.3)",
-                      color: "#fff", fontSize: 14, fontWeight: 700, textDecoration: "none",
-                    }}
-                  >
-                    {s("gateCta", locale)}
-                  </Link>
-                  <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 8 }}>
-                    {s("gateSub", locale)}
-                  </p>
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>

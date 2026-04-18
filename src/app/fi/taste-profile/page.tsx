@@ -178,7 +178,7 @@ export default function TasteProfilePage() {
             Löydä elokuvapersoonasi
           </p>
           <a
-            href="/premium"
+            href="/together"
             style={{
               display: "inline-block",
               padding: "12px 32px",

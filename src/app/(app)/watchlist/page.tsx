@@ -142,7 +142,6 @@ export default function WatchlistPage() {
   const [selectedItem, setSelectedItem] = useState<{ id: number; type: MediaType; title: string; poster_path: string | null } | null>(null);
   const [addToListItem, setAddToListItem] = useState<{ tmdb_id: number; type: MediaType; title: string } | null>(null);
   const [friendOverlaps, setFriendOverlaps] = useState<Record<string, FriendOverlap[]>>({});
-  const [isPremium, setIsPremium] = useState(true); // default true to hide banner until checked
   const [bannerDismissed, setBannerDismissed] = useState(() =>
     typeof window !== "undefined" && localStorage.getItem("logflix_watchlist_upsell_dismissed") === "1"
   );
@@ -150,12 +149,6 @@ export default function WatchlistPage() {
   useEffect(() => {
     loadData();
     fetchFriendOverlaps().then(setFriendOverlaps).catch(() => {});
-    // Check premium status
-    createSupabaseBrowser().auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
-      createSupabaseBrowser().from("profiles").select("is_premium").eq("id", user.id).single()
-        .then(({ data }) => { if (data) setIsPremium(data.is_premium === true); });
-    });
   }, []);
 
   async function loadData() {
@@ -266,7 +259,7 @@ export default function WatchlistPage() {
         )}
       </div>
 
-      {!isPremium && titles.length >= 3 && !bannerDismissed && (
+      {titles.length >= 3 && !bannerDismissed && (
         <div className="mb-5 flex items-center gap-3 rounded-[var(--radius-lg)] bg-white/5 backdrop-blur-3xl border border-white/10 px-4 py-3">
           <p className="flex-1 text-sm text-[var(--text-secondary)]">{s.upsellText}</p>
           <Link

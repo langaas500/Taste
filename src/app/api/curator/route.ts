@@ -162,12 +162,12 @@ async function* readAnthropicSSE(body: ReadableStream<Uint8Array>): AsyncGenerat
 
 async function callCuratorAIStreaming(
   chatHistory: ChatMessage[], lang: NormalizedLang, username: string | null,
-  region: SupportedRegion, tasteContext?: string, isPremium?: boolean,
+  region: SupportedRegion, tasteContext?: string,
 ): Promise<string> {
   const provider = env.AI_PROVIDER;
   const systemPrompt = buildSystemPrompt(lang, username, region, tasteContext);
-  const curatorModel = isPremium ? CURATOR_MODEL_PREMIUM : CURATOR_MODEL_FREE;
-  const curatorMaxTokens = isPremium ? 2048 : 1024;
+  const curatorModel = CURATOR_MODEL_PREMIUM;
+  const curatorMaxTokens = 2048;
   const messages = chatHistory.slice(-10);
 
   if (provider === "anthropic") {
@@ -370,21 +370,13 @@ export const POST = withLogger("/api/curator", async (req: NextRequest, { logger
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  // Premium check — allow 5 free messages per session
-  const FREE_MESSAGE_LIMIT = 5;
-  const messageCount = typeof body.messageCount === "number" ? body.messageCount : FREE_MESSAGE_LIMIT;
   const supabase = await createSupabaseServer();
 
-  // Bug 7 fix: single profile query includes taste_summary
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_premium, preferred_region, partner_user_id, taste_summary, exploration_slider, streaming_services")
+    .select("preferred_region, partner_user_id, taste_summary, exploration_slider, streaming_services")
     .eq("id", user.id)
     .single();
-
-  if (!profile?.is_premium && messageCount >= FREE_MESSAGE_LIMIT) {
-    return NextResponse.json({ error: "Premium required" }, { status: 403 });
-  }
 
   const userMessage = typeof body.message === "string" ? body.message.trim() : "";
   if (!userMessage || userMessage.length > 500) {
@@ -1140,7 +1132,7 @@ Make sure the three titles share a thematic thread or emotional arc.`;
   }
 
   // 1. AI interprets the query (streaming for faster time-to-completion)
-  const aiRaw = await callCuratorAIStreaming(chatHistory, normalizedLang, username, userRegion, tasteContext, !!profile?.is_premium);
+  const aiRaw = await callCuratorAIStreaming(chatHistory, normalizedLang, username, userRegion, tasteContext);
   const aiResponse = parseAIResponse(aiRaw);
   logger.info("AI parsed", { searches: aiResponse.searches.length });
 

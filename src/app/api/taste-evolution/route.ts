@@ -188,10 +188,7 @@ export async function GET() {
 
     // AI insight
     let aiInsight: string | null = null;
-    const { data: profile } = await supabase.from("profiles").select("is_premium, trial_ends_at").eq("id", user.id).single();
-    const isPremium = profile?.is_premium || (profile?.trial_ends_at && new Date(profile.trial_ends_at) > new Date());
-
-    if (isPremium) {
+    {
       try {
         const summary = `${rows.length} titles. Genres: ${genreBreakdown.slice(0, 5).map((g) => `${g.name} ${g.pct}%`).join(", ")}. ${movieCount} movies, ${tvCount} series. Top directors: ${topDirectors.map((d) => d.name).join(", ")}. Moods: ${topMoods.join(", ")}. Countries: ${countrySet.size}. Rating avg: ${ratingCount > 0 ? (ratingSum / ratingCount).toFixed(1) : "N/A"}.`;
         const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -225,7 +222,6 @@ export async function GET() {
       periods,
       posters,
       aiInsight,
-      isPremium: !!isPremium,
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Error";

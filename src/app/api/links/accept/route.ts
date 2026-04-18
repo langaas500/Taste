@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase-server";
+import { createSupabaseServer } from "@/lib/supabase-server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -46,51 +46,6 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-    // Referral reward: grant 30-day trial to non-premium partner
-    try {
-      const admin = createSupabaseAdmin();
-      const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-      // Check inviter's premium status
-      const { data: inviterProfile } = await admin
-        .from("profiles")
-        .select("is_premium")
-        .eq("id", link.inviter_id)
-        .single();
-
-      // Check invitee's (current user) premium status
-      const { data: inviteeProfile } = await admin
-        .from("profiles")
-        .select("is_premium, trial_ends_at")
-        .eq("id", user.id)
-        .single();
-
-      // If inviter is premium → give invitee 30-day trial
-      if (inviterProfile?.is_premium && inviteeProfile && !inviteeProfile.is_premium && !inviteeProfile.trial_ends_at) {
-        await admin
-          .from("profiles")
-          .update({ trial_ends_at: thirtyDays })
-          .eq("id", user.id);
-      }
-
-      // If invitee is premium → give inviter 30-day trial
-      if (inviteeProfile?.is_premium) {
-        const { data: inviterCheck } = await admin
-          .from("profiles")
-          .select("is_premium, trial_ends_at")
-          .eq("id", link.inviter_id)
-          .single();
-        if (inviterCheck && !inviterCheck.is_premium && !inviterCheck.trial_ends_at) {
-          await admin
-            .from("profiles")
-            .update({ trial_ends_at: thirtyDays })
-            .eq("id", link.inviter_id);
-        }
-      }
-    } catch {
-      // Non-fatal — link is already accepted
-    }
 
     return NextResponse.json({ link: data });
   } catch (e: unknown) {

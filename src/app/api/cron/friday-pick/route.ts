@@ -23,7 +23,6 @@ interface LinkRow {
 
 interface ProfileRow {
   id: string;
-  is_premium: boolean;
   email?: string;
   display_name?: string;
 }
@@ -68,7 +67,7 @@ export async function GET(req: NextRequest) {
 
   const { data: profiles } = await admin
     .from("profiles")
-    .select("id, is_premium, display_name")
+    .select("id, display_name")
     .in("id", userIds);
 
   const profileMap = new Map<string, ProfileRow>();
@@ -76,12 +75,7 @@ export async function GET(req: NextRequest) {
     profileMap.set(p.id, p);
   }
 
-  // 3. Filter to pairs where at least one is premium
-  const eligibleLinks = typedLinks.filter((l) => {
-    const inviter = profileMap.get(l.inviter_id);
-    const invitee = l.invitee_id ? profileMap.get(l.invitee_id) : null;
-    return inviter?.is_premium || invitee?.is_premium;
-  });
+  const eligibleLinks = typedLinks;
 
   // 4. Fetch picks for today (or trigger generation via the tonight-pick API)
   const linkIds = eligibleLinks.map((l) => l.id);

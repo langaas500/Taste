@@ -40,9 +40,6 @@ export async function GET(req: NextRequest) {
       seoTitlesRes,
       recentRes,
       totalMembersRes,
-      premiumMembersRes,
-      trialMembersRes,
-      foundingMembersRes,
       newUsersRes,
       dauRes,
       wauRes,
@@ -118,25 +115,6 @@ export async function GET(req: NextRequest) {
         .from("profiles")
         .select("*", { count: "exact", head: true }),
 
-      // Paying members
-      admin
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq("is_premium", true),
-
-      // Trial members (trial active, not premium via stripe)
-      admin
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .gt("trial_ends_at", now.toISOString())
-        .eq("is_premium", false),
-
-      // Founding members
-      admin
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq("founding_member", true),
-
       // New users last 7 days (created_at per day)
       admin
         .from("profiles")
@@ -204,9 +182,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       members: {
         total: totalMembersRes.count || 0,
-        premium: premiumMembersRes.count || 0,
-        trial: trialMembersRes.count || 0,
-        founding: foundingMembersRes.count || 0,
         dau: dauRes.count || 0,
         wau: wauRes.count || 0,
         new_per_day: newUsersPerDay,

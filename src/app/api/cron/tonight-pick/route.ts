@@ -20,11 +20,6 @@ interface LinkRow {
   invitee_id: string;
 }
 
-interface ProfileRow {
-  id: string;
-  is_premium: boolean;
-}
-
 export async function GET(req: NextRequest) {
   const secret = req.headers.get("x-cron-secret");
   if (!secret || secret !== process.env.CRON_SECRET) {
@@ -34,7 +29,7 @@ export async function GET(req: NextRequest) {
   const admin = createSupabaseAdmin();
   const today = new Date().toISOString().slice(0, 10);
 
-  // Find accepted links where at least one user is premium
+  // Find all accepted links
   const { data: links } = await admin
     .from("account_links")
     .select("id, inviter_id, invitee_id")
@@ -45,26 +40,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ generated: 0, skipped: 0 });
   }
 
-  // Get all user IDs to batch-check premium status
   const typedLinks = links as LinkRow[];
-  const userIds = [
-    ...new Set(typedLinks.flatMap((l: LinkRow) => [l.inviter_id, l.invitee_id].filter(Boolean))),
-  ];
-
-  const { data: profiles } = await admin
-    .from("profiles")
-    .select("id, is_premium")
-    .in("id", userIds);
-
-  const typedProfiles = (profiles || []) as ProfileRow[];
-  const premiumSet = new Set(
-    typedProfiles.filter((p: ProfileRow) => p.is_premium).map((p: ProfileRow) => p.id),
-  );
-
-  // Filter to links with at least one premium user
-  const eligibleLinks = typedLinks.filter(
-    (l: LinkRow) => premiumSet.has(l.inviter_id) || (l.invitee_id && premiumSet.has(l.invitee_id)),
-  );
+  const eligibleLinks = typedLinks;
 
   // Check which already have picks today (batch)
   const linkIds = eligibleLinks.map((l: LinkRow) => l.id);

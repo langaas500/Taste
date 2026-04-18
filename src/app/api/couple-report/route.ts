@@ -38,7 +38,7 @@ export async function GET() {
 
     const { data: myProfile } = await admin
       .from("profiles")
-      .select("display_name, founding_member, is_premium, taste_summary")
+      .select("display_name, founding_member, taste_summary")
       .eq("id", user.id)
       .single();
 
@@ -231,7 +231,6 @@ export async function GET() {
       partner_founding: !!partnerProfile?.founding_member,
       my_name: myProfile?.display_name || "Du",
       my_founding: !!myProfile?.founding_member,
-      is_premium: !!myProfile?.is_premium,
       tonight_pick: pick || null,
       taste_compatibility: tasteCompatibility,
     });

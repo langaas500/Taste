@@ -46,3 +46,8 @@ supabase/.temp/
 next-env.d.ts
 
 .vercel
+
+# iOS secrets
+IOS/
+*.p8
+

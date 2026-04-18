@@ -19,7 +19,7 @@ export default function TonightPickPage() {
         <p style={{ fontSize: 17, lineHeight: 1.7, color: "rgba(255,255,255,0.7)", marginBottom: 20 }}>Tonight&apos;s Pick bruger AI til at analysere hvad I begge kan lide, og finder den perfekte titel til aftenen. Nyt pick hver dag, baseret på hvad der er tilgængeligt på jeres streamingtjenester.</p>
         <p style={{ fontSize: 17, lineHeight: 1.7, color: "rgba(255,255,255,0.7)", marginBottom: 40 }}>Inkluderet i Logflix Premium for 29 kr/md — din partner får det gratis.</p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <a href="/premium" style={{ display: "inline-block", padding: "14px 28px", borderRadius: 12, background: "#ff2a2a", color: "#fff", fontSize: 15, fontWeight: 700, textDecoration: "none" }}>Prøv Logflix Premium</a>
+          <a href="/together" style={{ display: "inline-block", padding: "14px 28px", borderRadius: 12, background: "#ff2a2a", color: "#fff", fontSize: 15, fontWeight: 700, textDecoration: "none" }}>Prøv Logflix Premium</a>
           <a href="/together" style={{ display: "inline-block", padding: "14px 28px", borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 500, textDecoration: "none" }}>Prøv Se Sammen gratis</a>
         </div>
       </div>

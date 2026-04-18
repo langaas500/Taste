@@ -260,7 +260,6 @@ export default function LibraryPage() {
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [recsLoading, setRecsLoading] = useState(false);
   const [friendOverlaps, setFriendOverlaps] = useState<Record<string, FriendOverlap[]>>({});
-  const [isPremium, setIsPremium] = useState(true);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -283,12 +282,10 @@ export default function LibraryPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const [{ data: ut }, { data: exc }, { data: profile }] = await Promise.all([
+    const [{ data: ut }, { data: exc }] = await Promise.all([
       supabase.from("user_titles").select("*").eq("user_id", user.id).eq("status", "watched").order("updated_at", { ascending: false }),
       supabase.from("user_exclusions").select("*").eq("user_id", user.id),
-      supabase.from("profiles").select("is_premium").eq("id", user.id).single(),
     ]);
-    setIsPremium(!!profile?.is_premium);
 
     const allKeys = [
       ...((ut || []) as UserTitle[]).map((t) => ({ tmdb_id: t.tmdb_id, type: t.type })),
@@ -482,7 +479,7 @@ export default function LibraryPage() {
       </div>
 
       {/* Taste profile upsell banner */}
-      {!isPremium && titles.length >= 20 && !bannerDismissed && (
+      {titles.length >= 20 && !bannerDismissed && (
         <div className="relative mb-6 rounded-2xl bg-white/[0.04] backdrop-blur-3xl border border-white/[0.08] px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
           <button
             onClick={() => { setBannerDismissed(true); localStorage.setItem("library_taste_banner_dismissed", "1"); }}

@@ -16,8 +16,6 @@ const BATCH_SIZE = 100;
 
 interface EligibleUser {
   id: string;
-  is_premium: boolean;
-  trial_ends_at: string | null;
   preferred_region: string | null;
 }
 
@@ -43,13 +41,12 @@ export async function GET(req: NextRequest) {
   }
 
   const admin = createSupabaseAdmin();
-  const now = new Date();
-  const today = now.toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
 
-  // 1. Find eligible users: email_digest = true AND (is_premium OR active trial)
+  // 1. Find eligible users: email_digest = true
   const { data: users } = await admin
     .from("profiles")
-    .select("id, email_digest, is_premium, trial_ends_at, preferred_region")
+    .select("id, preferred_region")
     .eq("email_digest", true)
     .limit(BATCH_SIZE);
 
@@ -57,16 +54,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ sent: 0, skipped: 0, reason: "no_eligible_users" });
   }
 
-  // Filter to premium or active trial
-  const eligible: EligibleUser[] = (users as EligibleUser[]).filter((u) => {
-    if (u.is_premium) return true;
-    if (u.trial_ends_at && new Date(u.trial_ends_at) > now) return true;
-    return false;
-  });
-
-  if (eligible.length === 0) {
-    return NextResponse.json({ sent: 0, skipped: users.length, reason: "no_premium_users" });
-  }
+  const eligible: EligibleUser[] = users as EligibleUser[];
 
   // 2. Batch-fetch today's picks for all eligible users
   const userIds = eligible.map((u) => u.id);
