@@ -29,32 +29,12 @@
   ],
   "crons": [
     {
-      "path": "/api/cron/weekly-digest",
-      "schedule": "0 10 * * 5"
-    },
-    {
       "path": "/api/cron/tonight-pick",
       "schedule": "0 14 * * *"
     },
     {
-      "path": "/api/cron/daily-pick-email",
-      "schedule": "0 17 * * *"
-    },
-    {
-      "path": "/api/cron/friday-pick",
-      "schedule": "0 17 * * 5"
-    },
-    {
-      "path": "/api/cron/monthly-couple-report",
-      "schedule": "0 10 1 * *"
-    },
-    {
       "path": "/api/cron/enrich-directors",
       "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/streak-reminder",
-      "schedule": "0 16 * * *"
     }
   ]
 }

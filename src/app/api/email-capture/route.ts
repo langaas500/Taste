@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase-server";
 import { withLogger } from "@/lib/logger";
-import { sendMatchReminderEmail } from "@/lib/email";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -37,8 +36,6 @@ export const POST = withLogger("/api/email-capture", async (req, { logger }) => 
 
       if (error) {
         logger.error("email_captures insert failed", error);
-      } else if (title && type) {
-        sendMatchReminderEmail(email, title, type).catch(() => {});
       }
     }
 
