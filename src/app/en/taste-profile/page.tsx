@@ -114,7 +114,6 @@ export default function TasteProfilePage() {
         relatedLinks={[
           { href: "/together", label: "Start Watch Together — free" },
           { href: "/en/watch-together", label: "How Watch Together works" },
-          { href: "/en/couple-streak", label: "Couple Streak — keep matching" },
           { href: "/en/wrapped", label: "Logflix Wrapped — your movie year" },
         ]}
       >

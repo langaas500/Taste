@@ -112,25 +112,6 @@ export default function HistoryPage() {
         </h1>
       </div>
 
-      {/* Couple report banner */}
-      <div style={{ padding: "0 16px 12px", maxWidth: 560, margin: "0 auto" }}>
-          <Link
-            href="/couple-report"
-            style={{
-              display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderRadius: 14, textDecoration: "none",
-              background: "rgba(255,255,255,0.04)", backdropFilter: "blur(30px)", WebkitBackdropFilter: "blur(30px)",
-              border: "1px solid rgba(255,255,255,0.08)",
-            }}
-          >
-            <span style={{ fontSize: 20, flexShrink: 0 }}>💑</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>{s("crTitle", locale)}</p>
-              <p style={{ margin: "2px 0 0", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{s("crDesc", locale)}</p>
-            </div>
-            <span style={{ flexShrink: 0, padding: "6px 12px", borderRadius: 8, background: "#ff2a2a", color: "#fff", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>{s("crCta", locale)}</span>
-          </Link>
-        </div>
-
       <div style={{ padding: "0 16px 32px", maxWidth: 560, margin: "0 auto" }}>
         {loading ? (
           <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textAlign: "center", paddingTop: 40 }}>

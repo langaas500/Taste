@@ -117,8 +117,6 @@ export default function TasteProfilePage() {
         trustLine="AI-drevet · Oppdateres automatisk · Partnersammenligning inkludert"
         relatedLinks={[
           { href: "/together", label: "Start Se Sammen — gratis" },
-          { href: "/no/tonight-pick", label: "Kveldens valg" },
-          { href: "/no/couple-streak", label: "Par-streak — hold filmkveldene i gang" },
           { href: "/no/wrapped", label: "Logflix Wrapped — filmåret ditt" },
         ]}
       >

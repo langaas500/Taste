@@ -74,12 +74,7 @@ export function GET() {
       entry(`${base}${en}`, lastmod, "weekly", "0.85", { nb: `${base}${no}`, en: `${base}${en}`, "x-default": `${base}${en}` }),
     ]),
     ...["no", "se", "dk", "fi", "en"].flatMap((r) => [
-      entry(`${base}/${r}/tonight-pick`, lastmod, "monthly", "0.7", { nb: `${base}/no/tonight-pick`, sv: `${base}/se/tonight-pick`, da: `${base}/dk/tonight-pick`, fi: `${base}/fi/tonight-pick`, en: `${base}/en/tonight-pick`, "x-default": `${base}/en/tonight-pick` }),
-      entry(`${base}/${r === "en" ? "en/couple-report" : `${r}/par-rapport`}`, lastmod, "monthly", "0.7", { nb: `${base}/no/par-rapport`, sv: `${base}/se/par-rapport`, da: `${base}/dk/par-rapport`, fi: `${base}/fi/par-rapport`, en: `${base}/en/couple-report`, "x-default": `${base}/en/couple-report` }),
-    ]),
-    ...["no", "se", "dk", "fi", "en"].flatMap((r) => [
       entry(`${base}/${r}/taste-profile`, lastmod, "monthly", "0.7", { nb: `${base}/no/taste-profile`, sv: `${base}/se/taste-profile`, da: `${base}/dk/taste-profile`, fi: `${base}/fi/taste-profile`, en: `${base}/en/taste-profile`, "x-default": `${base}/en/taste-profile` }),
-      entry(`${base}/${r}/couple-streak`, lastmod, "monthly", "0.7", { nb: `${base}/no/couple-streak`, sv: `${base}/se/couple-streak`, da: `${base}/dk/couple-streak`, fi: `${base}/fi/couple-streak`, en: `${base}/en/couple-streak`, "x-default": `${base}/en/couple-streak` }),
       entry(`${base}/${r}/wrapped`, lastmod, "monthly", "0.7", { nb: `${base}/no/wrapped`, sv: `${base}/se/wrapped`, da: `${base}/dk/wrapped`, fi: `${base}/fi/wrapped`, en: `${base}/en/wrapped`, "x-default": `${base}/en/wrapped` }),
     ]),
     entry(`${base}/en/import`, lastmod, "monthly", "0.7", { nb: `${base}/no/importer`, en: `${base}/en/import`, "x-default": `${base}/en/import` }),
@@ -91,7 +86,6 @@ export function GET() {
       entry(`${base}${path}`, lastmod, "weekly", "0.85", { en: `${base}${path}`, nb: `${base}/no/`, sv: `${base}/se/`, da: `${base}/dk/`, fi: `${base}/fi/`, "x-default": `${base}${path}` }),
     ),
     entry(`${base}/en/taste-profile`, lastmod, "monthly", "0.7", { en: `${base}/en/taste-profile`, "x-default": `${base}/en/taste-profile` }),
-    entry(`${base}/en/couple-streak`, lastmod, "monthly", "0.7", { en: `${base}/en/couple-streak`, "x-default": `${base}/en/couple-streak` }),
     entry(`${base}/en/wrapped`, lastmod, "monthly", "0.7", { en: `${base}/en/wrapped`, "x-default": `${base}/en/wrapped` }),
     entry(`${base}/privacy`, lastmod, "monthly", "0.3"),
     entry(`${base}/contact`, lastmod, "monthly", "0.3"),

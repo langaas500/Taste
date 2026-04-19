@@ -11,9 +11,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async redirects() {
-    return [
-      { source: "/en/par-rapport", destination: "/en/couple-report", permanent: true },
-    ];
+    return [];
   },
   async rewrites() {
     return [

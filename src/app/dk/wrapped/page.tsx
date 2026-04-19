@@ -119,7 +119,6 @@ export default function WrappedPage() {
           { href: "/together", label: "Start Se Sammen — gratis" },
           { href: "/dk/watch-together", label: "Sådan fungerer Se Sammen" },
           { href: "/dk/taste-profile", label: "Din smagsprofil" },
-          { href: "/dk/couple-streak", label: "Par-streak — bliv ved med at matche" },
         ]}
       >
         <section style={{ marginBottom: 40 }}>

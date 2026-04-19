@@ -585,12 +585,6 @@ export default function TastePage() {
             </div>
           </div>
 
-          {/* Couple report CTA */}
-          <div style={{ background: "rgba(255,42,42,0.07)", border: "1px solid rgba(255,42,42,0.2)", borderRadius: 14, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.65)" }}>{s.parReportDesc}</p>
-            <Link href="/couple-report" style={{ background: "#ff2a2a", color: "#fff", textDecoration: "none", borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0 }}>{s.parReport} →</Link>
-          </div>
-
           {summary.updatedAt && (
             <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", textAlign: "center" }}>
               {s.lastUpdated}: {new Date(summary.updatedAt).toLocaleString("nb-NO")}

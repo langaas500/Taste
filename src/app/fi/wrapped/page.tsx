@@ -119,7 +119,6 @@ export default function WrappedPage() {
           { href: "/together", label: "Aloita Katsotaan yhdessä — ilmaiseksi" },
           { href: "/fi/watch-together", label: "Näin Katsotaan yhdessä toimii" },
           { href: "/fi/taste-profile", label: "Makuprofiilisi" },
-          { href: "/fi/couple-streak", label: "Pariputki — jatka matchaamista" },
         ]}
       >
         <section style={{ marginBottom: 40 }}>

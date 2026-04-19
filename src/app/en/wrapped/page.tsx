@@ -115,7 +115,6 @@ export default function WrappedPage() {
           { href: "/together", label: "Start Watch Together — free" },
           { href: "/en/watch-together", label: "How Watch Together works" },
           { href: "/en/taste-profile", label: "Your Taste Profile" },
-          { href: "/en/couple-streak", label: "Couple Streak — keep matching" },
         ]}
       >
         <section style={{ marginBottom: 40 }}>

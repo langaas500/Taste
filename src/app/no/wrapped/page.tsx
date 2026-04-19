@@ -117,9 +117,7 @@ export default function WrappedPage() {
         trustLine="Månedlige + årlige rapporter · Delbare som bilder · Parstatistikk inkludert"
         relatedLinks={[
           { href: "/together", label: "Start Se Sammen — gratis" },
-          { href: "/no/tonight-pick", label: "Kveldens valg" },
           { href: "/no/taste-profile", label: "Din smaksprofil" },
-          { href: "/no/couple-streak", label: "Par-streak — hold filmkveldene i gang" },
         ]}
       >
         <section style={{ marginBottom: 40 }}>

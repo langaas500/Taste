@@ -215,29 +215,6 @@ export default function WTBetaPage() {
     createSupabaseBrowser().auth.getSession()
       .then(({ data }) => {
         setAuthUser(data.session?.user ?? null);
-        // Fetch couple streak + match count for logged-in users (fire-and-forget, non-blocking)
-        if (data.session?.user) {
-          fetch("/api/couple-report").then((r) => r.ok ? r.json() : null).then((d) => { if (d?.total_matches) setMatchCount(d.total_matches); }).catch(() => {});
-          fetch("/api/couple-streak")
-            .then((r) => r.ok ? r.json() : null)
-            .then((d) => {
-              if (d && d.current_streak > 0) {
-                setStreakData(d);
-              } else {
-                // Check for frozen streak from cancelled subscription
-                createSupabaseBrowser()
-                  .from("profiles")
-                  .select("frozen_couple_data")
-                  .single()
-                  .then(({ data: p }) => {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const fd = (p as any)?.frozen_couple_data;
-                    if (fd?.streak > 0) setFrozenStreak(fd.streak);
-                  });
-              }
-            })
-            .catch(() => {});
-        }
       })
       .catch(() => {});
 
@@ -2469,22 +2446,6 @@ export default function WTBetaPage() {
                           >
                             {locale === "no" ? "For deg — anbefalinger og Wrapped →" : locale === "se" ? "För dig — rekommendationer och Wrapped →" : locale === "dk" ? "For dig — anbefalinger og Wrapped →" : locale === "fi" ? "Sinulle — suositukset ja Wrapped →" : "For You — recommendations and Wrapped →"}
                           </Link>
-                        )}
-
-                        {/* Couple report — teaser at 1-2 matches, link at 3+ */}
-                        {authUser && matchCount >= 3 && (
-                          <Link href="/couple-report" className="block w-full py-2 text-xs font-medium text-center" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none" }}
-                            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }}
-                            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}>
-                            {t(locale, "winner", "coupleReportWithCount").replace("{n}", String(matchCount))}
-                          </Link>
-                        )}
-                        {authUser && matchCount >= 1 && matchCount < 3 && (
-                          <p className="w-full py-2 text-[10px] text-center" style={{ color: "rgba(255,255,255,0.2)" }}>
-                            {matchCount === 1
-                              ? (locale === "no" ? "2 matcher til for å låse opp par-rapport 📊" : locale === "se" ? "2 matcher till för att låsa upp parrapport 📊" : locale === "dk" ? "2 matcher til for at låse op parrapport 📊" : locale === "fi" ? "2 osumaa vielä pariraportin avaamiseen 📊" : "2 more matches to unlock couple report 📊")
-                              : (locale === "no" ? "Neste match låser opp par-rapport 📊" : locale === "se" ? "Nästa match låser upp parrapport 📊" : locale === "dk" ? "Næste match låser op parrapport 📊" : locale === "fi" ? "Seuraava osuma avaa pariraportin 📊" : "Next match unlocks couple report 📊")}
-                          </p>
                         )}
 
                         {/* Solo invite */}

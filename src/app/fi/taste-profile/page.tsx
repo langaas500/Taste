@@ -118,7 +118,6 @@ export default function TasteProfilePage() {
         relatedLinks={[
           { href: "/together", label: "Aloita Katsotaan yhdessä — ilmaiseksi" },
           { href: "/fi/watch-together", label: "Näin Katsotaan yhdessä toimii" },
-          { href: "/fi/couple-streak", label: "Pariputki — jatka matchaamista" },
           { href: "/fi/wrapped", label: "Logflix Wrapped — elokuvavuotenne" },
         ]}
       >

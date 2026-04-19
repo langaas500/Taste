@@ -118,7 +118,6 @@ export default function TasteProfilePage() {
         relatedLinks={[
           { href: "/together", label: "Starta Se Tillsammans — gratis" },
           { href: "/se/watch-together", label: "Hur Se Tillsammans fungerar" },
-          { href: "/se/couple-streak", label: "Parstreak — håll igång matchningen" },
           { href: "/se/wrapped", label: "Logflix Wrapped — ditt filmår" },
         ]}
       >

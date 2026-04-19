@@ -389,20 +389,6 @@ interface DashboardData {
   bannerPosters: string[];
 }
 
-interface TonightPickItem {
-  tmdb_id: number;
-  type: string;
-  title: string;
-  poster_path: string | null;
-  match_score: number | null;
-}
-
-interface TonightPickData {
-  movie: TonightPickItem | null;
-  series: TonightPickItem | null;
-  reroll_count: number;
-}
-
 export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -417,11 +403,6 @@ export default function HomePage() {
     } catch { /* ignore */ }
     return [];
   });
-  const [tonightPick, setTonightPick] = useState<TonightPickData | null>(null);
-  const [tpLoading, setTpLoading] = useState(true);
-  const [tpRerolling, setTpRerolling] = useState(false);
-  const [partnerName, setPartnerName] = useState<string | null>(null);
-  const [hasPartner, setHasPartner] = useState<boolean | null>(null);
   const [returningBanner, setReturningBanner] = useState<{ type: "day3" | "day7" } | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [wrappedCount, setWrappedCount] = useState(0);
@@ -498,37 +479,7 @@ export default function HomePage() {
           }
         } catch { /* ignore */ }
       }
-      loadTonightPick();
     } catch { /* ignore */ }
-  }
-
-  async function loadTonightPick() {
-    setTpLoading(true);
-    try {
-      const res = await fetch("/api/tonight-pick");
-      if (!res.ok) { setTpLoading(false); return; }
-      const data = await res.json();
-      setTonightPick(data);
-      setHasPartner(!data.solo);
-      if (!data.solo) {
-        try {
-          const friendsRes = await fetch("/api/friends/titles");
-          const friendsData = await friendsRes.json();
-          if (friendsData.friendName) setPartnerName(friendsData.friendName);
-        } catch { /* ignore */ }
-      }
-    } catch { /* ignore */ }
-    setTpLoading(false);
-  }
-
-  async function handleReroll() {
-    setTpRerolling(true);
-    try {
-      const res = await fetch("/api/tonight-pick", { method: "POST" });
-      const data = await res.json();
-      if (res.ok && data) { setTonightPick(data); }
-    } catch { /* ignore */ }
-    setTpRerolling(false);
   }
 
   async function loadDashboard() {
@@ -863,85 +814,8 @@ export default function HomePage() {
         </Link>
       )}
 
-      {/* Tonight's Pick + Recommendations — side by side on desktop */}
-      <div className="flex flex-col md:flex-row gap-6 items-start">
-
-        {/* Tonight's Pick — venstre kolonne */}
-        {(isPremium || tpLoading) && (
-          <div className="w-full md:w-[320px] md:flex-shrink-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[9px] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-full" style={{ background: "rgba(245,200,66,0.12)", border: "0.5px solid rgba(245,200,66,0.3)", color: "#F5C842" }}>Premium</span>
-            </div>
-            <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-4">
-              {hasPartner ? s.tpTitle(partnerName || "Partner") : s.tpTitleSolo}
-            </h2>
-            {tpLoading && !tonightPick && (
-              <div className="flex gap-3">
-                {[s.tpMovie, s.tpSeries].map((_, i) => (
-                  <div key={i} className="w-[140px] rounded-xl border border-white/[0.06] p-3 flex flex-col flex-shrink-0"
-                    style={{ background: "rgba(255,255,255,0.025)" }}>
-                    <div className="skeleton h-3 w-20 rounded mb-2" />
-                    <div className="skeleton w-full rounded-lg mb-2" style={{ aspectRatio: "2/3" }} />
-                    <div className="skeleton h-3 w-24 rounded mb-1" />
-                    <div className="skeleton h-2.5 w-16 rounded" />
-                  </div>
-                ))}
-              </div>
-            )}
-            {tonightPick && (
-              <>
-                <div className="flex gap-3">
-                  {tonightPick.movie && (
-                    <div className="w-[140px] rounded-xl border border-white/[0.06] p-3 flex flex-col flex-shrink-0"
-                      style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2">🎬 {s.tpMovie}</p>
-                      {tonightPick.movie.poster_path && (
-                        <div className="relative w-full rounded-lg overflow-hidden mb-2" style={{ aspectRatio: "2/3" }}>
-                          <Image src={`https://image.tmdb.org/t/p/w185${tonightPick.movie.poster_path}`} alt={tonightPick.movie.title} fill className="object-cover" sizes="140px" />
-                        </div>
-                      )}
-                      <p className="text-xs font-semibold text-white/85 truncate">{tonightPick.movie.title}</p>
-                      {tonightPick.movie.match_score != null && (
-                        <p className="text-[10px] text-[var(--accent-light)] mt-0.5">★ {tonightPick.movie.match_score}% {s.tpMatch}</p>
-                      )}
-                      <Link href="/together" className="mt-2 text-center py-1 rounded-md text-[10px] font-semibold text-white/70 bg-white/[0.06] hover:bg-white/[0.1] transition-colors">{s.tpSeTogether}</Link>
-                    </div>
-                  )}
-                  {tonightPick.series && (
-                    <div className="w-[140px] rounded-xl border border-white/[0.06] p-3 flex flex-col flex-shrink-0"
-                      style={{ background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-2">📺 {s.tpSeries}</p>
-                      {tonightPick.series.poster_path && (
-                        <div className="relative w-full rounded-lg overflow-hidden mb-2" style={{ aspectRatio: "2/3" }}>
-                          <Image src={`https://image.tmdb.org/t/p/w185${tonightPick.series.poster_path}`} alt={tonightPick.series.title} fill className="object-cover" sizes="140px" />
-                        </div>
-                      )}
-                      <p className="text-xs font-semibold text-white/85 truncate">{tonightPick.series.title}</p>
-                      {tonightPick.series.match_score != null && (
-                        <p className="text-[10px] text-[var(--accent-light)] mt-0.5">★ {tonightPick.series.match_score}% {s.tpMatch}</p>
-                      )}
-                      <Link href="/together" className="mt-2 text-center py-1 rounded-md text-[10px] font-semibold text-white/70 bg-white/[0.06] hover:bg-white/[0.1] transition-colors">{s.tpSeTogether}</Link>
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-col items-center gap-2 mt-3">
-                  <button onClick={handleReroll} disabled={tpRerolling} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white/40 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.08] transition-all disabled:opacity-40 cursor-pointer">
-                    {tpRerolling ? "..." : `↻ ${s.tpReroll}`}
-                  </button>
-                  {hasPartner && (
-                    <Link href="/couple-report" className="text-xs transition-colors" style={{ color: "rgba(255,255,255,0.35)" }}
-                      onMouseEnter={(e) => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }}
-                      onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}>
-                      {s.coupleReportLink}
-                    </Link>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Recommendations — høyre kolonne */}
+      {/* Recommendations */}
+      <div>
         {homeRecs.length > 0 && (
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-3">
