@@ -13,6 +13,7 @@ export function initPostHog() {
     capture_pageview: true,
     capture_pageleave: true,
     persistence: "localStorage+cookie",
+    ip: false,
   });
   initialized = true;
 }
