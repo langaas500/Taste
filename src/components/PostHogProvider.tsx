@@ -3,10 +3,16 @@
 import { useEffect } from "react";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { initPostHog, identify, resetIdentity } from "@/lib/posthog";
+import CookieBanner, { CONSENT_KEY } from "@/components/CookieBanner";
 
 export default function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    initPostHog();
+    if (localStorage.getItem(CONSENT_KEY) === "all") initPostHog();
+
+    function onConsentUpdate(e: Event) {
+      if ((e as CustomEvent).detail === "all") initPostHog();
+    }
+    window.addEventListener("cookie_consent_updated", onConsentUpdate);
 
     const supabase = createSupabaseBrowser();
     supabase.auth.getSession().then(({ data }) => {
@@ -21,8 +27,16 @@ export default function PostHogProvider({ children }: { children: React.ReactNod
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("cookie_consent_updated", onConsentUpdate);
+    };
   }, []);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <CookieBanner />
+    </>
+  );
 }

@@ -13,7 +13,7 @@ const s = {
     s1p1: "Logflix bruker Supabase Auth for autentisering. Du kan logge inn med e-post og passord, eller via Google eller Apple (OAuth).",
     s1p2: "Ved opprettelse av konto lagrer vi:",
     s1list: ["E-postadresse", "Kryptert passord (bcrypt-hashet av Supabase)", "Visningsnavn (fra OAuth-leverandør eller e-post)", "Tidspunkt og versjon for godkjenning av brukervilkår"],
-    s1p3: "Innlogging håndteres via sikre HTTP-only session-cookies satt av Supabase. Vi bruker ingen andre cookies.",
+    s1p3: "Innlogging håndteres via sikre HTTP-only session-cookies satt av Supabase. Vi bruker ingen andre tracking-cookies.",
     s2t: "2. Data lagret i kontoen din",
     s2p1: "For at Logflix skal fungere lagres følgende i vår database (Supabase PostgreSQL med Row Level Security):",
     s2list: ["Profil: visningsnavn, språk, foretrukne strømmetjenester, innholdsfiltre (ekskluderte sjangre og språk)", "Seerhistorikk: titler du har sett eller vurdert, med vurdering, notater og dato", "Ekskluderinger: titler du har fjernet fra anbefalinger", "Tilbakemeldinger på anbefalinger (liker / ikke for meg)", "Egne lister og innholdet i dem", "Kontokoblinger: forbindelser til andre brukere (krever samtykke fra begge parter, gir tilgang til delte lister)", "Smaksanalyse: generert av AI basert på dine titler (ingen personopplysninger sendes til AI)", "Trakt.tv OAuth-token (kun dersom du aktivt kobler til Trakt, lagres kun på server)"],
@@ -34,7 +34,7 @@ const s = {
     s4p3: "Ingen gjestedata lagres permanent på serveren. Sesjonsdata slettes automatisk som beskrevet i punkt 3.",
     s5t: "5. Lokal lagring på din enhet",
     s5p1: "Logflix bruker localStorage i nettleseren for å lagre:",
-    s5list: ["Sesjonsstatus og gjenopptakingsdata for Se Sammen", "Gjestehandlinger og gjeste-UUID", "Visningsnavn for gruppeøkter", "Innholdspreferanser (film/serie/begge)", "Poster-cache og titteldekk-cache", "Innloggingspreferanser (husk meg)"],
+    s5list: ["Sesjonsstatus og gjenopptakingsdata for Se Sammen", "Gjestehandlinger og gjeste-UUID", "Visningsnavn for gruppeøkter", "Innholdspreferanser (film/serie/begge)", "Poster-cache og titteldekk-cache", "Innloggingspreferanser (husk meg)", "Ditt samtykkevalg for cookies (cookie_consent)"],
     s5p2: "Denne informasjonen lagres kun på din enhet og sendes ikke til tredjeparter. Du kan slette den ved å tømme nettleserens lagring.",
     s6t: "6. Tredjepartstjenester",
     s6p1: "Logflix bruker følgende eksterne tjenester:",
@@ -52,19 +52,41 @@ const s = {
     s6vercel: "Logflix hostes på Vercel. Vi leser Vercels x-vercel-ip-country-header for å bestemme språk og strømmeregion. Denne verdien lagres ikke og brukes ikke til sporing.",
     s7t: "7. Hva vi ikke gjør",
     s7p1: "Logflix:",
-    s7list: ["Bruker PostHog for anonym produktanalyse (sidevisninger og funksjonsbruk) — ingen personlig identifisering, ingen annonsesporing", "Har ingen annonser", "Selger ikke data", "Sender ingen markedsførings-e-post", "Sporer ikke IP-adresser eller enhetsinformasjon utover det PostHog samler anonymt", "Bruker ingen tracking cookies utover autentisering", "Bruker ingen feilrapporteringstjenester (ingen Sentry, Datadog e.l.)"],
+    s7list: [
+      "Bruker PostHog for anonym produktanalyse – kun dersom du har samtykket til analysecookies",
+      "Har ingen annonser",
+      "Selger ikke data",
+      "Sender ingen markedsførings-e-post",
+      "Samler ikke inn IP-adresser (PostHog er konfigurert med ip: false)",
+      "Bruker ingen tracking cookies utover autentisering og samtykkebasert analyse",
+      "Bruker ingen feilrapporteringstjenester (ingen Sentry, Datadog e.l.)",
+    ],
     s7p2: "Kun autentiseringscookies fra Supabase brukes for innlogging.",
-    s8t: "8. Dataeksport",
-    s8p: "Du kan eksportere dine data som JSON via innebygd eksportfunksjon.",
-    s9t: "9. Sletting av konto",
+    sct: "8. Informasjonskapsler (cookies)",
+    sc_intro: "Logflix bruker to kategorier informasjonskapsler og lokal lagring:",
+    sch1: "Nødvendige – krever ikke samtykke",
+    sclist1: [
+      "sb-* (Supabase) – HTTP-only session-cookies for autentisering. Kreves for innlogging.",
+      "cookie_consent – lagrer ditt samtykkevalg i localStorage.",
+      "x-locale – lagrer språkvalg i localStorage.",
+      "wt-guest-id – tilfeldig UUID for Se Sammen-gjester (localStorage).",
+    ],
+    sch2: "Analysecookies – krever samtykke",
+    sclist2: [
+      "PostHog (ph_*) – produktanalyse (sidevisninger, klikk, funksjonsbruk). Initialiseres kun dersom du godtar analysecookies i samtykkebanneret. IP-adresser samles ikke inn.",
+    ],
+    sc_p: "Første gang du besøker Logflix vises et samtykkebanner der du velger. Du kan endre valget ved å tømme nettleserens lokale lagring, f.eks. via nettleserinnstillinger → Fjern nettstedsdata.",
+    s8t: "9. Dataeksport",
+    s8p: "Du kan eksportere dine data som JSON via innebygd eksportfunksjon i Innstillinger.",
+    s9t: "10. Sletting av konto",
     s9p1: "Du kan slette kontoen din direkte i appen via Innstillinger → Slett konto. Sletting er umiddelbar og permanent.",
     s9p2: "Du kan også sende e-post til oss for manuell sletting:",
     s9p3: "Ved sletting fjernes all data permanent, inkludert:",
     s9list: ["Profil og preferanser", "Seerhistorikk, vurderinger og notater", "Egne lister og innhold", "Tilbakemeldinger og ekskluderinger", "Kontokoblinger", "Trakt.tv-token"],
     s9p4: "Sesjonsdata (Se Sammen og gruppeøkter) slettes automatisk uavhengig av konto, som beskrevet i punkt 3.",
-    s10t: "10. Barn",
+    s10t: "11. Barn",
     s10p: "Logflix er ikke rettet mot barn under 13 år. Vi samler ikke bevisst inn opplysninger fra barn.",
-    s11t: "11. Endringer",
+    s11t: "12. Endringer",
     s11p: "Vi kan oppdatere denne personvernerklæringen ved behov. Dato for siste oppdatering vises øverst på siden.",
   },
   en: {
@@ -76,7 +98,7 @@ const s = {
     s1p1: "Logflix uses Supabase Auth for authentication. You can log in with email and password, or via Google or Apple (OAuth).",
     s1p2: "When you create an account, we store:",
     s1list: ["Email address", "Encrypted password (bcrypt-hashed by Supabase)", "Display name (from OAuth provider or email)", "Timestamp and version of terms acceptance"],
-    s1p3: "Login is handled via secure HTTP-only session cookies set by Supabase. We use no other cookies.",
+    s1p3: "Login is handled via secure HTTP-only session cookies set by Supabase. We use no other tracking cookies.",
     s2t: "2. Data stored in your account",
     s2p1: "For Logflix to work, the following is stored in our database (Supabase PostgreSQL with Row Level Security):",
     s2list: ["Profile: display name, language, preferred streaming services, content filters (excluded genres and languages)", "Watch history: titles you have watched or rated, with ratings, notes and date", "Exclusions: titles you have removed from recommendations", "Recommendation feedback (liked / not for me)", "Custom lists and their contents", "Account links: connections to other users (requires consent from both parties, grants access to shared lists)", "Taste analysis: generated by AI based on your titles (no personal information is sent to AI)", "Trakt.tv OAuth token (only if you actively connect Trakt, stored server-side only)"],
@@ -97,7 +119,7 @@ const s = {
     s4p3: "No guest data is permanently stored on the server. Session data is automatically deleted as described in section 3.",
     s5t: "5. Local storage on your device",
     s5p1: "Logflix uses localStorage in the browser to store:",
-    s5list: ["Session status and resume data for Watch Together", "Guest actions and guest UUID", "Display name for group sessions", "Content preferences (movie/series/both)", "Poster cache and title deck cache", "Login preferences (remember me)"],
+    s5list: ["Session status and resume data for Watch Together", "Guest actions and guest UUID", "Display name for group sessions", "Content preferences (movie/series/both)", "Poster cache and title deck cache", "Login preferences (remember me)", "Your cookie consent choice (cookie_consent)"],
     s5p2: "This information is stored only on your device and is not sent to third parties. You can delete it by clearing your browser storage.",
     s6t: "6. Third-party services",
     s6p1: "Logflix uses the following external services:",
@@ -115,19 +137,41 @@ const s = {
     s6vercel: "Logflix is hosted on Vercel. We read Vercel's x-vercel-ip-country header to determine language and streaming region. This value is not stored and is not used for tracking.",
     s7t: "7. What we do not do",
     s7p1: "Logflix:",
-    s7list: ["Uses PostHog for anonymous product analytics (page views and feature usage) — no personal identification, no ad tracking", "Has no ads", "Does not sell data", "Does not send marketing emails", "Does not track IP addresses or device information beyond what PostHog collects anonymously", "Uses no tracking cookies beyond authentication", "Uses no error reporting services (no Sentry, Datadog, etc.)"],
+    s7list: [
+      "Uses PostHog for anonymous product analytics — only if you have consented to analytics cookies",
+      "Has no ads",
+      "Does not sell data",
+      "Does not send marketing emails",
+      "Does not collect IP addresses (PostHog is configured with ip: false)",
+      "Uses no tracking cookies beyond authentication and consent-based analytics",
+      "Uses no error reporting services (no Sentry, Datadog, etc.)",
+    ],
     s7p2: "Only authentication cookies from Supabase are used for login.",
-    s8t: "8. Data export",
-    s8p: "You can export your data as JSON via the built-in export function.",
-    s9t: "9. Account deletion",
+    sct: "8. Cookies",
+    sc_intro: "Logflix uses two categories of cookies and local storage:",
+    sch1: "Necessary — no consent required",
+    sclist1: [
+      "sb-* (Supabase) – HTTP-only session cookies for authentication. Required for login.",
+      "cookie_consent – stores your consent choice in localStorage.",
+      "x-locale – stores language preference in localStorage.",
+      "wt-guest-id – random UUID for Watch Together guests (localStorage).",
+    ],
+    sch2: "Analytics cookies — consent required",
+    sclist2: [
+      "PostHog (ph_*) – product analytics (page views, clicks, feature usage). Initialized only if you accept analytics cookies in the consent banner. IP addresses are not collected.",
+    ],
+    sc_p: "The first time you visit Logflix, a consent banner is shown. You can change your choice by clearing your browser's local storage, e.g. via browser Settings → Clear site data.",
+    s8t: "9. Data export",
+    s8p: "You can export your data as JSON via the built-in export function in Settings.",
+    s9t: "10. Account deletion",
     s9p1: "You can delete your account directly in the app via Settings → Delete account. Deletion is immediate and permanent.",
     s9p2: "You can also contact us by email for manual deletion:",
     s9p3: "Upon deletion, all data is permanently removed, including:",
     s9list: ["Profile and preferences", "Watch history, ratings and notes", "Custom lists and contents", "Feedback and exclusions", "Account links", "Trakt.tv token"],
     s9p4: "Session data (Watch Together and group sessions) is automatically deleted regardless of account, as described in section 3.",
-    s10t: "10. Children",
+    s10t: "11. Children",
     s10p: "Logflix is not intended for children under 13. We do not knowingly collect information from children.",
-    s11t: "11. Changes",
+    s11t: "12. Changes",
     s11p: "We may update this privacy policy as needed. The date of the last update is shown at the top of the page.",
   },
 };
@@ -227,6 +271,16 @@ export default function PrivacyPage() {
             <p className="mb-1">{t.s7p1}</p>
             <List items={t.s7list} />
             <p>{t.s7p2}</p>
+          </section>
+
+          <section id="cookies">
+            <h2 className="text-lg font-semibold text-white mb-3">{t.sct}</h2>
+            <p className="mb-3">{t.sc_intro}</p>
+            <h3 className="font-medium text-white/90 mb-1">{t.sch1}</h3>
+            <List items={t.sclist1} />
+            <h3 className="font-medium text-white/90 mb-1">{t.sch2}</h3>
+            <List items={t.sclist2} />
+            <p>{t.sc_p}</p>
           </section>
 
           <section>

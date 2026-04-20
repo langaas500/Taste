@@ -7,7 +7,7 @@ const s = {
   no: {
     back: "Tilbake",
     title: "Brukervilkår – Logflix",
-    updated: "Sist oppdatert: 1. mars 2026",
+    updated: "Sist oppdatert: 20. april 2026",
     intro1: "Ved å bruke Logflix godtar du disse vilkårene.",
     intro2: "Hvis du ikke aksepterer vilkårene, skal du ikke bruke tjenesten.",
     s1t: "1. Hva Logflix er",
@@ -19,45 +19,52 @@ const s = {
     s2p1: "Du er ansvarlig for:",
     s2list1: ["Å holde innloggingsinformasjon sikker", "All aktivitet som skjer på din konto"],
     s2p2: "Logflix kan suspendere eller stenge kontoer ved:",
-    s2list2: ["Misbruk", "Forsøk på å manipulere systemet", "Automatisert scraping", "Omgåelse av betalingsløsninger"],
-    s3t: "3. Fremtidige betalte funksjoner",
-    s3p1: "Logflix kan i fremtiden tilby betalte funksjoner eller abonnement.",
-    s3list: ["Eksisterende brukere kan beholde funksjoner de allerede har fått tilgang til, med mindre annet er tydelig kommunisert.", "Nye brukere kan få tilgang til en annen funksjonsmodell.", "Eventuelle betalte funksjoner vil bli tydelig presentert før kjøp."],
-    s4t: "4. Deling av innhold",
-    s4p1: "Brukere kan velge å dele:",
-    s4list: ["Lister", "Titler", "Lenker til Logflix"],
-    s4p2: "Du er selv ansvarlig for hva du deler.",
-    s4p3: "Logflix kan fjerne offentlig delt innhold som bryter med lov eller god praksis.",
-    s5t: "5. Kontokobling (Watch Together)",
-    s5list: ["Logflix kan tilby frivillig kobling mellom kontoer.", "Begge parter må samtykke.", "Koblingen kan når som helst fjernes av én av partene.", "Ingen privat informasjon deles utover det som er nødvendig for funksjonen."],
-    s6t: "6. Immaterielle rettigheter",
-    s6p1: "Logflix, inkludert design, logo, kode og struktur, tilhører tjenesteeier.",
-    s6p2: "Filmmetadata, plakater og strømmeinformasjon leveres via tredjeparts API-er og tilhører respektive rettighetshavere.",
+    s2list2: ["Misbruk", "Forsøk på å manipulere systemet", "Automatisert scraping"],
+    s3t: "3. Gratistjeneste",
+    s3p1: "Logflix er i sin nåværende form tilgjengelig gratis for alle brukere – uten abonnement eller skjulte kostnader.",
+    s3p2: "Logflix forbeholder seg retten til å introdusere betalte tilleggsfunksjoner i fremtiden. Eksisterende brukere vil varsles i god tid, og eventuelle betalte funksjoner vil presenteres tydelig før kjøp.",
+    s4t: "4. Akseptabel bruk",
+    s4p1: "Du forplikter deg til ikke å:",
+    s4list: ["Bruke tjenesten til ulovlige formål", "Forsøke å hente ut data automatisk (scraping)", "Omgå eller angripe tjenestens tekniske infrastruktur", "Utgi deg for å være en annen bruker", "Dele innhold som er ulovlig, støtende eller krenkende"],
+    s5t: "5. Deling av innhold",
+    s5p1: "Brukere kan velge å dele:",
+    s5list: ["Lister", "Titler", "Lenker til Logflix"],
+    s5p2: "Du er selv ansvarlig for hva du deler.",
+    s5p3: "Logflix kan fjerne offentlig delt innhold som bryter med lov eller god praksis.",
+    s6t: "6. Kontokobling (Se Sammen / Watch Together)",
+    s6list: ["Logflix kan tilby frivillig kobling mellom kontoer.", "Begge parter må samtykke.", "Koblingen kan når som helst fjernes av én av partene.", "Ingen privat informasjon deles utover det som er nødvendig for funksjonen."],
     s7t: "7. AI-funksjoner",
     s7p1: "Anbefalinger og smaksanalyse kan genereres ved bruk av kunstig intelligens. Disse er:",
     s7list: ["Veiledende", "Ikke garanti for kvalitet", "Ikke personlig rådgivning"],
-    s8t: "8. Ansvarsbegrensning",
-    s8p1: "Tjenesten leveres «som den er».",
-    s8p2: "Logflix gir ingen garanti for:",
-    s8list: ["Kontinuerlig tilgjengelighet", "Feilfri drift", "Nøyaktighet i tredjepartsdata"],
-    s8p3: "Logflix er ikke ansvarlig for direkte eller indirekte tap som følge av bruk av tjenesten.",
-    s9t: "9. Endringer og opphør",
-    s9p1: "Logflix kan:",
-    s9list: ["Endre funksjonalitet", "Introdusere nye prismodeller", "Avslutte tjenesten"],
-    s9p2: "Brukere vil bli varslet ved vesentlige endringer.",
-    s10t: "10. Lovvalg",
-    s10p1: "Disse vilkårene reguleres av norsk lov.",
-    s10p2: "Eventuelle tvister skal behandles i Norge.",
-    s11t: "11. Tjenesteeier og kontakt",
-    s11p1: "Logflix drives av Solutions by Langaas (enkeltpersonforetak), Norge.",
-    s11contact: "Kontakt:",
-    s11privacy: "Se også vår",
-    s11privacyLink: "personvernerklæring",
+    s8t: "8. Informasjonskapsler og personvern",
+    s8p: "Logflix bruker nødvendige cookies for autentisering og valgfrie analysecookies (PostHog) etter ditt samtykke. Du velger selv hva du godtar første gang du besøker tjenesten. Se vår",
+    s8link: "personvernerklæring",
+    s8p2: "for fullstendig informasjon om databehandling og cookies.",
+    s9t: "9. Immaterielle rettigheter",
+    s9p1: "Logflix, inkludert design, logo, kode og struktur, tilhører tjenesteeier.",
+    s9p2: "Filmmetadata, plakater og strømmeinformasjon leveres via tredjeparts API-er og tilhører respektive rettighetshavere.",
+    s10t: "10. Ansvarsbegrensning",
+    s10p1: "Tjenesten leveres «som den er».",
+    s10p2: "Logflix gir ingen garanti for:",
+    s10list: ["Kontinuerlig tilgjengelighet", "Feilfri drift", "Nøyaktighet i tredjepartsdata"],
+    s10p3: "Logflix er ikke ansvarlig for direkte eller indirekte tap som følge av bruk av tjenesten.",
+    s11t: "11. Endringer og opphør",
+    s11p1: "Logflix kan:",
+    s11list: ["Endre funksjonalitet", "Introdusere nye prismodeller", "Avslutte tjenesten"],
+    s11p2: "Brukere vil bli varslet ved vesentlige endringer.",
+    s12t: "12. Lovvalg",
+    s12p1: "Disse vilkårene reguleres av norsk lov.",
+    s12p2: "Eventuelle tvister skal behandles i Norge.",
+    s13t: "13. Tjenesteeier og kontakt",
+    s13p1: "Logflix drives av Solutions by Langaas (enkeltpersonforetak), Norge.",
+    s13contact: "Kontakt:",
+    s13privacy: "Se også vår",
+    s13privacyLink: "personvernerklæring",
   },
   en: {
     back: "Back",
     title: "Terms of Service – Logflix",
-    updated: "Last updated: March 1, 2026",
+    updated: "Last updated: April 20, 2026",
     intro1: "By using Logflix you agree to these terms.",
     intro2: "If you do not accept the terms, you should not use the service.",
     s1t: "1. What Logflix is",
@@ -69,40 +76,47 @@ const s = {
     s2p1: "You are responsible for:",
     s2list1: ["Keeping your login information secure", "All activity that occurs on your account"],
     s2p2: "Logflix may suspend or close accounts for:",
-    s2list2: ["Abuse", "Attempts to manipulate the system", "Automated scraping", "Circumvention of payment solutions"],
-    s3t: "3. Future paid features",
-    s3p1: "Logflix may in the future offer paid features or subscriptions.",
-    s3list: ["Existing users may retain features they already have access to, unless otherwise clearly communicated.", "New users may have access to a different feature model.", "Any paid features will be clearly presented before purchase."],
-    s4t: "4. Sharing content",
-    s4p1: "Users may choose to share:",
-    s4list: ["Lists", "Titles", "Links to Logflix"],
-    s4p2: "You are responsible for what you share.",
-    s4p3: "Logflix may remove publicly shared content that violates law or good practice.",
-    s5t: "5. Account linking (Watch Together)",
-    s5list: ["Logflix may offer voluntary linking between accounts.", "Both parties must consent.", "The link can be removed at any time by either party.", "No private information is shared beyond what is necessary for the feature."],
-    s6t: "6. Intellectual property",
-    s6p1: "Logflix, including design, logo, code and structure, belongs to the service owner.",
-    s6p2: "Movie metadata, posters and streaming information are provided via third-party APIs and belong to their respective rights holders.",
+    s2list2: ["Abuse", "Attempts to manipulate the system", "Automated scraping"],
+    s3t: "3. Free service",
+    s3p1: "Logflix is currently available free of charge to all users — no subscription or hidden costs.",
+    s3p2: "Logflix reserves the right to introduce optional paid features in the future. Existing users will be notified in advance, and any paid features will be clearly presented before purchase.",
+    s4t: "4. Acceptable use",
+    s4p1: "You agree not to:",
+    s4list: ["Use the service for illegal purposes", "Attempt to extract data automatically (scraping)", "Circumvent or attack the service's technical infrastructure", "Impersonate another user", "Share content that is illegal, offensive or infringing"],
+    s5t: "5. Sharing content",
+    s5p1: "Users may choose to share:",
+    s5list: ["Lists", "Titles", "Links to Logflix"],
+    s5p2: "You are responsible for what you share.",
+    s5p3: "Logflix may remove publicly shared content that violates law or good practice.",
+    s6t: "6. Account linking (Watch Together)",
+    s6list: ["Logflix may offer voluntary linking between accounts.", "Both parties must consent.", "The link can be removed at any time by either party.", "No private information is shared beyond what is necessary for the feature."],
     s7t: "7. AI features",
     s7p1: "Recommendations and taste analysis may be generated using artificial intelligence. These are:",
     s7list: ["Advisory", "Not a guarantee of quality", "Not personal advice"],
-    s8t: "8. Limitation of liability",
-    s8p1: "The service is provided \"as is\".",
-    s8p2: "Logflix makes no guarantee of:",
-    s8list: ["Continuous availability", "Error-free operation", "Accuracy of third-party data"],
-    s8p3: "Logflix is not liable for direct or indirect losses resulting from the use of the service.",
-    s9t: "9. Changes and termination",
-    s9p1: "Logflix may:",
-    s9list: ["Change functionality", "Introduce new pricing models", "Discontinue the service"],
-    s9p2: "Users will be notified of significant changes.",
-    s10t: "10. Governing law",
-    s10p1: "These terms are governed by Norwegian law.",
-    s10p2: "Any disputes shall be handled in Norway.",
-    s11t: "11. Service owner and contact",
-    s11p1: "Logflix is operated by Solutions by Langaas (sole proprietorship), Norway.",
-    s11contact: "Contact:",
-    s11privacy: "See also our",
-    s11privacyLink: "privacy policy",
+    s8t: "8. Cookies and privacy",
+    s8p: "Logflix uses necessary cookies for authentication and optional analytics cookies (PostHog) based on your consent. You choose what you accept the first time you visit the service. See our",
+    s8link: "privacy policy",
+    s8p2: "for full information on data processing and cookies.",
+    s9t: "9. Intellectual property",
+    s9p1: "Logflix, including design, logo, code and structure, belongs to the service owner.",
+    s9p2: "Movie metadata, posters and streaming information are provided via third-party APIs and belong to their respective rights holders.",
+    s10t: "10. Limitation of liability",
+    s10p1: "The service is provided \"as is\".",
+    s10p2: "Logflix makes no guarantee of:",
+    s10list: ["Continuous availability", "Error-free operation", "Accuracy of third-party data"],
+    s10p3: "Logflix is not liable for direct or indirect losses resulting from the use of the service.",
+    s11t: "11. Changes and termination",
+    s11p1: "Logflix may:",
+    s11list: ["Change functionality", "Introduce new pricing models", "Discontinue the service"],
+    s11p2: "Users will be notified of significant changes.",
+    s12t: "12. Governing law",
+    s12p1: "These terms are governed by Norwegian law.",
+    s12p2: "Any disputes shall be handled in Norway.",
+    s13t: "13. Service owner and contact",
+    s13p1: "Logflix is operated by Solutions by Langaas (sole proprietorship), Norway.",
+    s13contact: "Contact:",
+    s13privacy: "See also our",
+    s13privacyLink: "privacy policy",
   },
 };
 
@@ -157,26 +171,26 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">{t.s3t}</h2>
             <p className="mb-2">{t.s3p1}</p>
-            <List items={t.s3list} />
+            <p>{t.s3p2}</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">{t.s4t}</h2>
             <p className="mb-1">{t.s4p1}</p>
             <List items={t.s4list} />
-            <p className="mb-2">{t.s4p2}</p>
-            <p>{t.s4p3}</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">{t.s5t}</h2>
+            <p className="mb-1">{t.s5p1}</p>
             <List items={t.s5list} />
+            <p className="mb-2">{t.s5p2}</p>
+            <p>{t.s5p3}</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">{t.s6t}</h2>
-            <p className="mb-2">{t.s6p1}</p>
-            <p>{t.s6p2}</p>
+            <List items={t.s6list} />
           </section>
 
           <section>
@@ -187,35 +201,50 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">{t.s8t}</h2>
-            <p className="mb-2">{t.s8p1}</p>
-            <p className="mb-1">{t.s8p2}</p>
-            <List items={t.s8list} />
-            <p>{t.s8p3}</p>
+            <p>
+              {t.s8p}{" "}
+              <Link href="/privacy" className="underline hover:text-white">{t.s8link}</Link>{" "}
+              {t.s8p2}
+            </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">{t.s9t}</h2>
-            <p className="mb-1">{t.s9p1}</p>
-            <List items={t.s9list} />
+            <p className="mb-2">{t.s9p1}</p>
             <p>{t.s9p2}</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">{t.s10t}</h2>
             <p className="mb-2">{t.s10p1}</p>
-            <p>{t.s10p2}</p>
+            <p className="mb-1">{t.s10p2}</p>
+            <List items={t.s10list} />
+            <p>{t.s10p3}</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">{t.s11t}</h2>
-            <p className="mb-2">{t.s11p1}</p>
+            <p className="mb-1">{t.s11p1}</p>
+            <List items={t.s11list} />
+            <p>{t.s11p2}</p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-white mb-2">{t.s12t}</h2>
+            <p className="mb-2">{t.s12p1}</p>
+            <p>{t.s12p2}</p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-white mb-2">{t.s13t}</h2>
+            <p className="mb-2">{t.s13p1}</p>
             <p className="mb-4">
-              {t.s11contact}{" "}
+              {t.s13contact}{" "}
               <a href="mailto:contact@logflix.app" className="underline hover:text-white">contact@logflix.app</a>
             </p>
             <p>
-              {t.s11privacy}{" "}
-              <Link href="/privacy" className="underline hover:text-white">{t.s11privacyLink}</Link>.
+              {t.s13privacy}{" "}
+              <Link href="/privacy" className="underline hover:text-white">{t.s13privacyLink}</Link>.
             </p>
           </section>
         </div>
